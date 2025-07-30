@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User roles in the system
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+// Types of posts that can be created
+enum PostType {
+  QUESTION
+  NOTE
+  RESOURCE
+}
+
+// Represents a user account with authentication and profile information
+model User {
+  id        String    @id @default(uuid())
+  username  String    @unique
+  email     String    @unique
+  password  String
+  bio       String?
+  avatarUrl String?
+  role      Role      @default(STUDENT)
+  posts     Post[]
+  comments  Comment[]
+  likes     Like[]
+  createdAt DateTime  @default(now())
+}
+
+// Represents a post created by a user (question, note, or resource)
+model Post {
+  id        String    @id @default(uuid())
+  title     String
+  content   String
+  type      PostType
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  author    User      @relation(fields: [authorId], references: [id])
+  authorId  String
+  comments  Comment[]
+  likes     Like[]
+  postTags  PostTag[]
+}
+
+// Represents a comment made by a user on a post
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    String
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String
+}
+
+// Represents a category or topic tag that can be attached to posts
+model Tag {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  postTags PostTag[]
+}
+
+// Junction table for many-to-many relationship between posts and tags
+model PostTag {
+  post   Post   @relation(fields: [postId], references: [id])
+  postId String
+  tag    Tag    @relation(fields: [tagId], references: [id])
+  tagId  Int
+
+  @@id([postId, tagId])
+}
+
+// Represents a like/upvote/useful given by a user to a post
+model Like {
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+  post   Post   @relation(fields: [postId], references: [id])
+  postId String
+
+  @@id([userId, postId])
+}

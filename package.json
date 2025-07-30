@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json.schemastore.org/package",
+  "name": "klasmwen",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "start:frontend": "npm --workspace frontend run dev",
+    "start:backend": "npm --workspace backend run dev",
+    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0"
+  }
+}

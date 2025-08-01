@@ -1,6 +1,8 @@
-import { Request, Response, NextFunction } from "express";
 import passport from "passport";
+
 import { UserService } from "./register.controller.js";
+
+import type { Request, Response, NextFunction } from "express";
 
 interface User {
   id: string;
@@ -24,7 +26,7 @@ const handleAuthenticationResult = (
 
     if (!user) {
       return res.status(401).json({
-        message: info?.message || "Invalid credentials",
+        message: info?.message ?? "Invalid credentials",
       });
     }
 
@@ -49,11 +51,11 @@ const handleAuthenticationResult = (
 };
 
 // Controller
-export const loginUser = async (
+export const loginUser = (
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<void> => {
+): void => {
   passport.authenticate(
     "local",
     { session: false },

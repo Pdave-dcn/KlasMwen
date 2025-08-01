@@ -1,9 +1,14 @@
-import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
-import { corsOptions } from "./config/cors.js";
-import router from "./routes/index.route.js";
+import express, {
+  type Request,
+  type Response,
+  type NextFunction,
+} from "express";
 import passport from "passport";
+
+import { corsOptions } from "./config/cors.js";
 import initializePassport from "./config/passport.js";
+import router from "./routes/index.route.js";
 
 const app = express();
 

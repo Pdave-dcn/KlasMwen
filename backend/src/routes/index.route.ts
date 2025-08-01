@@ -1,5 +1,7 @@
 import express from "express";
+
 import prisma from "../config/db.js";
+
 import authRoutes from "./auth.route.js";
 
 const router = express.Router();

@@ -1,6 +1,8 @@
 import dotenv from "dotenv";
+
+import type cors from "cors";
+
 dotenv.config();
-import cors from "cors";
 
 const allowedOrigin = process.env.ALLOWED_ORIGIN;
 

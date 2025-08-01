@@ -9,9 +9,16 @@
   "scripts": {
     "start:frontend": "npm --workspace frontend run dev",
     "start:backend": "npm --workspace backend run dev",
-    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\""
+    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "backend/**/*.{js,ts}": "eslint --fix",
+    "frontend/**/*.{js,ts,jsx,tsx}": "eslint --fix"
   },
   "devDependencies": {
-    "concurrently": "^9.2.0"
+    "concurrently": "^9.2.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.2"
   }
 }

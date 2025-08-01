@@ -1,9 +1,11 @@
-import { Request, Response } from "express";
-import bcrypt from "bcryptjs";
-import { z } from "zod";
-import prisma from "../../config/db.js";
-import jwt from "jsonwebtoken";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { z } from "zod";
+
+import prisma from "../../config/db.js";
+
+import type { Request, Response } from "express";
 
 // Registration-specific schema
 const RegisterUserSchema = z.object({
@@ -33,12 +35,12 @@ const RegisterUserSchema = z.object({
 });
 
 // Service functions
-export class UserService {
-  static async hashPassword(password: string): Promise<string> {
+class UserService {
+  static hashPassword(password: string): Promise<string> {
     return bcrypt.hash(password, 12);
   }
 
-  static async createUser(userData: {
+  static createUser(userData: {
     username: string;
     email: string;
     password: string;
@@ -84,7 +86,7 @@ export class UserService {
 }
 
 // Error handling utilities
-export class ErrorHandler {
+class ErrorHandler {
   static handleValidationError(error: z.ZodError) {
     return {
       status: 400,
@@ -127,10 +129,7 @@ export class ErrorHandler {
 }
 
 // Controller - focuses on orchestration
-export const registerUser = async (
-  req: Request,
-  res: Response
-): Promise<Response> => {
+const registerUser = async (req: Request, res: Response): Promise<Response> => {
   try {
     const validatedBody = RegisterUserSchema.parse(req.body);
 
@@ -163,3 +162,5 @@ export const registerUser = async (
     return res.status(errorResponse.status).json(errorResponse.response);
   }
 };
+
+export { UserService, ErrorHandler, registerUser };

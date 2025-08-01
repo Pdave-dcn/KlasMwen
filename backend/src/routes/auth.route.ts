@@ -1,6 +1,7 @@
-import express, { RequestHandler } from "express";
-import { registerUser } from "../controllers/auth/register.controller.js";
+import express, { type RequestHandler } from "express";
+
 import { loginUser } from "../controllers/auth/login.controller.js";
+import { registerUser } from "../controllers/auth/register.controller.js";
 
 const router = express.Router();
 

@@ -1,3 +1,4 @@
+// backend/.eslintrc.cjs
 import js from "@eslint/js";
 import globals from "globals";
 import tseslint from "typescript-eslint";
@@ -144,11 +145,73 @@ export default defineConfig([
       // Problematic with async callbacks in libraries like passport
       "@typescript-eslint/no-misused-promises": "off",
 
-      // Optional: Enable these as warnings for guidance
       // "@typescript-eslint/no-unsafe-assignment": "warn",
       // "@typescript-eslint/no-unsafe-call": "warn",
       // "@typescript-eslint/no-unsafe-member-access": "warn",
       // "@typescript-eslint/no-unsafe-argument": "warn",
+    },
+  },
+
+  // TEST FILES SPECIFIC OVERRIDES
+  {
+    files: [
+      "**/*.test.{js,ts}",
+      "**/*.spec.{js,ts}",
+      "**/tests/**/*.{js,ts}",
+      "**/__tests__/**/*.{js,ts}",
+    ],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        // Add vitest globals
+        describe: "readonly",
+        it: "readonly",
+        test: "readonly",
+        expect: "readonly",
+        beforeEach: "readonly",
+        afterEach: "readonly",
+        beforeAll: "readonly",
+        afterAll: "readonly",
+        vi: "readonly",
+      },
+    },
+    rules: {
+      // RELAX RULES FOR TEST FILES
+      "max-lines-per-function": "off", // Test functions can be long
+      "max-params": "off", // Test setup might need many parameters
+      complexity: "off", // Tests can be complex
+
+      // Allow more flexible imports in tests
+      "import/no-unresolved": "off", // Tests might import mocked modules
+      "import/order": "warn",
+
+      // TypeScript relaxations for tests
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/consistent-type-imports": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "warn", // Less strict for test variables
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_|^mock",
+        },
+      ],
+
+      // Allow unused expressions in tests (for setup)
+      "@typescript-eslint/no-unused-expressions": "off",
+
+      // Allow non-null assertions in tests
+      "@typescript-eslint/no-non-null-assertion": "off",
+
+      // Allow empty functions in test mocks
+      "@typescript-eslint/no-empty-function": "off",
+
+      // Less strict about awaiting in tests
+      "require-await": "warn",
+
+      // Allow console usage in tests for debugging
+      "no-console": "off",
+
+      "@typescript-eslint/unbound-method": "off",
     },
   },
 

@@ -13,8 +13,8 @@
     "prepare": "husky"
   },
   "lint-staged": {
-    "backend/**/*.{js,ts}": "eslint --fix",
-    "frontend/**/*.{js,ts,jsx,tsx}": "eslint --fix"
+    "backend/**/*.{js,ts}": "npm run lint --workspace backend",
+    "frontend/**/*.{js,ts,jsx,tsx}": "npm run lint --workspace frontend"
   },
   "devDependencies": {
     "concurrently": "^9.2.0",

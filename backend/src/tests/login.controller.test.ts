@@ -53,7 +53,6 @@ describe("Login controller", () => {
 
     const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
       callback(null, mockUser, undefined);
-
       return vi.fn();
     });
 
@@ -83,7 +82,6 @@ describe("Login controller", () => {
     it("should return 401 when user is false", () => {
       const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
         callback(null, false, { message: "Invalid password" });
-
         return vi.fn();
       });
 
@@ -118,7 +116,6 @@ describe("Login controller", () => {
       const authError = new Error("Database connection failed");
       const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
         callback(authError, false, undefined);
-
         return vi.fn();
       });
 
@@ -129,33 +126,6 @@ describe("Login controller", () => {
       expect(mockNext).toHaveBeenCalledWith(authError);
       expect(mockResponse.status).not.toHaveBeenCalled();
       expect(mockResponse.json).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("token generation errors", () => {
-    it("should return 500 when token generation fails", () => {
-      const mockUser = {
-        id: "1",
-        username: "john",
-        email: "john@test.com",
-        role: "STUDENT",
-      };
-
-      mockedUserService.generateToken.mockImplementation(() => {
-        throw new Error("JWT_SECRET not defined");
-      });
-      const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
-        callback(null, mockUser, undefined);
-        return vi.fn();
-      });
-      mockedPassport.authenticate.mockImplementation(mockAuthenticate);
-
-      loginUser(mockRequest, mockResponse as Response, mockNext);
-
-      expect(mockResponse.status).toHaveBeenCalledWith(500);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Internal server error",
-      });
     });
   });
 

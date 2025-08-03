@@ -1,9 +1,9 @@
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 
 import prisma from "../../config/db.js";
+import { handleError } from "../../lib/errorHandler.js";
 
 import type { Request, Response } from "express";
 
@@ -85,49 +85,6 @@ class UserService {
   }
 }
 
-// Error handling utilities
-class ErrorHandler {
-  static handleValidationError(error: z.ZodError) {
-    return {
-      status: 400,
-      response: {
-        message: "Validation failed",
-        errors: error.issues.map((err) => ({
-          path: err.path.join("."),
-          message: err.message,
-        })),
-      },
-    };
-  }
-
-  static handlePrismaError(error: PrismaClientKnownRequestError) {
-    if (error.code === "P2002") {
-      const field = error.meta?.target as string[];
-      const fieldName = field?.[0] === "username" ? "username" : "email";
-      return {
-        status: 409,
-        response: {
-          message: `User with this ${fieldName} already exists.`,
-        },
-      };
-    }
-
-    console.error("Prisma Error:", error.message);
-    return {
-      status: 500,
-      response: { message: "Internal server error" },
-    };
-  }
-
-  static handleGenericError(error: unknown) {
-    console.error("Error creating user:", error);
-    return {
-      status: 500,
-      response: { message: "Internal server error" },
-    };
-  }
-}
-
 // Controller - focuses on orchestration
 const registerUser = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -149,18 +106,8 @@ const registerUser = async (req: Request, res: Response): Promise<Response> => {
       token,
     });
   } catch (error: unknown) {
-    let errorResponse;
-
-    if (error instanceof z.ZodError) {
-      errorResponse = ErrorHandler.handleValidationError(error);
-    } else if (error instanceof PrismaClientKnownRequestError) {
-      errorResponse = ErrorHandler.handlePrismaError(error);
-    } else {
-      errorResponse = ErrorHandler.handleGenericError(error);
-    }
-
-    return res.status(errorResponse.status).json(errorResponse.response);
+    return handleError(error, res);
   }
 };
 
-export { UserService, ErrorHandler, registerUser };
+export { UserService, registerUser };

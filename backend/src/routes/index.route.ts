@@ -3,6 +3,7 @@ import express from "express";
 import prisma from "../config/db.js";
 
 import authRoutes from "./auth.route.js";
+import postRoutes from "./post.route.js";
 import userRoutes from "./user.route.js";
 
 const router = express.Router();
@@ -35,6 +36,7 @@ router.get("/status", async (_req, res) => {
 
 router.use("/api", authRoutes);
 router.use("/api", userRoutes);
+router.use("/api", postRoutes);
 
 router.use(/.*/, (_req, res) => {
   res.status(404).json({

@@ -61,7 +61,7 @@ export default defineConfig([
       "no-unreachable": "error",
       "no-unreachable-loop": "error",
       "require-await": "error",
-      "no-return-await": "error",
+      "no-return-await": "off",
       "no-process-exit": "error",
       "no-sync": "warn",
       "no-useless-rename": "error",

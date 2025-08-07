@@ -1,58 +1,22 @@
-/* eslint-disable max-lines-per-function*/
-
-import { PostType } from "@prisma/client";
-import z from "zod";
-
-import prisma from "../config/db";
-import { handlePostWithCommentPagination } from "../lib/commentPaginationHandler";
-import { handleError } from "../lib/errorHandler";
-import transformPostTagsToFlat from "../lib/postTagFlattener";
+import prisma from "../config/db.js";
+import {
+  deleteFromCloudinary,
+  extractPublicIdFromUrl,
+} from "../lib/cloudinaryServices.js";
+import { handlePostWithCommentPagination } from "../lib/commentPaginationHandler.js";
+import createEditResponse from "../lib/createEditResponse.js";
+import { handleError } from "../lib/errorHandler.js";
+import handlePostCreation from "../lib/postCreationHandler.js";
+import transformPostTagsToFlat from "../lib/postTagFlattener.js";
+import handlePostUpdate from "../lib/postUpdateHandler.js";
+import handleRequestValidation from "../lib/requestPostParser.js";
+import {
+  PostIdParamSchema,
+  UpdatedPostSchema,
+} from "../zodSchemas/post.zod.js";
 
 import type { Request, Response } from "express";
 
-const NewPostSchema = z.object({
-  title: z
-    .string()
-    .trim()
-    .min(5, "Title must be at least 5 characters long")
-    .max(100, "Title must be 100 characters or fewer"),
-
-  content: z
-    .string()
-    .trim()
-    .min(10, "Content must be at least 10 characters")
-    .max(10000, "Content can't exceed 10000 characters"),
-
-  type: z.enum(Object.values(PostType)),
-
-  tagIds: z
-    .array(z.number().int().positive("Tag ID must be a positive integer"))
-    .max(10, "Maximum 10 tags allowed")
-    .optional()
-    .default([]),
-});
-
-const PostIdParamSchema = z.object({
-  id: z.uuid("Invalid post ID format in URL parameter."),
-});
-
-const EditPostSchema = z.object({
-  title: z
-    .string()
-    .trim()
-    .min(5, "Title must be at least 5 characters long")
-    .max(200, "Title must be less than 200 characters"),
-
-  content: z
-    .string()
-    .trim()
-    .min(1, "Content is required")
-    .max(10000, "Content must be less than 10000 characters"),
-
-  type: z.enum(Object.values(PostType) as [PostType, ...PostType[]]),
-});
-
-// TODO: handle file upload
 const createPost = async (req: Request, res: Response) => {
   try {
     const user = req.user;
@@ -60,53 +24,20 @@ const createPost = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const validatedBody = NewPostSchema.parse(req.body);
+    const { completeValidatedData, uploadedFileInfo } =
+      await handleRequestValidation(req, user.id);
 
-    // Use transaction to create post and tags together
-    const result = await prisma.$transaction(async (tx) => {
-      //  Create the post first
-      const post = await tx.post.create({
-        data: {
-          title: validatedBody.title,
-          content: validatedBody.content,
-          type: validatedBody.type,
-          authorId: user.id,
-        },
-      });
-
-      //  Create PostTag relationships if tags are provided
-      if (validatedBody.tagIds && validatedBody.tagIds.length > 0) {
-        await tx.postTag.createMany({
-          data: validatedBody.tagIds.map((tagId) => ({
-            postId: post.id,
-            tagId,
-          })),
-        });
-      }
-
-      // 3. Return the post with all relations for response
-      return await tx.post.findUnique({
-        where: { id: post.id },
-        select: {
-          id: true,
-          title: true,
-          content: true,
-          type: true,
-          createdAt: true,
-          author: {
-            select: { id: true, username: true, avatarUrl: true },
-          },
-          postTags: {
-            include: { tag: true },
-          },
-          _count: {
-            select: { comments: true, likes: true },
-          },
-        },
-      });
-    });
+    const result = await handlePostCreation(completeValidatedData, user.id);
 
     if (!result) {
+      // If database operation failed but file was uploaded, clean up
+      if (uploadedFileInfo) {
+        try {
+          await deleteFromCloudinary(uploadedFileInfo.publicId, "raw");
+        } catch (cleanupError) {
+          console.error("Failed to cleanup uploaded file:", cleanupError);
+        }
+      }
       return res
         .status(500)
         .json({ message: "Unexpected error: post creation failed." });
@@ -122,6 +53,7 @@ const createPost = async (req: Request, res: Response) => {
   }
 };
 
+// TODO: Review the data that are being provided
 const getAllPosts = async (req: Request, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
@@ -131,10 +63,25 @@ const getAllPosts = async (req: Request, res: Response) => {
     const posts = await prisma.post.findMany({
       skip,
       take: pageSize,
-      include: {
-        author: { select: { id: true, username: true, avatarUrl: true } },
-        postTags: { include: { tag: true } },
-        _count: { select: { comments: true, likes: true } },
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        type: true,
+        fileUrl: true,
+        fileName: true,
+        fileSize: true,
+        mimeType: true,
+        createdAt: true,
+        author: {
+          select: { id: true, username: true, avatarUrl: true },
+        },
+        postTags: {
+          include: { tag: true },
+        },
+        _count: {
+          select: { comments: true, likes: true },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -147,6 +94,7 @@ const getAllPosts = async (req: Request, res: Response) => {
   }
 };
 
+// TODO: Review the data that are being provided
 const getPostById = async (req: Request, res: Response) => {
   try {
     const { id: postId } = PostIdParamSchema.parse(req.params);
@@ -161,6 +109,10 @@ const getPostById = async (req: Request, res: Response) => {
         title: true,
         content: true,
         type: true,
+        fileUrl: true,
+        fileName: true,
+        fileSize: true,
+        mimeType: true,
         createdAt: true,
         updatedAt: true,
         author: {
@@ -203,14 +155,118 @@ const getPostById = async (req: Request, res: Response) => {
   }
 };
 
-// TODO: handle file specifics
-const editPost = async (req: Request, res: Response) => {
+const getPostForEdit = async (req: Request, res: Response) => {
   try {
     const user = req.user;
-    if (!user) return res.status(409).json({ message: "Unauthorized" });
+    if (!user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
     const { id: postId } = PostIdParamSchema.parse(req.params);
-    const updateData = EditPostSchema.parse(req.body);
+
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        type: true,
+        fileUrl: true,
+        fileName: true,
+        fileSize: true,
+        mimeType: true,
+        createdAt: true,
+        updatedAt: true,
+        author: {
+          select: { id: true, username: true, avatarUrl: true },
+        },
+        postTags: {
+          include: { tag: true },
+        },
+
+        _count: {
+          select: { comments: true, likes: true },
+        },
+      },
+    });
+
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    if (user.id !== post.author.id && user.role !== "ADMIN") {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized to edit this post" });
+    }
+
+    const transformedPost = transformPostTagsToFlat(post);
+
+    const editData = createEditResponse(transformedPost);
+
+    return res.status(200).json({
+      message: "Post data for editing retrieved successfully",
+      post: editData,
+    });
+  } catch (error: unknown) {
+    return handleError(error, res);
+  }
+};
+
+//* Disposable
+const getPostMetadata = async (req: Request, res: Response) => {
+  try {
+    const user = req.user;
+    if (!user || user.role !== "ADMIN") {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    const { id: postId } = PostIdParamSchema.parse(req.params);
+
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: {
+        id: true,
+        title: true,
+        type: true,
+        fileUrl: true,
+        fileName: true,
+        fileSize: true,
+        mimeType: true,
+        createdAt: true,
+        updatedAt: true,
+        authorId: true,
+        author: {
+          select: { id: true, username: true, email: true },
+        },
+        _count: {
+          select: { comments: true, likes: true },
+        },
+      },
+    });
+
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    return res.status(200).json(post);
+  } catch (error: unknown) {
+    return handleError(error, res);
+  }
+};
+
+const updatePost = async (req: Request, res: Response) => {
+  try {
+    const user = req.user;
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
+
+    const { id: postId } = PostIdParamSchema.parse(req.params);
+    const validatedData = UpdatedPostSchema.parse({
+      title: req.body.title,
+      type: req.body.type,
+      content: req.body.content,
+      tagIds: req.body.tagIds ? JSON.parse(req.body.tagIds) : [],
+    });
 
     const post = await prisma.post.findUnique({
       where: { id: postId },
@@ -218,20 +274,18 @@ const editPost = async (req: Request, res: Response) => {
     if (!post) return res.status(404).json({ message: "Post not found" });
 
     if (user.id !== post.authorId)
-      return res.status(409).json({ message: "Unauthorized" });
+      return res.status(403).json({ message: "Forbidden" });
 
-    const editedPost = await prisma.post.update({
-      where: { id: postId },
-      data: {
-        title: updateData.title,
-        content: updateData.content,
-        type: updateData.type,
-      },
-    });
+    const result = handlePostUpdate(validatedData, post.id);
+
+    if (!result)
+      res
+        .status(400)
+        .json({ message: "Unexpected error: post update failed." });
 
     return res.status(200).json({
       message: "Post update successfully",
-      post: editedPost,
+      post: result,
     });
   } catch (error: unknown) {
     return handleError(error, res);
@@ -241,7 +295,7 @@ const editPost = async (req: Request, res: Response) => {
 const deletePost = async (req: Request, res: Response) => {
   try {
     const user = req.user;
-    if (!user) return res.status(409).json({ message: "Unauthorized" });
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
 
     const { id: postId } = PostIdParamSchema.parse(req.params);
 
@@ -250,8 +304,20 @@ const deletePost = async (req: Request, res: Response) => {
     });
     if (!post) return res.status(404).json({ message: "Post not found" });
 
-    if (user.id !== post.authorId || user.role !== "ADMIN")
+    if (user.id !== post.authorId && user.role !== "ADMIN")
       return res.status(409).json({ message: "Unauthorized" });
+
+    if (post.type === "RESOURCE" && post.fileUrl) {
+      try {
+        const publicId = extractPublicIdFromUrl(post.fileUrl);
+        if (publicId) {
+          await deleteFromCloudinary(publicId, "raw");
+        }
+      } catch (cleanupError) {
+        console.error("Failed to cleanup Cloudinary file:", cleanupError);
+        // Don't fail the entire operation if cleanup fails
+      }
+    }
 
     await prisma.post.delete({
       where: { id: postId },
@@ -263,4 +329,12 @@ const deletePost = async (req: Request, res: Response) => {
   }
 };
 
-export { createPost, getAllPosts, getPostById, editPost, deletePost };
+export {
+  createPost,
+  getAllPosts,
+  getPostById,
+  updatePost,
+  deletePost,
+  getPostForEdit,
+  getPostMetadata,
+};

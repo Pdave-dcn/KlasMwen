@@ -1,7 +1,27 @@
 import app from "./app.js";
+import { verifyCloudinaryConnection } from "./config/cloudinary.js";
+import prisma from "./config/db.js";
 
 const PORT = process.env.PORT ?? 3000;
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+const startServer = async () => {
+  console.log("Verifying external connections...");
+
+  await verifyCloudinaryConnection();
+
+  try {
+    await prisma.$connect();
+    console.log("✅ Database connected successfully");
+  } catch (error) {
+    console.error("❌ Database connection failed:", error);
+  }
+
+  app.listen(PORT, () => {
+    console.log(`🚀 Server is running on PORT ${PORT}`);
+  });
+};
+
+startServer().catch((error) => {
+  console.error("❌ Failed to start server:", error);
+  throw new Error("Database connection failed");
 });

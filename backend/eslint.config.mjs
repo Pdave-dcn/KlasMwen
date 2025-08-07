@@ -67,7 +67,7 @@ export default defineConfig([
       "no-useless-rename": "error",
       "object-shorthand": "warn",
       "max-params": ["warn", 5],
-      "max-lines-per-function": ["warn", { max: 50, skipBlankLines: true }],
+      "max-lines-per-function": ["warn", { max: 60, skipBlankLines: true }],
       complexity: ["warn", 15],
 
       // IMPORT ORGANIZATION & FORMATTING

@@ -8,7 +8,7 @@ import {
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { z } from "zod";
 
-import { handleError } from "../lib/errorHandler";
+import { handleError } from "../core/error/errorHandler";
 
 import type { Response } from "express";
 

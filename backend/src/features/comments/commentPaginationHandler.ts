@@ -3,9 +3,8 @@ import {
   type CommentPaginationResult,
   type RawPostWithComments,
   type TransformedPostWithPagination,
-} from "../types/postTypes";
-
-import transformPostTagsToFlat from "./postTagFlattener";
+} from "../../types/postTypes";
+import transformPostTagsToFlat from "../posts/postTagFlattener";
 
 /**
  * Handles comment pagination logic by processing fetched comments and generating pagination metadata.

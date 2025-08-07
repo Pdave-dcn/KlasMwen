@@ -6,8 +6,8 @@ import express, {
 } from "express";
 import passport from "passport";
 
-import { corsOptions } from "./config/cors.js";
-import initializePassport from "./config/passport.js";
+import { corsOptions } from "./core/config/cors.js";
+import initializePassport from "./core/config/passport.js";
 import router from "./routes/index.route.js";
 
 const app = express();

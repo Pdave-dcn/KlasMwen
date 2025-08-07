@@ -4,7 +4,7 @@ import { describe, it, expect, vi } from "vitest";
 import {
   handleCommentPagination,
   handlePostWithCommentPagination,
-} from "../lib/commentPaginationHandler";
+} from "../features/comments/commentPaginationHandler";
 
 import type {
   Comment,

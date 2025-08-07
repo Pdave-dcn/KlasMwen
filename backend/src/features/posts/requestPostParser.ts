@@ -1,15 +1,14 @@
 import {
   CompletePostSchema,
   NewPostRequestSchema,
-} from "../zodSchemas/post.zod.js";
-
-import { uploadToCloudinary } from "./cloudinaryServices.js";
+} from "../../zodSchemas/post.zod.js";
+import { uploadToCloudinary } from "../media/cloudinaryServices.js";
 
 import type {
   CreatePostInput,
   ResourcePostInput,
   TextPostInput,
-} from "../types/postTypes.js";
+} from "../../types/postTypes.js";
 import type { Request } from "express";
 
 interface FileUploadData {

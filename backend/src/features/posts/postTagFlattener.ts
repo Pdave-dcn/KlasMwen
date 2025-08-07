@@ -1,4 +1,4 @@
-import type { RawPost, TransformedPost } from "../types/postTypes";
+import type { RawPost, TransformedPost } from "../../types/postTypes";
 
 /**
  * Transforms a RawPost object by converting its nested postTags into a simplified tags array.

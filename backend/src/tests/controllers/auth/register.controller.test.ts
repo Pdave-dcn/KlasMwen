@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   UserService,
   registerUser,
-} from "../controllers/auth/register.controller.js";
+} from "../../../controllers/auth/register.controller.js";
 
 import type { Request, Response } from "express";
 
@@ -60,7 +60,7 @@ describe("UserService class", () => {
         createdAt: new Date(),
       };
 
-      const prisma = await import("../config/db.js");
+      const prisma = await import("../../../core/config/db.js");
       vi.mocked(prisma.default.user.create).mockResolvedValue(mockUser);
 
       const result = await UserService.createUser(userData);
@@ -161,7 +161,7 @@ describe("Register User Controller", () => {
         createdAt: new Date(),
       };
 
-      const prisma = await import("../config/db.js");
+      const prisma = await import("../../../core/config/db.js");
       vi.mocked(prisma.default.user.create).mockResolvedValue(mockUser);
 
       await registerUser(mockRequest as Request, mockResponse as Response);

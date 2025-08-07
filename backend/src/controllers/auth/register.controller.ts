@@ -2,8 +2,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 
-import prisma from "../../config/db.js";
-import { handleError } from "../../lib/errorHandler.js";
+import prisma from "../../core/config/db.js";
+import { handleError } from "../../core/error/errorHandler.js";
 
 import type { Request, Response } from "express";
 

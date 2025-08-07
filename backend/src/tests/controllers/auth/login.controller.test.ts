@@ -1,8 +1,8 @@
 import passport from "passport";
 import { it, expect, describe, vi, beforeEach } from "vitest";
 
-import { loginUser } from "../controllers/auth/login.controller.js";
-import { UserService } from "../controllers/auth/register.controller.js";
+import { loginUser } from "../../../controllers/auth/login.controller.js";
+import { UserService } from "../../../controllers/auth/register.controller.js";
 
 import type { NextFunction, Request, Response } from "express";
 

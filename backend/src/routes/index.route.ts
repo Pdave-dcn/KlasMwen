@@ -1,6 +1,6 @@
 import express from "express";
 
-import prisma from "../config/db.js";
+import prisma from "../core/config/db.js";
 
 import authRoutes from "./auth.route.js";
 import postRoutes from "./post.route.js";

@@ -1,9 +1,9 @@
 import { PostType } from "@prisma/client";
 import { describe, it, expect } from "vitest";
 
-import transformPostTagsToFlat from "../lib/postTagFlattener";
+import transformPostTagsToFlat from "../../../features/posts/postTagFlattener";
 
-import type { RawPost, TransformedPost } from "../types/postTypes";
+import type { RawPost, TransformedPost } from "../../../types/postTypes";
 
 describe("transformPostTagsToFlat", () => {
   const mockAuthor = {
@@ -45,6 +45,10 @@ describe("transformPostTagsToFlat", () => {
         },
       ],
       _count: mockCount,
+      fileUrl: null,
+      fileName: null,
+      fileSize: null,
+      mimeType: null,
     };
 
     const result = transformPostTagsToFlat(rawPost);
@@ -74,6 +78,10 @@ describe("transformPostTagsToFlat", () => {
       author: mockAuthor,
       postTags: [],
       _count: mockCount,
+      fileUrl: null,
+      fileName: null,
+      fileSize: null,
+      mimeType: null,
     };
 
     const result = transformPostTagsToFlat(rawPost);
@@ -109,6 +117,10 @@ describe("transformPostTagsToFlat", () => {
         comments: 1,
         likes: 3,
       },
+      fileUrl: null,
+      fileName: null,
+      fileSize: null,
+      mimeType: null,
     };
 
     const result = transformPostTagsToFlat(rawPost);
@@ -152,6 +164,10 @@ describe("transformPostTagsToFlat", () => {
       author: mockAuthor,
       postTags: originalPostTags,
       _count: mockCount,
+      fileUrl: null,
+      fileName: null,
+      fileSize: null,
+      mimeType: null,
     };
 
     const result = transformPostTagsToFlat(rawPost);
@@ -182,6 +198,10 @@ describe("transformPostTagsToFlat", () => {
         },
       ],
       _count: mockCount,
+      fileUrl: null,
+      fileName: null,
+      fileSize: null,
+      mimeType: null,
     };
 
     const result = transformPostTagsToFlat(rawPost);
@@ -216,6 +236,10 @@ describe("transformPostTagsToFlat", () => {
         },
       ],
       _count: mockCount,
+      fileUrl: null,
+      fileName: null,
+      fileSize: null,
+      mimeType: null,
     };
 
     const result = transformPostTagsToFlat(rawPost);
@@ -238,6 +262,10 @@ describe("transformPostTagsToFlat", () => {
       author: mockAuthor,
       postTags: [],
       _count: mockCount,
+      fileUrl: null,
+      fileName: null,
+      fileSize: null,
+      mimeType: null,
     };
 
     const result: TransformedPost = transformPostTagsToFlat(rawPost);

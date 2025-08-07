@@ -1,13 +1,13 @@
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-import prisma from "../config/db.js";
 import {
   getUserById,
   updateUserProfile,
   getMyPosts,
 } from "../controllers/user.controller.js";
-import { handleError } from "../lib/errorHandler.js";
+import prisma from "../core/config/db.js";
+import { handleError } from "../core/error/errorHandler.js";
 
 import type { Role } from "@prisma/client";
 import type { Request, Response } from "express";

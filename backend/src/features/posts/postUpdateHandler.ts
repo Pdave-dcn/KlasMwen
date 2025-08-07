@@ -1,6 +1,6 @@
-import prisma from "../config/db.js";
+import prisma from "../../core/config/db.js";
 
-import type { RawPost } from "../types/postTypes.js";
+import type { RawPost } from "../../types/postTypes.js";
 
 type ValidatedData =
   | {

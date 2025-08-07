@@ -2,7 +2,7 @@ import type {
   ResourcePost,
   TextPost,
   TransformedPost,
-} from "../types/postTypes";
+} from "../../types/postTypes";
 
 const isResourcePost = (post: TransformedPost): post is ResourcePost => {
   return post.type === "RESOURCE" && post.fileUrl !== null;

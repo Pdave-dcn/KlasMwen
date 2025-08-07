@@ -1,15 +1,15 @@
-import prisma from "../config/db.js";
+import prisma from "../core/config/db.js";
+import { handleError } from "../core/error/errorHandler.js";
+import { handlePostWithCommentPagination } from "../features/comments/commentPaginationHandler.js";
 import {
   deleteFromCloudinary,
   extractPublicIdFromUrl,
-} from "../lib/cloudinaryServices.js";
-import { handlePostWithCommentPagination } from "../lib/commentPaginationHandler.js";
-import createEditResponse from "../lib/createEditResponse.js";
-import { handleError } from "../lib/errorHandler.js";
-import handlePostCreation from "../lib/postCreationHandler.js";
-import transformPostTagsToFlat from "../lib/postTagFlattener.js";
-import handlePostUpdate from "../lib/postUpdateHandler.js";
-import handleRequestValidation from "../lib/requestPostParser.js";
+} from "../features/media/cloudinaryServices.js";
+import createEditResponse from "../features/posts/createEditResponse.js";
+import handlePostCreation from "../features/posts/postCreationHandler.js";
+import transformPostTagsToFlat from "../features/posts/postTagFlattener.js";
+import handlePostUpdate from "../features/posts/postUpdateHandler.js";
+import handleRequestValidation from "../features/posts/requestPostParser.js";
 import {
   PostIdParamSchema,
   UpdatedPostSchema,

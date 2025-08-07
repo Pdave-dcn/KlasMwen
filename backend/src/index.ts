@@ -1,6 +1,6 @@
 import app from "./app.js";
-import { verifyCloudinaryConnection } from "./config/cloudinary.js";
-import prisma from "./config/db.js";
+import { verifyCloudinaryConnection } from "./core/config/cloudinary.js";
+import prisma from "./core/config/db.js";
 
 const PORT = process.env.PORT ?? 3000;
 

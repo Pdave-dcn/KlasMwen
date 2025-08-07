@@ -1,6 +1,6 @@
 import { isResourcePost, isTextPost } from "./postTypeGuards";
 
-import type { TransformedPost } from "../types/postTypes";
+import type { TransformedPost } from "../../types/postTypes";
 
 type EditResponse = {
   id: string;

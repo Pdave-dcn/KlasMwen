@@ -1,7 +1,7 @@
 /*eslint-disable max-lines-per-function*/
-import prisma from "../config/db.js";
+import prisma from "../../core/config/db.js";
 
-import type { CreatePostInput, RawPost } from "../types/postTypes.js";
+import type { CreatePostInput, RawPost } from "../../types/postTypes.js";
 
 /**
  * Creates a new post in the database with associated tags.

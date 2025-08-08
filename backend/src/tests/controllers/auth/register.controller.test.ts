@@ -9,7 +9,7 @@ import {
 
 import type { Request, Response } from "express";
 
-vi.mock("../config/db.js", () => ({
+vi.mock("../../../core/config/db.js", () => ({
   default: {
     user: {
       create: vi.fn(),

@@ -4,13 +4,13 @@ import { describe, it, expect, vi } from "vitest";
 import {
   handleCommentPagination,
   handlePostWithCommentPagination,
-} from "../features/comments/commentPaginationHandler";
+} from "../../../features/comments/commentPaginationHandler";
 
 import type {
   Comment,
   RawPostWithComments,
   TransformedPostWithPagination,
-} from "../types/postTypes";
+} from "../../../types/postTypes";
 
 vi.mock("./postTagFlattener", () => ({
   default: vi.fn((post) => {
@@ -256,6 +256,10 @@ describe("handlePostWithCommentPagination", () => {
       comments: totalComments,
       likes: 5,
     },
+    fileUrl: null,
+    fileName: null,
+    fileSize: null,
+    mimeType: null,
   });
 
   describe("integration with handleCommentPagination", () => {

@@ -5,15 +5,15 @@ import {
   getUserById,
   updateUserProfile,
   getMyPosts,
-} from "../controllers/user.controller.js";
-import prisma from "../core/config/db.js";
-import { handleError } from "../core/error/errorHandler.js";
+} from "../../controllers/user.controller.js";
+import prisma from "../../core/config/db.js";
+import { handleError } from "../../core/error/errorHandler.js";
 
 import type { Role } from "@prisma/client";
 import type { Request, Response } from "express";
 
 // Mock dependencies
-vi.mock("../config/db.js", () => ({
+vi.mock("../../core/config/db.js", () => ({
   default: {
     user: {
       findUnique: vi.fn(),
@@ -25,7 +25,7 @@ vi.mock("../config/db.js", () => ({
   },
 }));
 
-vi.mock("../lib/errorHandler.js", () => ({
+vi.mock("../../core/error/errorHandler.js", () => ({
   handleError: vi.fn(),
 }));
 

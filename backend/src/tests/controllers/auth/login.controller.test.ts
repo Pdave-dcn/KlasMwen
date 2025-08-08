@@ -7,7 +7,7 @@ import { UserService } from "../../../controllers/auth/register.controller.js";
 import type { NextFunction, Request, Response } from "express";
 
 vi.mock("passport");
-vi.mock("../controllers/auth/register.controller.js", () => ({
+vi.mock("../../../controllers/auth/register.controller.js", () => ({
   UserService: {
     generateToken: vi.fn(),
   },

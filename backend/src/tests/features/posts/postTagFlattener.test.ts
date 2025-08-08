@@ -65,6 +65,10 @@ describe("transformPostTagsToFlat", () => {
         { id: 2, name: "JavaScript" },
       ],
       _count: mockCount,
+      fileUrl: null,
+      fileName: null,
+      fileSize: null,
+      mimeType: null,
     });
   });
 
@@ -143,6 +147,10 @@ describe("transformPostTagsToFlat", () => {
         comments: 1,
         likes: 3,
       },
+      fileUrl: null,
+      fileName: null,
+      fileSize: null,
+      mimeType: null,
     });
   });
 

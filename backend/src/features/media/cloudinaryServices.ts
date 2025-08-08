@@ -135,26 +135,31 @@ const getResourceType = (mimetype: string): "image" | "video" | "raw" => {
 
 /**
  * Extracts public_id from Cloudinary URLs.
- * Removes version numbers (v1234567) and file extensions.
+ * Removes version numbers (v1234567), transformations, and file extensions.
  *
  * @param {string} url - Full Cloudinary URL
  * @returns {string | null} Public ID or null if extraction fails
  */
 const extractPublicIdFromUrl = (url: string): string | null => {
   try {
-    // Cloudinary URLs format: https://res.cloudinary.com/cloud_name/resource_type/upload/version/public_id.extension
-    const urlParts = url.split("/");
-    const uploadIndex = urlParts.findIndex((part) => part === "upload");
+    const urlParts = url.split("upload/");
+    if (urlParts.length < 2) {
+      return null;
+    }
 
-    if (uploadIndex !== -1 && uploadIndex < urlParts.length - 1) {
-      // Get everything after 'upload/', might include version number
-      let publicIdPart = urlParts.slice(uploadIndex + 1).join("/");
+    const pathAfterUpload = urlParts[1];
 
-      // Remove version number if present (starts with 'v' followed by digits)
-      publicIdPart = publicIdPart.replace(/^v\d+\//, "");
+    // Regex to match and capture the public ID part.
+    // It looks for an optional transformation section (c_*, w_*, etc.),
+    // an optional version number (v followed by digits), and then captures
+    // everything until the file extension.
+    const regex =
+      /(?:(?:[a-z]_\w+|[a-z]_\w+,\s*)*\/)?(?:v\d+\/)?(.+?)(?:\.\w+)?$/;
+    const match = pathAfterUpload.match(regex);
 
-      // Remove file extension
-      return publicIdPart.replace(/\.[^/.]+$/, "");
+    if (match?.[1]) {
+      // The captured group is the public ID
+      return match[1];
     }
 
     return null;
@@ -175,7 +180,12 @@ const extractPublicIdFromUrl = (url: string): string | null => {
  * @returns {string} Lowercase extension or empty string
  */
 const getFileExtension = (filename: string): string => {
-  return filename.split(".").pop()?.toLowerCase() ?? "";
+  const lastDotIndex = filename.lastIndexOf(".");
+  // If there's no dot or it's the first character, there's no extension
+  if (lastDotIndex <= 0) {
+    return "";
+  }
+  return filename.slice(lastDotIndex + 1).toLowerCase();
 };
 
 export {

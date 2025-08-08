@@ -43,7 +43,13 @@ const handlePostUpdate = async (
       data: updateData,
     });
 
-    // Replace existing tags with new ones
+    // Replace existing tags with new ones by first deleting all old tags
+    // and then creating the new ones.
+    await tx.postTag.deleteMany({
+      where: { postId },
+    });
+
+    // Only create new tags if there are any to add
     if (validatedData.tagIds?.length > 0) {
       await tx.postTag.createMany({
         data: validatedData.tagIds.map((tagId) => ({

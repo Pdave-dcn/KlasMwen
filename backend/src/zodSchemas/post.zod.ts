@@ -21,12 +21,12 @@ const BasePostSchema = z.object({
 const TextPostRequestSchema = BasePostSchema.extend({
   type: z.enum(["QUESTION", "NOTE"]),
   content: z.string().trim().min(10).max(10000),
-});
+}).strict(); // Reject extra fields
 
 // Resource posts - file data comes from multer
 const ResourcePostRequestSchema = BasePostSchema.extend({
   type: z.literal("RESOURCE"),
-});
+}).strict(); // Reject extra fields like 'content'
 
 // Resource posts after file upload processing
 const CompleteResourcePostSchema = BasePostSchema.extend({
@@ -35,7 +35,7 @@ const CompleteResourcePostSchema = BasePostSchema.extend({
   fileName: z.string(),
   fileSize: z.number().positive(),
   mimeType: z.string(),
-});
+}).strict();
 
 const NewPostRequestSchema = z.discriminatedUnion("type", [
   TextPostRequestSchema,
@@ -54,7 +54,7 @@ const PostIdParamSchema = z.object({
 const UpdatedResourceSchema = BasePostSchema.extend({
   type: z.literal("RESOURCE"),
   fileName: z.string().trim().min(1, "Name is required for update"),
-});
+}).strict();
 
 const UpdatedPostSchema = z.discriminatedUnion("type", [
   TextPostRequestSchema,

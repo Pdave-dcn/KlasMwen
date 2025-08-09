@@ -15,6 +15,7 @@ import {
   UpdatedPostSchema,
 } from "../zodSchemas/post.zod.js";
 
+import type { RawPost, TransformedPost } from "../types/postTypes.js";
 import type { Request, Response } from "express";
 
 const createPost = async (req: Request, res: Response) => {
@@ -53,7 +54,6 @@ const createPost = async (req: Request, res: Response) => {
   }
 };
 
-// TODO: Review the data that are being provided
 const getAllPosts = async (req: Request, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
@@ -70,8 +70,6 @@ const getAllPosts = async (req: Request, res: Response) => {
         type: true,
         fileUrl: true,
         fileName: true,
-        fileSize: true,
-        mimeType: true,
         createdAt: true,
         author: {
           select: { id: true, username: true, avatarUrl: true },
@@ -86,7 +84,9 @@ const getAllPosts = async (req: Request, res: Response) => {
       orderBy: { createdAt: "desc" },
     });
 
-    const transformedPosts = posts.map(transformPostTagsToFlat);
+    const transformedPosts = posts.map(
+      transformPostTagsToFlat as (post: Partial<RawPost>) => TransformedPost
+    );
 
     return res.status(200).json(transformedPosts);
   } catch (error: unknown) {
@@ -94,7 +94,6 @@ const getAllPosts = async (req: Request, res: Response) => {
   }
 };
 
-// TODO: Review the data that are being provided
 const getPostById = async (req: Request, res: Response) => {
   try {
     const { id: postId } = PostIdParamSchema.parse(req.params);
@@ -276,12 +275,13 @@ const updatePost = async (req: Request, res: Response) => {
     if (user.id !== post.authorId)
       return res.status(403).json({ message: "Forbidden" });
 
-    const result = handlePostUpdate(validatedData, post.id);
+    const result = await handlePostUpdate(validatedData, post.id);
 
-    if (!result)
-      res
+    if (!result) {
+      return res
         .status(400)
         .json({ message: "Unexpected error: post update failed." });
+    }
 
     return res.status(200).json({
       message: "Post update successfully",

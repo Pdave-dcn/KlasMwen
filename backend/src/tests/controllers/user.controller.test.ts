@@ -12,7 +12,6 @@ import { handleError } from "../../core/error/errorHandler.js";
 import type { Role } from "@prisma/client";
 import type { Request, Response } from "express";
 
-// Mock dependencies
 vi.mock("../../core/config/db.js", () => ({
   default: {
     user: {
@@ -21,6 +20,7 @@ vi.mock("../../core/config/db.js", () => ({
     },
     post: {
       findMany: vi.fn(),
+      count: vi.fn(),
     },
   },
 }));
@@ -29,11 +29,15 @@ vi.mock("../../core/error/errorHandler.js", () => ({
   handleError: vi.fn(),
 }));
 
-// Mock Express Request and Response
+vi.mock("../../features/posts/postTagFlattener.js", () => ({
+  default: vi.fn((post) => post),
+}));
+
 const createMockRequest = (overrides = {}) =>
   ({
     params: {},
     body: {},
+    query: {},
     user: undefined,
     ...overrides,
   } as Request);
@@ -46,7 +50,6 @@ const createMockResponse = () => {
   return res;
 };
 
-// Sample data
 const mockUser = {
   id: "123e4567-e89b-12d3-a456-426614174000",
   username: "testuser",
@@ -57,6 +60,14 @@ const mockUser = {
   createdAt: new Date("2023-01-01"),
 };
 
+// const mockUpdatedUser = {
+//   id: "123e4567-e89b-12d3-a456-426614174000",
+//   username: "testuser",
+//   bio: "Updated bio",
+//   avatarUrl: "https://example.com/new-avatar.jpg",
+//   role: "STUDENT" as Role,
+// };
+
 // Helper to create authenticated user for req.user
 const createAuthenticatedUser = (overrides = {}) => ({
   id: "123e4567-e89b-12d3-a456-426614174000",
@@ -66,17 +77,20 @@ const createAuthenticatedUser = (overrides = {}) => ({
   ...overrides,
 });
 
-const mockPosts = [
-  {
-    id: "123e4567-e89b-12d3-a456-426614174001",
-    title: "Test Post",
-    content: "Test content",
-    authorId: mockUser.id,
-    postTags: [],
-    comments: [],
-    likes: [],
-  },
-];
+// const mockPosts = [
+//   {
+//     id: "123e4567-e89b-12d3-a456-426614174001",
+//     title: "Test Post",
+//     content: "Test content",
+//     authorId: mockUser.id,
+//     type: "TEXT",
+//     fileUrl: null,
+//     fileName: null,
+//     createdAt: new Date("2023-01-01T00:00:00Z"),
+//     postTags: [{ id: "tag-1", tag: { id: "tag-1", name: "test-tag" } }],
+//     _count: { comments: 5, likes: 10 },
+//   },
+// ];
 
 describe("User Controller", () => {
   let mockReq: Request;
@@ -105,7 +119,6 @@ describe("User Controller", () => {
           select: {
             id: true,
             username: true,
-            email: true,
             bio: true,
             avatarUrl: true,
             role: true,
@@ -127,7 +140,6 @@ describe("User Controller", () => {
           select: {
             id: true,
             username: true,
-            email: true,
             bio: true,
             avatarUrl: true,
             role: true,
@@ -213,7 +225,11 @@ describe("User Controller", () => {
           bio: "Updated bio",
           avatarUrl: "https://example.com/new-avatar.jpg",
         };
+
         const updatedUser = { ...mockUser, bio: "Updated bio" };
+
+        (prisma.user.findUnique as any).mockResolvedValue(mockUser);
+
         (prisma.user.update as any).mockResolvedValue(updatedUser);
 
         await updateUserProfile(mockReq, mockRes);
@@ -224,9 +240,16 @@ describe("User Controller", () => {
             bio: "Updated bio",
             avatarUrl: "https://example.com/new-avatar.jpg",
           },
+          select: {
+            id: true,
+            username: true,
+            bio: true,
+            avatarUrl: true,
+            role: true,
+          },
         });
         expect(mockRes.json).toHaveBeenCalledWith({
-          message: "Profile updated",
+          message: "Profile update successfully",
           user: updatedUser,
         });
       });
@@ -235,6 +258,8 @@ describe("User Controller", () => {
         mockReq.user = createAuthenticatedUser();
         mockReq.body = { bio: "New bio only" };
         const updatedUser = { ...mockUser, bio: "New bio only" };
+        (prisma.user.findUnique as any).mockResolvedValue(mockUser);
+
         (prisma.user.update as any).mockResolvedValue(updatedUser);
 
         await updateUserProfile(mockReq, mockRes);
@@ -245,9 +270,16 @@ describe("User Controller", () => {
             bio: "New bio only",
             avatarUrl: undefined,
           },
+          select: {
+            id: true,
+            username: true,
+            bio: true,
+            avatarUrl: true,
+            role: true,
+          },
         });
         expect(mockRes.json).toHaveBeenCalledWith({
-          message: "Profile updated",
+          message: "Profile update successfully",
           user: updatedUser,
         });
       });
@@ -259,6 +291,8 @@ describe("User Controller", () => {
           ...mockUser,
           avatarUrl: "https://example.com/avatar.png",
         };
+        (prisma.user.findUnique as any).mockResolvedValue(mockUser);
+
         (prisma.user.update as any).mockResolvedValue(updatedUser);
 
         await updateUserProfile(mockReq, mockRes);
@@ -269,66 +303,51 @@ describe("User Controller", () => {
             bio: undefined,
             avatarUrl: "https://example.com/avatar.png",
           },
-        });
-        expect(mockRes.json).toHaveBeenCalledWith({
-          message: "Profile updated",
-          user: updatedUser,
-        });
-      });
-
-      it("should handle empty strings as valid input", async () => {
-        mockReq.user = createAuthenticatedUser();
-        mockReq.body = { bio: "", avatarUrl: "" };
-        const updatedUser = { ...mockUser, bio: "", avatarUrl: "" };
-        (prisma.user.update as any).mockResolvedValue(updatedUser);
-
-        await updateUserProfile(mockReq, mockRes);
-
-        expect(prisma.user.update).toHaveBeenCalledWith({
-          where: { id: mockUser.id },
-          data: { bio: "", avatarUrl: "" },
-        });
-        expect(mockRes.json).toHaveBeenCalledWith({
-          message: "Profile updated",
-          user: updatedUser,
-        });
-      });
-
-      it("should handle empty request body", async () => {
-        mockReq.user = createAuthenticatedUser();
-        mockReq.body = {};
-        const updatedUser = mockUser;
-        (prisma.user.update as any).mockResolvedValue(updatedUser);
-
-        await updateUserProfile(mockReq, mockRes);
-
-        expect(prisma.user.update).toHaveBeenCalledWith({
-          where: { id: mockUser.id },
-          data: {
-            bio: undefined,
-            avatarUrl: undefined,
+          select: {
+            id: true,
+            username: true,
+            bio: true,
+            avatarUrl: true,
+            role: true,
           },
         });
         expect(mockRes.json).toHaveBeenCalledWith({
-          message: "Profile updated",
+          message: "Profile update successfully",
           user: updatedUser,
         });
       });
     });
 
     describe("Validation Errors", () => {
+      it("should handle empty request body", async () => {
+        mockReq.user = createAuthenticatedUser();
+        mockReq.body = {};
+
+        await updateUserProfile(mockReq, mockRes);
+
+        expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockRes);
+        expect(prisma.user.update).not.toHaveBeenCalled();
+      });
+
+      it("should handle empty strings for both bio and avatarUrl", async () => {
+        mockReq.user = createAuthenticatedUser();
+        mockReq.body = { bio: "", avatarUrl: "" };
+
+        await updateUserProfile(mockReq, mockRes);
+
+        expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockRes);
+        expect(prisma.user.update).not.toHaveBeenCalled();
+      });
+
       it("should handle bio that is too long", async () => {
         mockReq.user = createAuthenticatedUser();
         mockReq.body = {
-          bio: "x".repeat(161), // Exceeds 160 character limit
+          bio: "x".repeat(161),
         };
 
         await updateUserProfile(mockReq, mockRes);
 
-        expect(handleError).toHaveBeenCalledWith(
-          expect.any(Error), // ZodError
-          mockRes
-        );
+        expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockRes);
         expect(prisma.user.update).not.toHaveBeenCalled();
       });
 
@@ -393,22 +412,18 @@ describe("User Controller", () => {
 
     describe("Authentication Errors", () => {
       it("should handle missing user in request", async () => {
-        mockReq.user = undefined; // No authenticated user
+        mockReq.user = undefined;
         mockReq.body = { bio: "New bio" };
-
-        const prismaError = new PrismaClientKnownRequestError(
-          "Record not found",
-          { code: "P2025", clientVersion: "5.0.0" }
-        );
-        (prisma.user.update as any).mockRejectedValue(prismaError);
 
         await updateUserProfile(mockReq, mockRes);
 
-        expect(prisma.user.update).toHaveBeenCalledWith({
-          where: { id: undefined },
-          data: { bio: "New bio", avatarUrl: undefined },
-        });
-        expect(handleError).toHaveBeenCalledWith(prismaError, mockRes);
+        expect(mockRes.status).toHaveBeenCalledWith(401);
+        expect(mockRes.json).toHaveBeenCalledWith({ message: "Unauthorized" });
+
+        expect(prisma.user.findUnique).not.toHaveBeenCalled();
+        expect(prisma.user.update).not.toHaveBeenCalled();
+
+        expect(handleError).not.toHaveBeenCalled();
       });
     });
 
@@ -417,20 +432,22 @@ describe("User Controller", () => {
         mockReq.user = createAuthenticatedUser({ id: "non-existent-id" });
         mockReq.body = { bio: "New bio" };
 
-        const prismaError = new PrismaClientKnownRequestError(
-          "Record not found",
-          { code: "P2025", clientVersion: "5.0.0" }
-        );
-        (prisma.user.update as any).mockRejectedValue(prismaError);
+        (prisma.user.findUnique as any).mockResolvedValue(null);
 
         await updateUserProfile(mockReq, mockRes);
 
-        expect(handleError).toHaveBeenCalledWith(prismaError, mockRes);
+        expect(mockRes.status).toHaveBeenCalledWith(404);
+        expect(mockRes.json).toHaveBeenCalledWith({
+          message: "User not found",
+        });
+        expect(handleError).not.toHaveBeenCalled();
       });
 
       it("should handle database connection errors during update", async () => {
         mockReq.user = createAuthenticatedUser();
         mockReq.body = { bio: "New bio" };
+
+        (prisma.user.findUnique as any).mockResolvedValue(mockUser);
 
         const dbError = new Error("Database connection failed");
         (prisma.user.update as any).mockRejectedValue(dbError);
@@ -443,83 +460,98 @@ describe("User Controller", () => {
   });
 
   describe("getMyPosts", () => {
+    const mockPosts = [
+      {
+        id: "123e4567-e89b-12d3-a456-426614174001",
+        title: "Test Post",
+        content: "Test content",
+        authorId: mockUser.id,
+        type: "TEXT",
+        fileUrl: null,
+        fileName: null,
+        createdAt: new Date("2023-01-01T00:00:00Z"),
+        postTags: [{ id: "tag-1", tag: { id: "tag-1", name: "test-tag" } }],
+        _count: { comments: 5, likes: 10 },
+      },
+    ];
+
     describe("Success Cases", () => {
-      it("should return user posts with relations", async () => {
-        mockReq.user = createAuthenticatedUser();
+      it("should return user posts with pagination and total count", async () => {
         (prisma.post.findMany as any).mockResolvedValue(mockPosts);
+        (prisma.post.count as any).mockResolvedValue(1);
+        mockReq.user = createAuthenticatedUser();
+        mockReq.query = { postLimit: "10", postCursor: undefined };
 
         await getMyPosts(mockReq, mockRes);
 
+        expect(prisma.post.findMany).toHaveBeenCalledTimes(1);
+        expect(prisma.post.count).toHaveBeenCalledTimes(1);
+
         expect(prisma.post.findMany).toHaveBeenCalledWith({
           where: { authorId: mockUser.id },
-          include: {
-            postTags: true,
-            comments: true,
-            likes: true,
+          take: 11,
+          select: {
+            id: true,
+            title: true,
+            content: true,
+            type: true,
+            fileUrl: true,
+            fileName: true,
+            createdAt: true,
+            postTags: { include: { tag: true } },
+            _count: { select: { comments: true, likes: true } },
           },
+          orderBy: { createdAt: "desc" },
         });
-        expect(mockRes.json).toHaveBeenCalledWith(mockPosts);
+        expect(prisma.post.count).toHaveBeenCalledWith({
+          where: { authorId: mockUser.id },
+        });
+
+        expect(mockRes.json).toHaveBeenCalledWith({
+          posts: expect.any(Array),
+          nextCursor: null,
+          totalPosts: 1,
+        });
       });
 
-      it("should return empty array when user has no posts", async () => {
-        mockReq.user = createAuthenticatedUser();
+      it("should return empty posts with a total count of 0", async () => {
         (prisma.post.findMany as any).mockResolvedValue([]);
+        (prisma.post.count as any).mockResolvedValue(0);
+        mockReq.user = createAuthenticatedUser();
+        mockReq.query = { postLimit: "10", postCursor: undefined };
 
         await getMyPosts(mockReq, mockRes);
 
-        expect(prisma.post.findMany).toHaveBeenCalledWith({
-          where: { authorId: mockUser.id },
-          include: {
-            postTags: true,
-            comments: true,
-            likes: true,
-          },
+        expect(mockRes.json).toHaveBeenCalledWith({
+          posts: [],
+          nextCursor: null,
+          totalPosts: 0,
         });
-        expect(mockRes.json).toHaveBeenCalledWith([]);
       });
     });
 
     describe("Authentication Errors", () => {
       it("should handle missing user in request", async () => {
-        mockReq.user = undefined; // No authenticated user
-        (prisma.post.findMany as any).mockResolvedValue([]);
+        mockReq.user = undefined;
+        mockReq.query = {};
 
         await getMyPosts(mockReq, mockRes);
 
-        expect(prisma.post.findMany).toHaveBeenCalledWith({
-          where: { authorId: undefined },
-          include: {
-            postTags: true,
-            comments: true,
-            likes: true,
-          },
-        });
-        expect(mockRes.json).toHaveBeenCalledWith([]);
-      });
-
-      it("should handle null user ID", async () => {
-        mockReq.user = createAuthenticatedUser({ id: null as any });
-        (prisma.post.findMany as any).mockResolvedValue([]);
-
-        await getMyPosts(mockReq, mockRes);
-
-        expect(prisma.post.findMany).toHaveBeenCalledWith({
-          where: { authorId: null },
-          include: {
-            postTags: true,
-            comments: true,
-            likes: true,
-          },
-        });
-        expect(mockRes.json).toHaveBeenCalledWith([]);
+        expect(mockRes.status).toHaveBeenCalledWith(401);
+        expect(mockRes.json).toHaveBeenCalledWith({ message: "Unauthorized" });
+        expect(prisma.post.findMany).not.toHaveBeenCalled();
+        expect(prisma.post.count).not.toHaveBeenCalled();
       });
     });
 
     describe("Database Errors", () => {
       it("should handle database connection errors", async () => {
         mockReq.user = createAuthenticatedUser();
+        mockReq.query = {};
         const dbError = new Error("Database connection failed");
+
         (prisma.post.findMany as any).mockRejectedValue(dbError);
+        (prisma.post.count as any).mockResolvedValue(0);
 
         await getMyPosts(mockReq, mockRes);
 
@@ -528,11 +560,14 @@ describe("User Controller", () => {
 
       it("should handle Prisma known request errors", async () => {
         mockReq.user = createAuthenticatedUser();
+        mockReq.query = {};
         const prismaError = new PrismaClientKnownRequestError(
           "Database error",
           { code: "P2001", clientVersion: "5.0.0" }
         );
+
         (prisma.post.findMany as any).mockRejectedValue(prismaError);
+        (prisma.post.count as any).mockResolvedValue(0);
 
         await getMyPosts(mockReq, mockRes);
 
@@ -545,7 +580,6 @@ describe("User Controller", () => {
     it("should maintain consistent error handling across all functions", async () => {
       const error = new Error("Test error");
 
-      // Test getUserById error handling
       mockReq.params = { id: mockUser.id };
       (prisma.user.findUnique as any).mockRejectedValue(error);
       await getUserById(mockReq, mockRes);
@@ -553,18 +587,18 @@ describe("User Controller", () => {
 
       vi.clearAllMocks();
 
-      // Test updateUserProfile error handling
       mockReq.user = createAuthenticatedUser();
       mockReq.body = { bio: "test" };
+      (prisma.user.findUnique as any).mockResolvedValue(mockUser);
       (prisma.user.update as any).mockRejectedValue(error);
       await updateUserProfile(mockReq, mockRes);
       expect(handleError).toHaveBeenCalledWith(error, mockRes);
 
       vi.clearAllMocks();
 
-      // Test getMyPosts error handling
       mockReq.user = createAuthenticatedUser();
       (prisma.post.findMany as any).mockRejectedValue(error);
+      (prisma.post.count as any).mockResolvedValue(0);
       await getMyPosts(mockReq, mockRes);
       expect(handleError).toHaveBeenCalledWith(error, mockRes);
     });

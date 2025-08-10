@@ -1,30 +1,13 @@
-import z from "zod";
-
 import prisma from "../core/config/db.js";
 import { handleError } from "../core/error/errorHandler.js";
+import transformPostTagsToFlat from "../features/posts/postTagFlattener.js";
+import {
+  UpdateUserProfileSchema,
+  UserIdParamSchema,
+} from "../zodSchemas/user.zod.js";
 
+import type { RawPost, TransformedPost } from "../types/postTypes.js";
 import type { Response, Request } from "express";
-
-const UserIdParamSchema = z.object({
-  id: z.uuid("Invalid user ID format in URL parameter."),
-});
-
-const UpdateUserProfileSchema = z.object({
-  bio: z
-    .string()
-    .max(160, "Bio must be less than 500 characters.")
-    .optional()
-    .or(z.literal("")),
-
-  avatarUrl: z
-    .string()
-    .regex(
-      /^https?:\/\/.*\.(jpg|jpeg|png|gif|webp)$/i,
-      "Avatar URL must be a valid image URL."
-    )
-    .optional()
-    .or(z.literal("")),
-});
 
 const getUserById = async (req: Request, res: Response) => {
   try {
@@ -35,7 +18,6 @@ const getUserById = async (req: Request, res: Response) => {
       select: {
         id: true,
         username: true,
-        email: true,
         bio: true,
         avatarUrl: true,
         role: true,
@@ -52,15 +34,33 @@ const getUserById = async (req: Request, res: Response) => {
 
 const updateUserProfile = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.id;
+    const user = req.user;
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
+
     const { bio, avatarUrl } = UpdateUserProfileSchema.parse(req.body);
 
-    const updated = await prisma.user.update({
-      where: { id: userId },
-      data: { bio, avatarUrl },
+    const isExist = await prisma.user.findUnique({
+      where: { id: user.id },
     });
 
-    return res.json({ message: "Profile updated", user: updated });
+    if (!isExist) return res.status(404).json({ message: "User not found" });
+
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: { bio, avatarUrl },
+      select: {
+        id: true,
+        username: true,
+        bio: true,
+        avatarUrl: true,
+        role: true,
+      },
+    });
+
+    return res.json({
+      message: "Profile update successfully",
+      user: updatedUser,
+    });
   } catch (error: unknown) {
     return handleError(error, res);
   }
@@ -68,18 +68,55 @@ const updateUserProfile = async (req: Request, res: Response) => {
 
 const getMyPosts = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.id;
+    const user = req.user;
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
 
-    const posts = await prisma.post.findMany({
-      where: { authorId: userId },
-      include: {
-        postTags: true,
-        comments: true,
-        likes: true,
-      },
-    });
+    const postLimit = parseInt(req.query.postLimit as string) || 10;
+    const postCursor = req.query.postCursor as string;
 
-    return res.json(posts);
+    const [posts, totalPosts] = await Promise.all([
+      prisma.post.findMany({
+        where: { authorId: user.id },
+        take: postLimit + 1,
+        ...(postCursor && {
+          cursor: { id: postCursor },
+          skip: 1,
+        }),
+        select: {
+          id: true,
+          title: true,
+          content: true,
+          type: true,
+          fileUrl: true,
+          fileName: true,
+          createdAt: true,
+          postTags: {
+            include: { tag: true },
+          },
+          _count: {
+            select: { comments: true, likes: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+
+      prisma.post.count({
+        where: { authorId: user.id },
+      }),
+    ]);
+
+    const transformedPosts = posts.map(
+      transformPostTagsToFlat as (post: Partial<RawPost>) => TransformedPost
+    );
+
+    const hasNextPage = transformedPosts.length > postLimit;
+    const postsSlice = hasNextPage
+      ? transformedPosts.slice(0, postLimit)
+      : transformedPosts;
+
+    const nextCursor = hasNextPage ? transformedPosts[postLimit - 1].id : null;
+
+    return res.status(200).json({ posts: postsSlice, nextCursor, totalPosts });
   } catch (error: unknown) {
     return handleError(error, res);
   }

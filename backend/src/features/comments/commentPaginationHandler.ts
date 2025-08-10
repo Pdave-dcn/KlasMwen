@@ -24,14 +24,9 @@ const handleCommentPagination = (
   limit: number,
   totalComments: number
 ): CommentPaginationResult => {
-  // Create a copy to avoid mutating the original array
-  const paginatedComments = [...comments];
-  const hasNextPage = paginatedComments.length > limit;
+  const hasNextPage = comments.length > limit;
 
-  // Remove the extra comments if we have more than the limit
-  if (hasNextPage) {
-    paginatedComments.splice(limit);
-  }
+  const paginatedComments = comments.slice(0, limit);
 
   // Generate the next cursor (ID of the last comment in the current page)
   const nextCursor =

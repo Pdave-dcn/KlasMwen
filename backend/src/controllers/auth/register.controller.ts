@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import { z } from "zod";
 
 import prisma from "../../core/config/db.js";
-import { handleError } from "../../core/error/errorHandler.js";
+import { handleError } from "../../core/error/index.js";
 
 import type { Request, Response } from "express";
 

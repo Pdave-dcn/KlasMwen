@@ -10,7 +10,7 @@ import {
   deletePost,
 } from "../../controllers/post.controller.js";
 import prisma from "../../core/config/db.js";
-import { handleError } from "../../core/error/errorHandler.js";
+import { handleError } from "../../core/error/index.js";
 import { handlePostWithCommentPagination } from "../../features/comments/commentPaginationHandler.js";
 import {
   deleteFromCloudinary,
@@ -43,7 +43,7 @@ vi.mock("../../core/config/db.js", () => ({
     },
   },
 }));
-vi.mock("../../core/error/errorHandler.js");
+vi.mock("../../core/error/index.js");
 vi.mock("../../features/posts/requestPostParser.js");
 vi.mock("../../features/posts/postCreationHandler.js");
 vi.mock("../../features/posts/postTagFlattener.js");

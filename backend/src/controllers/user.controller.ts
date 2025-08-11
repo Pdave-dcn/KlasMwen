@@ -1,5 +1,5 @@
 import prisma from "../core/config/db.js";
-import { handleError } from "../core/error/errorHandler.js";
+import { handleError } from "../core/error/index.js";
 import transformPostTagsToFlat from "../features/posts/postTagFlattener.js";
 import {
   UpdateUserProfileSchema,

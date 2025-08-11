@@ -5,10 +5,11 @@ import {
   PrismaClientInitializationError,
   PrismaClientValidationError,
 } from "@prisma/client/runtime/library";
+import { MulterError } from "multer";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { z } from "zod";
 
-import { handleError } from "../../../core/error/errorHandler";
+import { handleError } from "../../../core/error/index.js";
 
 import type { Response } from "express";
 
@@ -459,6 +460,209 @@ describe("Error Handler", () => {
     });
   });
 
+  describe("Multer File Upload Errors", () => {
+    it("should handle LIMIT_FILE_SIZE error with field information", () => {
+      const error = new MulterError("LIMIT_FILE_SIZE", "avatar");
+      error.field = "avatar";
+
+      handleError(error, mockRes);
+
+      expect(consoleMock.error).toHaveBeenCalledWith(
+        "Multer Error:",
+        "File too large"
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(413);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message:
+          "File too large. Maximum file size is allowed for field 'avatar'.",
+        code: "FILE_TOO_LARGE",
+      });
+    });
+
+    it("should handle LIMIT_FILE_SIZE error without field information", () => {
+      const error = new MulterError("LIMIT_FILE_SIZE");
+
+      handleError(error, mockRes);
+
+      expect(consoleMock.error).toHaveBeenCalledWith(
+        "Multer Error:",
+        "File too large"
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(413);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "File too large. Maximum file size is exceeded.",
+        code: "FILE_TOO_LARGE",
+      });
+    });
+
+    it("should handle LIMIT_FILE_COUNT error", () => {
+      const error = new MulterError("LIMIT_FILE_COUNT");
+
+      handleError(error, mockRes);
+
+      expect(consoleMock.error).toHaveBeenCalledWith(
+        "Multer Error:",
+        "Too many files"
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "Too many files uploaded. Please reduce the number of files.",
+        code: "TOO_MANY_FILES",
+      });
+    });
+
+    it("should handle LIMIT_PART_COUNT error", () => {
+      const error = new MulterError("LIMIT_PART_COUNT");
+
+      handleError(error, mockRes);
+
+      expect(consoleMock.error).toHaveBeenCalledWith(
+        "Multer Error:",
+        "Too many parts"
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "Too many form fields. Please reduce the number of fields.",
+        code: "TOO_MANY_PARTS",
+      });
+    });
+
+    it("should handle LIMIT_FIELD_KEY error", () => {
+      const error = new MulterError("LIMIT_FIELD_KEY");
+
+      handleError(error, mockRes);
+
+      expect(consoleMock.error).toHaveBeenCalledWith(
+        "Multer Error:",
+        "Field name too long"
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "Field name too long. Please use shorter field names.",
+        code: "FIELD_NAME_TOO_LONG",
+      });
+    });
+
+    it("should handle LIMIT_FIELD_VALUE error with field information", () => {
+      const error = new MulterError("LIMIT_FIELD_VALUE", "description");
+      error.field = "description";
+
+      handleError(error, mockRes);
+
+      expect(consoleMock.error).toHaveBeenCalledWith(
+        "Multer Error:",
+        "Field value too long"
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "Field value too long for field 'description'.",
+        code: "FIELD_VALUE_TOO_LONG",
+      });
+    });
+
+    it("should handle LIMIT_FIELD_VALUE error without field information", () => {
+      const error = new MulterError("LIMIT_FIELD_VALUE");
+
+      handleError(error, mockRes);
+
+      expect(consoleMock.error).toHaveBeenCalledWith(
+        "Multer Error:",
+        "Field value too long"
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "Field value too long.",
+        code: "FIELD_VALUE_TOO_LONG",
+      });
+    });
+
+    it("should handle LIMIT_FIELD_COUNT error", () => {
+      const error = new MulterError("LIMIT_FIELD_COUNT");
+
+      handleError(error, mockRes);
+
+      expect(consoleMock.error).toHaveBeenCalledWith(
+        "Multer Error:",
+        "Too many fields"
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "Too many fields. Please reduce the number of form fields.",
+        code: "TOO_MANY_FIELDS",
+      });
+    });
+
+    it("should handle LIMIT_UNEXPECTED_FILE error with field information", () => {
+      const error = new MulterError("LIMIT_UNEXPECTED_FILE", "wrongField");
+      error.field = "wrongField";
+
+      handleError(error, mockRes);
+
+      expect(consoleMock.error).toHaveBeenCalledWith(
+        "Multer Error:",
+        "Unexpected field"
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message:
+          "Unexpected file upload in field 'wrongField'. Please check the field name.",
+        code: "UNEXPECTED_FILE_FIELD",
+      });
+    });
+
+    it("should handle LIMIT_UNEXPECTED_FILE error without field information", () => {
+      const error = new MulterError("LIMIT_UNEXPECTED_FILE");
+
+      handleError(error, mockRes);
+
+      expect(consoleMock.error).toHaveBeenCalledWith(
+        "Multer Error:",
+        "Unexpected field"
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "Unexpected file upload. Please check the field name.",
+        code: "UNEXPECTED_FILE_FIELD",
+      });
+    });
+
+    it("should handle MISSING_FIELD_NAME error", () => {
+      const error = new MulterError("MISSING_FIELD_NAME");
+
+      handleError(error, mockRes);
+
+      expect(consoleMock.error).toHaveBeenCalledWith(
+        "Multer Error:",
+        "Field name missing"
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "Missing field name for file upload.",
+        code: "MISSING_FIELD_NAME",
+      });
+    });
+
+    it("should handle unknown Multer error codes", () => {
+      const error = new MulterError("UNKNOWN_ERROR_CODE" as any);
+
+      handleError(error, mockRes);
+
+      expect(consoleMock.error).toHaveBeenCalledWith(
+        "Multer Error:",
+        undefined
+      );
+      expect(consoleMock.error).toHaveBeenCalledWith(
+        "Unhandled Multer Error:",
+        undefined
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "File upload error. Please try again.",
+        code: "FILE_UPLOAD_ERROR",
+      });
+    });
+  });
+
   describe("JWT Errors", () => {
     it("should handle TokenExpiredError", () => {
       const error = new Error("Token expired");
@@ -643,6 +847,20 @@ describe("Error Handler", () => {
       expect(mockRes.json).toHaveBeenCalledWith({
         message: "User with this email already exists.",
       });
+    });
+
+    it("should prioritize Multer errors over generic errors", () => {
+      const error = new MulterError("LIMIT_FILE_SIZE");
+
+      handleError(error, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(413);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.stringContaining("File too large"),
+          code: "FILE_TOO_LARGE",
+        })
+      );
     });
   });
 

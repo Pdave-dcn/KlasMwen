@@ -1,33 +1,15 @@
 /* eslint-disable max-lines-per-function */
 /* eslint-disable complexity */
-
-import {
-  PrismaClientKnownRequestError,
-  PrismaClientUnknownRequestError,
-  PrismaClientRustPanicError,
+import type {
   PrismaClientInitializationError,
+  PrismaClientKnownRequestError,
+  PrismaClientRustPanicError,
+  PrismaClientUnknownRequestError,
   PrismaClientValidationError,
 } from "@prisma/client/runtime/library";
-import z from "zod";
 
-import type { Response } from "express";
-
-class ErrorHandler {
+class DatabaseErrorHandler {
   // Zod validation errors
-  static handleValidationError(error: z.ZodError) {
-    return {
-      status: 400,
-      response: {
-        message: "Validation failed",
-        errors: error.issues.map((err) => ({
-          path: err.path.join("."),
-          message: err.message,
-        })),
-      },
-    };
-  }
-
-  // Handle Prisma known Errors
   static handlePrismaKnownError(error: PrismaClientKnownRequestError) {
     switch (error.code) {
       // Unique constraint violation
@@ -236,166 +218,6 @@ class ErrorHandler {
       },
     };
   }
-
-  // Handle JWT Errors
-  static handleJWTError(error: Error) {
-    console.error("JWT Error:", error.message);
-    if (error.name === "TokenExpiredError") {
-      return {
-        status: 401,
-        response: {
-          message: "Token has expired. Please log in again.",
-        },
-      };
-    }
-    if (error.name === "JsonWebTokenError") {
-      return {
-        status: 401,
-        response: {
-          message: "Invalid token. Please log in again.",
-        },
-      };
-    }
-    if (error.name === "NotBeforeError") {
-      return {
-        status: 401,
-        response: {
-          message: "Token not active yet.",
-        },
-      };
-    }
-    return {
-      status: 401,
-      response: {
-        message: "Authentication failed.",
-      },
-    };
-  }
-
-  // Handle bcrypt errors
-  static handleBcryptError(error: Error) {
-    console.error("Bcrypt Error:", error.message);
-    return {
-      status: 500,
-      response: {
-        message: "Password processing error.",
-      },
-    };
-  }
-
-  // Generic error handler
-  static handleGenericError(error: unknown) {
-    // Handle standard Error objects
-    if (error instanceof Error) {
-      console.error(`Generic Error [${error.name}]:`, error.message);
-
-      // Handle specific error types that might not be caught elsewhere
-      if (error.message.includes("ECONNREFUSED")) {
-        return {
-          status: 503,
-          response: {
-            message: "Service temporarily unavailable.",
-          },
-        };
-      }
-
-      if (error.message.includes("ETIMEDOUT")) {
-        return {
-          status: 408,
-          response: {
-            message: "Request timeout. Please try again.",
-          },
-        };
-      }
-
-      return {
-        status: 500,
-        response: {
-          message: "Internal server error",
-        },
-      };
-    }
-
-    // Handle string errors (rare but possible)
-    if (typeof error === "string") {
-      console.error("String Error:", error);
-      return {
-        status: 500,
-        response: {
-          message: "Internal server error",
-        },
-      };
-    }
-
-    // Handle completely unknown errors
-    console.error("Unknown Error:", error);
-    return {
-      status: 500,
-      response: {
-        message: "Internal server error",
-      },
-    };
-  }
 }
 
-export const handleError = (error: unknown, res: Response): Response => {
-  let errorResponse;
-
-  // Handle Zod validation errors
-  if (error instanceof z.ZodError) {
-    errorResponse = ErrorHandler.handleValidationError(error);
-  }
-  // Handle Prisma errors (in order of specificity)
-  else if (error instanceof PrismaClientKnownRequestError) {
-    errorResponse = ErrorHandler.handlePrismaKnownError(error);
-  } else if (error instanceof PrismaClientValidationError) {
-    errorResponse = ErrorHandler.handlePrismaValidationError(error);
-  } else if (error instanceof PrismaClientInitializationError) {
-    errorResponse = ErrorHandler.handlePrismaInitializationError(error);
-  } else if (error instanceof PrismaClientUnknownRequestError) {
-    errorResponse = ErrorHandler.handlePrismaUnknownError(error);
-  } else if (error instanceof PrismaClientRustPanicError) {
-    errorResponse = ErrorHandler.handlePrismaRustPanicError(error);
-  }
-  // Handle JWT-related errors
-  else if (
-    error instanceof Error &&
-    (error.name === "TokenExpiredError" ||
-      error.name === "JsonWebTokenError" ||
-      error.name === "NotBeforeError")
-  ) {
-    errorResponse = ErrorHandler.handleJWTError(error);
-  }
-  // Handle bcrypt errors
-  else if (error instanceof Error && error.message.includes("bcrypt")) {
-    errorResponse = ErrorHandler.handleBcryptError(error);
-  }
-  // Handle all other errors
-  else {
-    errorResponse = ErrorHandler.handleGenericError(error);
-  }
-
-  return res.status(errorResponse.status).json(errorResponse.response);
-};
-
-/*
-COVERAGE:
-
-✅ CURRENTLY HANDLED:
-- Zod validation errors
-- Most common Prisma known request errors (P2002, P2025, P2003, etc.)
-- All Prisma error types (PrismaClientValidationError, PrismaClientInitializationError, etc.)
-- JWT-specific errors (expired, invalid, not before)
-- bcrypt-related errors
-- Network errors (ECONNREFUSED, ETIMEDOUT)
-- String errors
-- Generic error handling
-
-❌ STILL NOT HANDLED
-- Rate limiting errors
-- File upload errors (multer)
-- CORS errors
-- Custom business logic errors
-- Third-party API errors
-- Memory/resource limit errors
-*/
+export default DatabaseErrorHandler;

@@ -343,7 +343,6 @@ describe("Comment Controller", () => {
 
       await createComment(mockRequest as Request, mockResponse as Response);
 
-      // Now this assertion will correctly pass since the Prisma mock is hit first
       expect(handleError).toHaveBeenCalledWith(error, mockResponse);
       expect(mockResponse.status).not.toHaveBeenCalled();
       expect(mockResponse.json).not.toHaveBeenCalled();

@@ -101,7 +101,7 @@ model PostTag {
 model Like {
   user   User   @relation(fields: [userId], references: [id])
   userId String @map("user_id")
-  post   Post   @relation(fields: [postId], references: [id])
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
   postId String @map("post_id")
 
   @@id([userId, postId])

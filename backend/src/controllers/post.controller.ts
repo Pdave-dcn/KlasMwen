@@ -98,8 +98,8 @@ const getPostById = async (req: Request, res: Response) => {
   try {
     const { id: postId } = PostIdParamSchema.parse(req.params);
 
-    const commentLimit = parseInt(req.query.commentLimit as string) || 20;
-    const commentCursor = req.query.commentCursor as string;
+    const commentLimit = parseInt(req.query.limit as string) || 20;
+    const commentCursor = req.query.cursor as string;
 
     const post = await prisma.post.findUnique({
       where: { id: postId },

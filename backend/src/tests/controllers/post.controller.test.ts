@@ -462,11 +462,7 @@ describe("Post Controllers", () => {
     });
 
     it("should handle custom comment pagination parameters", async () => {
-      const req = mockRequest(
-        null,
-        { id: "1" },
-        { commentLimit: "10", commentCursor: "5" }
-      );
+      const req = mockRequest(null, { id: "1" }, { limit: "10", cursor: "5" });
       const res = mockResponse();
       const mockPost = {
         id: 1,

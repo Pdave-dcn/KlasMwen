@@ -1,5 +1,5 @@
 import prisma from "../core/config/db.js";
-import { handleError } from "../core/error/index.js";
+import { handleError } from "../core/error/index";
 import { handlePostWithCommentPagination } from "../features/comments/commentPaginationHandler.js";
 import {
   deleteFromCloudinary,

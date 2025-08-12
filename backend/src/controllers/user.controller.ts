@@ -1,5 +1,5 @@
 import prisma from "../core/config/db.js";
-import { handleError } from "../core/error/index.js";
+import { handleError } from "../core/error/index";
 import transformPostTagsToFlat from "../features/posts/postTagFlattener.js";
 import {
   UpdateUserProfileSchema,
@@ -71,8 +71,8 @@ const getMyPosts = async (req: Request, res: Response) => {
     const user = req.user;
     if (!user) return res.status(401).json({ message: "Unauthorized" });
 
-    const postLimit = parseInt(req.query.postLimit as string) || 10;
-    const postCursor = req.query.postCursor as string;
+    const postLimit = parseInt(req.query.limit as string) || 10;
+    const postCursor = req.query.cursor as string;
 
     const [posts, totalPosts] = await Promise.all([
       prisma.post.findMany({

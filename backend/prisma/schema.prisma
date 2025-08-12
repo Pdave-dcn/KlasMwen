@@ -63,13 +63,16 @@ model Post {
 
 // Represents a comment made by a user on a post
 model Comment {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   content   String
-  createdAt DateTime @default(now()) @map("created_at")
-  post      Post     @relation(fields: [postId], references: [id])
-  postId    String   @map("post_id")
-  author    User     @relation(fields: [authorId], references: [id])
-  authorId  String   @map("author_id")
+  createdAt DateTime  @default(now()) @map("created_at")
+  parent    Comment?  @relation("commentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  parentId  Int?      @map("parent_id")
+  post      Post      @relation(fields: [postId], references: [id])
+  postId    String    @map("post_id")
+  author    User      @relation(fields: [authorId], references: [id])
+  authorId  String    @map("author_id")
+  Comment   Comment[] @relation("commentReplies")
 
   @@map("comments")
 }

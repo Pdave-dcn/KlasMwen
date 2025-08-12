@@ -3,6 +3,7 @@ import express from "express";
 import prisma from "../core/config/db.js";
 
 import authRoutes from "./auth.route.js";
+import commentRoutes from "./comment.route.js";
 import postRoutes from "./post.route.js";
 import userRoutes from "./user.route.js";
 
@@ -37,6 +38,7 @@ router.get("/status", async (_req, res) => {
 router.use("/api", authRoutes);
 router.use("/api", userRoutes);
 router.use("/api", postRoutes);
+router.use("/api", commentRoutes);
 
 router.use(/.*/, (_req, res) => {
   res.status(404).json({

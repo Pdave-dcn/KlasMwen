@@ -43,8 +43,8 @@ const handleRequestValidation = async (
   const bodyValidation = NewPostRequestSchema.parse({
     title: req.body.title,
     type: req.body.type,
-    content: req.body.content,
     tagIds: req.body.tagIds ? JSON.parse(req.body.tagIds) : [],
+    ...(req.body.content && { content: req.body.content }),
   });
 
   // Handle resource posts

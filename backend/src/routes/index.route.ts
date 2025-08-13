@@ -6,6 +6,7 @@ import authRoutes from "./auth.route.js";
 import commentRoutes from "./comment.route.js";
 import postRoutes from "./post.route.js";
 import reactionRoutes from "./reaction.route.js";
+import tagRoutes from "./tag.route.js";
 import userRoutes from "./user.route.js";
 
 const router = express.Router();
@@ -41,6 +42,7 @@ router.use("/api", userRoutes);
 router.use("/api", postRoutes);
 router.use("/api", commentRoutes);
 router.use("/api", reactionRoutes);
+router.use("/api", tagRoutes);
 
 router.use(/.*/, (_req, res) => {
   res.status(404).json({

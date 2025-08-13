@@ -26,7 +26,7 @@ const getUserById = async (req: Request, res: Response) => {
     });
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    return res.status(200).json(user);
+    return res.status(200).json({ data: user });
   } catch (error: unknown) {
     return handleError(error, res);
   }
@@ -58,8 +58,8 @@ const updateUserProfile = async (req: Request, res: Response) => {
     });
 
     return res.json({
-      message: "Profile update successfully",
-      user: updatedUser,
+      message: "Profile updated successfully",
+      data: updatedUser,
     });
   } catch (error: unknown) {
     return handleError(error, res);
@@ -109,14 +109,21 @@ const getMyPosts = async (req: Request, res: Response) => {
       transformPostTagsToFlat as (post: Partial<RawPost>) => TransformedPost
     );
 
-    const hasNextPage = transformedPosts.length > postLimit;
-    const postsSlice = hasNextPage
+    const hasMore = transformedPosts.length > postLimit;
+    const postsSlice = hasMore
       ? transformedPosts.slice(0, postLimit)
       : transformedPosts;
 
-    const nextCursor = hasNextPage ? transformedPosts[postLimit - 1].id : null;
+    const nextCursor = hasMore ? transformedPosts[postLimit - 1].id : null;
 
-    return res.status(200).json({ posts: postsSlice, nextCursor, totalPosts });
+    return res.status(200).json({
+      data: postsSlice,
+      pagination: {
+        hasMore,
+        nextCursor,
+        totalPosts,
+      },
+    });
   } catch (error: unknown) {
     return handleError(error, res);
   }

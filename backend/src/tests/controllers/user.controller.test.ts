@@ -126,7 +126,7 @@ describe("User Controller", () => {
           },
         });
         expect(mockRes.status).toHaveBeenCalledWith(200);
-        expect(mockRes.json).toHaveBeenCalledWith(mockUser);
+        expect(mockRes.json).toHaveBeenCalledWith({ data: mockUser });
       });
 
       it("should return 404 when user is not found", async () => {
@@ -179,7 +179,7 @@ describe("User Controller", () => {
       });
 
       it("should handle non-string id parameter", async () => {
-        mockReq.params = { id: 123 as any }; // Number instead of string
+        mockReq.params = { id: 123 as any };
 
         await getUserById(mockReq, mockRes);
 
@@ -249,8 +249,8 @@ describe("User Controller", () => {
           },
         });
         expect(mockRes.json).toHaveBeenCalledWith({
-          message: "Profile update successfully",
-          user: updatedUser,
+          message: "Profile updated successfully",
+          data: updatedUser,
         });
       });
 
@@ -279,8 +279,8 @@ describe("User Controller", () => {
           },
         });
         expect(mockRes.json).toHaveBeenCalledWith({
-          message: "Profile update successfully",
-          user: updatedUser,
+          message: "Profile updated successfully",
+          data: updatedUser,
         });
       });
 
@@ -312,8 +312,8 @@ describe("User Controller", () => {
           },
         });
         expect(mockRes.json).toHaveBeenCalledWith({
-          message: "Profile update successfully",
-          user: updatedUser,
+          message: "Profile updated successfully",
+          data: updatedUser,
         });
       });
     });
@@ -508,9 +508,12 @@ describe("User Controller", () => {
         });
 
         expect(mockRes.json).toHaveBeenCalledWith({
-          posts: expect.any(Array),
-          nextCursor: null,
-          totalPosts: 1,
+          data: expect.any(Array),
+          pagination: {
+            hasMore: false,
+            nextCursor: null,
+            totalPosts: 1,
+          },
         });
       });
 
@@ -523,9 +526,13 @@ describe("User Controller", () => {
         await getMyPosts(mockReq, mockRes);
 
         expect(mockRes.json).toHaveBeenCalledWith({
-          posts: [],
-          nextCursor: null,
-          totalPosts: 0,
+          data: [],
+
+          pagination: {
+            hasMore: false,
+            nextCursor: null,
+            totalPosts: 0,
+          },
         });
       });
     });

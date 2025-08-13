@@ -118,8 +118,8 @@ describe("Comment Controller", () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(201);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Comment create successfully",
-        comment: expect.objectContaining({
+        message: "Comment created successfully",
+        data: expect.objectContaining({
           id: 1,
           content: "This is a new comment.",
           authorId: mockUserId1,
@@ -190,8 +190,8 @@ describe("Comment Controller", () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(201);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Comment create successfully",
-        comment: expect.objectContaining({
+        message: "Comment created successfully",
+        data: expect.objectContaining({
           id: 3,
           parentId: 2,
         }),
@@ -395,7 +395,7 @@ describe("Comment Controller", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         data: mockComments.slice(0, 2),
         pagination: {
-          nextCursor: 5,
+          nextCursor: 6,
           hasNextPage: true,
           totalItems: 12,
         },
@@ -542,7 +542,7 @@ describe("Comment Controller", () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Comment delete successfully",
+        message: "Comment deleted successfully",
       });
       expect(prisma.comment.delete).toHaveBeenCalledWith({
         where: { id: 5 },
@@ -576,7 +576,7 @@ describe("Comment Controller", () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Comment delete successfully",
+        message: "Comment deleted successfully",
       });
       expect(prisma.comment.delete).toHaveBeenCalledWith({
         where: { id: 6 },

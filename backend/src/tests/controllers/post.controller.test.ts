@@ -164,8 +164,8 @@ describe("Post Controllers", () => {
       expect(transformPostTagsToFlat).toHaveBeenCalledWith(mockPostResult);
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith({
-        message: "Post create successfully",
-        post: mockTransformedPost,
+        message: "Post created successfully",
+        data: mockTransformedPost,
       });
     });
 
@@ -467,7 +467,7 @@ describe("Post Controllers", () => {
         20
       );
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith(mockTransformedPost);
+      expect(res.json).toHaveBeenCalledWith({ data: mockTransformedPost });
     });
 
     it("should handle custom comment pagination parameters", async () => {
@@ -604,7 +604,7 @@ describe("Post Controllers", () => {
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
         message: "Post data for editing retrieved successfully",
-        post: mockEditResponse,
+        data: mockEditResponse,
       });
     });
 
@@ -660,7 +660,7 @@ describe("Post Controllers", () => {
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
         message: "Post data for editing retrieved successfully",
-        post: mockEditResponse,
+        data: mockEditResponse,
       });
     });
 
@@ -753,8 +753,8 @@ describe("Post Controllers", () => {
       );
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
-        message: "Post update successfully",
-        post: mockUpdateResult,
+        message: "Post updated successfully",
+        data: mockUpdateResult,
       });
     });
 
@@ -875,7 +875,7 @@ describe("Post Controllers", () => {
       });
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
-        message: "Post delete successfully",
+        message: "Post deleted successfully",
       });
     });
 
@@ -956,7 +956,7 @@ describe("Post Controllers", () => {
 
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
-        message: "Post delete successfully",
+        message: "Post deleted successfully",
       });
     });
 

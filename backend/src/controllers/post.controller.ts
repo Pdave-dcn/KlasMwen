@@ -47,8 +47,8 @@ const createPost = async (req: Request, res: Response) => {
     const transformedPost = transformPostTagsToFlat(result);
 
     return res.status(201).json({
-      message: "Post create successfully",
-      post: transformedPost,
+      message: "Post created successfully",
+      data: transformedPost,
     });
   } catch (error: unknown) {
     return handleError(error, res);
@@ -165,7 +165,7 @@ const getPostById = async (req: Request, res: Response) => {
 
     const transformedPost = handlePostWithCommentPagination(post, limit);
 
-    return res.status(200).json(transformedPost);
+    return res.status(200).json({ data: transformedPost });
   } catch (error: unknown) {
     return handleError(error, res);
   }
@@ -222,7 +222,7 @@ const getPostForEdit = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       message: "Post data for editing retrieved successfully",
-      post: editData,
+      data: editData,
     });
   } catch (error: unknown) {
     return handleError(error, res);
@@ -301,8 +301,8 @@ const updatePost = async (req: Request, res: Response) => {
     }
 
     return res.status(200).json({
-      message: "Post update successfully",
-      post: result,
+      message: "Post updated successfully",
+      data: result,
     });
   } catch (error: unknown) {
     return handleError(error, res);
@@ -340,7 +340,7 @@ const deletePost = async (req: Request, res: Response) => {
       where: { id: postId },
     });
 
-    return res.status(200).json({ message: "Post delete successfully" });
+    return res.status(200).json({ message: "Post deleted successfully" });
   } catch (error: unknown) {
     return handleError(error, res);
   }

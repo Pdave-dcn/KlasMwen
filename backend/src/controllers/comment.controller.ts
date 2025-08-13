@@ -43,8 +43,8 @@ const createComment = async (req: Request, res: Response) => {
     });
 
     return res.status(201).json({
-      message: "Comment create successfully",
-      comment: newComment,
+      message: "Comment created successfully",
+      data: newComment,
     });
   } catch (error: unknown) {
     return handleError(error, res);
@@ -59,16 +59,16 @@ const getReplies = async (req: Request, res: Response) => {
 
     const parentId = parseInt(id, 10);
 
-    const repliesLimit = parseInt(req.query.limit as string) || 10;
-    const repliesCursor = parseInt(req.query.cursor as string);
+    const limit = parseInt(req.query.limit as string) || 10;
+    const cursor = parseInt(req.query.cursor as string);
 
     const [replies, totalItems] = await prisma.$transaction([
       prisma.comment.findMany({
         where: { parentId },
         orderBy: { createdAt: "asc" },
-        take: repliesLimit + 1,
-        ...(repliesCursor && {
-          cursor: { id: repliesCursor },
+        take: limit + 1,
+        ...(cursor && {
+          cursor: { id: cursor },
           skip: 1,
         }),
         select: {
@@ -81,9 +81,11 @@ const getReplies = async (req: Request, res: Response) => {
       prisma.comment.count({ where: { parentId } }),
     ]);
 
-    const hasNextPage = replies.length > repliesLimit;
-    const repliesSlice = hasNextPage ? replies.slice(0, repliesLimit) : replies;
-    const nextCursor = hasNextPage ? replies[replies.length - 1].id : null;
+    const hasNextPage = replies.length > limit;
+    const repliesSlice = hasNextPage ? replies.slice(0, limit) : replies;
+    const nextCursor = hasNextPage
+      ? repliesSlice[repliesSlice.length - 1].id
+      : null;
 
     return res.status(200).json({
       data: repliesSlice,
@@ -126,7 +128,7 @@ const deleteComment = async (req: Request, res: Response) => {
       where: { id: commentId },
     });
 
-    return res.status(200).json({ message: "Comment delete successfully" });
+    return res.status(200).json({ message: "Comment deleted successfully" });
   } catch (error: unknown) {
     return handleError(error, res);
   }

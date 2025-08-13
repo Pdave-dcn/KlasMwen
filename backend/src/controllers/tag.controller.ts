@@ -24,7 +24,7 @@ const createTag = async (req: Request, res: Response) => {
 
     return res.status(201).json({
       message: "New tag created successfully",
-      tag: newTag,
+      data: newTag,
     });
   } catch (error: unknown) {
     return handleError(error, res);
@@ -42,7 +42,7 @@ const getTagForEdit = async (req: Request, res: Response) => {
       where: { id: tagId },
     });
 
-    return res.status(200).json(tag);
+    return res.status(200).json({ data: tag });
   } catch (error: unknown) {
     return handleError(error, res);
   }
@@ -83,7 +83,7 @@ const getAllTags = async (req: Request, res: Response) => {
     const nextCursor = hasMore ? tagsSlice[tagsSlice.length - 1].id : null;
 
     return res.status(200).json({
-      tags: tagsSlice,
+      data: tagsSlice,
       pagination: {
         nextCursor,
         hasMore,
@@ -111,7 +111,7 @@ const updateTag = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       message: "Tag updated successfully",
-      tag: updatedTag,
+      data: updatedTag,
     });
   } catch (error: unknown) {
     return handleError(error, res);

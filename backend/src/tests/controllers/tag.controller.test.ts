@@ -280,7 +280,7 @@ describe("Tag controller", () => {
 
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "New tag created successfully",
-        tag: mockTag,
+        data: mockTag,
       });
     });
   });
@@ -315,7 +315,7 @@ describe("Tag controller", () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        tags: mockTags,
+        data: mockTags,
         pagination: {
           nextCursor: 3,
           hasMore: true,
@@ -356,7 +356,7 @@ describe("Tag controller", () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        tags: mockTags,
+        data: mockTags,
         pagination: {
           nextCursor: 6,
           hasMore: true,
@@ -396,7 +396,7 @@ describe("Tag controller", () => {
       await getAllTags(mockRequest as Request, mockResponse as Response);
 
       expect(mockResponse.json).toHaveBeenCalledWith({
-        tags: mockTags,
+        data: mockTags,
         pagination: {
           nextCursor: null,
           hasMore: false,
@@ -416,7 +416,7 @@ describe("Tag controller", () => {
       await getAllTags(mockRequest as Request, mockResponse as Response);
 
       expect(mockResponse.json).toHaveBeenCalledWith({
-        tags: [],
+        data: [],
         pagination: {
           nextCursor: null,
           hasMore: false,
@@ -514,8 +514,10 @@ describe("Tag controller", () => {
       });
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        id: 1,
-        name: "javascript",
+        data: {
+          id: 1,
+          name: "javascript",
+        },
       });
     });
 
@@ -633,7 +635,7 @@ describe("Tag controller", () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "Tag updated successfully",
-        tag: { id: 1, name: "typescript" },
+        data: { id: 1, name: "typescript" },
       });
     });
 

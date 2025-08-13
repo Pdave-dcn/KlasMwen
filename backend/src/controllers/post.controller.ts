@@ -16,6 +16,7 @@ import {
 } from "../zodSchemas/post.zod.js";
 
 import type { RawPost, TransformedPost } from "../types/postTypes.js";
+import type { Prisma } from "@prisma/client";
 import type { Request, Response } from "express";
 
 const createPost = async (req: Request, res: Response) => {
@@ -56,13 +57,12 @@ const createPost = async (req: Request, res: Response) => {
 
 const getAllPosts = async (req: Request, res: Response) => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const pageSize = parseInt(req.query.pageSize as string) || 10;
-    const skip = (page - 1) * pageSize;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const cursor = req.query.cursor as string | undefined;
 
-    const posts = await prisma.post.findMany({
-      skip,
-      take: pageSize,
+    const queryOptions: Prisma.PostFindManyArgs = {
+      take: limit + 1,
+      orderBy: { createdAt: "desc" },
       select: {
         id: true,
         title: true,
@@ -81,14 +81,31 @@ const getAllPosts = async (req: Request, res: Response) => {
           select: { comments: true, likes: true },
         },
       },
-      orderBy: { createdAt: "desc" },
-    });
+    };
 
-    const transformedPosts = posts.map(
+    if (cursor) {
+      const validatedCursor = PostIdParamSchema.parse(cursor);
+      queryOptions.cursor = { id: validatedCursor.id };
+      queryOptions.skip = 1;
+    }
+
+    const posts = await prisma.post.findMany(queryOptions);
+
+    const hasMore = posts.length > limit;
+    const postsSlice = posts.slice(0, limit);
+    const nextCursor = hasMore ? postsSlice[postsSlice.length - 1].id : null;
+
+    const transformedPosts = postsSlice.map(
       transformPostTagsToFlat as (post: Partial<RawPost>) => TransformedPost
     );
 
-    return res.status(200).json(transformedPosts);
+    return res.status(200).json({
+      data: transformedPosts,
+      pagination: {
+        hasMore,
+        nextCursor,
+      },
+    });
   } catch (error: unknown) {
     return handleError(error, res);
   }
@@ -98,8 +115,8 @@ const getPostById = async (req: Request, res: Response) => {
   try {
     const { id: postId } = PostIdParamSchema.parse(req.params);
 
-    const commentLimit = parseInt(req.query.limit as string) || 20;
-    const commentCursor = req.query.cursor as string;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const cursor = req.query.cursor as string;
 
     const post = await prisma.post.findUnique({
       where: { id: postId },
@@ -130,9 +147,9 @@ const getPostById = async (req: Request, res: Response) => {
             },
           },
           orderBy: { createdAt: "asc" },
-          take: commentLimit + 1,
-          ...(commentCursor && {
-            cursor: { id: parseInt(commentCursor) },
+          take: limit + 1,
+          ...(cursor && {
+            cursor: { id: parseInt(cursor) },
             skip: 1,
           }),
         },
@@ -146,7 +163,7 @@ const getPostById = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    const transformedPost = handlePostWithCommentPagination(post, commentLimit);
+    const transformedPost = handlePostWithCommentPagination(post, limit);
 
     return res.status(200).json(transformedPost);
   } catch (error: unknown) {

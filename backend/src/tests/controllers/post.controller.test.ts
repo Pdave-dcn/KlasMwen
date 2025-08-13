@@ -189,7 +189,6 @@ describe("Post Controllers", () => {
         type: "TEXT",
         tagIds: [],
       };
-      // Correct the mock uploaded file info to include 'secureUrl'
       const mockUploadedFileInfo = {
         publicId: "test_public_id",
         secureUrl: "test_url",
@@ -269,8 +268,7 @@ describe("Post Controllers", () => {
       await getAllPosts(req, res);
 
       expect(prisma.post.findMany).toHaveBeenCalledWith({
-        skip: 0,
-        take: 10,
+        take: 11,
         select: {
           id: true,
           title: true,
@@ -293,11 +291,17 @@ describe("Post Controllers", () => {
       });
       expect(transformPostTagsToFlat).toHaveBeenCalledTimes(mockPosts.length);
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith(mockTransformedPosts);
+      expect(res.json).toHaveBeenCalledWith({
+        data: mockTransformedPosts,
+        pagination: {
+          hasMore: false,
+          nextCursor: null,
+        },
+      });
     });
 
     it("should handle custom pagination parameters", async () => {
-      const req = mockRequest(null, null, { page: "2", pageSize: "5" });
+      const req = mockRequest(null, null, { limit: "2" });
       const res = mockResponse();
       const mockPosts = [
         {
@@ -336,8 +340,7 @@ describe("Post Controllers", () => {
       await getAllPosts(req, res);
 
       expect(prisma.post.findMany).toHaveBeenCalledWith({
-        skip: 5,
-        take: 5,
+        take: 3,
         select: {
           id: true,
           title: true,
@@ -359,7 +362,13 @@ describe("Post Controllers", () => {
         orderBy: { createdAt: "desc" },
       });
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith(mockTransformedPosts);
+      expect(res.json).toHaveBeenCalledWith({
+        data: mockTransformedPosts,
+        pagination: {
+          hasMore: false,
+          nextCursor: null,
+        },
+      });
     });
 
     it("should call handleError if database query fails", async () => {

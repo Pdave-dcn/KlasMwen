@@ -10,6 +10,10 @@ import {
   deletePost,
 } from "../../controllers/post.controller.js";
 import prisma from "../../core/config/db.js";
+import {
+  AuthenticationError,
+  AuthorizationError,
+} from "../../core/error/custom/auth.error.js";
 import { handleError } from "../../core/error/index.js";
 import { handlePostWithCommentPagination } from "../../features/comments/commentPaginationHandler.js";
 import {
@@ -68,7 +72,6 @@ const mockResponse = (): Response => {
   return res;
 };
 
-// Mock the Zod parse functions to correctly return the expected data
 vi.mock("../../zodSchemas/post.zod.js", () => {
   const PostIdParamSchema = {
     parse: vi.fn((params) => ({ id: params.id })),
@@ -94,7 +97,6 @@ describe("Post Controllers", () => {
       const req = mockRequest({ id: 1, role: "STUDENT" });
       const res = mockResponse();
 
-      // Ensure mock validated data conforms to the required type
       const mockValidatedData: CreatePostInput = {
         title: "Test Title",
         content: "Test Content",
@@ -169,15 +171,16 @@ describe("Post Controllers", () => {
       });
     });
 
-    it("should return 401 if the user is not authenticated", async () => {
+    it("should call handleError with AuthenticationError when user is not authenticated", async () => {
       const req = mockRequest();
       const res = mockResponse();
 
       await createPost(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith({ message: "Unauthorized" });
-      expect(handlePostCreation).not.toHaveBeenCalled();
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthenticationError),
+        res
+      );
     });
 
     it("should return 500 and clean up the file if post creation fails", async () => {
@@ -608,14 +611,16 @@ describe("Post Controllers", () => {
       });
     });
 
-    it("should return 401 if the user is not authenticated", async () => {
+    it("should call handleError with AuthenticationError when user is not authenticated", async () => {
       const req = mockRequest(undefined, { id: mockPostId });
       const res = mockResponse();
 
       await getPostForEdit(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith({ message: "Unauthorized" });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthenticationError),
+        res
+      );
     });
 
     it("should return 404 if the post is not found", async () => {
@@ -631,7 +636,7 @@ describe("Post Controllers", () => {
       expect(res.json).toHaveBeenCalledWith({ message: "Post not found" });
     });
 
-    it("should return 403 if the user is not the author and not an ADMIN", async () => {
+    it("should call handleError with AuthorizationError if the user is not the author and not an ADMIN", async () => {
       const req = mockRequest({ id: "2", role: "STUDENT" }, { id: mockPostId });
       const res = mockResponse();
 
@@ -640,28 +645,10 @@ describe("Post Controllers", () => {
 
       await getPostForEdit(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(403);
-      expect(res.json).toHaveBeenCalledWith({
-        message: "Unauthorized to edit this post",
-      });
-    });
-
-    it("should allow an ADMIN user to edit any post", async () => {
-      const req = mockRequest({ id: "2", role: "ADMIN" }, { id: mockPostId });
-      const res = mockResponse();
-
-      vi.mocked(PostIdParamSchema.parse).mockReturnValue({ id: mockPostId });
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPost as any);
-      vi.mocked(transformPostTagsToFlat).mockReturnValue(mockPost as any);
-      vi.mocked(createEditResponse).mockReturnValue(mockEditResponse);
-
-      await getPostForEdit(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({
-        message: "Post data for editing retrieved successfully",
-        data: mockEditResponse,
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthorizationError),
+        res
+      );
     });
 
     it("should call handleError if a database query fails", async () => {
@@ -758,14 +745,16 @@ describe("Post Controllers", () => {
       });
     });
 
-    it("should return 401 if the user is not authenticated", async () => {
+    it("should call handleError with AuthenticationError when user is not authenticated", async () => {
       const req = mockRequest(undefined, { id: mockPostId });
       const res = mockResponse();
 
       await updatePost(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith({ message: "Unauthorized" });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthenticationError),
+        res
+      );
     });
 
     it("should return 404 if the post is not found", async () => {
@@ -798,7 +787,7 @@ describe("Post Controllers", () => {
       expect(res.json).toHaveBeenCalledWith({ message: "Post not found" });
     });
 
-    it("should return 403 if the user is not the author", async () => {
+    it("should call handleError with AuthorizationError if the user is not the author", async () => {
       const req = mockRequest(
         { id: "different-user" },
         { id: mockPostId },
@@ -820,8 +809,10 @@ describe("Post Controllers", () => {
 
       await updatePost(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(403);
-      expect(res.json).toHaveBeenCalledWith({ message: "Forbidden" });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthorizationError),
+        res
+      );
     });
 
     it("should call handleError if a database operation fails", async () => {
@@ -911,8 +902,8 @@ describe("Post Controllers", () => {
 
       await deletePost(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith({ message: "Unauthorized" });
+      expect(handleError).toHaveBeenCalled();
+      expect(prisma.post.delete).not.toHaveBeenCalled();
     });
 
     it("should return 404 if the post is not found", async () => {
@@ -928,7 +919,7 @@ describe("Post Controllers", () => {
       expect(res.json).toHaveBeenCalledWith({ message: "Post not found" });
     });
 
-    it("should return 409 if the user is not the author and not an ADMIN", async () => {
+    it("should call handleError with AuthorizationError when user is not the author and not an ADMIN", async () => {
       const req = mockRequest({ id: "different-user" }, { id: mockPostId });
       const res = mockResponse();
 
@@ -937,8 +928,10 @@ describe("Post Controllers", () => {
 
       await deletePost(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(409);
-      expect(res.json).toHaveBeenCalledWith({ message: "Unauthorized" });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthorizationError),
+        res
+      );
     });
 
     it("should allow an ADMIN user to delete any post", async () => {

@@ -8,6 +8,7 @@ import {
 import { MulterError } from "multer";
 import { ZodError } from "zod";
 
+import BaseCustomError from "./custom/base.error.js";
 import AuthErrorHandler from "./handlers/auth";
 import DatabaseErrorHandler from "./handlers/database";
 import FileUploadErrorHandler from "./handlers/fileUpload";
@@ -19,8 +20,15 @@ import type { Response } from "express";
 export const handleError = (error: unknown, res: Response): Response => {
   let errorResponse;
 
+  // Handle all custom errors
+  if (error instanceof BaseCustomError) {
+    errorResponse = {
+      status: error.statusCode,
+      response: { message: error.message },
+    };
+  }
   // Handle Zod validation errors
-  if (error instanceof ZodError) {
+  else if (error instanceof ZodError) {
     errorResponse = ValidationErrorHandler.handleValidationError(error);
   }
   // Handle Multer file upload errors

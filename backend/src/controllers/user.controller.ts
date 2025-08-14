@@ -1,6 +1,7 @@
 import prisma from "../core/config/db.js";
 import { handleError } from "../core/error/index";
 import transformPostTagsToFlat from "../features/posts/postTagFlattener.js";
+import { ensureAuthenticated } from "../utils/auth.util.js";
 import {
   UpdateUserProfileSchema,
   UserIdParamSchema,
@@ -34,8 +35,7 @@ const getUserById = async (req: Request, res: Response) => {
 
 const updateUserProfile = async (req: Request, res: Response) => {
   try {
-    const user = req.user;
-    if (!user) return res.status(401).json({ message: "Unauthorized" });
+    const user = ensureAuthenticated(req);
 
     const { bio, avatarUrl } = UpdateUserProfileSchema.parse(req.body);
 
@@ -68,8 +68,7 @@ const updateUserProfile = async (req: Request, res: Response) => {
 
 const getMyPosts = async (req: Request, res: Response) => {
   try {
-    const user = req.user;
-    if (!user) return res.status(401).json({ message: "Unauthorized" });
+    const user = ensureAuthenticated(req);
 
     const postLimit = parseInt(req.query.limit as string) || 10;
     const postCursor = req.query.cursor as string;

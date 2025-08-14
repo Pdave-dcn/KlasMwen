@@ -11,6 +11,10 @@ import {
   deleteComment,
 } from "../../controllers/comment.controller.js";
 import prisma from "../../core/config/db.js";
+import {
+  AuthenticationError,
+  AuthorizationError,
+} from "../../core/error/custom/auth.error.js";
 import { handleError } from "../../core/error/index";
 import { CreateCommentSchema } from "../../zodSchemas/comment.zod.js";
 import { PostIdParamSchema } from "../../zodSchemas/post.zod.js";
@@ -206,7 +210,7 @@ describe("Comment Controller", () => {
       });
     });
 
-    it("should return 401 if user is not authenticated", async () => {
+    it("should call handleError with AuthenticationError when user is not authenticated", async () => {
       mockRequest = {
         user: undefined,
         params: { id: mockPostId },
@@ -215,10 +219,10 @@ describe("Comment Controller", () => {
 
       await createComment(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Unauthorized",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthenticationError),
+        mockResponse
+      );
       expect(prisma.comment.create).not.toHaveBeenCalled();
     });
 
@@ -584,7 +588,7 @@ describe("Comment Controller", () => {
     });
 
     // Business logic test: unauthorized user (not logged in)
-    it("should return 401 if user is not authenticated", async () => {
+    it("should call handleError with AuthenticationError when user is not authenticated", async () => {
       mockRequest = {
         user: undefined,
         params: { id: "5" },
@@ -592,10 +596,10 @@ describe("Comment Controller", () => {
 
       await deleteComment(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Unauthorized",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthenticationError),
+        mockResponse
+      );
       expect(prisma.comment.delete).not.toHaveBeenCalled();
     });
 
@@ -623,7 +627,7 @@ describe("Comment Controller", () => {
     });
 
     // Business logic test: unauthorized user (not author and not admin)
-    it("should return 403 if the user is not the author or an admin", async () => {
+    it("should call handleError with AuthorizationError when user is not the author or an admin", async () => {
       mockRequest = {
         user: {
           id: mockUserId1,
@@ -647,10 +651,10 @@ describe("Comment Controller", () => {
 
       await deleteComment(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(403);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Unauthorized",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthorizationError),
+        mockResponse
+      );
       expect(prisma.comment.delete).not.toHaveBeenCalled();
     });
 

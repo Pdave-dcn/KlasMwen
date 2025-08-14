@@ -1,5 +1,5 @@
 import prisma from "../../core/config/db.js";
-import checkAdminAuth from "../../utils/adminAuthChecker.js";
+import { checkAdminAuth } from "../../utils/auth.util.js";
 
 import parseTagId from "./tagIdParser.js";
 

@@ -1,5 +1,6 @@
 import prisma from "../core/config/db";
 import { handleError } from "../core/error/index";
+import { checkPermission, ensureAuthenticated } from "../utils/auth.util";
 import { CreateCommentSchema } from "../zodSchemas/comment.zod";
 import { PostIdParamSchema } from "../zodSchemas/post.zod";
 
@@ -7,8 +8,7 @@ import type { Request, Response } from "express";
 
 const createComment = async (req: Request, res: Response) => {
   try {
-    const user = req.user;
-    if (!user) return res.status(401).json({ message: "Unauthorized" });
+    const user = ensureAuthenticated(req);
 
     const { id: postId } = PostIdParamSchema.parse(req.params);
     const { content, parentId } = CreateCommentSchema.parse(req.body);
@@ -102,8 +102,7 @@ const getReplies = async (req: Request, res: Response) => {
 
 const deleteComment = async (req: Request, res: Response) => {
   try {
-    const user = req.user;
-    if (!user) return res.status(401).json({ message: "Unauthorized" });
+    const user = ensureAuthenticated(req);
 
     const { id: commentIdParam } = req.params;
     const commentId = parseInt(commentIdParam, 10);
@@ -121,8 +120,7 @@ const deleteComment = async (req: Request, res: Response) => {
 
     if (!comment) return res.status(404).json({ message: "Comment not found" });
 
-    if (comment.authorId !== user.id && user.role !== "ADMIN")
-      return res.status(403).json({ message: "Unauthorized" });
+    checkPermission(user, comment);
 
     await prisma.comment.delete({
       where: { id: commentId },

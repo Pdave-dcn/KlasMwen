@@ -7,6 +7,7 @@ import {
   getMyPosts,
 } from "../../controllers/user.controller.js";
 import prisma from "../../core/config/db.js";
+import { AuthenticationError } from "../../core/error/custom/auth.error.js";
 import { handleError } from "../../core/error/index.js";
 
 import type { Role } from "@prisma/client";
@@ -417,13 +418,13 @@ describe("User Controller", () => {
 
         await updateUserProfile(mockReq, mockRes);
 
-        expect(mockRes.status).toHaveBeenCalledWith(401);
-        expect(mockRes.json).toHaveBeenCalledWith({ message: "Unauthorized" });
+        expect(handleError).toHaveBeenCalledWith(
+          expect.any(AuthenticationError),
+          mockRes
+        );
 
         expect(prisma.user.findUnique).not.toHaveBeenCalled();
         expect(prisma.user.update).not.toHaveBeenCalled();
-
-        expect(handleError).not.toHaveBeenCalled();
       });
     });
 
@@ -544,8 +545,10 @@ describe("User Controller", () => {
 
         await getMyPosts(mockReq, mockRes);
 
-        expect(mockRes.status).toHaveBeenCalledWith(401);
-        expect(mockRes.json).toHaveBeenCalledWith({ message: "Unauthorized" });
+        expect(handleError).toHaveBeenCalledWith(
+          expect.any(AuthenticationError),
+          mockRes
+        );
         expect(prisma.post.findMany).not.toHaveBeenCalled();
         expect(prisma.post.count).not.toHaveBeenCalled();
       });

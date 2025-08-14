@@ -1,13 +1,13 @@
 import prisma from "../core/config/db.js";
 import { handleError } from "../core/error/index";
+import { ensureAuthenticated } from "../utils/auth.util.js";
 import { PostIdParamSchema } from "../zodSchemas/post.zod.js";
 
 import type { Request, Response } from "express";
 
 const toggleLike = async (req: Request, res: Response) => {
   try {
-    const user = req.user;
-    if (!user) return res.status(401).json({ message: "Unauthorized" });
+    const user = ensureAuthenticated(req);
     const userId = user.id;
 
     const { id: postId } = PostIdParamSchema.parse(req.params);

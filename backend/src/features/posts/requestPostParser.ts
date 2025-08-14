@@ -1,3 +1,4 @@
+import FileUploadError from "../../core/error/custom/file.error.js";
 import {
   CompletePostSchema,
   NewPostRequestSchema,
@@ -17,14 +18,6 @@ interface FileUploadData {
     secureUrl: string;
   } | null;
   completeValidatedData: CreatePostInput;
-}
-
-// Custom error class
-class FileUploadError extends Error {
-  constructor(message: string, public statusCode: number = 500) {
-    super(message);
-    this.name = "FileUploadError";
-  }
 }
 
 /**

@@ -10,6 +10,7 @@ import handlePostCreation from "../features/posts/postCreationHandler.js";
 import transformPostTagsToFlat from "../features/posts/postTagFlattener.js";
 import handlePostUpdate from "../features/posts/postUpdateHandler.js";
 import handleRequestValidation from "../features/posts/requestPostParser.js";
+import { checkPermission, ensureAuthenticated } from "../utils/auth.util.js";
 import {
   PostIdParamSchema,
   UpdatedPostSchema,
@@ -21,10 +22,7 @@ import type { Request, Response } from "express";
 
 const createPost = async (req: Request, res: Response) => {
   try {
-    const user = req.user;
-    if (!user) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
+    const user = ensureAuthenticated(req);
 
     const { completeValidatedData, uploadedFileInfo } =
       await handleRequestValidation(req, user.id);
@@ -173,10 +171,7 @@ const getPostById = async (req: Request, res: Response) => {
 
 const getPostForEdit = async (req: Request, res: Response) => {
   try {
-    const user = req.user;
-    if (!user) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
+    const user = ensureAuthenticated(req);
 
     const { id: postId } = PostIdParamSchema.parse(req.params);
 
@@ -210,11 +205,7 @@ const getPostForEdit = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    if (user.id !== post.author.id && user.role !== "ADMIN") {
-      return res
-        .status(403)
-        .json({ message: "Unauthorized to edit this post" });
-    }
+    checkPermission(user, post, false);
 
     const transformedPost = transformPostTagsToFlat(post);
 
@@ -273,8 +264,7 @@ const getPostMetadata = async (req: Request, res: Response) => {
 
 const updatePost = async (req: Request, res: Response) => {
   try {
-    const user = req.user;
-    if (!user) return res.status(401).json({ message: "Unauthorized" });
+    const user = ensureAuthenticated(req);
 
     const { id: postId } = PostIdParamSchema.parse(req.params);
     const validatedData = UpdatedPostSchema.parse({
@@ -289,8 +279,7 @@ const updatePost = async (req: Request, res: Response) => {
     });
     if (!post) return res.status(404).json({ message: "Post not found" });
 
-    if (user.id !== post.authorId)
-      return res.status(403).json({ message: "Forbidden" });
+    checkPermission(user, post, false);
 
     const result = await handlePostUpdate(validatedData, post.id);
 
@@ -311,8 +300,7 @@ const updatePost = async (req: Request, res: Response) => {
 
 const deletePost = async (req: Request, res: Response) => {
   try {
-    const user = req.user;
-    if (!user) return res.status(401).json({ message: "Unauthorized" });
+    const user = ensureAuthenticated(req);
 
     const { id: postId } = PostIdParamSchema.parse(req.params);
 
@@ -321,8 +309,7 @@ const deletePost = async (req: Request, res: Response) => {
     });
     if (!post) return res.status(404).json({ message: "Post not found" });
 
-    if (user.id !== post.authorId && user.role !== "ADMIN")
-      return res.status(409).json({ message: "Unauthorized" });
+    checkPermission(user, post);
 
     if (post.type === "RESOURCE" && post.fileUrl) {
       try {

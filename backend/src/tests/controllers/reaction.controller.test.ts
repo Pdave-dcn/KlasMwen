@@ -4,6 +4,7 @@ import { it, expect, describe, vi, beforeEach } from "vitest";
 
 import { toggleLike } from "../../controllers/reaction.controller";
 import prisma from "../../core/config/db.js";
+import { AuthenticationError } from "../../core/error/custom/auth.error";
 import { handleError } from "../../core/error/index";
 import { PostIdParamSchema } from "../../zodSchemas/post.zod.js";
 
@@ -121,7 +122,7 @@ describe("Reaction controller", () => {
       });
     });
 
-    it("should return 401 if user is not authenticated", async () => {
+    it("should call handleError with AuthenticationError when user is not authenticated", async () => {
       mockRequest = {
         user: undefined,
         params: { id: mockPostId },
@@ -130,10 +131,10 @@ describe("Reaction controller", () => {
       await toggleLike(mockRequest as Request, mockResponse as Response);
 
       expect(PostIdParamSchema.parse).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Unauthorized",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthenticationError),
+        mockResponse
+      );
       expect(prisma.post.findUnique).not.toHaveBeenCalled();
     });
 

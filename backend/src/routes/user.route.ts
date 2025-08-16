@@ -5,12 +5,16 @@ import {
   getUserById,
   updateUserProfile,
 } from "../controllers/user.controller";
+import {
+  writeOperationsLimiter,
+  generalApiLimiter,
+} from "../middleware/coreRateLimits";
 import { requireAuth } from "../middleware/requireAuth";
 
 const router = express.Router();
 
-router.get("/users/:id", getUserById);
-router.put("/users/me", requireAuth, updateUserProfile);
-router.get("/users/me/posts", requireAuth, getMyPosts);
+router.get("/users/:id", generalApiLimiter, getUserById);
+router.put("/users/me", writeOperationsLimiter, requireAuth, updateUserProfile);
+router.get("/users/me/posts", generalApiLimiter, requireAuth, getMyPosts);
 
 export default router;

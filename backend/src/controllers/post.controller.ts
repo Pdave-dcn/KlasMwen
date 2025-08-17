@@ -10,7 +10,11 @@ import handlePostCreation from "../features/posts/postCreationHandler.js";
 import transformPostTagsToFlat from "../features/posts/postTagFlattener.js";
 import handlePostUpdate from "../features/posts/postUpdateHandler.js";
 import handleRequestValidation from "../features/posts/requestPostParser.js";
-import { checkPermission, ensureAuthenticated } from "../utils/auth.util.js";
+import {
+  checkAdminAuth,
+  checkPermission,
+  ensureAuthenticated,
+} from "../utils/auth.util.js";
 import {
   PostIdParamSchema,
   UpdatedPostSchema,
@@ -212,7 +216,6 @@ const getPostForEdit = async (req: Request, res: Response) => {
     const editData = createEditResponse(transformedPost);
 
     return res.status(200).json({
-      message: "Post data for editing retrieved successfully",
       data: editData,
     });
   } catch (error: unknown) {
@@ -223,8 +226,7 @@ const getPostForEdit = async (req: Request, res: Response) => {
 //* Disposable
 const getPostMetadata = async (req: Request, res: Response) => {
   try {
-    const user = req.user;
-    if (!user || user.role !== "ADMIN") {
+    if (!checkAdminAuth(req.user)) {
       return res.status(403).json({ message: "Admin access required" });
     }
 
@@ -256,7 +258,7 @@ const getPostMetadata = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    return res.status(200).json(post);
+    return res.status(200).json({ data: post });
   } catch (error: unknown) {
     return handleError(error, res);
   }

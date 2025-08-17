@@ -453,7 +453,7 @@ describe("Comment Controller", () => {
       expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     });
 
-    it("should return 404 if the parent ID is not a number", async () => {
+    it("should return 400 if the parent ID is not a number", async () => {
       mockRequest = {
         params: { id: "abc" },
         query: {},
@@ -461,9 +461,26 @@ describe("Comment Controller", () => {
 
       await getReplies(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(404);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "Invalid parent ID!",
+      });
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it("should return 404 if the parent is not a found", async () => {
+      mockRequest = {
+        params: { id: "1" },
+        query: {},
+      };
+
+      vi.mocked(prisma.comment.findUnique).mockResolvedValue(null);
+
+      await getReplies(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        message: "Parent comment not found",
       });
       expect(prisma.$transaction).not.toHaveBeenCalled();
     });
@@ -473,6 +490,15 @@ describe("Comment Controller", () => {
         params: { id: "1" },
         query: {},
       };
+
+      vi.mocked(prisma.comment.findUnique).mockResolvedValue({
+        id: 1,
+        content: "test content",
+        parentId: null,
+        postId: "abc",
+        authorId: "def",
+        createdAt: new Date(),
+      });
 
       vi.mocked(prisma.$transaction).mockImplementation(
         async (queries: any) => {
@@ -505,7 +531,7 @@ describe("Comment Controller", () => {
       };
 
       const error = new Error("Database error on transaction");
-      vi.mocked(prisma.$transaction).mockRejectedValue(error);
+      vi.mocked(prisma.comment.findUnique).mockRejectedValue(error);
 
       await getReplies(mockRequest as Request, mockResponse as Response);
 

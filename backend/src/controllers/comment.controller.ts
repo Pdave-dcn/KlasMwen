@@ -55,9 +55,15 @@ const getReplies = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     if (isNaN(parseInt(id, 10)))
-      return res.status(404).json({ message: "Invalid parent ID!" });
+      return res.status(400).json({ message: "Invalid parent ID!" });
 
     const parentId = parseInt(id, 10);
+
+    const parent = await prisma.comment.findUnique({
+      where: { id: parentId },
+    });
+    if (!parent)
+      return res.status(404).json({ message: "Parent comment not found" });
 
     const limit = parseInt(req.query.limit as string) || 10;
     const cursor = parseInt(req.query.cursor as string);

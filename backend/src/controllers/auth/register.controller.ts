@@ -104,7 +104,7 @@ const registerUser = async (req: Request, res: Response): Promise<Response> => {
     const token = UserService.generateToken(newUser);
 
     return res.status(201).json({
-      message: "User created successfully",
+      message: "User registered successfully",
       user: newUser,
       token,
     });

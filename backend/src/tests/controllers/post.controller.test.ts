@@ -606,7 +606,6 @@ describe("Post Controllers", () => {
       expect(createEditResponse).toHaveBeenCalledWith(mockPost);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
-        message: "Post data for editing retrieved successfully",
         data: mockEditResponse,
       });
     });

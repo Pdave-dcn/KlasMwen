@@ -9,6 +9,7 @@ import passport from "passport";
 import { corsOptions } from "./core/config/cors.js";
 import initializePassport from "./core/config/passport.js";
 import router from "./routes/index.route.js";
+import setupSwagger from "./swagger.js";
 
 const app = express();
 
@@ -19,6 +20,8 @@ app.use(cors(corsOptions));
 
 app.use(passport.initialize());
 initializePassport(passport);
+
+setupSwagger(app);
 
 app.use("/", router);
 

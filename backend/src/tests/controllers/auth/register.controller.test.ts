@@ -168,7 +168,7 @@ describe("Register User Controller", () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(201);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "User created successfully",
+        message: "User registered successfully",
         user: mockUser,
         token,
       });

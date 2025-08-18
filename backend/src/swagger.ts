@@ -315,15 +315,86 @@ const options: swaggerJSDoc.Options = {
             pagination: { $ref: "#/components/schemas/Pagination" },
           },
         },
+
+        SearchPagination: {
+          type: "object",
+          properties: {
+            hasMore: {
+              type: "boolean",
+              example: false,
+              description: "Whether there are more results available",
+            },
+            nextCursor: {
+              type: "string",
+              format: "uuid",
+              nullable: true,
+              example: null,
+              description: "Cursor for the next page (null if no more results)",
+            },
+            total: {
+              type: "integer",
+              example: 2,
+              description: "Number of posts returned in current page",
+            },
+          },
+        },
+
+        SearchMeta: {
+          type: "object",
+          properties: {
+            searchTerm: {
+              type: "string",
+              example: "javascript",
+              description: "The search term that was used",
+            },
+            resultsFound: {
+              type: "integer",
+              example: 25,
+              description: "Total number of posts matching the search criteria",
+            },
+            currentPageSize: {
+              type: "integer",
+              example: 2,
+              description: "Number of posts returned in this response",
+            },
+          },
+        },
+
+        SearchPostsResponse: {
+          type: "object",
+          properties: {
+            data: {
+              type: "array",
+              items: { $ref: "#/components/schemas/Post" },
+            },
+            pagination: {
+              $ref: "#/components/schemas/SearchPagination",
+            },
+            meta: {
+              $ref: "#/components/schemas/SearchMeta",
+            },
+          },
+        },
+
+        ErrorResponse: {
+          type: "object",
+          properties: {
+            message: {
+              type: "string",
+              example: "Search term is required and must be a string",
+            },
+          },
+        },
       },
     },
     tags: [
       { name: "Auth", description: "Operations related to auth" },
-      { name: "Users", description: "Operations related to users" },
+      { name: "Comments", description: "Operations related to comments" },
       { name: "Posts", description: "Operations related to posts" },
       { name: "Reactions", description: "Operations related to reactions" },
+      { name: "Search", description: "Operations related to searching" },
       { name: "Tags", description: "Operations related to tags" },
-      { name: "Comments", description: "Operations related to comments" },
+      { name: "Users", description: "Operations related to users" },
     ],
   },
   apis: [

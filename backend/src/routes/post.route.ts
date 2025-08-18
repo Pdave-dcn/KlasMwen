@@ -251,7 +251,7 @@ router.put("/posts/:id", writeOperationsLimiter, requireAuth, updatePost);
  *         description: Post deleted successfully
  *       400:
  *         description: Bad request (e.g., Post ID is not a valid uuid)
- *       400:
+ *       401:
  *         description: Unauthenticated
  *       403:
  *         description: User does not have permission to delete this post

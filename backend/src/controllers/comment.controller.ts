@@ -65,7 +65,7 @@ const getReplies = async (req: Request, res: Response) => {
     if (!parent)
       return res.status(404).json({ message: "Parent comment not found" });
 
-    const limit = parseInt(req.query.limit as string) || 10;
+    const limit = Math.min(parseInt(req.query.limit as string) || 10, 40);
     const cursor = parseInt(req.query.cursor as string);
 
     const [replies, totalItems] = await prisma.$transaction([

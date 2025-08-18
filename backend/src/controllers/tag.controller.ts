@@ -50,7 +50,7 @@ const getTagForEdit = async (req: Request, res: Response) => {
 
 const getAllTags = async (req: Request, res: Response) => {
   try {
-    const limit = parseInt(req.query.limit as string) || 20;
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 60);
     const cursor = req.query.cursor as string | undefined;
     const sortOrder = (req.query.sortOrder as "asc" | "desc") || "asc";
 

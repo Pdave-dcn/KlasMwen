@@ -70,7 +70,7 @@ const getMyPosts = async (req: Request, res: Response) => {
   try {
     const user = ensureAuthenticated(req);
 
-    const postLimit = parseInt(req.query.limit as string) || 10;
+    const postLimit = Math.min(parseInt(req.query.limit as string) || 10, 50);
     const postCursor = req.query.cursor as string;
 
     const [posts, totalPosts] = await Promise.all([

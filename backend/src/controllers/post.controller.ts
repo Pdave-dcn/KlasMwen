@@ -59,7 +59,7 @@ const createPost = async (req: Request, res: Response) => {
 
 const getAllPosts = async (req: Request, res: Response) => {
   try {
-    const limit = parseInt(req.query.limit as string) || 10;
+    const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
     const cursor = req.query.cursor as string | undefined;
 
     const queryOptions: Prisma.PostFindManyArgs = {
@@ -117,7 +117,7 @@ const getPostById = async (req: Request, res: Response) => {
   try {
     const { id: postId } = PostIdParamSchema.parse(req.params);
 
-    const limit = parseInt(req.query.limit as string) || 20;
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
     const cursor = req.query.cursor as string;
 
     const post = await prisma.post.findUnique({

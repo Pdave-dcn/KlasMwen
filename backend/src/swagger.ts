@@ -376,12 +376,31 @@ const options: swaggerJSDoc.Options = {
           },
         },
 
-        ErrorResponse: {
+        BookmarksResponse: {
           type: "object",
           properties: {
-            message: {
-              type: "string",
-              example: "Search term is required and must be a string",
+            data: {
+              type: "array",
+              items: {
+                $ref: "#/components/schemas/Post",
+              },
+            },
+            pagination: {
+              type: "object",
+              properties: {
+                hasMore: {
+                  type: "boolean",
+                  description: "Whether there are more results available",
+                  example: true,
+                },
+                nextCursor: {
+                  type: "string",
+                  format: "uuid",
+                  nullable: true,
+                  description: "Cursor for the next page of results",
+                  example: "660e8400-e29b-41d4-a716-446655440001",
+                },
+              },
             },
           },
         },
@@ -389,6 +408,7 @@ const options: swaggerJSDoc.Options = {
     },
     tags: [
       { name: "Auth", description: "Operations related to auth" },
+      { name: "Bookmarks", description: "Operations related to bookmarking" },
       { name: "Comments", description: "Operations related to comments" },
       { name: "Posts", description: "Operations related to posts" },
       { name: "Reactions", description: "Operations related to reactions" },

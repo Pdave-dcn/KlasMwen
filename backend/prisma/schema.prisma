@@ -22,17 +22,18 @@ enum PostType {
 
 // Represents a user account with authentication and profile information
 model User {
-  id        String    @id @default(uuid())
-  username  String    @unique
-  email     String    @unique
+  id        String     @id @default(uuid())
+  username  String     @unique
+  email     String     @unique
   password  String
   bio       String?
-  avatarUrl String?   @map("avatar_url")
-  role      Role      @default(STUDENT)
+  avatarUrl String?    @map("avatar_url")
+  role      Role       @default(STUDENT)
   posts     Post[]
   comments  Comment[]
   likes     Like[]
-  createdAt DateTime  @default(now()) @map("created_at")
+  bookmarks Bookmark[]
+  createdAt DateTime   @default(now()) @map("created_at")
 
   @@map("users")
 }
@@ -50,13 +51,14 @@ model Post {
   fileSize Int?    @map("file_size")
   mimeType String? @map("mime_type")
 
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  author    User      @relation(fields: [authorId], references: [id])
-  authorId  String    @map("author_id")
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  author    User       @relation(fields: [authorId], references: [id])
+  authorId  String     @map("author_id")
   comments  Comment[]
   likes     Like[]
   postTags  PostTag[]
+  bookmarks Bookmark[]
 
   @@map("posts")
 }
@@ -106,4 +108,16 @@ model Like {
 
   @@id([userId, postId])
   @@map("likes")
+}
+
+// Represents a post bookmarked by a user
+model Bookmark {
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @map("user_id")
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String   @map("post_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@id([userId, postId])
+  @@map("bookmarks")
 }

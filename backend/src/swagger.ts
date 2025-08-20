@@ -285,7 +285,14 @@ const options: swaggerJSDoc.Options = {
               type: "array",
               items: { $ref: "#/components/schemas/Comment" },
             },
-            pagination: { $ref: "#/components/schemas/Pagination" },
+            pagination: {
+              type: "object",
+              properties: {
+                nextCursor: { type: "integer", nullable: true, example: 456 },
+                hasMore: { type: "boolean", example: true },
+                totalItems: { type: "integer", example: 25 },
+              },
+            },
           },
         },
 
@@ -312,7 +319,14 @@ const options: swaggerJSDoc.Options = {
               type: "array",
               items: { $ref: "#/components/schemas/Tag" },
             },
-            pagination: { $ref: "#/components/schemas/Pagination" },
+            pagination: {
+              type: "object",
+              properties: {
+                nextCursor: { type: "integer", nullable: true, example: 45 },
+                hasMore: { type: "boolean", example: true },
+                totalItems: { type: "integer", example: 70 },
+              },
+            },
           },
         },
 

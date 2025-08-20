@@ -50,9 +50,7 @@ const router = express.Router();
  *                 data:
  *                   type: array
  *                   items:
- *                     $ref: "#/components/schemas/Tag"
- *                 pagination:
- *                   $ref: "#/components/schemas/TagsPagination"
+ *                     $ref: "#/components/schemas/TagsResponse"
  *       400:
  *           description: Bad request (e.g., Invalid cursor format)
  *       429:

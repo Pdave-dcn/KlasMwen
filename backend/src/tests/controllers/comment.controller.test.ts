@@ -1,6 +1,3 @@
-/* eslint-disable require-await */
-/* eslint-disable @typescript-eslint/require-await*/
-
 import { Post, Comment, Role } from "@prisma/client";
 import { Request, Response } from "express";
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -31,7 +28,6 @@ vi.mock("../../core/config/db.js", () => ({
       count: vi.fn(),
       delete: vi.fn(),
     },
-    $transaction: vi.fn(),
   },
 }));
 
@@ -64,10 +60,8 @@ describe("Comment Controller", () => {
   const mockUserId2 = "d4e5f678-9012-3456-7890-abcdef123456";
 
   beforeEach(() => {
-    // Reset mocks before each test to ensure a clean state
     vi.clearAllMocks();
 
-    // Setup mock response object with chainable methods
     mockResponse = {
       status: vi.fn(() => mockResponse as Response),
       json: vi.fn(),
@@ -367,31 +361,43 @@ describe("Comment Controller", () => {
         {
           id: 7,
           content: "Reply 3",
-          author: { username: "userC", avatarUrl: null },
+          author: { id: "authorC", username: "userC", avatarUrl: null },
           createdAt: new Date(),
+          parentId: 1,
+          postId: "post123",
+          authorId: "authorC",
         },
         {
           id: 6,
           content: "Reply 2",
-          author: { username: "userB", avatarUrl: null },
+          author: { id: "authorB", username: "userB", avatarUrl: null },
           createdAt: new Date(),
+          parentId: 1,
+          postId: "post123",
+          authorId: "authorB",
         },
         {
           id: 5,
           content: "Reply 1",
-          author: { username: "userA", avatarUrl: null },
+          author: { id: "authorA", username: "userA", avatarUrl: null },
           createdAt: new Date(),
+          parentId: 1,
+          postId: "post123",
+          authorId: "authorA",
         },
       ];
 
-      vi.mocked(prisma.$transaction).mockImplementation(
-        async (queries: any) => {
-          if (Array.isArray(queries)) {
-            return [mockComments, 12];
-          }
-          return queries;
-        }
-      );
+      vi.mocked(prisma.comment.findUnique).mockResolvedValue({
+        id: 1,
+        content: "test content",
+        parentId: null,
+        postId: "abc",
+        authorId: "def",
+        createdAt: new Date(),
+      });
+
+      vi.mocked(prisma.comment.findMany).mockResolvedValue(mockComments);
+      vi.mocked(prisma.comment.count).mockResolvedValue(12);
 
       await getReplies(mockRequest as Request, mockResponse as Response);
 
@@ -400,12 +406,17 @@ describe("Comment Controller", () => {
         data: mockComments.slice(0, 2),
         pagination: {
           nextCursor: 6,
-          hasNextPage: true,
+          hasMore: true,
           totalItems: 12,
         },
       });
 
-      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(prisma.comment.findMany).toHaveBeenCalledTimes(1);
+      expect(prisma.comment.count).toHaveBeenCalledTimes(1);
+
+      expect(prisma.comment.count).toHaveBeenCalledWith({
+        where: { parentId: 1 },
+      });
     });
 
     it("should return a list of replies with cursor", async () => {
@@ -418,25 +429,34 @@ describe("Comment Controller", () => {
         {
           id: 9,
           content: "Reply after cursor",
-          author: { username: "userD", avatarUrl: null },
+          author: { id: "authorD", username: "userD", avatarUrl: null },
           createdAt: new Date(),
+          parentId: 1,
+          postId: "post123",
+          authorId: "authorD",
         },
         {
           id: 8,
           content: "Another reply after cursor",
-          author: { username: "userE", avatarUrl: null },
+          author: { id: "authorE", username: "userE", avatarUrl: null },
           createdAt: new Date(),
+          parentId: 1,
+          postId: "post123",
+          authorId: "authorE",
         },
       ];
 
-      vi.mocked(prisma.$transaction).mockImplementation(
-        async (queries: any) => {
-          if (Array.isArray(queries)) {
-            return [mockComments, 12];
-          }
-          return queries;
-        }
-      );
+      vi.mocked(prisma.comment.findUnique).mockResolvedValue({
+        id: 1,
+        content: "test content",
+        parentId: null,
+        postId: "abc",
+        authorId: "def",
+        createdAt: new Date(),
+      });
+
+      vi.mocked(prisma.comment.findMany).mockResolvedValue(mockComments);
+      vi.mocked(prisma.comment.count).mockResolvedValue(12);
 
       await getReplies(mockRequest as Request, mockResponse as Response);
 
@@ -445,12 +465,39 @@ describe("Comment Controller", () => {
         data: mockComments,
         pagination: {
           nextCursor: null,
-          hasNextPage: false,
+          hasMore: false,
           totalItems: 12,
         },
       });
 
-      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(prisma.comment.findMany).toHaveBeenCalledTimes(1);
+      expect(prisma.comment.count).toHaveBeenCalledTimes(1);
+
+      expect(prisma.comment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { parentId: 1 },
+          orderBy: { createdAt: "asc" },
+          take: 3,
+          cursor: { id: 10 },
+          skip: 1,
+          select: expect.objectContaining({
+            id: true,
+            content: true,
+            author: {
+              select: {
+                id: true,
+                username: true,
+                avatarUrl: true,
+              },
+            },
+            createdAt: true,
+          }),
+        })
+      );
+
+      expect(prisma.comment.count).toHaveBeenCalledWith({
+        where: { parentId: 1 },
+      });
     });
 
     it("should return 400 if the parent ID is not a number", async () => {
@@ -465,7 +512,7 @@ describe("Comment Controller", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "Invalid parent ID!",
       });
-      expect(prisma.$transaction).not.toHaveBeenCalled();
+      expect(prisma.comment.findMany).not.toHaveBeenCalled();
     });
 
     it("should return 404 if the parent is not a found", async () => {
@@ -482,7 +529,7 @@ describe("Comment Controller", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "Parent comment not found",
       });
-      expect(prisma.$transaction).not.toHaveBeenCalled();
+      expect(prisma.comment.findMany).not.toHaveBeenCalled();
     });
 
     it("should use default pagination values if none are provided", async () => {
@@ -500,24 +547,23 @@ describe("Comment Controller", () => {
         createdAt: new Date(),
       });
 
-      vi.mocked(prisma.$transaction).mockImplementation(
-        async (queries: any) => {
-          if (Array.isArray(queries)) {
-            return [[], 0];
-          }
-          return queries;
-        }
-      );
+      vi.mocked(prisma.comment.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.comment.count).mockResolvedValue(0);
 
       await getReplies(mockRequest as Request, mockResponse as Response);
 
-      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(prisma.comment.findMany).toHaveBeenCalledTimes(1);
+      expect(prisma.comment.count).toHaveBeenCalledTimes(1);
+
+      expect(prisma.comment.count).toHaveBeenCalledWith({
+        where: { parentId: 1 },
+      });
 
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
           pagination: expect.objectContaining({
             nextCursor: null,
-            hasNextPage: false,
+            hasMore: false,
             totalItems: 0,
           }),
         })

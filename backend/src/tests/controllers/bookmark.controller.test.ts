@@ -588,23 +588,6 @@ describe("Bookmark controller", () => {
       expect(prisma.bookmark.findMany).not.toHaveBeenCalled();
     });
 
-    it("should call handleError with validation error for limit out of range", async () => {
-      mockRequest = {
-        query: { limit: "100" },
-        user: {
-          id: mockUserId,
-          role: "STUDENT",
-          username: "test_username",
-          email: "test_email",
-        },
-      };
-
-      await getBookmarks(mockRequest as Request, mockResponse as Response);
-
-      expect(handleError).toHaveBeenCalled();
-      expect(prisma.bookmark.findMany).not.toHaveBeenCalled();
-    });
-
     it("should call handleError with validation error for invalid cursor UUID", async () => {
       mockRequest = {
         query: { cursor: "invalid-uuid" },

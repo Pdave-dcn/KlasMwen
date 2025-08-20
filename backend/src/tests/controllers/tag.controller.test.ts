@@ -365,7 +365,7 @@ describe("Tag controller", () => {
       });
     });
 
-    it("should return 400 when the cursor ID is an invalid format", async () => {
+    it("should call handleError when the cursor ID is an invalid format", async () => {
       mockRequest = {
         query: {
           limit: "3",
@@ -376,7 +376,7 @@ describe("Tag controller", () => {
 
       await getAllTags(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(handleError).toHaveBeenCalled();
       expect(prisma.tag.findMany).not.toHaveBeenCalledWith();
     });
 

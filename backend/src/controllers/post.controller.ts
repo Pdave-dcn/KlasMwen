@@ -16,12 +16,16 @@ import {
   ensureAuthenticated,
 } from "../utils/auth.util.js";
 import {
+  buildPaginatedQuery,
+  processPaginatedResults,
+  uuidPaginationSchema,
+} from "../utils/pagination.util.js";
+import {
   PostIdParamSchema,
   UpdatedPostSchema,
 } from "../zodSchemas/post.zod.js";
 
 import type { RawPost, TransformedPost } from "../types/postTypes.js";
-import type { Prisma } from "@prisma/client";
 import type { Request, Response } from "express";
 
 const createPost = async (req: Request, res: Response) => {
@@ -59,12 +63,10 @@ const createPost = async (req: Request, res: Response) => {
 
 const getAllPosts = async (req: Request, res: Response) => {
   try {
-    const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
-    const cursor = req.query.cursor as string | undefined;
+    const { limit, cursor } = uuidPaginationSchema.parse(req.query);
 
-    const queryOptions: Prisma.PostFindManyArgs = {
-      take: limit + 1,
-      orderBy: { createdAt: "desc" },
+    const baseQuery = {
+      orderBy: { createdAt: "desc" as const },
       select: {
         id: true,
         title: true,
@@ -85,27 +87,29 @@ const getAllPosts = async (req: Request, res: Response) => {
       },
     };
 
-    if (cursor) {
-      const validatedCursor = PostIdParamSchema.parse(cursor);
-      queryOptions.cursor = { id: validatedCursor.id };
-      queryOptions.skip = 1;
-    }
+    const paginatedQuery = buildPaginatedQuery<"post">(baseQuery, {
+      limit,
+      cursor,
+      cursorField: "id",
+    });
 
-    const posts = await prisma.post.findMany(queryOptions);
+    const posts = await prisma.post.findMany(paginatedQuery);
 
-    const hasMore = posts.length > limit;
-    const postsSlice = posts.slice(0, limit);
-    const nextCursor = hasMore ? postsSlice[postsSlice.length - 1].id : null;
-
-    const transformedPosts = postsSlice.map(
+    const transformedPosts = posts.map(
       transformPostTagsToFlat as (post: Partial<RawPost>) => TransformedPost
     );
 
+    const { data: postsData, pagination } = processPaginatedResults(
+      transformedPosts,
+      limit,
+      "id"
+    );
+
     return res.status(200).json({
-      data: transformedPosts,
+      data: postsData,
       pagination: {
-        hasMore,
-        nextCursor,
+        hasMore: pagination.hasMore,
+        nextCursor: pagination.nextCursor,
       },
     });
   } catch (error: unknown) {

@@ -1,6 +1,11 @@
 import prisma from "../core/config/db";
 import { handleError } from "../core/error/index";
 import { checkPermission, ensureAuthenticated } from "../utils/auth.util";
+import {
+  buildPaginatedQuery,
+  createPaginationSchema,
+  processPaginatedResults,
+} from "../utils/pagination.util";
 import { CreateCommentSchema } from "../zodSchemas/comment.zod";
 import { PostIdParamSchema } from "../zodSchemas/post.zod";
 
@@ -65,39 +70,42 @@ const getReplies = async (req: Request, res: Response) => {
     if (!parent)
       return res.status(404).json({ message: "Parent comment not found" });
 
-    const limit = Math.min(parseInt(req.query.limit as string) || 10, 40);
-    const cursor = parseInt(req.query.cursor as string);
+    const customRepliesSchema = createPaginationSchema(10, 40, "number");
+    const { limit, cursor } = customRepliesSchema.parse(req.query);
 
-    const [replies, totalItems] = await prisma.$transaction([
-      prisma.comment.findMany({
-        where: { parentId },
-        orderBy: { createdAt: "asc" },
-        take: limit + 1,
-        ...(cursor && {
-          cursor: { id: cursor },
-          skip: 1,
-        }),
-        select: {
-          id: true,
-          content: true,
-          author: { select: { username: true, avatarUrl: true } },
-          createdAt: true,
-        },
-      }),
+    const baseQuery = {
+      where: { parentId },
+      orderBy: { createdAt: "asc" as const },
+      select: {
+        id: true,
+        content: true,
+        author: { select: { id: true, username: true, avatarUrl: true } },
+        createdAt: true,
+      },
+    };
+
+    const paginatedQuery = buildPaginatedQuery<"comment">(baseQuery, {
+      limit,
+      cursor,
+      cursorField: "id",
+    });
+
+    const [replies, totalItems] = await Promise.all([
+      prisma.comment.findMany(paginatedQuery),
       prisma.comment.count({ where: { parentId } }),
     ]);
 
-    const hasNextPage = replies.length > limit;
-    const repliesSlice = hasNextPage ? replies.slice(0, limit) : replies;
-    const nextCursor = hasNextPage
-      ? repliesSlice[repliesSlice.length - 1].id
-      : null;
+    const { data: repliesData, pagination } = processPaginatedResults(
+      replies,
+      limit,
+      "id"
+    );
 
     return res.status(200).json({
-      data: repliesSlice,
+      data: repliesData,
       pagination: {
-        nextCursor,
-        hasNextPage,
+        nextCursor: pagination.nextCursor,
+        hasMore: pagination.hasMore,
         totalItems,
       },
     });

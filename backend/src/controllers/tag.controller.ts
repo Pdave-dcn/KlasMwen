@@ -1,7 +1,11 @@
 import prisma from "../core/config/db";
 import { handleError } from "../core/error/index";
-import parseTagId from "../features/tag/tagIdParser.js";
 import validateTagOperation from "../features/tag/tagValidationOperation.js";
+import {
+  buildPaginatedQuery,
+  createPaginationSchema,
+  processPaginatedResults,
+} from "../utils/pagination.util";
 import { CreateTagSchema } from "../zodSchemas/tag.zod.js";
 
 import type { Request, Response } from "express";
@@ -50,43 +54,38 @@ const getTagForEdit = async (req: Request, res: Response) => {
 
 const getAllTags = async (req: Request, res: Response) => {
   try {
-    const limit = Math.min(parseInt(req.query.limit as string) || 20, 60);
-    const cursor = req.query.cursor as string | undefined;
+    const customTagsSchema = createPaginationSchema(20, 60, "number");
+    const { limit, cursor } = customTagsSchema.parse(req.query);
+
     const sortOrder = (req.query.sortOrder as "asc" | "desc") || "asc";
 
-    const queryOptions: {
-      take: number;
-      orderBy: { name: "asc" | "desc" };
-      cursor?: { id: number };
-      skip?: number;
-    } = {
-      take: limit + 1,
+    const baseQuery = {
       orderBy: { name: sortOrder },
     };
 
-    if (cursor) {
-      const cursorId = parseTagId(cursor);
-      if (cursorId === null) {
-        return res.status(400).json({ message: "Invalid cursor format" });
-      }
-      queryOptions.cursor = { id: cursorId };
-      queryOptions.skip = 1;
-    }
+    const paginatedQuery = buildPaginatedQuery<"tag">(baseQuery, {
+      limit,
+      cursor,
+      cursorField: "id",
+      orderBy: { name: sortOrder },
+    });
 
     const [tags, totalCount] = await Promise.all([
-      prisma.tag.findMany(queryOptions),
+      prisma.tag.findMany(paginatedQuery),
       prisma.tag.count(),
     ]);
 
-    const hasMore = tags.length > limit;
-    const tagsSlice = tags.slice(0, limit);
-    const nextCursor = hasMore ? tagsSlice[tagsSlice.length - 1].id : null;
+    const { data: tagsData, pagination } = processPaginatedResults(
+      tags,
+      limit,
+      "id"
+    );
 
     return res.status(200).json({
-      data: tagsSlice,
+      data: tagsData,
       pagination: {
-        nextCursor,
-        hasMore,
+        nextCursor: pagination.nextCursor,
+        hasMore: pagination.hasMore,
         totalCount,
       },
     });

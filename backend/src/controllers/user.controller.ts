@@ -3,6 +3,11 @@ import { handleError } from "../core/error/index";
 import transformPostTagsToFlat from "../features/posts/postTagFlattener.js";
 import { ensureAuthenticated } from "../utils/auth.util.js";
 import {
+  buildPaginatedQuery,
+  processPaginatedResults,
+  uuidPaginationSchema,
+} from "../utils/pagination.util.js";
+import {
   UpdateUserProfileSchema,
   UserIdParamSchema,
 } from "../zodSchemas/user.zod.js";
@@ -70,35 +75,36 @@ const getMyPosts = async (req: Request, res: Response) => {
   try {
     const user = ensureAuthenticated(req);
 
-    const postLimit = Math.min(parseInt(req.query.limit as string) || 10, 50);
-    const postCursor = req.query.cursor as string;
+    const { limit, cursor } = uuidPaginationSchema.parse(req.query);
+
+    const baseQuery = {
+      where: { authorId: user.id },
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        type: true,
+        fileUrl: true,
+        fileName: true,
+        createdAt: true,
+        postTags: {
+          include: { tag: true },
+        },
+        _count: {
+          select: { comments: true, likes: true },
+        },
+      },
+      orderBy: { createdAt: "desc" as const },
+    };
+
+    const paginatedQuery = buildPaginatedQuery<"post">(baseQuery, {
+      limit,
+      cursor,
+      cursorField: "id",
+    });
 
     const [posts, totalPosts] = await Promise.all([
-      prisma.post.findMany({
-        where: { authorId: user.id },
-        take: postLimit + 1,
-        ...(postCursor && {
-          cursor: { id: postCursor },
-          skip: 1,
-        }),
-        select: {
-          id: true,
-          title: true,
-          content: true,
-          type: true,
-          fileUrl: true,
-          fileName: true,
-          createdAt: true,
-          postTags: {
-            include: { tag: true },
-          },
-          _count: {
-            select: { comments: true, likes: true },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-      }),
-
+      prisma.post.findMany(paginatedQuery),
       prisma.post.count({
         where: { authorId: user.id },
       }),
@@ -108,18 +114,17 @@ const getMyPosts = async (req: Request, res: Response) => {
       transformPostTagsToFlat as (post: Partial<RawPost>) => TransformedPost
     );
 
-    const hasMore = transformedPosts.length > postLimit;
-    const postsSlice = hasMore
-      ? transformedPosts.slice(0, postLimit)
-      : transformedPosts;
-
-    const nextCursor = hasMore ? transformedPosts[postLimit - 1].id : null;
+    const { data: postsData, pagination } = processPaginatedResults(
+      transformedPosts,
+      limit,
+      "id"
+    );
 
     return res.status(200).json({
-      data: postsSlice,
+      data: postsData,
       pagination: {
-        hasMore,
-        nextCursor,
+        hasMore: pagination.hasMore,
+        nextCursor: pagination.nextCursor,
         totalPosts,
       },
     });

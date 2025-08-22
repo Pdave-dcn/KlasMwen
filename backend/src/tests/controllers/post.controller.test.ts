@@ -10,6 +10,7 @@ import {
   deletePost,
 } from "../../controllers/post.controller.js";
 import prisma from "../../core/config/db.js";
+import { createLogger } from "../../core/config/logger.js";
 import {
   AuthenticationError,
   AuthorizationError,
@@ -47,6 +48,34 @@ vi.mock("../../core/config/db.js", () => ({
     },
   },
 }));
+
+vi.mock("../../core/config/logger.js", () => ({
+  createLogger: vi.fn(() => ({
+    child: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  })),
+  logger: {
+    child: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
 vi.mock("../../core/error/index.js");
 vi.mock("../../features/posts/requestPostParser.js");
 vi.mock("../../features/posts/postCreationHandler.js");
@@ -604,6 +633,7 @@ describe("Post Controllers", () => {
       expect(prisma.post.findUnique).toHaveBeenCalledWith(expect.anything());
       expect(transformPostTagsToFlat).toHaveBeenCalledWith(mockPost);
       expect(createEditResponse).toHaveBeenCalledWith(mockPost);
+      expect(handleError).not.toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
         data: mockEditResponse,

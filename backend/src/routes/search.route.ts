@@ -1,9 +1,9 @@
 import express from "express";
 
 import { searchPosts } from "../controllers/search.controller";
-import { generalApiLimiter } from "../middleware/coreRateLimits";
+import { generalApiLimiter } from "../middleware/coreRateLimits.middleware";
 
-const route = express.Router();
+const router = express.Router();
 
 /**
  * @openapi
@@ -49,6 +49,6 @@ const route = express.Router();
  *       500:
  *         description: Internal Server Error
  */
-route.get("/search/posts", generalApiLimiter, searchPosts);
+router.get("/search/posts", generalApiLimiter, searchPosts);
 
-export default route;
+export default router;

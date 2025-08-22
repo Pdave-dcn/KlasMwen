@@ -7,6 +7,7 @@ import {
   getBookmarks,
 } from "../../controllers/bookmark.controller.js";
 import prisma from "../../core/config/db.js";
+import { createLogger } from "../../core/config/logger.js";
 import { AuthenticationError } from "../../core/error/custom/auth.error.js";
 import { handleError } from "../../core/error/index.js";
 
@@ -23,6 +24,33 @@ vi.mock("../../core/config/db.js", () => ({
       create: vi.fn(),
       delete: vi.fn(),
     },
+  },
+}));
+
+vi.mock("../../core/config/logger.js", () => ({
+  createLogger: vi.fn(() => ({
+    child: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  })),
+  logger: {
+    child: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
   },
 }));
 

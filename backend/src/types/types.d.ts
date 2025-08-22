@@ -9,8 +9,15 @@ declare global {
       role: Role;
     }
 
+    interface LogContext {
+      requestId: string;
+      module: string;
+      [key: string]: unknown;
+    }
+
     interface Request {
       user?: User;
+      logContext?: LogContext;
     }
   }
 }

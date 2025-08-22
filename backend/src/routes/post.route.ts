@@ -12,11 +12,14 @@ import {
 import {
   writeOperationsLimiter,
   generalApiLimiter,
-} from "../middleware/coreRateLimits.js";
-import upload from "../middleware/multer.js";
-import { requireAuth } from "../middleware/requireAuth.js";
+} from "../middleware/coreRateLimits.middleware.js";
+import attachLogContext from "../middleware/logContext.middleware.js";
+import upload from "../middleware/multer.middleware.js";
+import { requireAuth } from "../middleware/requireAuth.middleware.js";
 
 const router = express.Router();
+
+router.use(attachLogContext("PostController"));
 
 /**
  * @openapi

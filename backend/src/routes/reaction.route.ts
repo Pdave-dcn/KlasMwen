@@ -1,10 +1,13 @@
 import express from "express";
 
 import { toggleLike } from "../controllers/reaction.controller.js";
-import { reactionLimiter } from "../middleware/coreRateLimits.js";
-import { requireAuth } from "../middleware/requireAuth.js";
+import { reactionLimiter } from "../middleware/coreRateLimits.middleware.js";
+import attachLogContext from "../middleware/logContext.middleware.js";
+import { requireAuth } from "../middleware/requireAuth.middleware.js";
 
 const router = express.Router();
+
+router.use(attachLogContext("reactionController"));
 
 /**
  * @openapi

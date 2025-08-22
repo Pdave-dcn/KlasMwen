@@ -8,10 +8,13 @@ import {
 import {
   writeOperationsLimiter,
   generalApiLimiter,
-} from "../middleware/coreRateLimits";
-import { requireAuth } from "../middleware/requireAuth";
+} from "../middleware/coreRateLimits.middleware";
+import attachLogContext from "../middleware/logContext.middleware";
+import { requireAuth } from "../middleware/requireAuth.middleware";
 
 const router = express.Router();
+
+router.use(attachLogContext("commentController"));
 
 /**
  * @openapi

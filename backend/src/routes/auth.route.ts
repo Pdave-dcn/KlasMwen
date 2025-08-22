@@ -2,9 +2,15 @@ import express from "express";
 
 import { loginUser } from "../controllers/auth/login.controller.js";
 import { registerUser } from "../controllers/auth/register.controller.js";
-import { authLimiter, registerLimiter } from "../middleware/coreRateLimits.js";
+import {
+  authLimiter,
+  registerLimiter,
+} from "../middleware/coreRateLimits.middleware.js";
+import attachLogContext from "../middleware/logContext.middleware.js";
 
 const router = express.Router();
+
+router.use(attachLogContext("AuthController"));
 
 /**
  * @openapi

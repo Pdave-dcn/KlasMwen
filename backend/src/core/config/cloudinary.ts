@@ -1,5 +1,9 @@
 import { v2 as cloudinary } from "cloudinary";
 
+import { createLogger } from "./logger.js";
+
+const logger = createLogger({ module: "CloudinaryConfig" });
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -7,12 +11,29 @@ cloudinary.config({
 });
 
 export const verifyCloudinaryConnection = async () => {
+  logger.info("Cloudinary connection verification started");
+  const startTime = Date.now();
+
   try {
     await cloudinary.api.ping();
-    console.log("✅ Cloudinary connected successfully");
+    const duration = Date.now() - startTime;
+    logger.info(
+      {
+        duration,
+      },
+      "Cloudinary connected successfully"
+    );
     return true;
   } catch (error) {
-    console.error("❌ Cloudinary connection failed:", error);
+    const duration = Date.now() - startTime;
+    logger.error(
+      {
+        error: error instanceof Error ? error.message : String(error),
+        cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+        duration,
+      },
+      "Cloudinary connection failed"
+    );
     return false;
   }
 };

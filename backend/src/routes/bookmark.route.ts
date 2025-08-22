@@ -8,10 +8,13 @@ import {
 import {
   generalApiLimiter,
   writeOperationsLimiter,
-} from "../middleware/coreRateLimits";
-import { requireAuth } from "../middleware/requireAuth";
+} from "../middleware/coreRateLimits.middleware";
+import attachLogContext from "../middleware/logContext.middleware";
+import { requireAuth } from "../middleware/requireAuth.middleware";
 
-const route = express.Router();
+const router = express.Router();
+
+router.use(attachLogContext("BookmarkController"));
 
 /**
  * @openapi
@@ -57,7 +60,7 @@ const route = express.Router();
  *       500:
  *         description: Internal server error
  */
-route.get("/users/bookmarks", generalApiLimiter, requireAuth, getBookmarks);
+router.get("/users/bookmarks", generalApiLimiter, requireAuth, getBookmarks);
 
 /**
  * @openapi
@@ -93,7 +96,7 @@ route.get("/users/bookmarks", generalApiLimiter, requireAuth, getBookmarks);
  *       500:
  *         description: Internal server error
  */
-route.post(
+router.post(
   "/posts/:id/bookmark",
   writeOperationsLimiter,
   requireAuth,
@@ -132,11 +135,11 @@ route.post(
  *       500:
  *         description: Internal server error
  */
-route.delete(
+router.delete(
   "/users/:id/bookmark",
   writeOperationsLimiter,
   requireAuth,
   deleteBookmark
 );
 
-export default route;
+export default router;

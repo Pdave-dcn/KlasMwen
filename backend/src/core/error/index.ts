@@ -1,3 +1,5 @@
+/* eslint-disable max-lines-per-function*/
+/* eslint-disable complexity*/
 import {
   PrismaClientInitializationError,
   PrismaClientKnownRequestError,
@@ -8,16 +10,41 @@ import {
 import { MulterError } from "multer";
 import { ZodError } from "zod";
 
-import BaseCustomError from "./custom/base.error.js";
-import AuthErrorHandler from "./handlers/auth";
-import DatabaseErrorHandler from "./handlers/database";
-import FileUploadErrorHandler from "./handlers/fileUpload";
-import GenericErrorHandler from "./handlers/generic";
-import ValidationErrorHandler from "./handlers/validation";
+import { logger } from "../config/logger.js";
 
-import type { Response } from "express";
+import BaseCustomError from "./custom/base.error.js";
+import AuthErrorHandler from "./handlers/auth.js";
+import DatabaseErrorHandler from "./handlers/database.js";
+import FileUploadErrorHandler from "./handlers/fileUpload.js";
+import GenericErrorHandler from "./handlers/generic.js";
+import ValidationErrorHandler from "./handlers/validation.js";
+
+import type { Request, Response } from "express";
 
 export const handleError = (error: unknown, res: Response): Response => {
+  const req = res.req as
+    | (Request & { logContext?: Record<string, unknown> })
+    | undefined;
+  const contextLogger = logger.child(req?.logContext ?? {});
+
+  const errorType =
+    error instanceof Error ? error.constructor.name : typeof error;
+  const errorMessage = error instanceof Error ? error.message : String(error);
+
+  contextLogger.error(
+    {
+      errorType,
+      errorDescription: errorMessage,
+      stack:
+        process.env.NODE_ENV === "development"
+          ? error instanceof Error
+            ? error.stack
+            : undefined
+          : undefined,
+    },
+    `Request failed with error (${errorType})`
+  );
+
   let errorResponse;
 
   // Handle all custom errors

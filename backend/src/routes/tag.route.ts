@@ -10,10 +10,13 @@ import {
 import {
   generalApiLimiter,
   writeOperationsLimiter,
-} from "../middleware/coreRateLimits.js";
-import { requireAuth } from "../middleware/requireAuth.js";
+} from "../middleware/coreRateLimits.middleware.js";
+import attachLogContext from "../middleware/logContext.middleware.js";
+import { requireAuth } from "../middleware/requireAuth.middleware.js";
 
 const router = express.Router();
+
+router.use(attachLogContext("TagController"));
 
 /**
  * @openapi

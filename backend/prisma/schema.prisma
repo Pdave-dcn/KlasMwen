@@ -27,7 +27,8 @@ model User {
   email     String     @unique
   password  String
   bio       String?
-  avatarUrl String?    @map("avatar_url")
+  Avatar    Avatar?    @relation(fields: [avatarId], references: [id])
+  avatarId  Int?       @map("avatar_id")
   role      Role       @default(STUDENT)
   posts     Post[]
   comments  Comment[]
@@ -36,6 +37,16 @@ model User {
   createdAt DateTime   @default(now()) @map("created_at")
 
   @@map("users")
+}
+
+// Represents a profile avatar that users can be assigned or choose
+model Avatar {
+  id        Int     @id @default(autoincrement())
+  url       String  @unique
+  isDefault Boolean @default(false) @map("is_default")
+  users     User[]
+
+  @@map("avatars")
 }
 
 // Represents a post created by a user (question, note, or resource)

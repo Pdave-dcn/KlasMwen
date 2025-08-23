@@ -7,6 +7,7 @@ import {
   getMyPosts,
 } from "../../controllers/user.controller.js";
 import prisma from "../../core/config/db.js";
+import { createLogger } from "../../core/config/logger.js";
 import { AuthenticationError } from "../../core/error/custom/auth.error.js";
 import { handleError } from "../../core/error/index.js";
 
@@ -23,6 +24,33 @@ vi.mock("../../core/config/db.js", () => ({
       findMany: vi.fn(),
       count: vi.fn(),
     },
+  },
+}));
+
+vi.mock("../../core/config/logger.js", () => ({
+  createLogger: vi.fn(() => ({
+    child: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  })),
+  logger: {
+    child: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
@@ -121,7 +149,9 @@ describe("User Controller", () => {
             id: true,
             username: true,
             bio: true,
-            avatarUrl: true,
+            Avatar: {
+              select: { id: true, url: true },
+            },
             role: true,
             createdAt: true,
           },
@@ -142,7 +172,9 @@ describe("User Controller", () => {
             id: true,
             username: true,
             bio: true,
-            avatarUrl: true,
+            Avatar: {
+              select: { id: true, url: true },
+            },
             role: true,
             createdAt: true,
           },
@@ -224,7 +256,7 @@ describe("User Controller", () => {
         mockReq.user = createAuthenticatedUser();
         mockReq.body = {
           bio: "Updated bio",
-          avatarUrl: "https://example.com/new-avatar.jpg",
+          avatarId: 1,
         };
 
         const updatedUser = { ...mockUser, bio: "Updated bio" };
@@ -239,13 +271,15 @@ describe("User Controller", () => {
           where: { id: mockUser.id },
           data: {
             bio: "Updated bio",
-            avatarUrl: "https://example.com/new-avatar.jpg",
+            avatarId: 1,
           },
           select: {
             id: true,
             username: true,
             bio: true,
-            avatarUrl: true,
+            Avatar: {
+              select: { id: true, url: true },
+            },
             role: true,
           },
         });
@@ -269,13 +303,15 @@ describe("User Controller", () => {
           where: { id: mockUser.id },
           data: {
             bio: "New bio only",
-            avatarUrl: undefined,
+            avatarId: undefined,
           },
           select: {
             id: true,
             username: true,
             bio: true,
-            avatarUrl: true,
+            Avatar: {
+              select: { id: true, url: true },
+            },
             role: true,
           },
         });
@@ -287,10 +323,10 @@ describe("User Controller", () => {
 
       it("should update user profile with only avatarUrl", async () => {
         mockReq.user = createAuthenticatedUser();
-        mockReq.body = { avatarUrl: "https://example.com/avatar.png" };
+        mockReq.body = { avatarId: 1 };
         const updatedUser = {
           ...mockUser,
-          avatarUrl: "https://example.com/avatar.png",
+          avatarId: 1,
         };
         (prisma.user.findUnique as any).mockResolvedValue(mockUser);
 
@@ -298,17 +334,20 @@ describe("User Controller", () => {
 
         await updateUserProfile(mockReq, mockRes);
 
+        expect(handleError).not.toHaveBeenCalled();
         expect(prisma.user.update).toHaveBeenCalledWith({
           where: { id: mockUser.id },
           data: {
             bio: undefined,
-            avatarUrl: "https://example.com/avatar.png",
+            avatarId: 1,
           },
           select: {
             id: true,
             username: true,
             bio: true,
-            avatarUrl: true,
+            Avatar: {
+              select: { id: true, url: true },
+            },
             role: true,
           },
         });

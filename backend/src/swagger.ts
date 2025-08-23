@@ -32,6 +32,47 @@ const options: swaggerJSDoc.Options = {
         },
       },
 
+      parameters: {
+        LimitParam: {
+          name: "limit",
+          in: "query",
+          description: "Number of avatars to return per page",
+          required: false,
+          schema: {
+            type: "integer",
+            minimum: 1,
+            maximum: 60,
+            default: 20,
+            example: 20,
+          },
+        },
+
+        CursorParam: {
+          name: "cursor",
+          in: "query",
+          description:
+            "Cursor for pagination (ID of the last item from previous page)",
+          required: false,
+          schema: {
+            type: "integer",
+            minimum: 1,
+            example: 25,
+          },
+        },
+
+        AvatarIdParam: {
+          name: "id",
+          in: "path",
+          required: true,
+          description: "The unique identifier of the avatar",
+          schema: {
+            type: "integer",
+            minimum: 1,
+            example: 5,
+          },
+        },
+      },
+
       schemas: {
         User: {
           type: "object",
@@ -74,7 +115,17 @@ const options: swaggerJSDoc.Options = {
           properties: {
             id: { type: "string", format: "uuid" },
             username: { type: "string" },
-            avatarUrl: { type: "string", nullable: true },
+            Avatar: {
+              type: "object",
+              nullable: true,
+              properties: {
+                id: { type: "integer", example: 15 },
+                url: {
+                  type: "string",
+                  example: "https://cdn.example.com/avatars/avatar1.png",
+                },
+              },
+            },
           },
         },
 
@@ -418,10 +469,123 @@ const options: swaggerJSDoc.Options = {
             },
           },
         },
+
+        Avatar: {
+          type: "object",
+          properties: {
+            id: {
+              type: "integer",
+              description: "Unique identifier for the avatar",
+              example: 1,
+            },
+            url: {
+              type: "string",
+              format: "uri",
+              description: "URL pointing to the avatar image",
+              example: "https://cdn.example.com/avatars/avatar1.png",
+            },
+            isDefault: {
+              type: "boolean",
+              description: "Whether this avatar is a default avatar",
+              example: false,
+            },
+          },
+          required: ["id", "url", "isDefault"],
+        },
+
+        CreateAvatarRequest: {
+          type: "object",
+          properties: {
+            url: {
+              type: "string",
+              format: "uri",
+              description: "URL pointing to the avatar image",
+              example: "https://cdn.example.com/avatars/new-avatar.png",
+            },
+            isDefault: {
+              type: "boolean",
+              description: "Whether this avatar should be a default avatar",
+              default: false,
+              example: false,
+            },
+          },
+          required: ["url"],
+        },
+
+        PaginatedAvatarsResponse: {
+          type: "object",
+          properties: {
+            data: {
+              type: "array",
+              items: {
+                $ref: "#/components/schemas/Avatar",
+              },
+            },
+            pagination: {
+              type: "object",
+              properties: {
+                hasMore: {
+                  type: "boolean",
+                  description: "Whether there are more items available",
+                  example: true,
+                },
+                nextCursor: {
+                  type: "integer",
+                  nullable: true,
+                  description:
+                    "Cursor for the next page (null if no more pages)",
+                  example: 25,
+                },
+              },
+              required: ["hasMore", "nextCursor"],
+            },
+          },
+          required: ["data", "pagination"],
+        },
+
+        AvatarCreateResponse: {
+          type: "object",
+          properties: {
+            message: {
+              type: "string",
+              example: "Avatar(s) added successfully",
+            },
+            data: {
+              oneOf: [
+                {
+                  $ref: "#/components/schemas/Avatar",
+                },
+                {
+                  type: "object",
+                  properties: {
+                    count: {
+                      type: "integer",
+                      description: "Number of avatars created",
+                      example: 3,
+                    },
+                  },
+                },
+              ],
+            },
+          },
+          required: ["message", "data"],
+        },
+
+        AvatarDeleteResponse: {
+          type: "object",
+          properties: {
+            message: {
+              type: "string",
+              example: "Avatar deleted successfully",
+            },
+          },
+          required: ["message"],
+        },
       },
     },
     tags: [
       { name: "Auth", description: "Operations related to auth" },
+      { name: "Avatars", description: "Operations related to avatars" },
       { name: "Bookmarks", description: "Operations related to bookmarking" },
       { name: "Comments", description: "Operations related to comments" },
       { name: "Posts", description: "Operations related to posts" },

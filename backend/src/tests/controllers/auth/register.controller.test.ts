@@ -6,6 +6,9 @@ import {
   UserService,
   registerUser,
 } from "../../../controllers/auth/register.controller.js";
+import prisma from "../../../core/config/db.js";
+import { createLogger } from "../../../core/config/logger.js";
+import { handleError } from "../../../core/error/index.js";
 
 import type { Request, Response } from "express";
 
@@ -14,6 +17,38 @@ vi.mock("../../../core/config/db.js", () => ({
     user: {
       create: vi.fn(),
     },
+    avatar: {
+      findMany: vi.fn(),
+    },
+  },
+}));
+
+vi.mock("../../../core/error/index.js");
+
+vi.mock("../../../core/config/logger.js", () => ({
+  createLogger: vi.fn(() => ({
+    child: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  })),
+  logger: {
+    child: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
@@ -47,6 +82,7 @@ describe("UserService class", () => {
         username: "john",
         email: "john@test.com",
         password: "hashed_password",
+        avatarId: 1,
       };
 
       const mockUser = {
@@ -56,7 +92,7 @@ describe("UserService class", () => {
         email: "john@test.com",
         role: "STUDENT" as const,
         bio: null,
-        avatarUrl: null,
+        avatarId: 1,
         createdAt: new Date(),
       };
 
@@ -157,15 +193,34 @@ describe("Register User Controller", () => {
         email: "john@test.com",
         role: "STUDENT" as const,
         bio: null,
-        avatarUrl: null,
+        avatarId: 1,
         createdAt: new Date(),
       };
 
-      const prisma = await import("../../../core/config/db.js");
-      vi.mocked(prisma.default.user.create).mockResolvedValue(mockUser);
+      const mockDefaultAvatars = [
+        {
+          id: 1,
+          url: "https://mock-url-1.com",
+          isDefault: true,
+        },
+        {
+          id: 2,
+          url: "https://mock-url-2.com",
+          isDefault: true,
+        },
+        {
+          id: 3,
+          url: "https://mock-url-3.com",
+          isDefault: true,
+        },
+      ];
+
+      vi.mocked(prisma.avatar.findMany).mockResolvedValue(mockDefaultAvatars);
+      vi.mocked(prisma.user.create).mockResolvedValue(mockUser);
 
       await registerUser(mockRequest as Request, mockResponse as Response);
 
+      expect(handleError).not.toHaveBeenCalled();
       expect(mockResponse.status).toHaveBeenCalledWith(201);
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "User registered successfully",

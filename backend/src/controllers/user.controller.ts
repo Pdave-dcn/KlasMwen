@@ -48,7 +48,9 @@ const getUserById = async (req: Request, res: Response) => {
         id: true,
         username: true,
         bio: true,
-        avatarUrl: true,
+        Avatar: {
+          select: { id: true, url: true },
+        },
         role: true,
         createdAt: true,
       },
@@ -75,7 +77,7 @@ const getUserById = async (req: Request, res: Response) => {
         requestedUserId: userId,
         foundUsername: user.username,
         userRole: user.role,
-        hasAvatar: !!user.avatarUrl,
+        hasAvatar: !!user.Avatar,
         hasBio: !!user.bio,
         validationDuration,
         dbDuration,
@@ -108,14 +110,14 @@ const updateUserProfile = async (req: Request, res: Response) => {
 
     actionLogger.debug("Validating profile update data");
     const validationStartTime = Date.now();
-    const { bio, avatarUrl } = UpdateUserProfileSchema.parse(req.body);
+    const { bio, avatarId } = UpdateUserProfileSchema.parse(req.body);
     const validationDuration = Date.now() - validationStartTime;
 
     actionLogger.info(
       {
         userId: user.id,
         hasBioUpdate: !!bio,
-        hasAvatarUpdate: !!avatarUrl,
+        hasAvatarUpdate: !!avatarId,
         bioLength: bio?.length,
         authDuration,
         validationDuration,
@@ -149,12 +151,14 @@ const updateUserProfile = async (req: Request, res: Response) => {
     const dbUpdateStartTime = Date.now();
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
-      data: { bio, avatarUrl },
+      data: { bio, avatarId },
       select: {
         id: true,
         username: true,
         bio: true,
-        avatarUrl: true,
+        Avatar: {
+          select: { id: true, url: true },
+        },
         role: true,
       },
     });
@@ -166,7 +170,7 @@ const updateUserProfile = async (req: Request, res: Response) => {
         userId: user.id,
         username: updatedUser.username,
         updatedBio: !!updatedUser.bio,
-        updatedAvatar: !!updatedUser.avatarUrl,
+        updatedAvatar: !!updatedUser.Avatar,
         bioLength: updatedUser.bio?.length,
         authDuration,
         validationDuration,

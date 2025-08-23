@@ -83,8 +83,8 @@ const buildPaginatedQuery = <TModel extends keyof PrismaClient>(
 
   const query = {
     ...baseQuery,
-    where: where ?? baseQuery.where,
-    orderBy: orderBy ?? baseQuery.orderBy ?? { createdAt: "desc" },
+    where: where ?? baseQuery.where ?? undefined,
+    orderBy: orderBy ?? baseQuery.orderBy ?? undefined,
     take: limit + 1,
   };
 

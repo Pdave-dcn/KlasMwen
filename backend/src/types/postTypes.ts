@@ -7,7 +7,10 @@ interface Comment {
   author: {
     id: string;
     username: string;
-    avatarUrl: string | null;
+    Avatar: {
+      id: number;
+      url: string;
+    } | null;
   };
 }
 
@@ -25,7 +28,10 @@ interface RawPost {
   author: {
     id: string;
     username: string;
-    avatarUrl: string | null;
+    Avatar: {
+      id: number;
+      url: string;
+    } | null;
   };
   postTags: {
     postId: string;
@@ -72,7 +78,10 @@ interface RawPostWithComments extends Required<Pick<RawPost, "comments">> {
   author: {
     id: string;
     username: string;
-    avatarUrl: string | null;
+    Avatar: {
+      id: number;
+      url: string;
+    } | null;
   };
   postTags: {
     postId: string;

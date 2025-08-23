@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import prisma from "../../core/config/db.js";
 import { createLogger } from "../../core/config/logger.js";
 import { handleError } from "../../core/error/index.js";
+import { getRandomDefaultAvatar } from "../../features/avatar/avatarService.js";
 import createActionLogger from "../../utils/logger.util.js";
 import RegisterUserSchema from "../../zodSchemas/register.zod.js";
 
@@ -46,6 +47,7 @@ class UserService {
     username: string;
     email: string;
     password: string;
+    avatarId: number;
   }) {
     const methodLogger = serviceLogger.child({
       method: "createUser",
@@ -60,6 +62,7 @@ class UserService {
         username: userData.username,
         email: userData.email,
         password: userData.password,
+        avatarId: userData.avatarId,
       },
       select: {
         id: true,
@@ -146,21 +149,25 @@ const registerUser = async (req: Request, res: Response) => {
     const startTime = Date.now();
 
     actionLogger.debug("Validating request body");
-    const validatedBody = RegisterUserSchema.parse(req.body);
+    const { email, username, password } = RegisterUserSchema.parse(req.body);
 
-    const emailDomain = validatedBody.email.split("@")[1];
+    const emailDomain = email.split("@")[1];
     actionLogger.info(
-      `Registration data validated (username: ${validatedBody.username}, emailDomain: ${emailDomain})`
+      `Registration data validated (username: ${username}, emailDomain: ${emailDomain})`
     );
 
     actionLogger.debug("Hashing password");
-    const passwordHash = await UserService.hashPassword(validatedBody.password);
+    const passwordHash = await UserService.hashPassword(password);
+
+    actionLogger.debug("Retrieving user default avatar");
+    const avatar = await getRandomDefaultAvatar();
 
     actionLogger.debug("Creating user in database");
     const newUser = await UserService.createUser({
-      username: validatedBody.username,
-      email: validatedBody.email,
+      username,
+      email,
       password: passwordHash,
+      avatarId: avatar.id,
     });
 
     actionLogger.debug("Generating authentication token");

@@ -31,7 +31,11 @@ const bookmarkWithPost = Prisma.validator<Prisma.BookmarkFindManyArgs>()({
         fileName: true,
         createdAt: true,
         author: {
-          select: { id: true, username: true, avatarUrl: true },
+          select: {
+            id: true,
+            username: true,
+            Avatar: { select: { id: true, url: true } },
+          },
         },
         postTags: {
           include: { tag: true },

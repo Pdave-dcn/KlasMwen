@@ -27,7 +27,7 @@ vi.mock("../../core/config/db.js", () => ({
 
 vi.mock("../../core/error/index.js");
 
-describe("Tag controller", () => {
+describe("Tag controllers", () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
 
@@ -493,7 +493,7 @@ describe("Tag controller", () => {
           username: "test_username",
           email: "test_email",
         },
-        params: { id: "1" },
+        params: { id: "1.5" },
       };
 
       vi.mocked(prisma.tag.findUnique)

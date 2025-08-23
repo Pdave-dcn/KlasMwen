@@ -252,7 +252,11 @@ const getPostById = async (req: Request, res: Response) => {
         createdAt: true,
         updatedAt: true,
         author: {
-          select: { id: true, username: true, avatarUrl: true },
+          select: {
+            id: true,
+            username: true,
+            Avatar: { select: { id: true, url: true } },
+          },
         },
         postTags: {
           include: { tag: true },
@@ -263,7 +267,11 @@ const getPostById = async (req: Request, res: Response) => {
             content: true,
             createdAt: true,
             author: {
-              select: { id: true, username: true, avatarUrl: true },
+              select: {
+                id: true,
+                username: true,
+                Avatar: { select: { id: true, url: true } },
+              },
             },
           },
           orderBy: { createdAt: "asc" },
@@ -353,7 +361,11 @@ const getPostForEdit = async (req: Request, res: Response) => {
         createdAt: true,
         updatedAt: true,
         author: {
-          select: { id: true, username: true, avatarUrl: true },
+          select: {
+            id: true,
+            username: true,
+            Avatar: { select: { id: true, url: true } },
+          },
         },
         postTags: {
           include: { tag: true },

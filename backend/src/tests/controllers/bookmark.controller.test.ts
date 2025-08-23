@@ -438,7 +438,11 @@ describe("Bookmark controller", () => {
               fileName: true,
               createdAt: true,
               author: {
-                select: { id: true, username: true, avatarUrl: true },
+                select: {
+                  id: true,
+                  username: true,
+                  Avatar: { select: { id: true, url: true } },
+                },
               },
               postTags: {
                 include: { tag: true },
@@ -493,7 +497,11 @@ describe("Bookmark controller", () => {
               fileName: true,
               createdAt: true,
               author: {
-                select: { id: true, username: true, avatarUrl: true },
+                select: {
+                  id: true,
+                  username: true,
+                  Avatar: { select: { id: true, url: true } },
+                },
               },
               postTags: {
                 include: { tag: true },
@@ -525,6 +533,7 @@ describe("Bookmark controller", () => {
 
       await getBookmarks(mockRequest as Request, mockResponse as Response);
 
+      expect(handleError).not.toHaveBeenCalled();
       expect(prisma.bookmark.findMany).toHaveBeenCalledWith({
         where: { userId: mockUserId },
         orderBy: { createdAt: "desc" },
@@ -539,7 +548,11 @@ describe("Bookmark controller", () => {
               fileName: true,
               createdAt: true,
               author: {
-                select: { id: true, username: true, avatarUrl: true },
+                select: {
+                  id: true,
+                  username: true,
+                  Avatar: { select: { id: true, url: true } },
+                },
               },
               postTags: {
                 include: { tag: true },

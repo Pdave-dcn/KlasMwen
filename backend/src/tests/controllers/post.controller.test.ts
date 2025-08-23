@@ -146,8 +146,8 @@ describe("Post Controllers", () => {
         updatedAt: new Date(),
         author: {
           id: "1",
-          username: "testuser",
-          avatarUrl: null,
+          username: "testUser",
+          Avatar: { id: 2, url: "mock-url-2.com" },
         },
         postTags: [],
         comments: [],
@@ -171,7 +171,7 @@ describe("Post Controllers", () => {
         author: {
           id: "1",
           username: "testuser",
-          avatarUrl: null,
+          Avatar: { id: 2, url: "mock-url-2.com" },
         },
         comments: [],
         _count: {
@@ -431,14 +431,22 @@ describe("Post Controllers", () => {
         mimeType: null,
         createdAt: new Date(),
         updatedAt: new Date(),
-        author: { id: 1, username: "testuser", avatarUrl: null },
+        author: {
+          id: 1,
+          username: "testUser",
+          Avatar: { id: 56, url: "mock-url-56.com" },
+        },
         postTags: [],
         comments: [
           {
             id: 1,
             content: "Comment 1",
             createdAt: new Date(),
-            author: { id: 2, username: "commenter", avatarUrl: null },
+            author: {
+              id: 2,
+              username: "commenter",
+              Avatar: { id: 1, url: "mock-url.com" },
+            },
           },
         ],
         _count: { comments: 1, likes: 0 },
@@ -472,7 +480,11 @@ describe("Post Controllers", () => {
           createdAt: true,
           updatedAt: true,
           author: {
-            select: { id: true, username: true, avatarUrl: true },
+            select: {
+              id: true,
+              username: true,
+              Avatar: { select: { id: true, url: true } },
+            },
           },
           postTags: {
             include: { tag: true },
@@ -483,7 +495,11 @@ describe("Post Controllers", () => {
               content: true,
               createdAt: true,
               author: {
-                select: { id: true, username: true, avatarUrl: true },
+                select: {
+                  id: true,
+                  username: true,
+                  Avatar: { select: { id: true, url: true } },
+                },
               },
             },
             orderBy: { createdAt: "asc" },
@@ -516,7 +532,11 @@ describe("Post Controllers", () => {
         mimeType: null,
         createdAt: new Date(),
         updatedAt: new Date(),
-        author: { id: 1, username: "testuser", avatarUrl: null },
+        author: {
+          id: 1,
+          username: "testuser",
+          Avatar: { select: { id: true, url: true } },
+        },
         postTags: [],
         comments: [],
         _count: { comments: 0, likes: 0 },
@@ -530,6 +550,7 @@ describe("Post Controllers", () => {
 
       await getPostById(req, res);
 
+      expect(handleError).not.toHaveBeenCalled();
       expect(prisma.post.findUnique).toHaveBeenCalledWith({
         where: { id: "1" },
         select: {
@@ -544,7 +565,11 @@ describe("Post Controllers", () => {
           createdAt: true,
           updatedAt: true,
           author: {
-            select: { id: true, username: true, avatarUrl: true },
+            select: {
+              id: true,
+              username: true,
+              Avatar: { select: { id: true, url: true } },
+            },
           },
           postTags: {
             include: { tag: true },
@@ -555,7 +580,11 @@ describe("Post Controllers", () => {
               content: true,
               createdAt: true,
               author: {
-                select: { id: true, username: true, avatarUrl: true },
+                select: {
+                  id: true,
+                  username: true,
+                  Avatar: { select: { id: true, url: true } },
+                },
               },
             },
             orderBy: { createdAt: "asc" },

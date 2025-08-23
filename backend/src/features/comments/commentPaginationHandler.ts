@@ -24,20 +24,20 @@ const handleCommentPagination = (
   limit: number,
   totalComments: number
 ): CommentPaginationResult => {
-  const hasNextPage = comments.length > limit;
+  const hasMore = comments.length > limit;
 
   const paginatedComments = comments.slice(0, limit);
 
   // Generate the next cursor (ID of the last comment in the current page)
   const nextCursor =
-    hasNextPage && paginatedComments.length > 0
+    hasMore && paginatedComments.length > 0
       ? paginatedComments[paginatedComments.length - 1].id.toString()
       : null;
 
   return {
     paginatedComments,
     paginationMeta: {
-      hasNextPage,
+      hasMore,
       nextCursor,
       totalComments,
     },

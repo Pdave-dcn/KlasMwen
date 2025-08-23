@@ -181,11 +181,12 @@ const options: swaggerJSDoc.Options = {
                     },
                   },
                 },
-                pagination: {
+                commentsPagination: {
                   type: "object",
                   properties: {
                     hasMore: { type: "boolean" },
-                    nextCursor: { type: "string", nullable: true },
+                    nextCursor: { type: "integer", nullable: true },
+                    totalComments: { type: "integer" },
                   },
                 },
               },

@@ -519,7 +519,7 @@ describe("Post Controllers", () => {
     });
 
     it("should handle custom comment pagination parameters", async () => {
-      const req = mockRequest(null, { id: "1" }, { limit: "10", cursor: "5" });
+      const req = mockRequest(null, { id: "1" }, { limit: "30", cursor: "5" });
       const res = mockResponse();
       const mockPost = {
         id: 1,
@@ -588,7 +588,7 @@ describe("Post Controllers", () => {
               },
             },
             orderBy: { createdAt: "asc" },
-            take: 11,
+            take: 31,
             cursor: { id: 5 },
             skip: 1,
           },
@@ -600,7 +600,7 @@ describe("Post Controllers", () => {
 
       expect(handlePostWithCommentPagination).toHaveBeenCalledWith(
         mockPost,
-        10
+        30
       );
       expect(res.status).toHaveBeenCalledWith(200);
     });

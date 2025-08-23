@@ -30,7 +30,10 @@ describe("handleCommentPagination", () => {
     author: {
       id: `user-${id}`,
       username: `user${id}`,
-      avatarUrl: `https://example.com/avatar${id}.jpg`,
+      Avatar: {
+        id: 1,
+        url: `https://example.com/avatar${id}.jpg`,
+      },
     },
   });
 
@@ -44,14 +47,14 @@ describe("handleCommentPagination", () => {
 
       expect(result.paginatedComments).toHaveLength(2);
       expect(result.paginatedComments).toEqual(comments);
-      expect(result.paginationMeta.hasNextPage).toBe(false);
+      expect(result.paginationMeta.hasMore).toBe(false);
       expect(result.paginationMeta.nextCursor).toBe(null);
       expect(result.paginationMeta.totalComments).toBe(10);
     });
   });
 
   describe("when comments length is greater than limit", () => {
-    it("should remove extra comment and set hasNextPage to true", () => {
+    it("should remove extra comment and set hasMore to true", () => {
       const comments = [
         createMockComment(1),
         createMockComment(2),
@@ -65,7 +68,7 @@ describe("handleCommentPagination", () => {
       expect(result.paginatedComments).toHaveLength(2);
       expect(result.paginatedComments[0].id).toBe(1);
       expect(result.paginatedComments[1].id).toBe(2);
-      expect(result.paginationMeta.hasNextPage).toBe(true);
+      expect(result.paginationMeta.hasMore).toBe(true);
       expect(result.paginationMeta.nextCursor).toBe("2");
       expect(result.paginationMeta.totalComments).toBe(15);
     });
@@ -85,7 +88,7 @@ describe("handleCommentPagination", () => {
 
       expect(result.paginatedComments).toHaveLength(3);
       expect(result.paginatedComments.map((c) => c.id)).toEqual([1, 2, 3]);
-      expect(result.paginationMeta.hasNextPage).toBe(true);
+      expect(result.paginationMeta.hasMore).toBe(true);
       expect(result.paginationMeta.nextCursor).toBe("3");
     });
   });
@@ -99,7 +102,7 @@ describe("handleCommentPagination", () => {
       const result = handleCommentPagination(comments, limit, totalComments);
 
       expect(result.paginatedComments).toHaveLength(0);
-      expect(result.paginationMeta.hasNextPage).toBe(false);
+      expect(result.paginationMeta.hasMore).toBe(false);
       expect(result.paginationMeta.nextCursor).toBe(null);
       expect(result.paginationMeta.totalComments).toBe(0);
     });
@@ -115,7 +118,7 @@ describe("handleCommentPagination", () => {
 
       expect(result.paginatedComments).toHaveLength(1);
       expect(result.paginatedComments).toEqual(comments);
-      expect(result.paginationMeta.hasNextPage).toBe(false);
+      expect(result.paginationMeta.hasMore).toBe(false);
       expect(result.paginationMeta.nextCursor).toBe(null);
       expect(result.paginationMeta.totalComments).toBe(1);
     });
@@ -128,7 +131,7 @@ describe("handleCommentPagination", () => {
       const result = handleCommentPagination(comments, limit, totalComments);
 
       expect(result.paginatedComments).toHaveLength(2);
-      expect(result.paginationMeta.hasNextPage).toBe(false);
+      expect(result.paginationMeta.hasMore).toBe(false);
       expect(result.paginationMeta.nextCursor).toBe(null);
     });
   });
@@ -194,7 +197,7 @@ describe("handleCommentPagination", () => {
       const result = handleCommentPagination(comments, limit, totalComments);
 
       expect(result.paginatedComments).toHaveLength(0);
-      expect(result.paginationMeta.hasNextPage).toBe(true);
+      expect(result.paginationMeta.hasMore).toBe(true);
       expect(result.paginationMeta.nextCursor).toBe(null);
     });
 
@@ -214,7 +217,10 @@ describe("handlePostWithCommentPagination", () => {
   const mockAuthor = {
     id: "user-123",
     username: "testuser",
-    avatarUrl: "https://example.com/avatar.jpg",
+    Avatar: {
+      id: 1,
+      url: "mock-avatar-url.com",
+    },
   };
 
   const createMockPost = (
@@ -249,7 +255,10 @@ describe("handlePostWithCommentPagination", () => {
       author: {
         id: `user-${i + 1}`,
         username: `user${i + 1}`,
-        avatarUrl: null,
+        Avatar: {
+          id: 1,
+          url: "mock-avatar-url.com",
+        },
       },
     })),
     _count: {
@@ -284,7 +293,7 @@ describe("handlePostWithCommentPagination", () => {
       expect(result.comments?.[1].id).toBe(2);
 
       // Check pagination metadata
-      expect(result.commentsPagination.hasNextPage).toBe(true);
+      expect(result.commentsPagination.hasMore).toBe(true);
       expect(result.commentsPagination.nextCursor).toBe("2");
       expect(result.commentsPagination.totalComments).toBe(10);
     });
@@ -308,7 +317,7 @@ describe("handlePostWithCommentPagination", () => {
       const result = handlePostWithCommentPagination(post, commentLimit);
 
       expect(result.comments).toHaveLength(2);
-      expect(result.commentsPagination.hasNextPage).toBe(false);
+      expect(result.commentsPagination.hasMore).toBe(false);
       expect(result.commentsPagination.nextCursor).toBe(null);
       expect(result.commentsPagination.totalComments).toBe(5);
     });
@@ -320,7 +329,7 @@ describe("handlePostWithCommentPagination", () => {
       const result = handlePostWithCommentPagination(post, commentLimit);
 
       expect(result.comments).toHaveLength(0);
-      expect(result.commentsPagination.hasNextPage).toBe(false);
+      expect(result.commentsPagination.hasMore).toBe(false);
       expect(result.commentsPagination.nextCursor).toBe(null);
       expect(result.commentsPagination.totalComments).toBe(0);
     });
@@ -332,7 +341,7 @@ describe("handlePostWithCommentPagination", () => {
       const result = handlePostWithCommentPagination(post, commentLimit);
 
       expect(result.comments).toHaveLength(1);
-      expect(result.commentsPagination.hasNextPage).toBe(false);
+      expect(result.commentsPagination.hasMore).toBe(false);
       expect(result.commentsPagination.nextCursor).toBe(null);
       expect(result.commentsPagination.totalComments).toBe(1);
     });
@@ -344,7 +353,7 @@ describe("handlePostWithCommentPagination", () => {
       const result = handlePostWithCommentPagination(post, commentLimit);
 
       expect(result.comments).toHaveLength(10);
-      expect(result.commentsPagination.hasNextPage).toBe(true);
+      expect(result.commentsPagination.hasMore).toBe(true);
       expect(result.commentsPagination.nextCursor).toBe("10");
       expect(result.commentsPagination.totalComments).toBe(100);
     });
@@ -357,7 +366,6 @@ describe("handlePostWithCommentPagination", () => {
 
       const result = handlePostWithCommentPagination(post, commentLimit);
 
-      // Check all original properties are preserved
       expect(result.id).toBe(post.id);
       expect(result.title).toBe(post.title);
       expect(result.content).toBe(post.content);
@@ -369,7 +377,7 @@ describe("handlePostWithCommentPagination", () => {
 
       // Check pagination metadata is added
       expect(result.commentsPagination).toBeDefined();
-      expect(typeof result.commentsPagination.hasNextPage).toBe("boolean");
+      expect(typeof result.commentsPagination.hasMore).toBe("boolean");
       expect(typeof result.commentsPagination.totalComments).toBe("number");
     });
 
@@ -414,7 +422,7 @@ describe("handlePostWithCommentPagination", () => {
       expect(typeof result.id).toBe("string");
       expect(Array.isArray(result.tags)).toBe(true);
       expect(Array.isArray(result.comments)).toBe(true);
-      expect(typeof result.commentsPagination.hasNextPage).toBe("boolean");
+      expect(typeof result.commentsPagination.hasMore).toBe("boolean");
       expect(typeof result.commentsPagination.totalComments).toBe("number");
       expect(result).not.toHaveProperty("postTags");
     });
@@ -443,7 +451,7 @@ describe("handlePostWithCommentPagination", () => {
 
       expect(result.comments).toHaveLength(1);
       expect(result.comments?.[0].id).toBe(1);
-      expect(result.commentsPagination.hasNextPage).toBe(true);
+      expect(result.commentsPagination.hasMore).toBe(true);
       expect(result.commentsPagination.nextCursor).toBe("1");
       expect(result.commentsPagination.totalComments).toBe(10);
     });
@@ -453,7 +461,7 @@ describe("handlePostWithCommentPagination", () => {
       const result = handlePostWithCommentPagination(post, 0);
 
       expect(result.comments).toHaveLength(0);
-      expect(result.commentsPagination.hasNextPage).toBe(true);
+      expect(result.commentsPagination.hasMore).toBe(true);
       expect(result.commentsPagination.nextCursor).toBe(null);
     });
 

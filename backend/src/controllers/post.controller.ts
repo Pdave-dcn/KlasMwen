@@ -20,6 +20,7 @@ import {
 import createActionLogger from "../utils/logger.util.js";
 import {
   buildPaginatedQuery,
+  createPaginationSchema,
   processPaginatedResults,
   uuidPaginationSchema,
 } from "../utils/pagination.util.js";
@@ -229,8 +230,9 @@ const getPostById = async (req: Request, res: Response) => {
     const { id: postId } = PostIdParamSchema.parse(req.params);
     actionLogger.debug({ postId }, "Post ID parameter parsed");
 
-    const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
-    const cursor = (req.query.cursor as string) || undefined;
+    const customPostCommentSchema = createPaginationSchema(20, 50, "number");
+    const { limit, cursor } = customPostCommentSchema.parse(req.query);
+
     actionLogger.debug(
       { limit, cursor, hasCursor: !!cursor },
       "Comment pagination parameters"
@@ -277,7 +279,7 @@ const getPostById = async (req: Request, res: Response) => {
           orderBy: { createdAt: "asc" },
           take: limit + 1,
           ...(cursor && {
-            cursor: { id: parseInt(cursor) },
+            cursor: { id: cursor as number },
             skip: 1,
           }),
         },

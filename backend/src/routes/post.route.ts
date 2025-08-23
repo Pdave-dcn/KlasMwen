@@ -95,19 +95,22 @@ router.post(
  *     parameters:
  *       - in: path
  *         name: id
+ *         description: The unique identifier of the post
  *         required: true
  *         schema:
  *           type: string
  *           format: uuid
  *       - in: query
  *         name: limit
+ *         description: Number of comments to return per page
  *         schema:
  *           type: integer
  *           default: 20
  *       - in: query
  *         name: cursor
+ *         description: Cursor for pagination (ID of the last comment from previous page)
  *         schema:
- *           type: string
+ *           type: integer
  *     responses:
  *       200:
  *         description: Post details with comments

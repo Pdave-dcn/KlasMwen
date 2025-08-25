@@ -68,7 +68,7 @@ router.get("/comments/:id/replies", generalApiLimiter, getReplies);
  *     description: Creates a new comment under a post
  *     tags: [Comments]
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -114,7 +114,7 @@ router.post(
  *     description: Deletes a comment by its ID. The authenticated user must have permission to delete it.
  *     tags: [Comments]
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id

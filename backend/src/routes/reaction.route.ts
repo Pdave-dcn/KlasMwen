@@ -17,7 +17,7 @@ router.use(attachLogContext("reactionController"));
  *     description: Likes or unlikes a post depending on the current state for the authenticated user.
  *     tags: [Reactions]
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id

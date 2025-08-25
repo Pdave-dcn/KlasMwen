@@ -24,11 +24,11 @@ const options: swaggerJSDoc.Options = {
     ],
     components: {
       securitySchemes: {
-        bearerAuth: {
-          type: "http",
-          scheme: "bearer",
-          bearerFormat: "JWT",
-          description: "Enter JWT token in format: Bearer <token>",
+        cookieAuth: {
+          type: "apiKey",
+          in: "cookie",
+          name: "token",
+          description: "Authentication is handled via httpOnly cookie",
         },
       },
 

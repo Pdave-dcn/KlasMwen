@@ -184,10 +184,16 @@ const registerUser = async (req: Request, res: Response) => {
       "User registration completed successfully"
     );
 
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "none",
+      maxAge: 3 * 24 * 60 * 60 * 1000,
+    });
+
     return res.status(201).json({
       message: "User registered successfully",
       user: newUser,
-      token,
     });
   } catch (error: unknown) {
     return handleError(error, res);

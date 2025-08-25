@@ -8,7 +8,7 @@ const allowedOrigin = process.env.ALLOWED_ORIGIN;
 
 export const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
-    if (!origin || allowedOrigin?.includes(origin)) {
+    if (!origin || origin === allowedOrigin) {
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"));

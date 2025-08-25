@@ -24,7 +24,7 @@ router.use(attachLogContext("BookmarkController"));
  *     description: Retrieve a paginated list of bookmarked posts for the authenticated user
  *     tags: [Bookmarks]
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - name: limit
  *         in: query
@@ -70,7 +70,7 @@ router.get("/users/bookmarks", generalApiLimiter, requireAuth, getBookmarks);
  *     description: Bookmark a post for the authenticated user
  *     tags: [Bookmarks]
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - name: id
  *         in: path
@@ -111,7 +111,7 @@ router.post(
  *     description: Remove a bookmark for the authenticated user
  *     tags: [Bookmarks]
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - name: id
  *         in: path

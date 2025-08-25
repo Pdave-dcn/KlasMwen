@@ -56,7 +56,7 @@ router.get("/users/:id", generalApiLimiter, getUserById);
  *     description: Updates the bio and avatar of the currently authenticated user.
  *     tags: [Users]
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -93,7 +93,7 @@ router.put("/users/me", writeOperationsLimiter, requireAuth, updateUserProfile);
  *     description: Retrieves a paginated list of posts authored by the currently authenticated user.
  *     tags: [Users]
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: query
  *         name: limit

@@ -64,7 +64,7 @@ router.use(attachLogContext("TagController"));
  *     description: Creates a new tag. Requires authentication.
  *     tags: [Tags]
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -99,7 +99,7 @@ router.use(attachLogContext("TagController"));
  *     description: Fetches a single tag by ID for editing. Requires authentication.
  *     tags: [Tags]
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -131,7 +131,7 @@ router.use(attachLogContext("TagController"));
  *     description: Updates a tag's name. Requires authentication.
  *     tags: [Tags]
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -171,7 +171,7 @@ router.use(attachLogContext("TagController"));
  *     description: Deletes a tag by ID. Requires authentication.
  *     tags: [Tags]
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id

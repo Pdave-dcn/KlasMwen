@@ -3,6 +3,7 @@ import { it, expect, describe, vi, beforeEach } from "vitest";
 
 import { loginUser } from "../../../controllers/auth/login.controller.js";
 import { UserService } from "../../../controllers/auth/register.controller.js";
+import { createLogger } from "../../../core/config/logger.js";
 
 import type { NextFunction, Request, Response } from "express";
 
@@ -10,6 +11,33 @@ vi.mock("passport");
 vi.mock("../../../controllers/auth/register.controller.js", () => ({
   UserService: {
     generateToken: vi.fn(),
+  },
+}));
+
+vi.mock("../../../core/config/logger.js", () => ({
+  createLogger: vi.fn(() => ({
+    child: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  })),
+  logger: {
+    child: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
@@ -35,6 +63,7 @@ describe("Login controller", () => {
     mockResponse = {
       status: vi.fn().mockReturnThis(),
       json: vi.fn(),
+      cookie: vi.fn(),
     };
 
     mockNext = vi.fn();
@@ -65,6 +94,8 @@ describe("Login controller", () => {
       { session: false },
       expect.any(Function)
     );
+
+    expect(mockResponse.cookie).toHaveBeenCalled();
     expect(mockResponse.status).toHaveBeenCalledWith(200);
     expect(mockResponse.json).toHaveBeenCalledWith({
       message: "Login successful",
@@ -74,7 +105,6 @@ describe("Login controller", () => {
         email: mockUser.email,
         role: mockUser.role,
       },
-      token: mockToken,
     });
   });
 
@@ -181,6 +211,7 @@ describe("Login controller", () => {
 
       loginUser(mockRequest, mockResponse as Response, mockNext);
 
+      expect(mockResponse.cookie).toHaveBeenCalled();
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "Login successful",
         user: {
@@ -189,7 +220,6 @@ describe("Login controller", () => {
           email: "john@test.com",
           role: "STUDENT",
         },
-        token: mockToken,
       });
     });
   });

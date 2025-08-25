@@ -173,6 +173,7 @@ describe("Register User Controller", () => {
     mockResponse = {
       status: vi.fn().mockReturnThis(),
       json: vi.fn(),
+      cookie: vi.fn(),
     };
 
     process.env.JWT_SECRET = "test-secret";
@@ -221,11 +222,11 @@ describe("Register User Controller", () => {
       await registerUser(mockRequest as Request, mockResponse as Response);
 
       expect(handleError).not.toHaveBeenCalled();
+      expect(mockResponse.cookie).toHaveBeenCalled();
       expect(mockResponse.status).toHaveBeenCalledWith(201);
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "User registered successfully",
         user: mockUser,
-        token,
       });
     });
   });

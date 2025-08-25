@@ -54,7 +54,7 @@ router.use(attachLogContext("PostController"));
  *     summary: Create a new post
  *     tags: [Posts]
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -134,7 +134,7 @@ router.get("/posts/:id", generalApiLimiter, getPostById);
  *     summary: Get post data for editing
  *     tags: [Posts]
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -167,7 +167,7 @@ router.get("/posts/:id/edit", generalApiLimiter, requireAuth, getPostForEdit);
  *     summary: Get post metadata (admin only)
  *     tags: [Posts]
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -203,7 +203,7 @@ router.get(
  *     summary: Update a post
  *     tags: [Posts]
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -244,7 +244,7 @@ router.put("/posts/:id", writeOperationsLimiter, requireAuth, updatePost);
  *     summary: Delete a post
  *     tags: [Posts]
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id

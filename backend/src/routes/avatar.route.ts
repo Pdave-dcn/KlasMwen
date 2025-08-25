@@ -67,7 +67,7 @@ router.get("/avatars/available", generalApiLimiter, getAvailableAvatars);
  *       Retrieves a paginated list of all avatars in the system, including both
  *       default and non-default avatars. Requires admin authentication.
  *     security:
- *       - BearerAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - $ref: '#/components/parameters/LimitParam'
  *       - $ref: '#/components/parameters/CursorParam'
@@ -107,7 +107,7 @@ router.get("/avatars/available", generalApiLimiter, getAvailableAvatars);
  *       Accepts either a single avatar object or an array of avatar objects.
  *       Requires admin authentication.
  *     security:
- *       - BearerAuth: []
+ *       - cookieAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -184,7 +184,7 @@ router.post("/avatars", writeOperationsLimiter, requireAuth, addAvatar);
  *       The avatar must exist in the system to be deleted.
  *       Requires admin authentication.
  *     security:
- *       - BearerAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - $ref: '#/components/parameters/AvatarIdParam'
  *     responses:

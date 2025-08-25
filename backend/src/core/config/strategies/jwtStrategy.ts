@@ -1,6 +1,8 @@
-import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
+import { Strategy as JwtStrategy } from "passport-jwt";
 
 import prisma from "../db.js";
+
+import type { Request } from "express";
 
 interface User {
   id: string;
@@ -27,8 +29,16 @@ if (!jwtSecret) {
   throw new Error("JWT_SECRET not defined in environment variables");
 }
 
+const cookieExtractor = (req: Request) => {
+  if (req?.cookies) {
+    return req.cookies["token"];
+  }
+
+  return null;
+};
+
 const jwtOptions = {
-  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+  jwtFromRequest: cookieExtractor,
   secretOrKey: jwtSecret,
 };
 

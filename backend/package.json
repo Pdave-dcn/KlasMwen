@@ -65,6 +65,6 @@
     "vitest-mock-extended": "^3.1.0"
   },
   "prisma": {
-    "seed": "tsx src/seeds/seed.ts"
+    "seed": "tsx src/seeds/index.ts"
   }
 }

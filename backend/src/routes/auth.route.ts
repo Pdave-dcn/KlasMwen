@@ -74,6 +74,21 @@ router.use(attachLogContext("AuthController"));
  *                       example: "2025-08-25T14:48:00.000Z"
  *       400:
  *         description: Invalid input data
+ *       409:
+ *         description: Conflict - User already exists (Prisma error P2002)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Unique constraint failed on the field(s): email"
+ *                 fields:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["email"]
  *       429:
  *         description: Too many requests (rate limit exceeded)
  *       500:

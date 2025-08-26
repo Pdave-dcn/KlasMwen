@@ -4,6 +4,7 @@ import { it, expect, describe, vi, beforeEach } from "vitest";
 
 import { toggleLike } from "../../controllers/reaction.controller";
 import prisma from "../../core/config/db.js";
+import { createLogger } from "../../core/config/logger.js";
 import { AuthenticationError } from "../../core/error/custom/auth.error";
 import { handleError } from "../../core/error/index";
 import { PostIdParamSchema } from "../../zodSchemas/post.zod.js";
@@ -25,6 +26,33 @@ vi.mock("../../core/error/index");
 vi.mock("../../zodSchemas/post.zod.js", () => ({
   PostIdParamSchema: {
     parse: vi.fn(),
+  },
+}));
+
+vi.mock("../../core/config/logger.js", () => ({
+  createLogger: vi.fn(() => ({
+    child: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  })),
+  logger: {
+    child: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
   },
 }));
 

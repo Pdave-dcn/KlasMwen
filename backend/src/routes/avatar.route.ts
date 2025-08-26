@@ -165,6 +165,21 @@ router.get("/avatars/available", generalApiLimiter, getAvailableAvatars);
  *         description: Bad request
  *       '401':
  *         description: Unauthorized
+ *       409:
+ *         description: Conflict - Avatar already exists (Prisma error P2002)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Unique constraint failed on the field(s): url"
+ *                 fields:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["url"]
  *       '429':
  *         description: Too many requests (rate limit exceeded)
  *       '500':

@@ -43,6 +43,8 @@ router.use(attachLogContext("reactionController"));
  *         description: The post being reacted to is not found
  *       429:
  *         description: Too many requests (rate limit exceeded)
+ *       500:
+ *         description: Internal server error
  */
 router.post("/posts/:id/like", reactionLimiter, requireAuth, toggleLike);
 

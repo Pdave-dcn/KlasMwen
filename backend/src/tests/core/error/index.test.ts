@@ -9,6 +9,7 @@ import { MulterError } from "multer";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { z } from "zod";
 
+import { createLogger } from "../../../core/config/logger.js";
 import { handleError } from "../../../core/error/index.js";
 
 import type { Response } from "express";
@@ -22,7 +23,33 @@ const createMockResponse = () => {
   return res;
 };
 
-// Mock console methods
+vi.mock("../../../core/config/logger.js", () => ({
+  createLogger: vi.fn(() => ({
+    child: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  })),
+  logger: {
+    child: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
 const consoleMock = {
   error: vi.fn(),
 };
@@ -129,7 +156,7 @@ describe("Error Handler", () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(409);
       expect(mockRes.json).toHaveBeenCalledWith({
-        message: "User with this username already exists.",
+        message: "Unique constraint failed on the field(s): username",
       });
     });
 
@@ -149,7 +176,7 @@ describe("Error Handler", () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(409);
       expect(mockRes.json).toHaveBeenCalledWith({
-        message: "User with this email already exists.",
+        message: "Unique constraint failed on the field(s): email",
       });
     });
 
@@ -845,7 +872,7 @@ describe("Error Handler", () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(409);
       expect(mockRes.json).toHaveBeenCalledWith({
-        message: "User with this email already exists.",
+        message: "Unique constraint failed on the field(s): email",
       });
     });
 
@@ -879,7 +906,7 @@ describe("Error Handler", () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(409);
       expect(mockRes.json).toHaveBeenCalledWith({
-        message: "User with this email already exists.", // Default to email
+        message: "Unique constraint failed on the field(s): field",
       });
     });
 

@@ -49,6 +49,8 @@ router.use(attachLogContext("PostController"));
  *         description: Bad request (e.g., Cursor is not a valid uuid)
  *       429:
  *         description: Too many requests (rate limit exceeded)
+ *       500:
+ *         description: Internal server error
  *
  *   post:
  *     summary: Create a new post
@@ -124,6 +126,8 @@ router.post(
  *         description: Post not found
  *       429:
  *         description: Too many requests (rate limit exceeded)
+ *       500:
+ *         description: Internal server error
  */
 router.get("/posts/:id", generalApiLimiter, getPostById);
 
@@ -157,6 +161,8 @@ router.get("/posts/:id", generalApiLimiter, getPostById);
  *         description: Post not found
  *       429:
  *         description: Too many requests (rate limit exceeded)
+ *       500:
+ *         description: Internal server error
  */
 router.get("/posts/:id/edit", generalApiLimiter, requireAuth, getPostForEdit);
 
@@ -188,6 +194,8 @@ router.get("/posts/:id/edit", generalApiLimiter, requireAuth, getPostForEdit);
  *         description: Post not found
  *       429:
  *         description: Too many requests (rate limit exceeded)
+ *       500:
+ *         description: Internal server error
  */
 router.get(
   "/posts/:id/metadata",
@@ -234,6 +242,8 @@ router.get(
  *         description: Post not found
  *       429:
  *         description: Too many requests (rate limit exceeded)
+ *       500:
+ *         description: Internal server error
  */
 router.put("/posts/:id", writeOperationsLimiter, requireAuth, updatePost);
 
@@ -265,6 +275,8 @@ router.put("/posts/:id", writeOperationsLimiter, requireAuth, updatePost);
  *         description: Post not found
  *       429:
  *         description: Too many requests (rate limit exceeded)
+ *       500:
+ *         description: Internal server error
  */
 router.delete("/posts/:id", writeOperationsLimiter, requireAuth, deletePost);
 

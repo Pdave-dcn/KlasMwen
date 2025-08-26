@@ -45,6 +45,8 @@ router.use(attachLogContext("userController"));
  *         description: User not found
  *       429:
  *         description: Too many requests (rate limit exceeded)
+ *       500:
+ *         description: Internal server error
  */
 router.get("/users/:id", generalApiLimiter, getUserById);
 
@@ -82,6 +84,8 @@ router.get("/users/:id", generalApiLimiter, getUserById);
  *         description: User not found
  *       429:
  *         description: Too many requests (rate limit exceeded)
+ *       500:
+ *         description: Internal server error
  */
 router.put("/users/me", writeOperationsLimiter, requireAuth, updateUserProfile);
 
@@ -135,6 +139,8 @@ router.put("/users/me", writeOperationsLimiter, requireAuth, updateUserProfile);
  *         description: User not authenticated
  *       429:
  *         description: Too many requests (rate limit exceeded)
+ *       500:
+ *         description: Internal server error
  */
 router.get("/users/me/posts", generalApiLimiter, requireAuth, getMyPosts);
 

@@ -57,6 +57,8 @@ router.use(attachLogContext("commentController"));
  *         description: Parent comment not found
  *       429:
  *         description: Too many requests (rate limit exceeded)
+ *       500:
+ *         description: Internal server error
  */
 router.get("/comments/:id/replies", generalApiLimiter, getReplies);
 
@@ -98,6 +100,8 @@ router.get("/comments/:id/replies", generalApiLimiter, getReplies);
  *         description: Post or parent comment not found
  *       429:
  *         description: Too many requests (rate limit exceeded)
+ *       500:
+ *         description: Internal server error
  */
 router.post(
   "/posts/:id/comments",
@@ -143,6 +147,8 @@ router.post(
  *         description: Comment not found
  *       429:
  *         description: Too many requests (rate limit exceeded)
+ *       500:
+ *         description: Internal server error
  */
 router.delete(
   "/comments/:id",

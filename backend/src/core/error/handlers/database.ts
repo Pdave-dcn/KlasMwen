@@ -14,13 +14,14 @@ class DatabaseErrorHandler {
     switch (error.code) {
       // Unique constraint violation
       case "P2002": {
-        const field = error.meta?.target as string[];
-        const fieldName = field?.[0] === "username" ? "username" : "email";
+        const fields = error.meta?.target as string[];
+        const fieldList = fields?.join(", ") ?? "field";
         return {
           status: 409,
           response: {
-            message: `User with this ${fieldName} already exists.`,
+            message: `Unique constraint failed on the field(s): ${fieldList}`,
           },
+          fields,
         };
       }
 

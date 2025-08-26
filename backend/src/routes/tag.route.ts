@@ -58,6 +58,8 @@ router.use(attachLogContext("TagController"));
  *           description: Bad request (e.g., Invalid cursor format)
  *       429:
  *         description: Too many requests (rate limit exceeded)
+ *       500:
+ *         description: Internal server error
  *
  *   post:
  *     summary: Create a new tag (admin only)
@@ -88,10 +90,27 @@ router.use(attachLogContext("TagController"));
  *         description: Invalid input data
  *       401:
  *         description: Unauthorized
+ *       409:
+ *         description: Conflict - Tag already exists (Prisma error P2002)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Unique constraint failed on the field(s): name"
+ *                 fields:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["name"]
  *       403:
  *         description: Admin access required
  *       429:
  *         description: Too many requests (rate limit exceeded)
+ *       500:
+ *         description: Internal server error
  *
  * /tags/{id}/edit:
  *   get:
@@ -124,6 +143,8 @@ router.use(attachLogContext("TagController"));
  *         description: Tag not found
  *       429:
  *         description: Too many requests (rate limit exceeded)
+ *       500:
+ *         description: Internal server error
  *
  * /tags/{id}:
  *   put:
@@ -163,8 +184,12 @@ router.use(attachLogContext("TagController"));
  *         description: Admin access required
  *       404:
  *         description: Tag not found
+ *       409:
+ *         description: Conflict - Tag already exists (Prisma error P2002)
  *       429:
  *         description: Too many requests (rate limit exceeded)
+ *       500:
+ *         description: Internal server error
  *
  *   delete:
  *     summary: Delete a tag (admin only)
@@ -197,6 +222,8 @@ router.use(attachLogContext("TagController"));
  *         description: Tag not found
  *       429:
  *         description: Too many requests (rate limit exceeded)
+ *       500:
+ *         description: Internal server error
  */
 router.get("/tags", generalApiLimiter, getAllTags);
 router.get("/tags/:id/edit", generalApiLimiter, requireAuth, getTagForEdit);

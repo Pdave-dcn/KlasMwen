@@ -69,7 +69,7 @@ export default tseslint.config([
       "no-useless-rename": "error",
       "object-shorthand": "warn",
       "max-params": ["warn", 5],
-      "max-lines-per-function": ["warn", { max: 80, skipBlankLines: true }], // Slightly higher for React components
+      //S"max-lines-per-function": ["warn", { max: 80, skipBlankLines: true }],
       complexity: ["warn", 15],
 
       // MODERN JAVASCRIPT FEATURES
@@ -112,6 +112,10 @@ export default tseslint.config([
         },
         node: {
           extensions: [".js", ".jsx", ".ts", ".tsx"],
+        },
+        alias: {
+          map: [["@", "./src"]],
+          extensions: [".ts", ".tsx", ".js", ".jsx"],
         },
       },
       react: {
@@ -234,7 +238,7 @@ export default tseslint.config([
       "react/no-is-mounted": "error",
       "react/no-render-return-value": "error",
       "react/no-string-refs": "error",
-      "react/no-unescaped-entities": "error",
+      "react/no-unescaped-entities": "off",
       "react/no-unknown-property": "error",
       "react/prop-types": "off", // Using TypeScript for prop validation
       "react/react-in-jsx-scope": "off", // Not needed with new JSX transform
@@ -264,7 +268,7 @@ export default tseslint.config([
       "@typescript-eslint/no-unsafe-member-access": "off",
       "@typescript-eslint/no-unsafe-argument": "off",
       "@typescript-eslint/no-unsafe-return": "off",
-      "@typescript-eslint/no-misused-promises": "off", // Common with async event handlers
+      "@typescript-eslint/no-misused-promises": "off",
     },
   },
 

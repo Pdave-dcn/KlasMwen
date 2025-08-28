@@ -109,7 +109,6 @@ describe("UserService class", () => {
           username: true,
           email: true,
           role: true,
-          createdAt: true,
         },
       });
     });
@@ -226,7 +225,7 @@ describe("Register User Controller", () => {
       expect(mockResponse.status).toHaveBeenCalledWith(201);
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "User registered successfully",
-        user: mockUser,
+        data: mockUser,
       });
     });
   });

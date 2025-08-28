@@ -1,24 +1,67 @@
+import { useEffect } from "react";
+
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-const Home = () => <h2>Home Page</h2>;
-const Login = () => <h2>Login Page</h2>;
-const Register = () => <h2>Register Page</h2>;
-const NotFound = () => <h2>404 - Page Not Found</h2>;
+import axios from "axios";
+
+import ProtectedRoute from "./components/ProtectedRoute";
+import { ThemeToggle } from "./components/ThemeToggle";
+import { ThemeProvider } from "./contexts/ThemeProvider";
+import AuthForms from "./pages/AuthForms";
+import HomePage from "./pages/HomePage";
+import Index from "./pages/Index";
+import NotFound from "./pages/NotFound";
+import { useAuthStore } from "./stores/auth.store";
 
 const App = () => {
-  return (
-    <BrowserRouter>
-      <div className="p-4">
-        <h1 className="text-2xl mb-4">KlasMwen Project</h1>
+  const { login, logout } = useAuthStore();
 
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </div>
-    </BrowserRouter>
+  useEffect(() => {
+    const verifyAuth = async () => {
+      try {
+        const response = await axios.get("/auth/me", {
+          withCredentials: true,
+        });
+
+        login(response.data);
+      } catch (error) {
+        console.error("Auth verification failed:", error);
+        logout();
+      }
+    };
+
+    void verifyAuth();
+  }, [login, logout]);
+
+  return (
+    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+      <BrowserRouter>
+        <div className="relative">
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route
+              path="/register"
+              element={<AuthForms defaultMode="register" />}
+            />
+            <Route path="/sign-in" element={<AuthForms />} />
+
+            <Route
+              path="/home"
+              element={
+                <ProtectedRoute>
+                  <HomePage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <div className="fixed bottom-4 right-4 z-50">
+            <ThemeToggle />
+          </div>
+        </div>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 };
 

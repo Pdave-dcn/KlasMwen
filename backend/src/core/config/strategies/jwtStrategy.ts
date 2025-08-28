@@ -66,3 +66,4 @@ const jwtStrategy = new JwtStrategy(
 );
 
 export default jwtStrategy;
+export { JwtPayload };

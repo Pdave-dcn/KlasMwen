@@ -69,7 +69,6 @@ class UserService {
         username: true,
         email: true,
         role: true,
-        createdAt: true,
       },
     });
 
@@ -193,7 +192,7 @@ const registerUser = async (req: Request, res: Response) => {
 
     return res.status(201).json({
       message: "User registered successfully",
-      user: newUser,
+      data: newUser,
     });
   } catch (error: unknown) {
     return handleError(error, res);

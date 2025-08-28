@@ -2,8 +2,10 @@ import express from "express";
 
 import { loginUser } from "../controllers/auth/login.controller.js";
 import { registerUser } from "../controllers/auth/register.controller.js";
+import { verifyAuth } from "../controllers/auth/verification.controller.js";
 import {
   authLimiter,
+  generalApiLimiter,
   registerLimiter,
 } from "../middleware/coreRateLimits.middleware.js";
 import attachLogContext from "../middleware/logContext.middleware.js";
@@ -159,6 +161,44 @@ router.post("/auth/login", authLimiter, loginUser);
 
 /**
  * @openapi
+ * /auth/me:
+ *   get:
+ *     summary: Verify authentication and return user information
+ *     description: |
+ *       Verifies the user's authentication token from cookies and returns the authenticated user's information.
+ *       Requires a valid JWT token to be present in the request cookies.
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: Authentication verified successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   example: "123e4567-e89b-12d3-a456-426614174000"
+ *                 username:
+ *                   type: string
+ *                   example: "johndoe"
+ *                 email:
+ *                   type: string
+ *                   example: "user@example.com"
+ *                 role:
+ *                   type: string
+ *                   example: "STUDENT"
+ *       401:
+ *         description: Authentication failed
+ *       429:
+ *         description: Too many requests (rate limit exceeded)
+ *       500:
+ *         description: Server configuration error
+ */
+router.get("/auth/me", generalApiLimiter, verifyAuth);
+
+/**
+ * @openapi
  * /auth/logout:
  *   post:
  *     summary: Logout the current user
@@ -180,7 +220,7 @@ router.post("/auth/logout", (_req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "none",
   });
   return res.status(200).json({ message: "Logout successful" });
 });

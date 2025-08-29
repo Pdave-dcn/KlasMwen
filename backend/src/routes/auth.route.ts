@@ -81,16 +81,7 @@ router.use(attachLogContext("AuthController"));
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Unique constraint failed on the field(s): email"
- *                 fields:
- *                   type: array
- *                   items:
- *                     type: string
- *                   example: ["email"]
+ *                $ref: "#/components/schemas/LoginAuthErrorResponse"
  *       429:
  *         description: Too many requests (rate limit exceeded)
  *       500:
@@ -151,7 +142,20 @@ router.post("/auth/register", registerLimiter, registerUser);
  *                       type: string
  *                       example: "STUDENT"
  *       401:
- *         description: Invalid credentials
+ *         description: Authentication failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Specific error message based on authentication failure type
+ *                   enum:
+ *                     - "Incorrect Password"
+ *                     - "Invalid credentials"
+ *                     - "User not found"
+ *                   example: "Invalid credentials"
  *       429:
  *         description: Too many requests (rate limit exceeded)
  *       500:
@@ -221,6 +225,7 @@ router.post("/auth/logout", (_req, res) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "none",
+    path: "/",
   });
   return res.status(200).json({ message: "Logout successful" });
 });

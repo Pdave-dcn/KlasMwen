@@ -54,35 +54,48 @@ class UserService {
       username: userData.username,
     });
 
-    methodLogger.info("Creating new user");
-    const startTime = Date.now();
+    try {
+      methodLogger.info("Creating new user");
+      const startTime = Date.now();
 
-    const newUser = await prisma.user.create({
-      data: {
-        username: userData.username,
-        email: userData.email,
-        password: userData.password,
-        avatarId: userData.avatarId,
-      },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        role: true,
-      },
-    });
+      const newUser = await prisma.user.create({
+        data: {
+          username: userData.username,
+          email: userData.email,
+          password: userData.password,
+          avatarId: userData.avatarId,
+        },
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          role: true,
+        },
+      });
 
-    const dbDuration = Date.now() - startTime;
-    methodLogger.info(
-      {
-        userId: newUser.id,
-        role: newUser.role,
-        dbDuration,
-      },
-      "User created successfully"
-    );
+      const dbDuration = Date.now() - startTime;
+      methodLogger.info(
+        {
+          userId: newUser.id,
+          role: newUser.role,
+          dbDuration,
+        },
+        "User created successfully"
+      );
 
-    return newUser;
+      return newUser;
+    } catch (error) {
+      methodLogger.error(
+        {
+          errorType:
+            error instanceof Error ? error.constructor.name : typeof error,
+          errorDescription:
+            error instanceof Error ? error.message : String(error),
+        },
+        "User creation failed"
+      );
+      throw error;
+    }
   }
 
   static generateToken(userData: {
@@ -188,11 +201,12 @@ const registerUser = async (req: Request, res: Response) => {
       secure: process.env.NODE_ENV === "production",
       sameSite: "none",
       maxAge: 3 * 24 * 60 * 60 * 1000,
+      path: "/",
     });
 
     return res.status(201).json({
       message: "User registered successfully",
-      data: newUser,
+      user: newUser,
     });
   } catch (error: unknown) {
     return handleError(error, res);

@@ -14,17 +14,18 @@ interface SignInValues {
 type FormValues = SignInValues | RegisterValues;
 
 const signIn = async (data: FormValues) => {
-  const res = await api.post("/auth/login", data, { withCredentials: true });
+  const res = await api.post("/auth/login", data);
   return res.data;
 };
 
 const signUp = async (data: FormValues) => {
-  const res = await api.post("/auth/register", data, { withCredentials: true });
+  const res = await api.post("/auth/register", data);
   return res.data;
 };
 
-const logout = async () => {
-  await api.post("/auth/logout", {}, { withCredentials: true });
+const logOut = async () => {
+  const res = await api.post("/auth/logout", {});
+  return res.data;
 };
 
-export { signIn, signUp, logout };
+export { signIn, signUp, logOut };

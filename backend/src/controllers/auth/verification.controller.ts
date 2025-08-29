@@ -49,7 +49,7 @@ export const verifyAuth = (req: Request, res: Response) => {
     );
 
     return res.status(200).json({
-      data: {
+      user: {
         id: payload.id,
         username: payload.username,
         email: payload.email,

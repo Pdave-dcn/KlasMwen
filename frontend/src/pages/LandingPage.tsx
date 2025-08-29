@@ -4,7 +4,7 @@ import { ArrowRight, BookOpen, CheckCircle, Shield, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
-const Index = () => {
+const LandingPage = () => {
   const currentYear = new Date().getFullYear();
   return (
     <div className="min-h-screen bg-background">
@@ -52,20 +52,24 @@ const Index = () => {
                 your learning with the most engaging academic social platform.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-                <Button
-                  size="lg"
-                  className="text-lg px-8 py-4 h-auto font-semibold"
-                >
-                  Join the Community
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-                <Button
-                  size="lg"
-                  variant="secondary"
-                  className="text-lg px-8 py-4 h-auto font-semibold"
-                >
-                  Discover KlasMwen
-                </Button>
+                <Link to="/register">
+                  <Button
+                    size="lg"
+                    className="text-lg px-8 py-4 h-auto font-semibold cursor-pointer"
+                  >
+                    Join the Community
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Button>
+                </Link>
+                <Link to="#">
+                  <Button
+                    size="lg"
+                    variant="secondary"
+                    className="text-lg px-8 py-4 h-auto font-semibold cursor-pointer"
+                  >
+                    Discover KlasMwen
+                  </Button>
+                </Link>
               </div>
 
               {/* Trust Indicators */}
@@ -85,7 +89,7 @@ const Index = () => {
               </div>
             </div>
           </div>
-          z{/* Background Elements */}
+          {/* Background Elements */}
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-20 left-10 w-32 h-32 bg-white rounded-full blur-xl" />
             <div className="absolute bottom-20 right-10 w-24 h-24 bg-white rounded-full blur-xl" />
@@ -142,4 +146,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default LandingPage;

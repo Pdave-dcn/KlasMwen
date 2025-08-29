@@ -1,12 +1,6 @@
 /* eslint-disable max-lines-per-function*/
 /* eslint-disable complexity*/
-import {
-  PrismaClientInitializationError,
-  PrismaClientKnownRequestError,
-  PrismaClientRustPanicError,
-  PrismaClientUnknownRequestError,
-  PrismaClientValidationError,
-} from "@prisma/client/runtime/library";
+import { Prisma } from "@prisma/client";
 import { MulterError } from "multer";
 import { ZodError } from "zod";
 
@@ -63,15 +57,15 @@ export const handleError = (error: unknown, res: Response): Response => {
     errorResponse = FileUploadErrorHandler.handleMulterError(error);
   }
   // Handle Prisma errors (in order of specificity)
-  else if (error instanceof PrismaClientKnownRequestError) {
+  else if (error instanceof Prisma.PrismaClientKnownRequestError) {
     errorResponse = DatabaseErrorHandler.handlePrismaKnownError(error);
-  } else if (error instanceof PrismaClientValidationError) {
+  } else if (error instanceof Prisma.PrismaClientValidationError) {
     errorResponse = DatabaseErrorHandler.handlePrismaValidationError(error);
-  } else if (error instanceof PrismaClientInitializationError) {
+  } else if (error instanceof Prisma.PrismaClientInitializationError) {
     errorResponse = DatabaseErrorHandler.handlePrismaInitializationError(error);
-  } else if (error instanceof PrismaClientUnknownRequestError) {
+  } else if (error instanceof Prisma.PrismaClientUnknownRequestError) {
     errorResponse = DatabaseErrorHandler.handlePrismaUnknownError(error);
-  } else if (error instanceof PrismaClientRustPanicError) {
+  } else if (error instanceof Prisma.PrismaClientRustPanicError) {
     errorResponse = DatabaseErrorHandler.handlePrismaRustPanicError(error);
   }
   // Handle JWT-related errors

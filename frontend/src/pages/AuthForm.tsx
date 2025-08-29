@@ -1,11 +1,8 @@
-/* eslint-disable complexity */
 import { useState } from "react";
 
-import { useForm, type FieldError } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
 import {
   BookOpen,
   Eye,
@@ -16,7 +13,6 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-import { signIn, signUp } from "@/api/auth.api";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,22 +26,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { useAuthStore } from "@/stores/auth.store";
+import { useAuthMutation } from "@/queries/useAuthMutation";
+import type { FormData, FormType } from "@/types/form.type";
 import { RegisterSchema, SignInSchema } from "@/zodSchemas/auth.zod";
 
-import type { z } from "zod";
-
-type FormType = "register" | "signin";
-
-type SignInData = z.infer<typeof SignInSchema>;
-type RegisterData = z.infer<typeof RegisterSchema>;
-type FormData = SignInData | RegisterData;
-
-const AuthForms = ({ defaultMode = "signin" }: { defaultMode?: FormType }) => {
+const AuthForm = ({ defaultMode = "signin" }: { defaultMode?: FormType }) => {
   const [currentForm, setCurrentForm] = useState(defaultMode);
   const [showPassword, setShowPassword] = useState(false);
-
-  const navigate = useNavigate();
 
   const schema = currentForm === "signin" ? SignInSchema : RegisterSchema;
 
@@ -55,23 +42,7 @@ const AuthForms = ({ defaultMode = "signin" }: { defaultMode?: FormType }) => {
     });
   const { errors } = formState;
 
-  const mutation = useMutation({
-    mutationFn: currentForm === "signin" ? signIn : signUp,
-    onSuccess: (data) => {
-      useAuthStore.getState().login(data.user);
-      void navigate("/home");
-    },
-    onError: (error: any) => {
-      if (error?.response?.data?.errors) {
-        // TODO: manage unique constraint error here
-        Object.entries(error.response.data.errors).forEach(
-          ([field, message]) => {
-            setError(field as keyof FormData, { message } as FieldError);
-          }
-        );
-      }
-    },
-  });
+  const mutation = useAuthMutation(currentForm, setError);
 
   const onSubmit = (data: FormData) => {
     mutation.mutate(data);
@@ -114,7 +85,7 @@ const AuthForms = ({ defaultMode = "signin" }: { defaultMode?: FormType }) => {
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)}>
               <div className="space-y-4">
-                {currentForm === "register" && (
+                {currentForm === "signup" && (
                   <div className="space-y-2">
                     <Label htmlFor="username" className="text-sm font-medium">
                       Username
@@ -252,7 +223,7 @@ const AuthForms = ({ defaultMode = "signin" }: { defaultMode?: FormType }) => {
                 variant="link"
                 className="px-2 text-primary hover:underline font-medium cursor-pointer"
                 onClick={() =>
-                  switchForm(currentForm === "signin" ? "register" : "signin")
+                  switchForm(currentForm === "signin" ? "signup" : "signin")
                 }
               >
                 {currentForm === "signin" ? "Sign up" : "Sign in"}
@@ -276,4 +247,4 @@ const AuthForms = ({ defaultMode = "signin" }: { defaultMode?: FormType }) => {
   );
 };
 
-export default AuthForms;
+export default AuthForm;

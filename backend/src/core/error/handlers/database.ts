@@ -9,7 +9,6 @@ import type {
 } from "@prisma/client/runtime/library";
 
 class DatabaseErrorHandler {
-  // Zod validation errors
   static handlePrismaKnownError(error: PrismaClientKnownRequestError) {
     switch (error.code) {
       // Unique constraint violation
@@ -20,8 +19,8 @@ class DatabaseErrorHandler {
           status: 409,
           response: {
             message: `Unique constraint failed on the field(s): ${fieldList}`,
+            fields,
           },
-          fields,
         };
       }
 

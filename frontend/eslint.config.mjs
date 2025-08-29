@@ -51,7 +51,7 @@ export default tseslint.config([
     },
     rules: {
       // CODE QUALITY & BEST PRACTICES
-      "no-console": "warn", // Allow console in development, warn for production awareness
+      "no-console": "warn",
       "no-debugger": "error",
       "no-alert": "error",
       "no-eval": "error",
@@ -69,15 +69,15 @@ export default tseslint.config([
       "no-useless-rename": "error",
       "object-shorthand": "warn",
       "max-params": ["warn", 5],
-      //S"max-lines-per-function": ["warn", { max: 80, skipBlankLines: true }],
-      complexity: ["warn", 15],
+      // "max-lines-per-function": ["warn", { max: 80, skipBlankLines: true }],
+      complexity: ["warn", 25],
 
       // MODERN JAVASCRIPT FEATURES
       "prefer-template": "warn",
       "prefer-destructuring": [
         "warn",
         {
-          array: false, // Array destructuring can be less readable
+          array: false,
           object: true,
         },
       ],

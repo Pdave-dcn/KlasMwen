@@ -1,7 +1,10 @@
 import { useState } from "react";
 
+import { useNavigate } from "react-router-dom";
+
 import { Search, Bell, Plus, User, BookOpen } from "lucide-react";
 
+import { logOut as apiLogOut } from "@/api/auth.api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,12 +16,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { useAuthStore } from "@/stores/auth.store";
 
 export const Header = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const { logout } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await apiLogOut();
+    logout();
+    await navigate("/", { replace: true });
+  };
 
   return (
-    <header className="sticky top-0 z-50 bg-secondary border-b border-border shadow-sm">
+    <header className="sticky top-0 z-50 bg-background border-b border-border shadow-sm">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between gap-4">
           {/* Logo */}
@@ -82,7 +94,9 @@ export const Header = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem>Settings</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Logout</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>
+                  Logout
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

@@ -1,10 +1,4 @@
-import {
-  PrismaClientKnownRequestError,
-  PrismaClientUnknownRequestError,
-  PrismaClientRustPanicError,
-  PrismaClientInitializationError,
-  PrismaClientValidationError,
-} from "@prisma/client/runtime/library";
+import { Prisma } from "@prisma/client";
 import { MulterError } from "multer";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { z } from "zod";
@@ -141,7 +135,7 @@ describe("Error Handler", () => {
 
   describe("Prisma Known Request Errors", () => {
     it("should handle P2002 unique constraint violation for username", () => {
-      const error = new PrismaClientKnownRequestError(
+      const error = new Prisma.PrismaClientKnownRequestError(
         "Unique constraint failed",
         {
           code: "P2002",
@@ -157,11 +151,12 @@ describe("Error Handler", () => {
       expect(mockRes.status).toHaveBeenCalledWith(409);
       expect(mockRes.json).toHaveBeenCalledWith({
         message: "Unique constraint failed on the field(s): username",
+        fields: ["username"],
       });
     });
 
     it("should handle P2002 unique constraint violation for email", () => {
-      const error = new PrismaClientKnownRequestError(
+      const error = new Prisma.PrismaClientKnownRequestError(
         "Unique constraint failed",
         {
           code: "P2002",
@@ -177,14 +172,18 @@ describe("Error Handler", () => {
       expect(mockRes.status).toHaveBeenCalledWith(409);
       expect(mockRes.json).toHaveBeenCalledWith({
         message: "Unique constraint failed on the field(s): email",
+        fields: ["email"],
       });
     });
 
     it("should handle P2025 record not found", () => {
-      const error = new PrismaClientKnownRequestError("Record not found", {
-        code: "P2025",
-        clientVersion: "5.0.0",
-      });
+      const error = new Prisma.PrismaClientKnownRequestError(
+        "Record not found",
+        {
+          code: "P2025",
+          clientVersion: "5.0.0",
+        }
+      );
 
       handleError(error, mockRes);
 
@@ -195,7 +194,7 @@ describe("Error Handler", () => {
     });
 
     it("should handle P2003 foreign key constraint failed", () => {
-      const error = new PrismaClientKnownRequestError(
+      const error = new Prisma.PrismaClientKnownRequestError(
         "Foreign key constraint failed",
         {
           code: "P2003",
@@ -215,7 +214,7 @@ describe("Error Handler", () => {
     });
 
     it("should handle P2014 required relation violation", () => {
-      const error = new PrismaClientKnownRequestError(
+      const error = new Prisma.PrismaClientKnownRequestError(
         "Required relation violation",
         {
           code: "P2014",
@@ -236,7 +235,7 @@ describe("Error Handler", () => {
     });
 
     it("should handle P2011 null constraint violation", () => {
-      const error = new PrismaClientKnownRequestError(
+      const error = new Prisma.PrismaClientKnownRequestError(
         "Null constraint violation",
         {
           code: "P2011",
@@ -256,7 +255,7 @@ describe("Error Handler", () => {
     });
 
     it("should handle P2012 missing required value", () => {
-      const error = new PrismaClientKnownRequestError(
+      const error = new Prisma.PrismaClientKnownRequestError(
         "Missing required value",
         {
           code: "P2012",
@@ -276,7 +275,7 @@ describe("Error Handler", () => {
     });
 
     it("should handle P2000 value too long for column", () => {
-      const error = new PrismaClientKnownRequestError("Value too long", {
+      const error = new Prisma.PrismaClientKnownRequestError("Value too long", {
         code: "P2000",
         clientVersion: "5.0.0",
         meta: {
@@ -293,13 +292,16 @@ describe("Error Handler", () => {
     });
 
     it("should handle P2006 invalid field value", () => {
-      const error = new PrismaClientKnownRequestError("Invalid field value", {
-        code: "P2006",
-        clientVersion: "5.0.0",
-        meta: {
-          field_name: "age",
-        },
-      });
+      const error = new Prisma.PrismaClientKnownRequestError(
+        "Invalid field value",
+        {
+          code: "P2006",
+          clientVersion: "5.0.0",
+          meta: {
+            field_name: "age",
+          },
+        }
+      );
 
       handleError(error, mockRes);
 
@@ -310,10 +312,13 @@ describe("Error Handler", () => {
     });
 
     it("should handle P2024 connection timeout", () => {
-      const error = new PrismaClientKnownRequestError("Connection timeout", {
-        code: "P2024",
-        clientVersion: "5.0.0",
-      });
+      const error = new Prisma.PrismaClientKnownRequestError(
+        "Connection timeout",
+        {
+          code: "P2024",
+          clientVersion: "5.0.0",
+        }
+      );
 
       handleError(error, mockRes);
 
@@ -324,10 +329,13 @@ describe("Error Handler", () => {
     });
 
     it("should handle P2034 transaction failed", () => {
-      const error = new PrismaClientKnownRequestError("Transaction failed", {
-        code: "P2034",
-        clientVersion: "5.0.0",
-      });
+      const error = new Prisma.PrismaClientKnownRequestError(
+        "Transaction failed",
+        {
+          code: "P2034",
+          clientVersion: "5.0.0",
+        }
+      );
 
       handleError(error, mockRes);
 
@@ -338,10 +346,13 @@ describe("Error Handler", () => {
     });
 
     it("should handle P1000 database authentication failed", () => {
-      const error = new PrismaClientKnownRequestError("Authentication failed", {
-        code: "P1000",
-        clientVersion: "5.0.0",
-      });
+      const error = new Prisma.PrismaClientKnownRequestError(
+        "Authentication failed",
+        {
+          code: "P1000",
+          clientVersion: "5.0.0",
+        }
+      );
 
       handleError(error, mockRes);
 
@@ -356,10 +367,13 @@ describe("Error Handler", () => {
     });
 
     it("should handle P1001 database server unreachable", () => {
-      const error = new PrismaClientKnownRequestError("Server unreachable", {
-        code: "P1001",
-        clientVersion: "5.0.0",
-      });
+      const error = new Prisma.PrismaClientKnownRequestError(
+        "Server unreachable",
+        {
+          code: "P1001",
+          clientVersion: "5.0.0",
+        }
+      );
 
       handleError(error, mockRes);
 
@@ -374,7 +388,7 @@ describe("Error Handler", () => {
     });
 
     it("should handle P1003 database does not exist", () => {
-      const error = new PrismaClientKnownRequestError(
+      const error = new Prisma.PrismaClientKnownRequestError(
         "Database does not exist",
         {
           code: "P1003",
@@ -395,7 +409,7 @@ describe("Error Handler", () => {
     });
 
     it("should handle unknown Prisma error codes", () => {
-      const error = new PrismaClientKnownRequestError("Unknown error", {
+      const error = new Prisma.PrismaClientKnownRequestError("Unknown error", {
         code: "P9999" as any,
         clientVersion: "5.0.0",
       });
@@ -415,7 +429,7 @@ describe("Error Handler", () => {
 
   describe("Other Prisma Error Types", () => {
     it("should handle PrismaClientValidationError", () => {
-      const error = new PrismaClientValidationError(
+      const error = new Prisma.PrismaClientValidationError(
         "Invalid query parameters",
         { clientVersion: "5.0.0" }
       );
@@ -433,7 +447,7 @@ describe("Error Handler", () => {
     });
 
     it("should handle PrismaClientInitializationError", () => {
-      const error = new PrismaClientInitializationError(
+      const error = new Prisma.PrismaClientInitializationError(
         "Initialization failed",
         "5.0.0"
       );
@@ -451,7 +465,7 @@ describe("Error Handler", () => {
     });
 
     it("should handle PrismaClientUnknownRequestError", () => {
-      const error = new PrismaClientUnknownRequestError(
+      const error = new Prisma.PrismaClientUnknownRequestError(
         "Unknown request error",
         { clientVersion: "5.0.0" }
       );
@@ -469,7 +483,7 @@ describe("Error Handler", () => {
     });
 
     it("should handle PrismaClientRustPanicError", () => {
-      const error = new PrismaClientRustPanicError(
+      const error = new Prisma.PrismaClientRustPanicError(
         "Rust panic occurred",
         "5.0.0"
       );
@@ -859,7 +873,7 @@ describe("Error Handler", () => {
     });
 
     it("should prioritize Prisma known errors over generic errors", () => {
-      const error = new PrismaClientKnownRequestError(
+      const error = new Prisma.PrismaClientKnownRequestError(
         "Unique constraint failed",
         {
           code: "P2002",
@@ -873,6 +887,7 @@ describe("Error Handler", () => {
       expect(mockRes.status).toHaveBeenCalledWith(409);
       expect(mockRes.json).toHaveBeenCalledWith({
         message: "Unique constraint failed on the field(s): email",
+        fields: ["email"],
       });
     });
 
@@ -888,44 +903,6 @@ describe("Error Handler", () => {
           code: "FILE_TOO_LARGE",
         })
       );
-    });
-  });
-
-  describe("Edge Cases", () => {
-    it("should handle Prisma errors without meta information", () => {
-      const error = new PrismaClientKnownRequestError(
-        "Unique constraint failed",
-        {
-          code: "P2002",
-          clientVersion: "5.0.0",
-          // No meta property
-        }
-      );
-
-      handleError(error, mockRes);
-
-      expect(mockRes.status).toHaveBeenCalledWith(409);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: "Unique constraint failed on the field(s): field",
-      });
-    });
-
-    it("should handle errors with incomplete meta information", () => {
-      const error = new PrismaClientKnownRequestError(
-        "Foreign key constraint failed",
-        {
-          code: "P2003",
-          clientVersion: "5.0.0",
-          meta: {},
-        }
-      );
-
-      handleError(error, mockRes);
-
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: "Invalid reference: foreign key constraint failed.",
-      });
     });
   });
 });

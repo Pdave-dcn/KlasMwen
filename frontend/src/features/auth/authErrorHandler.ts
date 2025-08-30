@@ -80,8 +80,24 @@ const handleAuthError = (
         } as FieldError
       );
     });
-  } else if ("message" in errorData) {
-    // Handle specific auth error cases
+    return;
+  }
+
+  // Handle validation errors object
+  if ("errors" in errorData) {
+    Object.entries(errorData.errors).forEach(([field, message]) => {
+      setError(
+        field as keyof FormData,
+        {
+          message,
+        } as FieldError
+      );
+    });
+    return;
+  }
+
+  // Handle specific auth error cases with message
+  if ("message" in errorData) {
     if (errorData.message.includes("Incorrect Password")) {
       setError("password", {
         message: "The password you entered is incorrect. Please try again.",
@@ -100,7 +116,14 @@ const handleAuthError = (
         description: "Something went wrong. Please try again later.",
       });
     }
+    return;
   }
+
+  // Fallback for unhandled error structures
+  console.error("Unhandled authentication error:", errorData);
+  toast.error("Authentication error", {
+    description: "Something went wrong. Please try again later.",
+  });
 };
 
 const getUniqueConstraintMessage = (

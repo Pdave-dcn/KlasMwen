@@ -1,8 +1,10 @@
 import express from "express";
 
 import {
+  getActiveUser,
   getMyPosts,
   getUserById,
+  getUserPosts,
   updateUserProfile,
 } from "../controllers/user.controller";
 import {
@@ -18,37 +20,70 @@ router.use(attachLogContext("userController"));
 
 /**
  * @openapi
- * /users/{id}:
+ * /users/me:
  *   get:
- *     summary: Get a user by ID
- *     description: Retrieves user details by their ID.
+ *     summary: Get authenticated user profile
+ *     description: Retrieves the profile information of the currently authenticated user
  *     tags: [Users]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *         description: The UUID of the user to retrieve
+ *     security:
+ *       - cookieAuth: []
  *     responses:
  *       200:
- *         description: User retrieved successfully
+ *         description: User profile retrieved successfully
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
  *                 data:
- *                   $ref: '#/components/schemas/User'
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       format: uuid
+ *                       description: User's unique identifier
+ *                       example: "123e4567-e89b-12d3-a456-426614174000"
+ *                     username:
+ *                       type: string
+ *                       description: User's username
+ *                       example: "johndoe"
+ *                     bio:
+ *                       type: string
+ *                       nullable: true
+ *                       description: User's biography
+ *                       example: "Software developer passionate about open source"
+ *                     Avatar:
+ *                       type: object
+ *                       nullable: true
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                           format: uuid
+ *                           description: Avatar's unique identifier
+ *                         url:
+ *                           type: string
+ *                           format: uri
+ *                           description: Avatar image URL
+ *                           example: "https://example.com/avatars/user123.jpg"
+ *                     role:
+ *                       type: string
+ *                       description: User's role in the system
+ *                       example: "USER"
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                       description: Account creation timestamp
+ *                       example: "2024-01-15T10:30:00.000Z"
+ *       401:
+ *         description: Authentication required
  *       404:
  *         description: User not found
  *       429:
- *         description: Too many requests (rate limit exceeded)
+ *         description: Rate limit exceeded
  *       500:
  *         description: Internal server error
  */
-router.get("/users/:id", generalApiLimiter, getUserById);
+router.get("/users/me", generalApiLimiter, requireAuth, getActiveUser);
 
 /**
  * @openapi
@@ -95,7 +130,7 @@ router.put("/users/me", writeOperationsLimiter, requireAuth, updateUserProfile);
  *   get:
  *     summary: Get posts created by authenticated user
  *     description: Retrieves a paginated list of posts authored by the currently authenticated user.
- *     tags: [Users]
+ *     tags: [Users, Posts]
  *     security:
  *       - cookieAuth: []
  *     parameters:
@@ -143,5 +178,88 @@ router.put("/users/me", writeOperationsLimiter, requireAuth, updateUserProfile);
  *         description: Internal server error
  */
 router.get("/users/me/posts", generalApiLimiter, requireAuth, getMyPosts);
+
+/**
+ * @openapi
+ * /users/{id}:
+ *   get:
+ *     summary: Get a user by ID
+ *     description: Retrieves user details by their ID.
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The UUID of the user to retrieve
+ *     responses:
+ *       200:
+ *         description: User retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ *       404:
+ *         description: User not found
+ *       429:
+ *         description: Too many requests (rate limit exceeded)
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/users/:id", generalApiLimiter, getUserById);
+
+/**
+ * @openapi
+ * /users/{id}/posts:
+ *   get:
+ *     summary: Get posts by user ID
+ *     description: Retrieves a paginated list of posts created by a specific user
+ *     tags: [Users, Posts]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The unique identifier of the user
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         description: Maximum number of posts to return (pagination)
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 50
+ *           default: 10
+ *       - in: query
+ *         name: cursor
+ *         required: false
+ *         description: Cursor for pagination (UUID of the last post from previous page)
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       '200':
+ *         description: Posts retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/PostsResponse'
+ *       404:
+ *         description: User not found
+ *       400:
+ *         description: Invalid request parameters
+ *       429:
+ *         description: Rate limit exceeded
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/users/:id/posts", generalApiLimiter, getUserPosts);
 
 export default router;

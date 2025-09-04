@@ -1,21 +1,27 @@
-/* eslint-disable */
+/* eslint-disable max-lines-per-function */
+/* eslint-disable max-params */
 import passport from "passport";
 
 import { createLogger } from "../../core/config/logger.js";
 import { handleError } from "../../core/error/index.js";
+import createActionLogger from "../../utils/logger.util.js";
 
 import { UserService } from "./register.controller.js";
 
 import type { Request, Response, NextFunction } from "express";
-import createActionLogger from "../../utils/logger.util.js";
 
 const controllerLogger = createLogger({ module: "AuthController" });
 
 interface User {
   id: string;
   username: string;
+  password: string;
   email: string;
   role: string;
+  Avatar: {
+    id: number;
+    url: string;
+  } | null;
 }
 
 // Authentication callback
@@ -83,10 +89,12 @@ const handleAuthenticationResult = (
       "Login completed successfully"
     );
 
+    const isProduction = process.env.NODE_ENV === "production";
+
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
       maxAge: 3 * 24 * 60 * 60 * 1000,
       path: "/",
     });
@@ -98,6 +106,7 @@ const handleAuthenticationResult = (
         username: user.username,
         email: user.email,
         role: user.role,
+        avatar: user.Avatar,
       },
     });
   } catch (error) {

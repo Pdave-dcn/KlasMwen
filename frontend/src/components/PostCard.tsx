@@ -12,50 +12,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-
-interface User {
-  id: string;
-  name: string;
-  avatar?: string;
-  email: string;
-  role: "student" | "admin";
-  university?: string;
-  major?: string;
-}
-
-interface Tag {
-  id: string;
-  name: string;
-  color: string;
-  category:
-    | "math"
-    | "physics"
-    | "programming"
-    | "chemistry"
-    | "biology"
-    | "default";
-}
-
-interface Post {
-  id: string;
-  author: User;
-  content: string;
-  title?: string;
-  tags: Tag[];
-  likes: number;
-  likedByUser: boolean;
-  bookmarkedByUser: boolean;
-  commentsCount: number;
-  createdAt: Date;
-  updatedAt: Date;
-  type: "note" | "question" | "resource";
-}
+import type { Post } from "@/zodSchemas/post.zod";
 
 interface PostCardProps {
   post: Post;
   onLike?: (postId: string) => void;
   onBookmark?: (postId: string) => void;
   onComment?: (postId: string) => void;
+
+  likedByUser?: boolean;
+  bookmarkedByUser?: boolean;
 }
 
 export const PostCard = ({
@@ -63,9 +29,11 @@ export const PostCard = ({
   onLike,
   onBookmark,
   onComment,
+  likedByUser = false,
+  bookmarkedByUser = false,
 }: PostCardProps) => {
-  const [isLiked, setIsLiked] = useState(post.likedByUser);
-  const [isBookmarked, setIsBookmarked] = useState(post.bookmarkedByUser);
+  const [isLiked, setIsLiked] = useState(likedByUser);
+  const [isBookmarked, setIsBookmarked] = useState(bookmarkedByUser);
 
   const handleLike = () => {
     setIsLiked(!isLiked);
@@ -77,11 +45,25 @@ export const PostCard = ({
     onBookmark?.(post.id);
   };
 
-  const getTagClassName = (category: string) => {
-    return `tag-${category}`;
+  const getTypeClassName = (type: string) => {
+    return `post-type-${type.toLowerCase()}`;
   };
 
-  const formatTimeAgo = (date: Date) => {
+  const getTypeDisplayName = (type: string) => {
+    switch (type) {
+      case "NOTE":
+        return "Note";
+      case "QUESTION":
+        return "Question";
+      case "RESOURCE":
+        return "Resource";
+      default:
+        return type;
+    }
+  };
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const hours = Math.floor(diff / (1000 * 60 * 60));
@@ -98,27 +80,30 @@ export const PostCard = ({
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <Avatar className="w-10 h-10">
-              <AvatarImage src={post.author.avatar} />
+              <AvatarImage
+                src={post.author.avatar.url ?? undefined}
+                alt={post.author.username ?? undefined}
+              />
               <AvatarFallback>
-                {post.author.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")}
+                {post.author.username.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-sm">{post.author.name}</h3>
+                <h3 className="font-semibold text-sm">
+                  @{post.author.username}
+                </h3>
                 <span className="text-xs text-muted-foreground">•</span>
                 <span className="text-xs text-muted-foreground">
                   {formatTimeAgo(post.createdAt)}
                 </span>
+                <Badge
+                  variant="outline"
+                  className={`text-xs ${getTypeClassName(post.type)}`}
+                >
+                  {getTypeDisplayName(post.type)}
+                </Badge>
               </div>
-              {post.author.university && (
-                <p className="text-xs text-muted-foreground">
-                  {post.author.university}
-                </p>
-              )}
             </div>
           </div>
           <Button variant="ghost" size="sm">
@@ -128,11 +113,21 @@ export const PostCard = ({
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {post.title && (
-          <h2 className="text-lg font-semibold leading-tight">{post.title}</h2>
+        <h2 className="text-lg font-semibold leading-tight">{post.title}</h2>
+
+        {post.content && (
+          <p className="text-foreground leading-relaxed">{post.content}</p>
         )}
 
-        <p className="text-foreground leading-relaxed">{post.content}</p>
+        {/* File attachment indicator */}
+        {post.fileUrl && post.fileName && (
+          <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md">
+            <div className="w-4 h-4 bg-primary/20 rounded" />
+            <span className="text-sm text-muted-foreground">
+              {post.fileName}
+            </span>
+          </div>
+        )}
 
         {/* Tags */}
         {post.tags.length > 0 && (
@@ -141,7 +136,7 @@ export const PostCard = ({
               <Badge
                 key={tag.id}
                 variant="secondary"
-                className={`text-xs ${getTagClassName(tag.category)} border`}
+                className="text-xs border"
               >
                 {tag.name}
               </Badge>
@@ -163,7 +158,7 @@ export const PostCard = ({
               }`}
             >
               <Heart className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`} />
-              <span className="text-sm">{post.likes}</span>
+              <span className="text-sm">{post._count.likes}</span>
             </Button>
 
             <Button
@@ -173,7 +168,7 @@ export const PostCard = ({
               className="gap-2 text-muted-foreground hover:text-primary"
             >
               <MessageCircle className="w-4 h-4" />
-              <span className="text-sm">{post.commentsCount}</span>
+              <span className="text-sm">{post._count.comments}</span>
             </Button>
           </div>
 

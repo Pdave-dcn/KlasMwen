@@ -70,7 +70,7 @@ export default tseslint.config([
       "object-shorthand": "warn",
       "max-params": ["warn", 5],
       // "max-lines-per-function": ["warn", { max: 80, skipBlankLines: true }],
-      complexity: ["warn", 25],
+      complexity: ["warn", 15],
 
       // MODERN JAVASCRIPT FEATURES
       "prefer-template": "warn",

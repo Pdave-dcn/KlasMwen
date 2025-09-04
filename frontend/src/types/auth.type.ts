@@ -1,10 +1,15 @@
-type Role = "STUDENT" | "ADMIN";
+import type {
+  AuthResponseSchema,
+  AuthUserDataSchema,
+} from "@/zodSchemas/auth.zod";
+import type { UserDataSchema } from "@/zodSchemas/user.zod";
 
-interface User {
-  id: string;
-  username: string;
-  email: string;
-  role: Role;
-}
+import type { z } from "zod";
 
-export type { Role, User };
+type SignInResponse = z.infer<typeof AuthResponseSchema>;
+type SignUpResponse = z.infer<typeof AuthResponseSchema>;
+type User = z.infer<typeof UserDataSchema>;
+
+type AuthenticatedUser = z.infer<typeof AuthUserDataSchema>;
+
+export type { SignInResponse, SignUpResponse, User, AuthenticatedUser };

@@ -1,13 +1,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import type { User } from "@/types/auth.type";
+import type { AuthenticatedUser } from "@/types/auth.type";
 
 interface AuthState {
-  user: User | null;
+  user: AuthenticatedUser | null;
   isAuthenticated: boolean;
 
-  login: (user: User) => void;
+  login: (user: AuthenticatedUser) => void;
   logout: () => void;
 }
 
@@ -20,7 +20,6 @@ export const useAuthStore = create<AuthState>()(
       login: (user) => set({ user, isAuthenticated: true }),
       logout: () => {
         set({ user: null, isAuthenticated: false });
-        localStorage.removeItem("auth-storage");
       },
     }),
     {

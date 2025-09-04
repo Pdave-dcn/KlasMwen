@@ -90,26 +90,6 @@ describe("useAuthStore", () => {
       expect(state.user).toBeNull();
       expect(state.isAuthenticated).toBe(false);
     });
-
-    it("should remove auth-storage from localStorage when logout is called", () => {
-      const { logout } = useAuthStore.getState();
-
-      logout();
-
-      expect(localStorageMock.removeItem).toHaveBeenCalledWith("auth-storage");
-    });
-
-    it("should handle multiple logout calls gracefully", () => {
-      const { logout } = useAuthStore.getState();
-
-      logout();
-      logout();
-
-      const state = useAuthStore.getState();
-      expect(state.user).toBeNull();
-      expect(state.isAuthenticated).toBe(false);
-      expect(localStorageMock.removeItem).toHaveBeenCalledTimes(2);
-    });
   });
 
   describe("state transitions", () => {

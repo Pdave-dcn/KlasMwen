@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { UserDataSchema } from "./user.zod";
+
 const SignInSchema = z.object({
   email: z.email("Please enter a valid email address."),
 
@@ -31,4 +33,11 @@ const RegisterSchema = SignInSchema.extend({
     ),
 });
 
-export { SignInSchema, RegisterSchema };
+const AuthUserDataSchema = UserDataSchema.omit({ bio: true });
+
+const AuthResponseSchema = z.object({
+  message: z.string(),
+  user: AuthUserDataSchema,
+});
+
+export { SignInSchema, RegisterSchema, AuthResponseSchema, AuthUserDataSchema };

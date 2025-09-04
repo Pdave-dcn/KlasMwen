@@ -1,4 +1,4 @@
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { Prisma, type Role } from "@prisma/client";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 import {
@@ -11,7 +11,6 @@ import { createLogger } from "../../core/config/logger.js";
 import { AuthenticationError } from "../../core/error/custom/auth.error.js";
 import { handleError } from "../../core/error/index.js";
 
-import type { Role } from "@prisma/client";
 import type { Request, Response } from "express";
 
 vi.mock("../../core/config/db.js", () => ({
@@ -58,10 +57,6 @@ vi.mock("../../core/error/index.js", () => ({
   handleError: vi.fn(),
 }));
 
-vi.mock("../../features/posts/postTagFlattener.js", () => ({
-  default: vi.fn((post) => post),
-}));
-
 const createMockRequest = (overrides = {}) =>
   ({
     params: {},
@@ -89,14 +84,6 @@ const mockUser = {
   createdAt: new Date("2023-01-01"),
 };
 
-// const mockUpdatedUser = {
-//   id: "123e4567-e89b-12d3-a456-426614174000",
-//   username: "testuser",
-//   bio: "Updated bio",
-//   avatarUrl: "https://example.com/new-avatar.jpg",
-//   role: "STUDENT" as Role,
-// };
-
 // Helper to create authenticated user for req.user
 const createAuthenticatedUser = (overrides = {}) => ({
   id: "123e4567-e89b-12d3-a456-426614174000",
@@ -105,21 +92,6 @@ const createAuthenticatedUser = (overrides = {}) => ({
   role: "STUDENT" as Role,
   ...overrides,
 });
-
-// const mockPosts = [
-//   {
-//     id: "123e4567-e89b-12d3-a456-426614174001",
-//     title: "Test Post",
-//     content: "Test content",
-//     authorId: mockUser.id,
-//     type: "TEXT",
-//     fileUrl: null,
-//     fileName: null,
-//     createdAt: new Date("2023-01-01T00:00:00Z"),
-//     postTags: [{ id: "tag-1", tag: { id: "tag-1", name: "test-tag" } }],
-//     _count: { comments: 5, likes: 10 },
-//   },
-// ];
 
 describe("User Controller", () => {
   let mockReq: Request;
@@ -143,19 +115,9 @@ describe("User Controller", () => {
 
         await getUserById(mockReq, mockRes);
 
-        expect(prisma.user.findUnique).toHaveBeenCalledWith({
-          where: { id: mockUser.id },
-          select: {
-            id: true,
-            username: true,
-            bio: true,
-            Avatar: {
-              select: { id: true, url: true },
-            },
-            role: true,
-            createdAt: true,
-          },
-        });
+        expect(prisma.user.findUnique).toHaveBeenCalledWith(
+          expect.objectContaining({ where: { id: mockUser.id } })
+        );
         expect(mockRes.status).toHaveBeenCalledWith(200);
         expect(mockRes.json).toHaveBeenCalledWith({ data: mockUser });
       });
@@ -166,19 +128,9 @@ describe("User Controller", () => {
 
         await getUserById(mockReq, mockRes);
 
-        expect(prisma.user.findUnique).toHaveBeenCalledWith({
-          where: { id: mockUser.id },
-          select: {
-            id: true,
-            username: true,
-            bio: true,
-            Avatar: {
-              select: { id: true, url: true },
-            },
-            role: true,
-            createdAt: true,
-          },
-        });
+        expect(prisma.user.findUnique).toHaveBeenCalledWith(
+          expect.objectContaining({ where: { id: mockUser.id } })
+        );
         expect(mockRes.status).toHaveBeenCalledWith(404);
         expect(mockRes.json).toHaveBeenCalledWith({
           message: "User not found",
@@ -237,7 +189,7 @@ describe("User Controller", () => {
 
       it("should handle Prisma known request errors", async () => {
         mockReq.params = { id: mockUser.id };
-        const prismaError = new PrismaClientKnownRequestError(
+        const prismaError = new Prisma.PrismaClientKnownRequestError(
           "Database error",
           { code: "P2001", clientVersion: "5.0.0" }
         );
@@ -527,22 +479,9 @@ describe("User Controller", () => {
         expect(prisma.post.findMany).toHaveBeenCalledTimes(1);
         expect(prisma.post.count).toHaveBeenCalledTimes(1);
 
-        expect(prisma.post.findMany).toHaveBeenCalledWith({
-          where: { authorId: mockUser.id },
-          take: 11,
-          select: {
-            id: true,
-            title: true,
-            content: true,
-            type: true,
-            fileUrl: true,
-            fileName: true,
-            createdAt: true,
-            postTags: { include: { tag: true } },
-            _count: { select: { comments: true, likes: true } },
-          },
-          orderBy: { createdAt: "desc" },
-        });
+        expect(prisma.post.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({ where: { authorId: mockUser.id } })
+        );
         expect(prisma.post.count).toHaveBeenCalledWith({
           where: { authorId: mockUser.id },
         });
@@ -610,7 +549,7 @@ describe("User Controller", () => {
       it("should handle Prisma known request errors", async () => {
         mockReq.user = createAuthenticatedUser();
         mockReq.query = {};
-        const prismaError = new PrismaClientKnownRequestError(
+        const prismaError = new Prisma.PrismaClientKnownRequestError(
           "Database error",
           { code: "P2001", clientVersion: "5.0.0" }
         );

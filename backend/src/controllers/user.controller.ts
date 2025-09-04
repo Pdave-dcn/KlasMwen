@@ -16,6 +16,7 @@ import {
 } from "../zodSchemas/user.zod.js";
 
 import type { RawPost, TransformedPost } from "../types/postTypes.js";
+import type { Prisma } from "@prisma/client";
 import type { Response, Request } from "express";
 
 const controllerLogger = createLogger({ module: "UserController" });
@@ -52,7 +53,6 @@ const getUserById = async (req: Request, res: Response) => {
           select: { id: true, url: true },
         },
         role: true,
-        createdAt: true,
       },
     });
     const dbDuration = Date.now() - dbStartTime;
@@ -87,6 +87,82 @@ const getUserById = async (req: Request, res: Response) => {
     );
 
     return res.status(200).json({ data: user });
+  } catch (error: unknown) {
+    return handleError(error, res);
+  }
+};
+
+// TODO: Write tests for this controller
+const getActiveUser = async (req: Request, res: Response) => {
+  const actionLogger = createActionLogger(
+    controllerLogger,
+    "getActiveUser",
+    req
+  );
+
+  try {
+    actionLogger.info("Active user fetch attempt started");
+    const startTime = Date.now();
+
+    actionLogger.debug("Authenticating user");
+    const validUser = ensureAuthenticated(req);
+
+    actionLogger.debug("Fetching active user from database");
+    const dbStartTime = Date.now();
+    const user = await prisma.user.findUnique({
+      where: { id: validUser.id },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        bio: true,
+        Avatar: {
+          select: { id: true, url: true },
+        },
+        role: true,
+        createdAt: true,
+      },
+    });
+    const dbDuration = Date.now() - dbStartTime;
+
+    if (!user) {
+      const totalDuration = Date.now() - startTime;
+      actionLogger.warn(
+        {
+          authenticatedUserId: validUser.id,
+          dbDuration,
+          totalDuration,
+        },
+        "Active user fetch failed - authenticated user not found in database"
+      );
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const totalDuration = Date.now() - startTime;
+    actionLogger.info(
+      {
+        authenticatedUserId: validUser.id,
+        username: user.username,
+        userRole: user.role,
+        hasAvatar: !!user.Avatar,
+        hasBio: !!user.bio,
+        dbDuration,
+        totalDuration,
+      },
+      "Active user fetched successfully"
+    );
+
+    return res.status(200).json({
+      data: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        bio: user.bio,
+        avatar: user.Avatar,
+        role: user.role,
+        createdAt: user.createdAt,
+      },
+    });
   } catch (error: unknown) {
     return handleError(error, res);
   }
@@ -198,9 +274,7 @@ const getMyPosts = async (req: Request, res: Response) => {
     const startTime = Date.now();
 
     actionLogger.debug("Authenticating user");
-    const authStartTime = Date.now();
     const user = ensureAuthenticated(req);
-    const authDuration = Date.now() - authStartTime;
 
     actionLogger.debug("Parsing pagination parameters");
     const paginationStartTime = Date.now();
@@ -213,13 +287,12 @@ const getMyPosts = async (req: Request, res: Response) => {
         limit,
         cursor,
         hasCursor: !!cursor,
-        authDuration,
         paginationParsingDuration,
       },
       "User authenticated and pagination parameters parsed"
     );
 
-    const baseQuery = {
+    const baseQuery: Prisma.PostFindManyArgs = {
       where: { authorId: user.id },
       select: {
         id: true,
@@ -229,6 +302,18 @@ const getMyPosts = async (req: Request, res: Response) => {
         fileUrl: true,
         fileName: true,
         createdAt: true,
+        author: {
+          select: {
+            id: true,
+            username: true,
+            Avatar: {
+              select: {
+                id: true,
+                url: true,
+              },
+            },
+          },
+        },
         postTags: {
           include: { tag: true },
         },
@@ -292,7 +377,6 @@ const getMyPosts = async (req: Request, res: Response) => {
         currentPageSize: postsData.length,
         hasMore: pagination.hasMore,
         nextCursor: pagination.nextCursor,
-        authDuration,
         paginationParsingDuration,
         dbDuration,
         transformDuration,
@@ -315,4 +399,149 @@ const getMyPosts = async (req: Request, res: Response) => {
   }
 };
 
-export { getUserById, updateUserProfile, getMyPosts };
+// todo: Write tests for this controller
+const getUserPosts = async (req: Request, res: Response) => {
+  const actionLogger = createActionLogger(
+    controllerLogger,
+    "getUserPosts",
+    req
+  );
+
+  try {
+    actionLogger.info("Fetching user posts by ID");
+    const startTime = Date.now();
+
+    actionLogger.debug("Validating user ID parameter");
+    const { id: userId } = UserIdParamSchema.parse(req.params);
+
+    actionLogger.debug("Parsing pagination parameters");
+    const { limit, cursor } = uuidPaginationSchema.parse(req.query);
+
+    actionLogger.info(
+      {
+        requestedUserId: userId,
+        limit,
+        cursor,
+        hasCursor: !!cursor,
+      },
+      "User ID validated and pagination parameters parsed"
+    );
+
+    actionLogger.debug("Verifying user exists");
+    const userExists = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
+
+    if (!userExists) {
+      const totalDuration = Date.now() - startTime;
+      actionLogger.warn(
+        {
+          requestedUserId: userId,
+          totalDuration,
+        },
+        "User posts fetch failed - user not found"
+      );
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const baseQuery: Prisma.PostFindManyArgs = {
+      where: { authorId: userId },
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        type: true,
+        fileUrl: true,
+        fileName: true,
+        createdAt: true,
+        author: {
+          select: {
+            id: true,
+            username: true,
+            Avatar: {
+              select: {
+                id: true,
+                url: true,
+              },
+            },
+          },
+        },
+        postTags: {
+          include: { tag: true },
+        },
+        _count: {
+          select: { comments: true, likes: true },
+        },
+      },
+      orderBy: { createdAt: "desc" as const },
+    };
+
+    const paginatedQuery = buildPaginatedQuery<"post">(baseQuery, {
+      limit,
+      cursor,
+      cursorField: "id",
+    });
+
+    actionLogger.debug("Executing database queries for posts");
+    const dbStartTime = Date.now();
+    const posts = await prisma.post.findMany(paginatedQuery);
+    const dbDuration = Date.now() - dbStartTime;
+
+    actionLogger.info(
+      {
+        requestedUserId: userId,
+        rawPostsFound: posts.length,
+        dbDuration,
+      },
+      "Posts and count retrieved from database"
+    );
+
+    actionLogger.debug("Transforming post data");
+    const transformedPosts = posts.map(
+      transformPostTagsToFlat as (post: Partial<RawPost>) => TransformedPost
+    );
+
+    actionLogger.debug("Processing pagination results");
+    const { data: postsData, pagination } = processPaginatedResults(
+      transformedPosts,
+      limit,
+      "id"
+    );
+
+    const totalDuration = Date.now() - startTime;
+    actionLogger.info(
+      {
+        requestedUserId: userId,
+        limit,
+        cursor,
+        rawPostsFound: posts.length,
+        transformedPostsCount: transformedPosts.length,
+        currentPageSize: postsData.length,
+        hasMore: pagination.hasMore,
+        nextCursor: pagination.nextCursor,
+        dbDuration,
+        totalDuration,
+      },
+      "User posts fetched successfully"
+    );
+
+    return res.status(200).json({
+      data: postsData,
+      pagination: {
+        hasMore: pagination.hasMore,
+        nextCursor: pagination.nextCursor,
+      },
+    });
+  } catch (error: unknown) {
+    return handleError(error, res);
+  }
+};
+
+export {
+  getUserById,
+  updateUserProfile,
+  getMyPosts,
+  getUserPosts,
+  getActiveUser,
+};

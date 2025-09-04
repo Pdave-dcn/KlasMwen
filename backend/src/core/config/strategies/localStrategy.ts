@@ -12,6 +12,16 @@ const localStrategy = new LocalStrategy(
     try {
       const user = await prisma.user.findUnique({
         where: { email },
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          password: true,
+          role: true,
+          Avatar: {
+            select: { id: true, url: true },
+          },
+        },
       });
       if (!user) return done(null, false, { message: "User not found." });
 

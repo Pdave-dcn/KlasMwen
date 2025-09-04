@@ -70,6 +70,9 @@ class UserService {
           username: true,
           email: true,
           role: true,
+          Avatar: {
+            select: { id: true, url: true },
+          },
         },
       });
 
@@ -206,7 +209,13 @@ const registerUser = async (req: Request, res: Response) => {
 
     return res.status(201).json({
       message: "User registered successfully",
-      user: newUser,
+      user: {
+        id: newUser.id,
+        username: newUser.username,
+        email: newUser.email,
+        role: newUser.role,
+        avatar: newUser.Avatar,
+      },
     });
   } catch (error: unknown) {
     return handleError(error, res);

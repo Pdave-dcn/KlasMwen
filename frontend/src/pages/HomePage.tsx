@@ -8,128 +8,111 @@ import { TagFilter } from "@/components/TagFilter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-interface User {
-  id: string;
-  name: string;
-  avatar?: string;
-  email: string;
-  role: "student" | "admin";
-  university?: string;
-  major?: string;
-}
-
-interface Tag {
-  id: string;
-  name: string;
-  color: string;
-  category:
-    | "math"
-    | "physics"
-    | "programming"
-    | "chemistry"
-    | "biology"
-    | "default";
-}
-
-interface Post {
-  id: string;
-  author: User;
-  content: string;
-  title?: string;
-  tags: Tag[];
-  likes: number;
-  likedByUser: boolean;
-  bookmarkedByUser: boolean;
-  commentsCount: number;
-  createdAt: Date;
-  updatedAt: Date;
-  type: "note" | "question" | "resource";
-}
+import type { Post } from "@/zodSchemas/post.zod";
 
 const mockPosts: Post[] = [
   {
     id: "1",
-    author: {
-      id: "1",
-      name: "Sarah Chen",
-      email: "sarah@university.edu",
-      role: "student",
-      university: "MIT",
-      major: "Computer Science",
-      avatar: "/api/placeholder/40/40",
-    },
     title: "Understanding React Hooks - Complete Guide",
     content:
       "Just finished my comprehensive notes on React Hooks! Including useState, useEffect, and custom hooks with practical examples. Perfect for anyone preparing for frontend interviews or learning React.",
+    type: "NOTE",
+    fileUrl: null,
+    fileName: null,
+    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    author: {
+      id: "1",
+      username: "sarahchen",
+      avatar: {
+        id: 1,
+        url: "/api/placeholder/40/40",
+      },
+    },
     tags: [
-      { id: "1", name: "JavaScript", color: "green", category: "programming" },
-      { id: "2", name: "React", color: "blue", category: "programming" },
+      { id: 1, name: "JavaScript" },
+      { id: 2, name: "React" },
     ],
-    likes: 42,
-    likedByUser: false,
-    bookmarkedByUser: true,
-    commentsCount: 8,
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    type: "note",
+    _count: {
+      likes: 42,
+      comments: 8,
+    },
   },
   {
     id: "2",
-    author: {
-      id: "2",
-      name: "Marcus Johnson",
-      email: "marcus@university.edu",
-      role: "student",
-      university: "Stanford",
-      major: "Physics",
-      avatar: "/api/placeholder/40/40",
-    },
     title: "Help with Quantum Mechanics Problem",
     content:
       "Struggling with this quantum tunneling problem from my advanced physics course. Has anyone worked through similar problems? Would appreciate any insights or study resources!",
-    tags: [
-      {
-        id: "3",
-        name: "Quantum Mechanics",
-        color: "purple",
-        category: "physics",
+    type: "QUESTION",
+    fileUrl: null,
+    fileName: null,
+    createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+    author: {
+      id: "2",
+      username: "marcusj",
+      avatar: {
+        id: 2,
+        url: "/api/placeholder/40/40",
       },
-      { id: "4", name: "Physics", color: "purple", category: "physics" },
+    },
+    tags: [
+      { id: 3, name: "Quantum Mechanics" },
+      { id: 4, name: "Physics" },
     ],
-    likes: 15,
-    likedByUser: true,
-    bookmarkedByUser: false,
-    commentsCount: 12,
-    createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000),
-    updatedAt: new Date(Date.now() - 5 * 60 * 60 * 1000),
-    type: "question",
+    _count: {
+      likes: 15,
+      comments: 12,
+    },
   },
   {
     id: "3",
-    author: {
-      id: "3",
-      name: "Emma Rodriguez",
-      email: "emma@university.edu",
-      role: "student",
-      university: "Harvard",
-      major: "Mathematics",
-      avatar: "/api/placeholder/40/40",
-    },
     title: "Calculus Study Group Resources",
     content:
       "Sharing my collection of calculus practice problems and solutions. These helped me ace my midterm! Includes derivatives, integrals, and optimization problems with step-by-step solutions.",
+    type: "RESOURCE",
+    fileUrl: "https://example.com/files/calculus-resources.pdf",
+    fileName: "calculus-practice-problems.pdf",
+    createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
+    author: {
+      id: "3",
+      username: "emma_math",
+      avatar: {
+        id: 3,
+        url: "/api/placeholder/40/40",
+      },
+    },
     tags: [
-      { id: "5", name: "Calculus", color: "blue", category: "math" },
-      { id: "6", name: "Mathematics", color: "blue", category: "math" },
+      { id: 5, name: "Calculus" },
+      { id: 6, name: "Mathematics" },
     ],
-    likes: 67,
-    likedByUser: false,
-    bookmarkedByUser: false,
-    commentsCount: 23,
-    createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000),
-    updatedAt: new Date(Date.now() - 8 * 60 * 60 * 1000),
-    type: "resource",
+    _count: {
+      likes: 67,
+      comments: 23,
+    },
+  },
+  {
+    id: "4",
+    title: "Organic Chemistry Lab Report Template",
+    content: null,
+    type: "RESOURCE",
+    fileUrl: "https://example.com/files/lab-report-template.docx",
+    fileName: "organic-chem-lab-template.docx",
+    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    author: {
+      id: "4",
+      username: "chemstudent",
+      avatar: {
+        id: 4,
+        url: "/api/placeholder/40/40",
+      },
+    },
+    tags: [
+      { id: 7, name: "Chemistry" },
+      { id: 8, name: "Lab Report" },
+    ],
+    _count: {
+      likes: 28,
+      comments: 5,
+    },
   },
 ];
 

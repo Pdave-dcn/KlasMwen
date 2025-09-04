@@ -1,10 +1,22 @@
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+
+import { Link, useNavigate } from "react-router-dom";
 
 import { ArrowRight, BookOpen, CheckCircle, Shield, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/stores/auth.store";
 
 const LandingPage = () => {
+  const { isAuthenticated } = useAuthStore();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      void navigate("/home", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
   const currentYear = new Date().getFullYear();
   return (
     <div className="min-h-screen bg-background">
@@ -111,30 +123,30 @@ const LandingPage = () => {
               experiences and meaningful connections.
             </p>
             <div className="flex flex-wrap justify-center gap-8 mb-8">
-              <a
-                href="#"
+              <Link
+                to="#"
                 className="text-muted-foreground hover:text-primary transition-colors duration-200 font-medium hover:underline"
               >
                 Privacy Policy
-              </a>
-              <a
-                href="#"
+              </Link>
+              <Link
+                to="#"
                 className="text-muted-foreground hover:text-primary transition-colors duration-200 font-medium hover:underline"
               >
                 Terms of Service
-              </a>
-              <a
-                href="#"
+              </Link>
+              <Link
+                to="#"
                 className="text-muted-foreground hover:text-primary transition-colors duration-200 font-medium hover:underline"
               >
                 Support Center
-              </a>
-              <a
-                href="#"
+              </Link>
+              <Link
+                to="#"
                 className="text-muted-foreground hover:text-primary transition-colors duration-200 font-medium hover:underline"
               >
                 About Us
-              </a>
+              </Link>
             </div>
             <div className="text-sm text-muted-foreground/80 pt-6 border-t border-muted-foreground/20">
               © {currentYear} KlasMwen. All rights reserved.

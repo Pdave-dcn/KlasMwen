@@ -1,3 +1,7 @@
+import type { SignInResponse, SignUpResponse } from "@/types/auth.type";
+import handleZodValidationError from "@/utils/zodErrorHandler.util";
+import { AuthResponseSchema } from "@/zodSchemas/auth.zod";
+
 import api from "./api";
 
 interface RegisterValues {
@@ -13,14 +17,30 @@ interface SignInValues {
 
 type FormValues = SignInValues | RegisterValues;
 
-const signIn = async (data: FormValues) => {
-  const res = await api.post("/auth/login", data);
-  return res.data;
+const signIn = async (data: FormValues): Promise<SignInResponse> => {
+  try {
+    const res = await api.post("/auth/login", data);
+
+    const validatedData = AuthResponseSchema.parse(res.data);
+
+    return validatedData;
+  } catch (error) {
+    handleZodValidationError(error);
+    throw error;
+  }
 };
 
-const signUp = async (data: FormValues) => {
-  const res = await api.post("/auth/register", data);
-  return res.data;
+const signUp = async (data: FormValues): Promise<SignUpResponse> => {
+  try {
+    const res = await api.post("/auth/register", data);
+
+    const validatedData = AuthResponseSchema.parse(res.data);
+
+    return validatedData;
+  } catch (error) {
+    handleZodValidationError(error);
+    throw error;
+  }
 };
 
 const logOut = async () => {

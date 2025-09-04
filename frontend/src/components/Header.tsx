@@ -20,7 +20,7 @@ import { useAuthStore } from "@/stores/auth.store";
 
 export const Header = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const { logout } = useAuthStore();
+  const { logout, user } = useAuthStore();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -77,24 +77,38 @@ export const Header = () => {
             {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2 cursor-pointer"
+                >
                   <Avatar className="w-8 h-8">
-                    <AvatarImage src="/api/placeholder/32/32" />
-                    <AvatarFallback>JD</AvatarFallback>
+                    <AvatarImage src={`${user?.avatar?.url}`} />
+                    <AvatarFallback>
+                      {user?.username.charAt(0).toUpperCase()}
+                    </AvatarFallback>
                   </Avatar>
-                  <span className="hidden sm:inline">John Doe</span>
+                  <span className="hidden sm:inline">{user?.username}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 bg-card">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => navigate("/profile/me")}
+                >
                   <User className="mr-2 h-4 w-4" />
                   Profile
                 </DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer">
+                  Settings
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={handleLogout}
+                >
                   Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>

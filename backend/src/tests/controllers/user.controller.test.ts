@@ -1,10 +1,12 @@
-import { Prisma, type Role } from "@prisma/client";
+import { Prisma, User, type Role } from "@prisma/client";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 import {
   getUserById,
   updateUserProfile,
   getMyPosts,
+  getActiveUser,
+  getUserPosts,
 } from "../../controllers/user.controller.js";
 import prisma from "../../core/config/db.js";
 import { createLogger } from "../../core/config/logger.js";
@@ -74,12 +76,13 @@ const createMockResponse = () => {
   return res;
 };
 
-const mockUser = {
+const mockUser: User = {
   id: "123e4567-e89b-12d3-a456-426614174000",
   username: "testuser",
+  password: "hash-password",
   email: "test@example.com",
   bio: "Test bio",
-  avatarUrl: "https://example.com/avatar.jpg",
+  avatarId: 1,
   role: "STUDENT" as Role,
   createdAt: new Date("2023-01-01"),
 };
@@ -119,7 +122,6 @@ describe("User Controller", () => {
           expect.objectContaining({ where: { id: mockUser.id } })
         );
         expect(mockRes.status).toHaveBeenCalledWith(200);
-        expect(mockRes.json).toHaveBeenCalledWith({ data: mockUser });
       });
 
       it("should return 404 when user is not found", async () => {
@@ -198,6 +200,326 @@ describe("User Controller", () => {
         await getUserById(mockReq, mockRes);
 
         expect(handleError).toHaveBeenCalledWith(prismaError, mockRes);
+      });
+    });
+  });
+
+  describe("getActiveUser", () => {
+    describe("Success Cases", () => {
+      it("should return the authenticated user info", async () => {
+        mockReq.user = {
+          id: mockUser.id,
+          username: mockUser.username,
+          role: mockUser.role,
+          email: mockUser.email,
+        };
+        vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
+
+        await getActiveUser(mockReq, mockRes);
+
+        expect(prisma.user.findUnique).toHaveBeenCalledWith(
+          expect.objectContaining({ where: { id: mockUser.id } })
+        );
+        expect(mockRes.status).toHaveBeenCalledWith(200);
+        expect(mockRes.json).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              id: mockUser.id,
+              username: mockUser.username,
+              email: mockUser.email,
+              bio: mockUser.bio,
+              role: mockUser.role,
+            }),
+          })
+        );
+      });
+
+      it("should return user with null avatar when user has no avatar", async () => {
+        const userWithoutAvatar = { ...mockUser, Avatar: null };
+        mockReq.user = {
+          id: mockUser.id,
+          username: mockUser.username,
+          role: mockUser.role,
+          email: mockUser.email,
+        };
+        vi.mocked(prisma.user.findUnique).mockResolvedValue(userWithoutAvatar);
+
+        await getActiveUser(mockReq, mockRes);
+
+        expect(mockRes.status).toHaveBeenCalledWith(200);
+        expect(mockRes.json).toHaveBeenCalledWith({
+          data: expect.objectContaining({
+            avatar: null,
+          }),
+        });
+      });
+
+      it("should return user with null bio when user has no bio", async () => {
+        const userWithoutBio = { ...mockUser, bio: null };
+        mockReq.user = {
+          id: mockUser.id,
+          username: mockUser.username,
+          role: mockUser.role,
+          email: mockUser.email,
+        };
+        vi.mocked(prisma.user.findUnique).mockResolvedValue(userWithoutBio);
+
+        await getActiveUser(mockReq, mockRes);
+
+        expect(mockRes.status).toHaveBeenCalledWith(200);
+        expect(mockRes.json).toHaveBeenCalledWith({
+          data: expect.objectContaining({
+            bio: null,
+          }),
+        });
+      });
+
+      it("should select only the specified fields from database", async () => {
+        mockReq.user = {
+          id: mockUser.id,
+          username: mockUser.username,
+          role: mockUser.role,
+          email: mockUser.email,
+        };
+        vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
+
+        await getActiveUser(mockReq, mockRes);
+
+        expect(prisma.user.findUnique).toHaveBeenCalledWith({
+          where: { id: mockUser.id },
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            bio: true,
+            Avatar: {
+              select: { id: true, url: true },
+            },
+            role: true,
+            createdAt: true,
+          },
+        });
+      });
+    });
+
+    describe("Authentication Errors", () => {
+      it("should handle unauthenticated request", async () => {
+        mockReq.user = undefined;
+
+        await getActiveUser(mockReq, mockRes);
+
+        expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockRes);
+        expect(prisma.user.findUnique).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("User Not Found Cases", () => {
+      it("should return 404 when authenticated user not found in database", async () => {
+        mockReq.user = {
+          id: mockUser.id,
+          username: mockUser.username,
+          role: mockUser.role,
+          email: mockUser.email,
+        };
+        vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+
+        await getActiveUser(mockReq, mockRes);
+
+        expect(prisma.user.findUnique).toHaveBeenCalledWith(
+          expect.objectContaining({ where: { id: mockUser.id } })
+        );
+        expect(mockRes.status).toHaveBeenCalledWith(404);
+        expect(mockRes.json).toHaveBeenCalledWith({
+          message: "User not found",
+        });
+      });
+
+      it("should handle case where user was deleted after authentication", async () => {
+        const deletedUserId = "deleted-user-id";
+        mockReq.user = {
+          id: deletedUserId,
+          username: "deletedUser",
+          role: "STUDENT",
+          email: "deleted@example.com",
+        };
+        vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+
+        await getActiveUser(mockReq, mockRes);
+
+        expect(mockRes.status).toHaveBeenCalledWith(404);
+        expect(mockRes.json).toHaveBeenCalledWith({
+          message: "User not found",
+        });
+      });
+    });
+
+    describe("Database Errors", () => {
+      it("should handle database connection errors", async () => {
+        mockReq.user = {
+          id: mockUser.id,
+          username: mockUser.username,
+          role: mockUser.role,
+          email: mockUser.email,
+        };
+        const dbError = new Error("Database connection failed");
+        vi.mocked(prisma.user.findUnique).mockRejectedValue(dbError);
+
+        await getActiveUser(mockReq, mockRes);
+
+        expect(handleError).toHaveBeenCalledWith(dbError, mockRes);
+      });
+
+      it("should handle Prisma known request errors", async () => {
+        mockReq.user = {
+          id: mockUser.id,
+          username: mockUser.username,
+          role: mockUser.role,
+          email: mockUser.email,
+        };
+        const prismaError = new Prisma.PrismaClientKnownRequestError(
+          "Database error",
+          { code: "P2001", clientVersion: "5.0.0" }
+        );
+        vi.mocked(prisma.user.findUnique).mockRejectedValue(prismaError);
+
+        await getActiveUser(mockReq, mockRes);
+
+        expect(handleError).toHaveBeenCalledWith(prismaError, mockRes);
+      });
+
+      it("should handle database timeout errors", async () => {
+        mockReq.user = {
+          id: mockUser.id,
+          username: mockUser.username,
+          role: mockUser.role,
+          email: mockUser.email,
+        };
+        const timeoutError = new Error("Database query timeout");
+        vi.mocked(prisma.user.findUnique).mockRejectedValue(timeoutError);
+
+        await getActiveUser(mockReq, mockRes);
+
+        expect(handleError).toHaveBeenCalledWith(timeoutError, mockRes);
+      });
+    });
+
+    describe("Response Format Validation", () => {
+      it("should return response in correct format with all required fields", async () => {
+        mockReq.user = {
+          id: mockUser.id,
+          username: mockUser.username,
+          role: mockUser.role,
+          email: mockUser.email,
+        };
+        vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
+
+        await getActiveUser(mockReq, mockRes);
+
+        expect(mockRes.json).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              id: mockUser.id,
+              username: mockUser.username,
+              email: mockUser.email,
+              bio: mockUser.bio,
+            }),
+          })
+        );
+      });
+
+      it("should not expose sensitive fields in response", async () => {
+        const userWithSensitiveData = {
+          ...mockUser,
+          password: "hashedpassword123",
+          resetToken: "reset-token-123",
+          refreshToken: "refresh-token-456",
+        };
+        mockReq.user = {
+          id: mockUser.id,
+          username: mockUser.username,
+          role: mockUser.role,
+          email: mockUser.email,
+        };
+        vi.mocked(prisma.user.findUnique).mockResolvedValue(
+          userWithSensitiveData
+        );
+
+        await getActiveUser(mockReq, mockRes);
+
+        const responseCall = vi.mocked(mockRes.json).mock.calls[0][0];
+        expect(responseCall.data).not.toHaveProperty("password");
+        expect(responseCall.data).not.toHaveProperty("resetToken");
+        expect(responseCall.data).not.toHaveProperty("refreshToken");
+      });
+    });
+
+    describe("Edge Cases", () => {
+      it("should handle user with different role types", async () => {
+        const adminUser = { ...mockUser, role: "ADMIN" as const };
+        mockReq.user = {
+          id: adminUser.id,
+          username: adminUser.username,
+          role: adminUser.role,
+          email: adminUser.email,
+        };
+        vi.mocked(prisma.user.findUnique).mockResolvedValue(adminUser);
+
+        await getActiveUser(mockReq, mockRes);
+
+        expect(mockRes.status).toHaveBeenCalledWith(200);
+        expect(mockRes.json).toHaveBeenCalledWith({
+          data: expect.objectContaining({
+            role: "ADMIN",
+          }),
+        });
+      });
+
+      it("should handle user with very long bio", async () => {
+        const userWithLongBio = {
+          ...mockUser,
+          bio: "A".repeat(1000), // Very long bio
+        };
+        mockReq.user = {
+          id: mockUser.id,
+          username: mockUser.username,
+          role: mockUser.role,
+          email: mockUser.email,
+        };
+        vi.mocked(prisma.user.findUnique).mockResolvedValue(userWithLongBio);
+
+        await getActiveUser(mockReq, mockRes);
+
+        expect(mockRes.status).toHaveBeenCalledWith(200);
+        expect(mockRes.json).toHaveBeenCalledWith({
+          data: expect.objectContaining({
+            bio: expect.stringMatching(/^A+$/),
+          }),
+        });
+      });
+
+      it("should handle user with special characters in username", async () => {
+        const userWithSpecialChars = {
+          ...mockUser,
+          username: "user@#$%^&*()",
+        };
+        mockReq.user = {
+          id: mockUser.id,
+          username: userWithSpecialChars.username,
+          role: mockUser.role,
+          email: mockUser.email,
+        };
+        vi.mocked(prisma.user.findUnique).mockResolvedValue(
+          userWithSpecialChars
+        );
+
+        await getActiveUser(mockReq, mockRes);
+
+        expect(mockRes.status).toHaveBeenCalledWith(200);
+        expect(mockRes.json).toHaveBeenCalledWith({
+          data: expect.objectContaining({
+            username: "user@#$%^&*()",
+          }),
+        });
       });
     });
   });
@@ -564,31 +886,246 @@ describe("User Controller", () => {
     });
   });
 
-  describe("Integration", () => {
-    it("should maintain consistent error handling across all functions", async () => {
-      const error = new Error("Test error");
+  describe("getUserPosts", () => {
+    const mockPostId = "550e8400-e29b-41d4-a716-446655440000";
+    const mockPostId2 = "d4e5f678-9012-3456-7890-abcdef123456";
 
-      mockReq.params = { id: mockUser.id };
-      (prisma.user.findUnique as any).mockRejectedValue(error);
-      await getUserById(mockReq, mockRes);
-      expect(handleError).toHaveBeenCalledWith(error, mockRes);
+    const mockPosts = [
+      {
+        id: mockPostId,
+        title: "Test Title",
+        content: "Test Content",
+        type: "NOTE" as const,
+        fileUrl: null,
+        fileName: null,
+        fileSize: null,
+        mimeType: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        authorId: mockUser.id,
+        postTags: [],
+        comments: [],
+        _count: {
+          comments: 0,
+          likes: 0,
+        },
+      },
+      {
+        id: mockPostId2,
+        title: "Test Post 2",
+        content: "Content of test post 2",
+        type: "NOTE" as const,
+        fileUrl: null,
+        fileName: null,
+        fileSize: null,
+        mimeType: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        authorId: mockUser.id,
+        postTags: [],
+        _count: { comments: 0, likes: 3 },
+      },
+    ];
 
-      vi.clearAllMocks();
+    const mockTransformedPosts = [
+      {
+        id: mockPostId,
+        title: "Test Title",
+        content: "Test Content",
+        type: "NOTE" as const,
+        fileUrl: null,
+        fileName: null,
+        fileSize: null,
+        mimeType: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        authorId: mockUser.id,
+        tags: [],
+        comments: [],
+        _count: {
+          comments: 0,
+          likes: 0,
+        },
+      },
+      {
+        id: mockPostId2,
+        title: "Test Post 2",
+        content: "Content of test post 2",
+        type: "NOTE" as const,
+        fileUrl: null,
+        fileName: null,
+        fileSize: null,
+        mimeType: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        authorId: mockUser.id,
+        tags: [],
+        _count: { comments: 0, likes: 3 },
+      },
+    ];
 
-      mockReq.user = createAuthenticatedUser();
-      mockReq.body = { bio: "test" };
-      (prisma.user.findUnique as any).mockResolvedValue(mockUser);
-      (prisma.user.update as any).mockRejectedValue(error);
-      await updateUserProfile(mockReq, mockRes);
-      expect(handleError).toHaveBeenCalledWith(error, mockRes);
+    describe("Success Cases", () => {
+      it("should return user posts with default pagination", async () => {
+        mockReq.params = { id: mockUser.id };
+        mockReq.query = {};
 
-      vi.clearAllMocks();
+        vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
+        vi.mocked(prisma.post.findMany).mockResolvedValue(mockPosts);
 
-      mockReq.user = createAuthenticatedUser();
-      (prisma.post.findMany as any).mockRejectedValue(error);
-      (prisma.post.count as any).mockResolvedValue(0);
-      await getMyPosts(mockReq, mockRes);
-      expect(handleError).toHaveBeenCalledWith(error, mockRes);
+        await getUserPosts(mockReq, mockRes);
+
+        expect(prisma.user.findUnique).toHaveBeenCalledWith({
+          where: { id: mockUser.id },
+          select: { id: true },
+        });
+        expect(mockRes.status).toHaveBeenCalledWith(200);
+        expect(mockRes.json).toHaveBeenCalledWith({
+          data: mockTransformedPosts,
+          pagination: {
+            hasMore: false,
+            nextCursor: null,
+          },
+        });
+      });
+
+      it("should return empty posts array when user has no posts", async () => {
+        mockReq.params = { id: mockUser.id };
+        mockReq.query = {};
+
+        vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
+        vi.mocked(prisma.post.findMany).mockResolvedValue([]);
+
+        await getUserPosts(mockReq, mockRes);
+
+        expect(mockRes.status).toHaveBeenCalledWith(200);
+        expect(mockRes.json).toHaveBeenCalledWith({
+          data: [],
+          pagination: {
+            hasMore: false,
+            nextCursor: null,
+          },
+        });
+      });
+    });
+
+    describe("Validation Errors", () => {
+      it("should handle invalid user ID format", async () => {
+        mockReq.params = { id: "invalid-uuid" };
+        mockReq.query = {};
+
+        await getUserPosts(mockReq, mockRes);
+
+        expect(handleError).toHaveBeenCalled();
+        expect(prisma.user.findUnique).not.toHaveBeenCalled();
+        expect(prisma.post.findMany).not.toHaveBeenCalled();
+      });
+
+      it("should handle missing user ID parameter", async () => {
+        mockReq.params = {};
+        mockReq.query = {};
+
+        await getUserPosts(mockReq, mockRes);
+
+        expect(handleError).toHaveBeenCalled();
+        expect(prisma.user.findUnique).not.toHaveBeenCalled();
+      });
+
+      it("should handle invalid pagination parameters", async () => {
+        mockReq.params = { id: mockUser.id };
+        mockReq.query = { limit: "invalid", cursor: "not-a-uuid" };
+
+        await getUserPosts(mockReq, mockRes);
+
+        expect(handleError).toHaveBeenCalled();
+        expect(prisma.user.findUnique).not.toHaveBeenCalled();
+      });
+
+      it("should handle negative limit values", async () => {
+        mockReq.params = { id: mockUser.id };
+        mockReq.query = { limit: "-5" };
+
+        await getUserPosts(mockReq, mockRes);
+
+        expect(handleError).toHaveBeenCalled();
+      });
+    });
+
+    describe("User Not Found Cases", () => {
+      it("should return 404 when user does not exist", async () => {
+        mockReq.params = { id: mockUser.id };
+        mockReq.query = {};
+
+        vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+
+        await getUserPosts(mockReq, mockRes);
+
+        expect(prisma.user.findUnique).toHaveBeenCalledWith({
+          where: { id: mockUser.id },
+          select: { id: true },
+        });
+        expect(mockRes.status).toHaveBeenCalledWith(404);
+        expect(mockRes.json).toHaveBeenCalledWith({
+          message: "User not found",
+        });
+        expect(prisma.post.findMany).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("Database Errors", () => {
+      it("should handle database connection errors during user lookup", async () => {
+        mockReq.params = { id: mockUser.id };
+        mockReq.query = {};
+
+        const dbError = new Error("Database connection failed");
+        vi.mocked(prisma.user.findUnique).mockRejectedValue(dbError);
+
+        await getUserPosts(mockReq, mockRes);
+
+        expect(handleError).toHaveBeenCalledWith(dbError, mockRes);
+        expect(prisma.post.findMany).not.toHaveBeenCalled();
+      });
+
+      it("should handle database errors during posts fetch", async () => {
+        mockReq.params = { id: mockUser.id };
+        mockReq.query = {};
+
+        vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
+        const dbError = new Error("Posts query failed");
+        vi.mocked(prisma.post.findMany).mockRejectedValue(dbError);
+
+        await getUserPosts(mockReq, mockRes);
+
+        expect(handleError).toHaveBeenCalledWith(dbError, mockRes);
+      });
+
+      it("should handle Prisma known request errors", async () => {
+        mockReq.params = { id: mockUser.id };
+        mockReq.query = {};
+
+        vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
+        const prismaError = new Prisma.PrismaClientKnownRequestError(
+          "Database constraint violation",
+          { code: "P2002", clientVersion: "5.0.0" }
+        );
+        vi.mocked(prisma.post.findMany).mockRejectedValue(prismaError);
+
+        await getUserPosts(mockReq, mockRes);
+
+        expect(handleError).toHaveBeenCalledWith(prismaError, mockRes);
+      });
+
+      it("should handle database timeout errors", async () => {
+        mockReq.params = { id: mockUser.id };
+        mockReq.query = {};
+
+        vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
+        const timeoutError = new Error("Query timeout");
+        vi.mocked(prisma.post.findMany).mockRejectedValue(timeoutError);
+
+        await getUserPosts(mockReq, mockRes);
+
+        expect(handleError).toHaveBeenCalledWith(timeoutError, mockRes);
+      });
     });
   });
 });

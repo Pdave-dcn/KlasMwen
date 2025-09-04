@@ -86,13 +86,20 @@ const getUserById = async (req: Request, res: Response) => {
       "User fetched successfully"
     );
 
-    return res.status(200).json({ data: user });
+    return res.status(200).json({
+      data: {
+        id: user.id,
+        username: user.username,
+        bio: user.bio,
+        role: user.role,
+        avatar: user.Avatar,
+      },
+    });
   } catch (error: unknown) {
     return handleError(error, res);
   }
 };
 
-// TODO: Write tests for this controller
 const getActiveUser = async (req: Request, res: Response) => {
   const actionLogger = createActionLogger(
     controllerLogger,
@@ -399,7 +406,6 @@ const getMyPosts = async (req: Request, res: Response) => {
   }
 };
 
-// todo: Write tests for this controller
 const getUserPosts = async (req: Request, res: Response) => {
   const actionLogger = createActionLogger(
     controllerLogger,
@@ -494,7 +500,7 @@ const getUserPosts = async (req: Request, res: Response) => {
         rawPostsFound: posts.length,
         dbDuration,
       },
-      "Posts and count retrieved from database"
+      "Posts retrieved from database"
     );
 
     actionLogger.debug("Transforming post data");

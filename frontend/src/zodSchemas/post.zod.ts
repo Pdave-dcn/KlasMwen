@@ -2,11 +2,17 @@ import { z } from "zod";
 
 import { AvatarSchema } from "./user.zod";
 
-const AuthorSchema = z.object({
-  id: z.string(),
-  username: z.string(),
-  avatar: AvatarSchema,
-});
+const AuthorSchema = z
+  .object({
+    id: z.string(),
+    username: z.string(),
+    Avatar: AvatarSchema,
+  })
+  .transform((data) => ({
+    id: data.id,
+    username: data.username,
+    avatar: data.Avatar,
+  }));
 
 const TagSchema = z.object({
   id: z.number().int(),
@@ -25,7 +31,7 @@ const PostDataSchema = z.object({
   type: z.enum(["NOTE", "QUESTION", "RESOURCE"]),
   fileUrl: z.string().nullable(),
   fileName: z.string().nullable(),
-  createdAt: z.iso.date(),
+  createdAt: z.string(),
   author: AuthorSchema,
   tags: z.array(TagSchema),
   _count: CountSchema,

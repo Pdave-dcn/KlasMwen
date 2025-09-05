@@ -30,7 +30,9 @@ const GetUserProfileResponseSchema = z.object({
 
 export {
   UserDataSchema,
+  ActiveUserProfileDataSchema,
   GetActiveUserResponseSchema,
+  PublicUserProfileDataSchema,
   GetUserProfileResponseSchema,
   AvatarSchema,
 };

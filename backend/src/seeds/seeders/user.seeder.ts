@@ -48,6 +48,14 @@ const seedUsers = async (userCount = 10, avatars: Avatar[]) => {
       });
       const dbCreateDuration = Date.now() - dbCreateStartTime;
 
+      logger.info(
+        {
+          email: user.email,
+          password,
+        },
+        "Seeded user credentials"
+      );
+
       users.push(user);
 
       const userTotalDuration = Date.now() - userStartTime;

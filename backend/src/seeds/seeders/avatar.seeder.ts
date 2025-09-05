@@ -24,10 +24,23 @@ const seedAvatars = async (nonDefaultCount = 90, defaultCount = 10) => {
 
     const avatarsData: Prisma.AvatarCreateInput[] = [];
 
+    const backgroundColors = [
+      "FF6B6B", // lively coral red
+      "FFD93D", // bright yellow
+      "6BCB77", // fresh green
+      "4D96FF", // vivid blue
+      "843BFF", // playful purple
+      "FF8FAB", // bubblegum pink
+      "00C49A", // turquoise
+      "FFB84C", // tangerine
+    ];
+
     logger.debug(`Generating ${defaultCount} default avatars`);
     for (let i = 0; i < defaultCount; i++) {
       const seed = faker.string.uuid();
-      const url = `https://api.dicebear.com/9.x/identicon/svg?seed=${seed}&backgroundType=gradientLinear`;
+      const url = `https://api.dicebear.com/9.x/identicon/svg?seed=${seed}&backgroundColor=${backgroundColors.join(
+        ","
+      )}`;
       avatarsData.push({
         url,
         isDefault: true,
@@ -37,7 +50,9 @@ const seedAvatars = async (nonDefaultCount = 90, defaultCount = 10) => {
     logger.debug(`Generating ${nonDefaultCount} non-default avatars`);
     for (let i = 0; i < nonDefaultCount; i++) {
       const seed = faker.string.uuid();
-      const url = `https://api.dicebear.com/9.x/adventurer/svg?seed=avatar${seed}`;
+      const url = `https://api.dicebear.com/9.x/adventurer/svg?seed=${seed}&size=100&scale=140&backgroundColor=${backgroundColors.join(
+        ","
+      )}`;
       avatarsData.push({
         url,
       });

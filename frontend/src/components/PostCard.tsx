@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { useNavigate } from "react-router-dom";
+
 import {
   Heart,
   MessageCircle,
@@ -34,6 +36,7 @@ export const PostCard = ({
 }: PostCardProps) => {
   const [isLiked, setIsLiked] = useState(likedByUser);
   const [isBookmarked, setIsBookmarked] = useState(bookmarkedByUser);
+  const navigate = useNavigate();
 
   const handleLike = () => {
     setIsLiked(!isLiked);
@@ -43,6 +46,10 @@ export const PostCard = ({
   const handleBookmark = () => {
     setIsBookmarked(!isBookmarked);
     onBookmark?.(post.id);
+  };
+
+  const handleNavigation = async (userId: string) => {
+    await navigate(`/profile/${userId}`);
   };
 
   const getTypeClassName = (type: string) => {
@@ -90,9 +97,14 @@ export const PostCard = ({
             </Avatar>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-sm">
+                <Button
+                  variant="ghost"
+                  className="font-semibold text-sm cursor-pointer"
+                  onClick={() => handleNavigation(post.author.id)}
+                  aria-label="Go to user profile"
+                >
                   @{post.author.username}
-                </h3>
+                </Button>
                 <span className="text-xs text-muted-foreground">•</span>
                 <span className="text-xs text-muted-foreground">
                   {formatTimeAgo(post.createdAt)}

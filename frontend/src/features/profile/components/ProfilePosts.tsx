@@ -1,22 +1,37 @@
 import { BookOpen } from "lucide-react";
 
 import { PostCard } from "@/components/PostCard";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import type { Post } from "@/zodSchemas/post.zod";
 
-import type { InfiniteData } from "@tanstack/react-query";
+import type {
+  InfiniteData,
+  InfiniteQueryObserverResult,
+} from "@tanstack/react-query";
 
 type PostsResponse = {
   data: Post[];
 };
 
 interface ProfilePostsProps {
-  posts: InfiniteData<PostsResponse>;
+  posts: InfiniteData<PostsResponse> | undefined;
   postsLoading: boolean;
+  hasNextPage: boolean;
+  fetchNextPage: () => Promise<
+    InfiniteQueryObserverResult<InfiniteData<PostsResponse>>
+  >;
+  isFetchingNextPage: boolean;
 }
 
-const ProfilePosts = ({ posts, postsLoading }: ProfilePostsProps) => {
+const ProfilePosts = ({
+  posts,
+  postsLoading,
+  hasNextPage,
+  fetchNextPage,
+  isFetchingNextPage,
+}: ProfilePostsProps) => {
   if (postsLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -54,6 +69,20 @@ const ProfilePosts = ({ posts, postsLoading }: ProfilePostsProps) => {
             onComment={(postId) => console.log("Comment on post:", postId)}
           />
         ))
+      )}
+
+      {/* Load More button */}
+      {hasNextPage && (
+        <div className="flex justify-center">
+          <Button
+            variant="ghost"
+            className="cursor-pointer"
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+          >
+            {isFetchingNextPage ? "Loading..." : "Load more"}
+          </Button>
+        </div>
       )}
     </div>
   );

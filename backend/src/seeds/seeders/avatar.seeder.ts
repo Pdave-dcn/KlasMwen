@@ -50,7 +50,7 @@ const seedAvatars = async (nonDefaultCount = 90, defaultCount = 10) => {
     logger.debug(`Generating ${nonDefaultCount} non-default avatars`);
     for (let i = 0; i < nonDefaultCount; i++) {
       const seed = faker.string.uuid();
-      const url = `https://api.dicebear.com/9.x/adventurer/svg?seed=${seed}&size=100&scale=140&backgroundColor=${backgroundColors.join(
+      const url = `https://api.dicebear.com/9.x/adventurer/svg?seed=${seed}&size=100&scale=120&backgroundColor=${backgroundColors.join(
         ","
       )}`;
       avatarsData.push({

@@ -7,7 +7,6 @@ import {
 import api from "./api";
 
 const getUserProfile = async (userId: string) => {
-  console.log(`Executing getUserProfile with user ID: ${userId}`);
   try {
     const res = await api.get(`/users/${userId}`);
     const validatedData = GetUserProfileResponseSchema.parse(res.data);
@@ -20,7 +19,6 @@ const getUserProfile = async (userId: string) => {
 };
 
 const getActiveUserProfile = async () => {
-  console.log("Executing getActiveUserProfile without any user ID");
   try {
     const res = await api.get("/users/me");
     const validatedData = GetActiveUserResponseSchema.parse(res.data);

@@ -171,7 +171,7 @@ describe("Post Controllers", () => {
         author: {
           id: "1",
           username: "testuser",
-          Avatar: { id: 2, url: "mock-url-2.com" },
+          Avatar: { id: 2, url: "http://mock-url-2.com" },
         },
         comments: [],
         _count: {
@@ -310,7 +310,11 @@ describe("Post Controllers", () => {
           fileName: true,
           createdAt: true,
           author: {
-            select: { id: true, username: true, avatarUrl: true },
+            select: {
+              id: true,
+              username: true,
+              Avatar: { select: { id: true, url: true } },
+            },
           },
           postTags: {
             include: { tag: true },
@@ -382,7 +386,11 @@ describe("Post Controllers", () => {
           fileName: true,
           createdAt: true,
           author: {
-            select: { id: true, username: true, avatarUrl: true },
+            select: {
+              id: true,
+              username: true,
+              Avatar: { select: { id: true, url: true } },
+            },
           },
           postTags: {
             include: { tag: true },

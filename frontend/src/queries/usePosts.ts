@@ -1,8 +1,27 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 
-import { getActiveUserPosts, getUserPosts } from "@/api/posts.api";
+import {
+  getHomePagePosts,
+  getActiveUserPosts,
+  getUserPosts,
+} from "@/api/post.api";
 
-const usePosts = (userId?: string, limit = 10) => {
+const useHomePagePosts = (limit = 10) => {
+  return useInfiniteQuery({
+    queryKey: ["home-posts"],
+    queryFn: ({ pageParam }: { pageParam?: string | number }) => {
+      return getHomePagePosts(pageParam, limit);
+    },
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination.hasMore
+        ? lastPage.pagination.nextCursor
+        : undefined;
+    },
+  });
+};
+
+const useProfilePosts = (userId?: string, limit = 10) => {
   return useInfiniteQuery({
     queryKey: userId ? ["posts", userId] : ["me-posts"],
     queryFn: ({ pageParam }: { pageParam?: string | number }) => {
@@ -19,4 +38,4 @@ const usePosts = (userId?: string, limit = 10) => {
   });
 };
 
-export default usePosts;
+export { useHomePagePosts, useProfilePosts };

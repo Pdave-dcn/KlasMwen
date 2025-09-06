@@ -35,4 +35,19 @@ const getActiveUserPosts = async (cursor?: string | number, limit = 10) => {
   }
 };
 
-export { getUserPosts, getActiveUserPosts };
+const getHomePagePosts = async (cursor?: string | number, limit = 10) => {
+  try {
+    const res = await api.get("/posts", {
+      params: { cursor, limit },
+    });
+
+    const validatedData = PostResponseSchema.parse(res.data);
+
+    return validatedData;
+  } catch (error) {
+    handleZodValidationError(error);
+    throw error;
+  }
+};
+
+export { getUserPosts, getActiveUserPosts, getHomePagePosts };

@@ -2,10 +2,9 @@ import { useState } from "react";
 
 import { useParams } from "react-router-dom";
 
-import ProfileHeader from "@/components/ProfileHeader";
-import ProfileTabs from "@/components/ProfileTabs";
 import { Spinner } from "@/components/ui/spinner";
-import usePosts from "@/queries/usePosts";
+import ProfileHeader from "@/features/profile/components/ProfileHeader";
+import ProfileTabs from "@/features/profile/components/ProfileTabs";
 import useProfile from "@/queries/useProfile";
 
 const Profile = ({ isSelf = false }: { isSelf?: boolean }) => {
@@ -16,7 +15,6 @@ const Profile = ({ isSelf = false }: { isSelf?: boolean }) => {
   const userId = !actualSelf ? id : undefined;
 
   const { data: user, isLoading: userLoading } = useProfile(userId);
-  const { data: posts, isLoading: postsLoading } = usePosts(userId);
 
   if (!user) return;
 
@@ -36,8 +34,7 @@ const Profile = ({ isSelf = false }: { isSelf?: boolean }) => {
         <ProfileTabs
           activeTab={activeTab}
           onTabChange={setActiveTab}
-          posts={posts}
-          postsLoading={postsLoading}
+          userId={userId}
         />
       </div>
     </div>

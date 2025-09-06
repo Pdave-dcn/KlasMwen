@@ -1,4 +1,5 @@
 /* eslint-disable max-lines-per-function*/
+
 import prisma from "../core/config/db.js";
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index";
@@ -30,6 +31,7 @@ import {
 } from "../zodSchemas/post.zod.js";
 
 import type { RawPost, TransformedPost } from "../types/postTypes.js";
+import type { Prisma } from "@prisma/client";
 import type { Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "PostController" });
@@ -148,7 +150,7 @@ const getAllPosts = async (req: Request, res: Response) => {
       "Pagination parameters parsed"
     );
 
-    const baseQuery = {
+    const baseQuery: Prisma.PostFindManyArgs = {
       orderBy: { createdAt: "desc" as const },
       select: {
         id: true,
@@ -159,7 +161,11 @@ const getAllPosts = async (req: Request, res: Response) => {
         fileName: true,
         createdAt: true,
         author: {
-          select: { id: true, username: true, avatarUrl: true },
+          select: {
+            id: true,
+            username: true,
+            Avatar: { select: { id: true, url: true } },
+          },
         },
         postTags: {
           include: { tag: true },

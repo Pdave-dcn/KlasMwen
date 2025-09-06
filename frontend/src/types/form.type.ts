@@ -8,4 +8,4 @@ type SignInData = z.infer<typeof SignInSchema>;
 type RegisterData = z.infer<typeof RegisterSchema>;
 type FormData = SignInData | RegisterData;
 
-export type { FormType, FormData };
+export type { FormType, FormData, RegisterData };

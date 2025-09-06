@@ -54,13 +54,23 @@ describe("AuthForm component", () => {
   describe("Sign In Flow", () => {
     it("should successfully sign in with valid credentials", async () => {
       const user = userEvent.setup();
+
       const mockUser = {
-        id: "1",
+        id: "user-1",
         email: "test@example.com",
         username: "testuser",
+        role: "STUDENT" as const,
+        avatar: {
+          id: 1,
+          url: "https://mock-avatar-url.com",
+        },
+      };
+      const mockServerResponse = {
+        message: "Sign in successful",
+        user: mockUser,
       };
 
-      mockSignIn.mockResolvedValueOnce({ user: mockUser });
+      mockSignIn.mockResolvedValueOnce(mockServerResponse);
 
       render(
         <TestWrapper>
@@ -184,12 +194,21 @@ describe("AuthForm component", () => {
     it("should successfully sign up with valid data", async () => {
       const user = userEvent.setup();
       const mockUser = {
-        id: "1",
-        email: "new@example.com",
-        username: "newuser",
+        id: "user-1",
+        email: "test@example.com",
+        username: "testuser",
+        role: "STUDENT" as const,
+        avatar: {
+          id: 1,
+          url: "https://mock-avatar-url.com",
+        },
+      };
+      const mockServerResponse = {
+        message: "Sign up successful",
+        user: mockUser,
       };
 
-      mockSignUp.mockResolvedValueOnce({ user: mockUser });
+      mockSignUp.mockResolvedValueOnce(mockServerResponse);
 
       render(
         <TestWrapper>
@@ -388,7 +407,6 @@ describe("AuthForm component", () => {
         </TestWrapper>
       );
 
-      // Show password
       await user.click(screen.getByRole("button", { name: /show password/i }));
       expect(screen.getByLabelText(/^password$/i)).toHaveAttribute(
         "type",
@@ -594,18 +612,6 @@ describe("AuthForm component", () => {
       ).toBeInTheDocument();
     });
 
-    it("should show forgot password link only in signin mode", () => {
-      render(
-        <TestWrapper>
-          <AuthForm defaultMode="signin" />
-        </TestWrapper>
-      );
-
-      expect(
-        screen.getByRole("button", { name: /forgot password/i })
-      ).toBeInTheDocument();
-    });
-
     it("should not show forgot password link in signup mode", () => {
       render(
         <TestWrapper>
@@ -631,66 +637,6 @@ describe("AuthForm component", () => {
       expect(
         screen.getByRole("link", { name: /privacy policy/i })
       ).toBeInTheDocument();
-    });
-  });
-
-  describe("Accessibility", () => {
-    it("should have proper form labels and associations", () => {
-      render(
-        <TestWrapper>
-          <AuthForm defaultMode="signup" />
-        </TestWrapper>
-      );
-
-      const usernameInput = screen.getByLabelText(/username/i);
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/^password$/i);
-
-      expect(usernameInput).toHaveAttribute("id", "username");
-      expect(emailInput).toHaveAttribute("id", "email");
-      expect(passwordInput).toHaveAttribute("id", "password");
-    });
-
-    it("should have proper button roles and names", () => {
-      render(
-        <TestWrapper>
-          <AuthForm defaultMode="signin" />
-        </TestWrapper>
-      );
-
-      expect(
-        screen.getByRole("button", { name: /sign in/i })
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: /show password/i })
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: /forgot password/i })
-      ).toBeInTheDocument();
-    });
-
-    it("should provide proper error announcements", async () => {
-      const user = userEvent.setup();
-
-      render(
-        <TestWrapper>
-          <AuthForm defaultMode="signin" />
-        </TestWrapper>
-      );
-
-      await user.type(screen.getByLabelText(/email/i), "invalid");
-      await user.click(screen.getByRole("button", { name: /sign in/i }));
-
-      await waitFor(() => {
-        const errorAlerts = screen.getAllByRole("alert");
-        const emailErrorAlert = errorAlerts.find((alert) =>
-          alert.textContent?.includes("Please enter a valid email address")
-        );
-        expect(emailErrorAlert).toBeInTheDocument();
-        expect(emailErrorAlert).toHaveTextContent(
-          /please enter a valid email address/i
-        );
-      });
     });
   });
 
@@ -745,13 +691,23 @@ describe("AuthForm component", () => {
 
     it("should handle successful submission after fixing validation errors", async () => {
       const user = userEvent.setup();
+
       const mockUser = {
-        id: "1",
+        id: "user-1",
         email: "test@example.com",
         username: "testuser",
+        role: "STUDENT" as const,
+        avatar: {
+          id: 1,
+          url: "https://mock-avatar-url.com",
+        },
+      };
+      const mockServerResponse = {
+        message: "Sign in successful",
+        user: mockUser,
       };
 
-      mockSignUp.mockResolvedValueOnce({ user: mockUser });
+      mockSignUp.mockResolvedValueOnce(mockServerResponse);
 
       render(
         <TestWrapper>

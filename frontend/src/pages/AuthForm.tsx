@@ -1,41 +1,31 @@
 import { useState } from "react";
 
-import { useForm } from "react-hook-form";
+import { useForm, type FieldErrors } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  BookOpen,
-  Eye,
-  EyeOff,
-  Mail,
-  User,
-  Lock,
-  ArrowRight,
-} from "lucide-react";
+import { Eye, EyeOff, Mail, User, Lock, ArrowRight } from "lucide-react";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import AuthField from "@/features/auth/components/AuthFormField";
+import AuthFooter from "@/features/auth/components/AuthFormFooter";
+import AuthHeader from "@/features/auth/components/AuthFormHeader";
 import { useAuthMutation } from "@/queries/useAuthMutation";
-import type { FormData, FormType } from "@/types/form.type";
+import type { FormData, FormType, RegisterData } from "@/types/form.type";
 import { RegisterSchema, SignInSchema } from "@/zodSchemas/auth.zod";
 
 const AuthForm = ({ defaultMode = "signin" }: { defaultMode?: FormType }) => {
-  const [currentForm, setCurrentForm] = useState(defaultMode);
+  const [currentForm, setCurrentForm] = useState<FormType>(defaultMode);
   const [showPassword, setShowPassword] = useState(false);
 
   const schema = currentForm === "signin" ? SignInSchema : RegisterSchema;
-
   const { register, handleSubmit, formState, reset, setError } =
     useForm<FormData>({
       resolver: zodResolver(schema),
@@ -44,10 +34,7 @@ const AuthForm = ({ defaultMode = "signin" }: { defaultMode?: FormType }) => {
 
   const mutation = useAuthMutation(currentForm, setError);
 
-  const onSubmit = (data: FormData) => {
-    mutation.mutate(data);
-  };
-
+  const onSubmit = (data: FormData) => mutation.mutate(data);
   const switchForm = (formType: FormType) => {
     setCurrentForm(formType);
     setShowPassword(false);
@@ -55,20 +42,9 @@ const AuthForm = ({ defaultMode = "signin" }: { defaultMode?: FormType }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-primary/10 via-background to-accent/10">
       <div className="w-full max-w-md">
-        {/* Logo Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="p-2 bg-primary rounded-xl">
-              <BookOpen className="w-8 h-8 text-primary-foreground" />
-            </div>
-            <h1 className="text-3xl font-bold text-primary">KlasMwen</h1>
-          </div>
-          <p className="text-muted-foreground">
-            {currentForm === "signin" ? "Welcome back!" : "Join the community"}
-          </p>
-        </div>
+        <AuthHeader currentForm={currentForm} />
 
         <Card className="shadow-lg backdrop-blur-sm">
           <CardHeader className="space-y-1 text-center pb-4">
@@ -83,155 +59,77 @@ const AuthForm = ({ defaultMode = "signin" }: { defaultMode?: FormType }) => {
           </CardHeader>
 
           <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <div className="space-y-4">
-                {currentForm === "signup" && (
-                  <div className="space-y-2">
-                    <Label htmlFor="username" className="text-sm font-medium">
-                      Username
-                    </Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="username"
-                        {...register("username")}
-                        placeholder="Choose a username"
-                        className={`pl-10 ${
-                          "username" in errors && errors.username
-                            ? "border-red-500 focus-visible:ring-red-500"
-                            : ""
-                        }`}
-                      />
-                    </div>
-                    {"username" in errors && errors.username && (
-                      <Alert variant="destructive" className="py-2">
-                        <AlertDescription className="text-sm">
-                          {errors.username.message}
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                  </div>
-                )}
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              {currentForm === "signup" && (
+                <AuthField
+                  id="username"
+                  label="Username"
+                  icon={<User className="w-4 h-4 text-muted-foreground" />}
+                  placeholder="Choose a username"
+                  error={
+                    (errors as FieldErrors<RegisterData>).username?.message
+                  }
+                  register={register}
+                />
+              )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium">
-                    Email
-                  </Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      {...register("email")}
-                      placeholder="Enter your email"
-                      className={`pl-10 ${
-                        errors.email
-                          ? "border-red-500 focus-visible:ring-red-500"
-                          : ""
-                      }`}
-                    />
-                  </div>
-                  {errors.email && (
-                    <Alert variant="destructive" className="py-2">
-                      <AlertDescription className="text-sm">
-                        {errors.email.message}
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </div>
+              <AuthField
+                id="email"
+                label="Email"
+                icon={<Mail className="w-4 h-4 text-muted-foreground" />}
+                placeholder="Enter your email"
+                error={errors.email?.message}
+                register={register}
+              />
 
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium">
-                    Password
-                  </Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      {...register("password")}
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Enter your password"
-                      className={`pl-10 pr-10 ${
-                        errors.password
-                          ? "border-red-500 focus-visible:ring-red-500"
-                          : ""
-                      }`}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      aria-label={
-                        showPassword ? "Hide password" : "Show password"
-                      }
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="w-4 h-4 text-muted-foreground" />
-                      ) : (
-                        <Eye className="w-4 h-4 text-muted-foreground" />
-                      )}
-                    </Button>
-                  </div>
-                  {errors.password && (
-                    <Alert variant="destructive" className="py-2">
-                      <AlertDescription className="text-sm">
-                        {errors.password.message}
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </div>
+              <AuthField
+                id="password"
+                label="Password"
+                type={showPassword ? "text" : "password"}
+                icon={<Lock className="w-4 h-4 text-muted-foreground" />}
+                placeholder="Enter your password"
+                error={errors.password?.message}
+                register={register}
+                rightElement={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff /> : <Eye />}
+                  </Button>
+                }
+              />
 
-                {currentForm === "signin" && (
-                  <div className="flex justify-end">
-                    <Button
-                      variant="link"
-                      className="px-0 text-sm text-primary hover:underline"
-                    >
-                      Forgot password?
-                    </Button>
+              <Button
+                type="submit"
+                className="w-full mt-6 h-11 text-base font-medium cursor-pointer"
+                disabled={mutation.isPending}
+              >
+                {mutation.isPending ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    {currentForm === "signin"
+                      ? "Signing in..."
+                      : "Creating account..."}
                   </div>
-                )}
-
-                <Button
-                  type="submit"
-                  className="w-full mt-6 h-11 text-base font-medium cursor-pointer"
-                  disabled={mutation.isPending}
-                >
-                  {mutation.isPending ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      {currentForm === "signin"
-                        ? "Signing in..."
-                        : "Creating account..."}
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      {currentForm === "signin" ? "Sign In" : "Create Account"}
-                      <ArrowRight className="w-4 h-4" />
-                    </div>
-                  )}
-                </Button>
-              </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    {currentForm === "signin" ? "Sign In" : "Create Account"}
+                    <ArrowRight className="w-4 h-4" />
+                  </div>
+                )}{" "}
+              </Button>
             </form>
           </CardContent>
 
-          <CardFooter className="flex flex-col space-y-4 pt-4">
-            <Separator />
-            <div className="text-center text-sm text-muted-foreground">
-              {currentForm === "signin"
-                ? "Don't have an account?"
-                : "Already have an account?"}
-              <Button
-                variant="link"
-                className="px-2 text-primary hover:underline font-medium cursor-pointer"
-                onClick={() =>
-                  switchForm(currentForm === "signin" ? "signup" : "signin")
-                }
-              >
-                {currentForm === "signin" ? "Sign up" : "Sign in"}
-              </Button>
-            </div>
+          <CardFooter className="flex justify-center">
+            <AuthFooter currentForm={currentForm} switchForm={switchForm} />
           </CardFooter>
         </Card>
 

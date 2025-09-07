@@ -23,6 +23,7 @@ interface ProfilePostsProps {
     InfiniteQueryObserverResult<InfiniteData<PostsResponse>>
   >;
   isFetchingNextPage: boolean;
+  error: Error | null;
 }
 
 const ProfilePosts = ({
@@ -31,6 +32,7 @@ const ProfilePosts = ({
   hasNextPage,
   fetchNextPage,
   isFetchingNextPage,
+  error,
 }: ProfilePostsProps) => {
   if (postsLoading) {
     return (
@@ -38,6 +40,21 @@ const ProfilePosts = ({
         <div className="flex flex-col items-center gap-3">
           <Spinner />
           <p className="text-sm text-muted-foreground">Loading posts...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600">
+            Error loading posts
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Something went wrong. Please try again later.
+          </p>
         </div>
       </div>
     );

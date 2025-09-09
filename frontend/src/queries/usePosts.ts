@@ -4,6 +4,8 @@ import {
   getHomePagePosts,
   getActiveUserPosts,
   getUserPosts,
+  getActiveUserLikedPosts,
+  getActiveUserBookmarks,
 } from "@/api/post.api";
 
 const useHomePagePosts = (limit = 10) => {
@@ -38,4 +40,39 @@ const useProfilePosts = (userId?: string, limit = 10) => {
   });
 };
 
-export { useHomePagePosts, useProfilePosts };
+const useProfileLikedPosts = (limit = 10) => {
+  return useInfiniteQuery({
+    queryKey: ["me-posts", "liked"],
+    queryFn: ({ pageParam }: { pageParam?: string | number }) => {
+      return getActiveUserLikedPosts(pageParam, limit);
+    },
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination.hasMore
+        ? lastPage.pagination.nextCursor
+        : undefined;
+    },
+  });
+};
+
+const useProfileBookmarks = (limit = 10) => {
+  return useInfiniteQuery({
+    queryKey: ["me-posts", "bookmarked"],
+    queryFn: ({ pageParam }: { pageParam?: string | number }) => {
+      return getActiveUserBookmarks(pageParam, limit);
+    },
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination.hasMore
+        ? lastPage.pagination.nextCursor
+        : undefined;
+    },
+  });
+};
+
+export {
+  useHomePagePosts,
+  useProfilePosts,
+  useProfileLikedPosts,
+  useProfileBookmarks,
+};

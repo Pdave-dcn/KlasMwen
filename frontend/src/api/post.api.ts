@@ -50,4 +50,43 @@ const getHomePagePosts = async (cursor?: string | number, limit = 10) => {
   }
 };
 
-export { getUserPosts, getActiveUserPosts, getHomePagePosts };
+const getActiveUserLikedPosts = async (
+  cursor?: string | number,
+  limit = 10
+) => {
+  try {
+    const res = await api.get("/users/me/posts/like", {
+      params: { cursor, limit },
+    });
+
+    const validatedData = PostResponseSchema.parse(res.data);
+
+    return validatedData;
+  } catch (error) {
+    handleZodValidationError(error);
+    throw error;
+  }
+};
+
+const getActiveUserBookmarks = async (cursor?: string | number, limit = 10) => {
+  try {
+    const res = await api.get("/users/bookmarks", {
+      params: { cursor, limit },
+    });
+
+    const validatedData = PostResponseSchema.parse(res.data);
+
+    return validatedData;
+  } catch (error) {
+    handleZodValidationError(error);
+    throw error;
+  }
+};
+
+export {
+  getUserPosts,
+  getActiveUserPosts,
+  getHomePagePosts,
+  getActiveUserLikedPosts,
+  getActiveUserBookmarks,
+};

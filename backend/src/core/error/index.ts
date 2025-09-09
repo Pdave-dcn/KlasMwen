@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { MulterError } from "multer";
 import { ZodError } from "zod";
 
+import formatPrismaError from "../../utils/prismaErrorFormatter.js";
 import { logger } from "../config/logger.js";
 
 import BaseCustomError from "./custom/base.error.js";
@@ -23,7 +24,13 @@ export const handleError = (error: unknown, res: Response): Response => {
 
   const errorType =
     error instanceof Error ? error.constructor.name : typeof error;
-  const errorMessage = error instanceof Error ? error.message : String(error);
+  const errorMessage =
+    error instanceof Prisma.PrismaClientValidationError ||
+    error instanceof Prisma.PrismaClientKnownRequestError
+      ? formatPrismaError(error)
+      : error instanceof Error
+      ? error.message
+      : String(error);
 
   contextLogger.error(
     {

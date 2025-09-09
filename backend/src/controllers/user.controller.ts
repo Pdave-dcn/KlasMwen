@@ -1,22 +1,17 @@
 /* eslint-disable max-lines-per-function*/
+
 import prisma from "../core/config/db.js";
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index";
-import transformPostTagsToFlat from "../features/posts/postTagFlattener.js";
+import PostService from "../features/posts/postService.js";
 import { ensureAuthenticated } from "../utils/auth.util.js";
 import createActionLogger from "../utils/logger.util.js";
-import {
-  buildPaginatedQuery,
-  processPaginatedResults,
-  uuidPaginationSchema,
-} from "../utils/pagination.util.js";
+import { uuidPaginationSchema } from "../utils/pagination.util.js";
 import {
   UpdateUserProfileSchema,
   UserIdParamSchema,
 } from "../zodSchemas/user.zod.js";
 
-import type { RawPost, TransformedPost } from "../types/postTypes.js";
-import type { Prisma } from "@prisma/client";
 import type { Response, Request } from "express";
 
 const controllerLogger = createLogger({ module: "UserController" });
@@ -280,13 +275,8 @@ const getMyPosts = async (req: Request, res: Response) => {
     actionLogger.info("Fetching user's own posts");
     const startTime = Date.now();
 
-    actionLogger.debug("Authenticating user");
     const user = ensureAuthenticated(req);
-
-    actionLogger.debug("Parsing pagination parameters");
-    const paginationStartTime = Date.now();
     const { limit, cursor } = uuidPaginationSchema.parse(req.query);
-    const paginationParsingDuration = Date.now() - paginationStartTime;
 
     actionLogger.info(
       {
@@ -294,83 +284,18 @@ const getMyPosts = async (req: Request, res: Response) => {
         limit,
         cursor,
         hasCursor: !!cursor,
-        paginationParsingDuration,
       },
       "User authenticated and pagination parameters parsed"
     );
 
-    const baseQuery: Prisma.PostFindManyArgs = {
-      where: { authorId: user.id },
-      select: {
-        id: true,
-        title: true,
-        content: true,
-        type: true,
-        fileUrl: true,
-        fileName: true,
-        createdAt: true,
-        author: {
-          select: {
-            id: true,
-            username: true,
-            Avatar: {
-              select: {
-                id: true,
-                url: true,
-              },
-            },
-          },
-        },
-        postTags: {
-          include: { tag: true },
-        },
-        _count: {
-          select: { comments: true, likes: true },
-        },
-      },
-      orderBy: { createdAt: "desc" as const },
-    };
-
-    const paginatedQuery = buildPaginatedQuery<"post">(baseQuery, {
+    actionLogger.debug("Processing user posts request");
+    const serviceStartTime = Date.now();
+    const result = await PostService.getUserPosts(
+      user.id,
       limit,
-      cursor,
-      cursorField: "id",
-    });
-
-    actionLogger.debug("Executing database queries for posts and count");
-    const dbStartTime = Date.now();
-    const [posts, totalPosts] = await Promise.all([
-      prisma.post.findMany(paginatedQuery),
-      prisma.post.count({
-        where: { authorId: user.id },
-      }),
-    ]);
-    const dbDuration = Date.now() - dbStartTime;
-
-    actionLogger.info(
-      {
-        rawPostsFound: posts.length,
-        totalPosts,
-        dbDuration,
-      },
-      "Posts and count retrieved from database"
+      cursor as string | undefined
     );
-
-    actionLogger.debug("Transforming post data");
-    const transformStartTime = Date.now();
-    const transformedPosts = posts.map(
-      transformPostTagsToFlat as (post: Partial<RawPost>) => TransformedPost
-    );
-    const transformDuration = Date.now() - transformStartTime;
-
-    actionLogger.debug("Processing pagination results");
-    const paginationProcessStartTime = Date.now();
-    const { data: postsData, pagination } = processPaginatedResults(
-      transformedPosts,
-      limit,
-      "id"
-    );
-    const paginationProcessDuration = Date.now() - paginationProcessStartTime;
+    const serviceDuration = Date.now() - serviceStartTime;
 
     const totalDuration = Date.now() - startTime;
     actionLogger.info(
@@ -378,28 +303,78 @@ const getMyPosts = async (req: Request, res: Response) => {
         userId: user.id,
         limit,
         cursor,
-        rawPostsFound: posts.length,
-        totalPosts,
-        transformedPostsCount: transformedPosts.length,
-        currentPageSize: postsData.length,
-        hasMore: pagination.hasMore,
-        nextCursor: pagination.nextCursor,
-        paginationParsingDuration,
-        dbDuration,
-        transformDuration,
-        paginationProcessDuration,
+        postsCount: result.posts.length,
+        hasMore: result.pagination.hasMore,
+        nextCursor: result.pagination.nextCursor,
+        serviceDuration,
         totalDuration,
       },
       "User posts fetched successfully"
     );
 
     return res.status(200).json({
-      data: postsData,
-      pagination: {
-        hasMore: pagination.hasMore,
-        nextCursor: pagination.nextCursor,
-        totalPosts,
+      data: result.posts,
+      pagination: result.pagination,
+    });
+  } catch (error: unknown) {
+    return handleError(error, res);
+  }
+};
+
+const getPostsLikedByMe = async (req: Request, res: Response) => {
+  const actionLogger = createActionLogger(
+    controllerLogger,
+    "getPostsLikedByMe",
+    req
+  );
+
+  try {
+    actionLogger.info("Fetching user liked posts");
+    const startTime = Date.now();
+
+    actionLogger.debug("Authenticating user");
+    const user = ensureAuthenticated(req);
+
+    actionLogger.debug("Parsing pagination parameters");
+    const { limit, cursor } = uuidPaginationSchema.parse(req.query);
+
+    actionLogger.info(
+      {
+        userId: user.id,
+        limit,
+        cursor,
+        hasCursor: !!cursor,
       },
+      "User authenticated and pagination parameters parsed"
+    );
+
+    actionLogger.debug("Fetching and processing user liked posts");
+    const serviceStartTime = Date.now();
+    const result = await PostService.getUserLikedPosts(
+      user.id,
+      limit,
+      cursor as string | undefined
+    );
+    const serviceDuration = Date.now() - serviceStartTime;
+
+    const totalDuration = Date.now() - startTime;
+    actionLogger.info(
+      {
+        userId: user.id,
+        limit,
+        cursor,
+        likedPostsCount: result.posts.length,
+        hasMore: result.pagination.hasMore,
+        nextCursor: result.pagination.nextCursor,
+        serviceDuration,
+        totalDuration,
+      },
+      "User liked posts fetched successfully"
+    );
+
+    return res.status(200).json({
+      data: result.posts,
+      pagination: result.pagination,
     });
   } catch (error: unknown) {
     return handleError(error, res);
@@ -451,93 +426,34 @@ const getUserPosts = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const baseQuery: Prisma.PostFindManyArgs = {
-      where: { authorId: userId },
-      select: {
-        id: true,
-        title: true,
-        content: true,
-        type: true,
-        fileUrl: true,
-        fileName: true,
-        createdAt: true,
-        author: {
-          select: {
-            id: true,
-            username: true,
-            Avatar: {
-              select: {
-                id: true,
-                url: true,
-              },
-            },
-          },
-        },
-        postTags: {
-          include: { tag: true },
-        },
-        _count: {
-          select: { comments: true, likes: true },
-        },
-      },
-      orderBy: { createdAt: "desc" as const },
-    };
-
-    const paginatedQuery = buildPaginatedQuery<"post">(baseQuery, {
+    actionLogger.debug("Processing user posts request");
+    const serviceStartTime = Date.now();
+    const result = await PostService.getUserPosts(
+      userId,
       limit,
-      cursor,
-      cursorField: "id",
-    });
-
-    actionLogger.debug("Executing database queries for posts");
-    const dbStartTime = Date.now();
-    const posts = await prisma.post.findMany(paginatedQuery);
-    const dbDuration = Date.now() - dbStartTime;
-
-    actionLogger.info(
-      {
-        requestedUserId: userId,
-        rawPostsFound: posts.length,
-        dbDuration,
-      },
-      "Posts retrieved from database"
+      cursor as string | undefined
     );
-
-    actionLogger.debug("Transforming post data");
-    const transformedPosts = posts.map(
-      transformPostTagsToFlat as (post: Partial<RawPost>) => TransformedPost
-    );
-
-    actionLogger.debug("Processing pagination results");
-    const { data: postsData, pagination } = processPaginatedResults(
-      transformedPosts,
-      limit,
-      "id"
-    );
+    const serviceDuration = Date.now() - serviceStartTime;
 
     const totalDuration = Date.now() - startTime;
+
     actionLogger.info(
       {
         requestedUserId: userId,
         limit,
         cursor,
-        rawPostsFound: posts.length,
-        transformedPostsCount: transformedPosts.length,
-        currentPageSize: postsData.length,
-        hasMore: pagination.hasMore,
-        nextCursor: pagination.nextCursor,
-        dbDuration,
+        postsCount: result.posts.length,
+        hasMore: result.pagination.hasMore,
+        nextCursor: result.pagination.nextCursor,
+        serviceDuration,
         totalDuration,
       },
       "User posts fetched successfully"
     );
 
     return res.status(200).json({
-      data: postsData,
-      pagination: {
-        hasMore: pagination.hasMore,
-        nextCursor: pagination.nextCursor,
-      },
+      data: result.posts,
+      pagination: result.pagination,
     });
   } catch (error: unknown) {
     return handleError(error, res);
@@ -550,4 +466,5 @@ export {
   getMyPosts,
   getUserPosts,
   getActiveUser,
+  getPostsLikedByMe,
 };

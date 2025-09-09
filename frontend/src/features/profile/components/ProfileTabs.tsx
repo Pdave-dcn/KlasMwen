@@ -10,6 +10,8 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useProfilePosts } from "@/queries/usePosts";
 
+import ProfileBookmarks from "./ProfileBookmarks";
+import ProfileLikedPosts from "./ProfileLikedPosts";
 import ProfilePosts from "./ProfilePosts";
 
 interface ProfileTabsProps {
@@ -77,28 +79,11 @@ const ProfileTabs = ({
         {isSelf ? (
           <>
             <TabsContent value="liked">
-              <Card className="p-8 text-center">
-                <Heart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  No liked posts yet
-                </h3>
-                <p className="text-muted-foreground">
-                  Posts you like will appear here for easy access.
-                </p>
-              </Card>
+              <ProfileLikedPosts />
             </TabsContent>
 
             <TabsContent value="saved">
-              <Card className="p-8 text-center">
-                <MessageSquare className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  No saved posts yet
-                </h3>
-                <p className="text-muted-foreground">
-                  Save posts to read them later or reference them for your
-                  studies.
-                </p>
-              </Card>
+              <ProfileBookmarks />
             </TabsContent>
           </>
         ) : (

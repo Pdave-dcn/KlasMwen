@@ -1,5 +1,4 @@
 /* eslint-disable max-lines-per-function*/
-
 import prisma from "../core/config/db.js";
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index";
@@ -10,6 +9,7 @@ import {
 } from "../features/media/cloudinaryServices.js";
 import createEditResponse from "../features/posts/createEditResponse.js";
 import handlePostCreation from "../features/posts/postCreationHandler.js";
+import PostService from "../features/posts/postService.js";
 import transformPostTagsToFlat from "../features/posts/postTagFlattener.js";
 import handlePostUpdate from "../features/posts/postUpdateHandler.js";
 import handleRequestValidation from "../features/posts/requestPostParser.js";
@@ -20,9 +20,7 @@ import {
 } from "../utils/auth.util.js";
 import createActionLogger from "../utils/logger.util.js";
 import {
-  buildPaginatedQuery,
   createPaginationSchema,
-  processPaginatedResults,
   uuidPaginationSchema,
 } from "../utils/pagination.util.js";
 import {
@@ -30,8 +28,6 @@ import {
   UpdatedPostSchema,
 } from "../zodSchemas/post.zod.js";
 
-import type { RawPost, TransformedPost } from "../types/postTypes.js";
-import type { Prisma } from "@prisma/client";
 import type { Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "PostController" });
@@ -150,76 +146,29 @@ const getAllPosts = async (req: Request, res: Response) => {
       "Pagination parameters parsed"
     );
 
-    const baseQuery: Prisma.PostFindManyArgs = {
-      orderBy: { createdAt: "desc" as const },
-      select: {
-        id: true,
-        title: true,
-        content: true,
-        type: true,
-        fileUrl: true,
-        fileName: true,
-        createdAt: true,
-        author: {
-          select: {
-            id: true,
-            username: true,
-            Avatar: { select: { id: true, url: true } },
-          },
-        },
-        postTags: {
-          include: { tag: true },
-        },
-        _count: {
-          select: { comments: true, likes: true },
-        },
-      },
-    };
-
-    const paginatedQuery = buildPaginatedQuery<"post">(baseQuery, {
+    actionLogger.debug("Processing user posts request");
+    const serviceStartTime = Date.now();
+    const result = await PostService.getAllPosts(
       limit,
-      cursor,
-      cursorField: "id",
-    });
-
-    actionLogger.debug("Executing database query for posts");
-    const dbStartTime = Date.now();
-    const posts = await prisma.post.findMany(paginatedQuery);
-    const dbDuration = Date.now() - dbStartTime;
-
-    actionLogger.info(
-      { postsCount: posts.length, dbDuration },
-      "Posts retrieved from database"
+      cursor as string | undefined
     );
-
-    const transformedPosts = posts.map(
-      transformPostTagsToFlat as (post: Partial<RawPost>) => TransformedPost
-    );
-
-    const { data: postsData, pagination } = processPaginatedResults(
-      transformedPosts,
-      limit,
-      "id"
-    );
+    const serviceDuration = Date.now() - serviceStartTime;
 
     const totalDuration = Date.now() - startTime;
     actionLogger.info(
       {
-        totalPosts: posts.length,
-        hasMore: pagination.hasMore,
-        nextCursor: pagination.nextCursor,
-        dbDuration,
+        totalPosts: result.posts.length,
+        hasMore: result.pagination.hasMore,
+        nextCursor: result.pagination.nextCursor,
+        serviceDuration,
         totalDuration,
       },
       "All posts fetched successfully"
     );
 
     return res.status(200).json({
-      data: postsData,
-      pagination: {
-        hasMore: pagination.hasMore,
-        nextCursor: pagination.nextCursor,
-      },
+      data: result.posts,
+      pagination: result.pagination,
     });
   } catch (error: unknown) {
     return handleError(error, res);
@@ -234,70 +183,30 @@ const getPostById = async (req: Request, res: Response) => {
     const startTime = Date.now();
 
     const { id: postId } = PostIdParamSchema.parse(req.params);
-    actionLogger.debug({ postId }, "Post ID parameter parsed");
-
     const customPostCommentSchema = createPaginationSchema(20, 50, "number");
     const { limit, cursor } = customPostCommentSchema.parse(req.query);
 
     actionLogger.debug(
-      { limit, cursor, hasCursor: !!cursor },
-      "Comment pagination parameters"
+      {
+        postId,
+        limit,
+        cursor,
+        hasCursor: !!cursor,
+      },
+      "Parameters parsed"
     );
 
-    actionLogger.debug("Executing database query for post with comments");
-    const dbStartTime = Date.now();
-    const post = await prisma.post.findUnique({
-      where: { id: postId },
-      select: {
-        id: true,
-        title: true,
-        content: true,
-        type: true,
-        fileUrl: true,
-        fileName: true,
-        fileSize: true,
-        mimeType: true,
-        createdAt: true,
-        updatedAt: true,
-        author: {
-          select: {
-            id: true,
-            username: true,
-            Avatar: { select: { id: true, url: true } },
-          },
-        },
-        postTags: {
-          include: { tag: true },
-        },
-        comments: {
-          select: {
-            id: true,
-            content: true,
-            createdAt: true,
-            author: {
-              select: {
-                id: true,
-                username: true,
-                Avatar: { select: { id: true, url: true } },
-              },
-            },
-          },
-          orderBy: { createdAt: "asc" },
-          take: limit + 1,
-          ...(cursor && {
-            cursor: { id: cursor as number },
-            skip: 1,
-          }),
-        },
-        _count: {
-          select: { comments: true, likes: true },
-        },
-      },
-    });
-    const dbDuration = Date.now() - dbStartTime;
+    actionLogger.debug("Processing user post fetching by ID request");
+    const serviceStartTime = Date.now();
+    const post = await PostService.getPostById(
+      postId,
+      limit,
+      cursor as number | undefined
+    );
+    const serviceDuration = Date.now() - serviceStartTime;
 
     if (!post) {
-      actionLogger.warn({ postId, dbDuration }, "Post not found");
+      actionLogger.warn({ postId, serviceDuration }, "Post not found");
       return res.status(404).json({ message: "Post not found" });
     }
 
@@ -309,7 +218,7 @@ const getPostById = async (req: Request, res: Response) => {
         commentsLoaded: post.comments.length,
         totalComments: post._count.comments,
         totalLikes: post._count.likes,
-        dbDuration,
+        serviceDuration,
       },
       "Post found, processing comments pagination"
     );
@@ -321,7 +230,7 @@ const getPostById = async (req: Request, res: Response) => {
       {
         postId: post.id,
         postType: post.type,
-        dbDuration,
+        serviceDuration,
         totalDuration,
       },
       "Post retrieved successfully with comments"
@@ -345,49 +254,29 @@ const getPostForEdit = async (req: Request, res: Response) => {
     const startTime = Date.now();
 
     const user = ensureAuthenticated(req);
+    const { id: postId } = PostIdParamSchema.parse(req.params);
+
     actionLogger.info(
-      { userId: user.id, username: user.username },
-      "User authenticated"
+      {
+        userId: user.id,
+        username: user.username,
+        postId,
+      },
+      "User authenticated and post ID parsed"
     );
 
-    const { id: postId } = PostIdParamSchema.parse(req.params);
-    actionLogger.debug({ postId }, "Post ID parameter parsed");
-
-    actionLogger.debug("Executing database query for post");
-    const dbStartTime = Date.now();
-    const post = await prisma.post.findUnique({
-      where: { id: postId },
-      select: {
-        id: true,
-        title: true,
-        content: true,
-        type: true,
-        fileUrl: true,
-        fileName: true,
-        fileSize: true,
-        mimeType: true,
-        createdAt: true,
-        updatedAt: true,
-        author: {
-          select: {
-            id: true,
-            username: true,
-            Avatar: { select: { id: true, url: true } },
-          },
-        },
-        postTags: {
-          include: { tag: true },
-        },
-        _count: {
-          select: { comments: true, likes: true },
-        },
-      },
-    });
-    const dbDuration = Date.now() - dbStartTime;
+    actionLogger.debug("Processing user post fetch request");
+    const serviceStartTime = Date.now();
+    const post = await PostService.getPostForEdit(postId);
+    const serviceDuration = Date.now() - serviceStartTime;
 
     if (!post) {
       actionLogger.warn(
-        { postId, userId: user.id, dbDuration },
+        {
+          postId,
+          userId: user.id,
+          serviceDuration,
+        },
         "Post not found for edit"
       );
       return res.status(404).json({ message: "Post not found" });
@@ -399,13 +288,12 @@ const getPostForEdit = async (req: Request, res: Response) => {
         postAuthorId: post.author.id,
         requestUserId: user.id,
         postType: post.type,
-        dbDuration,
+        serviceDuration,
       },
       "Post found, checking permissions"
     );
 
     checkPermission(user, post, false);
-    actionLogger.debug("Permission check passed");
 
     const transformedPost = transformPostTagsToFlat(post);
     const editData = createEditResponse(transformedPost);
@@ -416,15 +304,13 @@ const getPostForEdit = async (req: Request, res: Response) => {
         postId: post.id,
         userId: user.id,
         postType: post.type,
-        dbDuration,
+        serviceDuration,
         totalDuration,
       },
       "Post for edit retrieved successfully"
     );
 
-    return res.status(200).json({
-      data: editData,
-    });
+    return res.status(200).json({ data: editData });
   } catch (error: unknown) {
     return handleError(error, res);
   }
@@ -454,34 +340,14 @@ const getPostMetadata = async (req: Request, res: Response) => {
     const { id: postId } = PostIdParamSchema.parse(req.params);
     actionLogger.debug({ postId }, "Post ID parameter parsed");
 
-    actionLogger.debug("Executing database query for post metadata");
-    const dbStartTime = Date.now();
-    const post = await prisma.post.findUnique({
-      where: { id: postId },
-      select: {
-        id: true,
-        title: true,
-        type: true,
-        fileUrl: true,
-        fileName: true,
-        fileSize: true,
-        mimeType: true,
-        createdAt: true,
-        updatedAt: true,
-        authorId: true,
-        author: {
-          select: { id: true, username: true, email: true },
-        },
-        _count: {
-          select: { comments: true, likes: true },
-        },
-      },
-    });
-    const dbDuration = Date.now() - dbStartTime;
+    actionLogger.debug("Processing user post metadata request");
+    const serviceStartTime = Date.now();
+    const post = await PostService.getPostMetadata(postId);
+    const serviceDuration = Date.now() - serviceStartTime;
 
     if (!post) {
       actionLogger.warn(
-        { postId, dbDuration },
+        { postId, serviceDuration },
         "Post not found for metadata request"
       );
       return res.status(404).json({ message: "Post not found" });
@@ -495,7 +361,7 @@ const getPostMetadata = async (req: Request, res: Response) => {
         authorId: post.authorId,
         authorEmail: post.author.email,
         adminUserId: req.user?.id,
-        dbDuration,
+        serviceDuration,
         totalDuration,
       },
       "Post metadata retrieved successfully"

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import ProfileHeader from "@/features/profile/components/ProfileHeader";
 import ProfileTabs from "@/features/profile/components/ProfileTabs";
-import useProfile from "@/queries/useProfile";
+import useProfileUser from "@/queries/useProfile";
 
 const Profile = ({ isSelf = false }: { isSelf?: boolean }) => {
   const [activeTab, setActiveTab] = useState("posts");
@@ -17,7 +17,7 @@ const Profile = ({ isSelf = false }: { isSelf?: boolean }) => {
   const actualSelf = isSelf || !id;
   const userId = !actualSelf ? id : undefined;
 
-  const { data: user, isLoading, error } = useProfile(userId);
+  const { data: user, isLoading, error } = useProfileUser(userId);
 
   if (isLoading) {
     return (

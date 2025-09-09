@@ -22,7 +22,7 @@ router.use(attachLogContext("BookmarkController"));
  *   get:
  *     summary: Get user bookmarks
  *     description: Retrieve a paginated list of bookmarked posts for the authenticated user
- *     tags: [Bookmarks]
+ *     tags: [Bookmarks, Users]
  *     security:
  *       - cookieAuth: []
  *     parameters:

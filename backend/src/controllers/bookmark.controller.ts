@@ -1,54 +1,15 @@
-/* eslint-disable max-lines-per-function */
-import { Prisma } from "@prisma/client";
-
 import prisma from "../core/config/db.js";
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index.js";
-import transformPostTagsToFlat from "../features/posts/postTagFlattener";
+import PostService from "../features/posts/postService.js";
 import { ensureAuthenticated } from "../utils/auth.util.js";
 import createActionLogger from "../utils/logger.util.js";
-import {
-  buildCompoundCursorQuery,
-  processPaginatedResults,
-  uuidPaginationSchema,
-} from "../utils/pagination.util.js";
+import { uuidPaginationSchema } from "../utils/pagination.util.js";
 import { PostIdParamSchema } from "../zodSchemas/post.zod.js";
 
-import type { RawPost, TransformedPost } from "../types/postTypes";
 import type { Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "BookmarkController" });
-
-const bookmarkWithPost = Prisma.validator<Prisma.BookmarkFindManyArgs>()({
-  include: {
-    post: {
-      select: {
-        id: true,
-        title: true,
-        content: true,
-        type: true,
-        fileUrl: true,
-        fileName: true,
-        createdAt: true,
-        author: {
-          select: {
-            id: true,
-            username: true,
-            Avatar: { select: { id: true, url: true } },
-          },
-        },
-        postTags: {
-          include: { tag: true },
-        },
-        _count: {
-          select: { comments: true, likes: true },
-        },
-      },
-    },
-  },
-});
-
-type BookmarkWithPost = Prisma.BookmarkGetPayload<typeof bookmarkWithPost>;
 
 const getBookmarks = async (req: Request, res: Response) => {
   const actionLogger = createActionLogger(
@@ -70,55 +31,32 @@ const getBookmarks = async (req: Request, res: Response) => {
       "Pagination parameters parsed"
     );
 
-    const baseQuery: Prisma.BookmarkFindManyArgs = {
-      where: { userId: user.id },
-      orderBy: { createdAt: "desc" },
-      ...bookmarkWithPost,
-    };
-
-    const queryOptions = buildCompoundCursorQuery<"bookmark">(baseQuery, {
-      cursor,
+    actionLogger.debug("Processing user bookmarks request");
+    const serviceStartTime = Date.now();
+    const result = await PostService.getUserBookmarkedPosts(
+      user.id,
       limit,
-      cursorFields: cursor
-        ? { userId_postId: { userId: user.id, postId: cursor } }
-        : {},
-      where: { userId: user.id },
-      orderBy: { createdAt: "desc" },
-    });
-
-    actionLogger.debug("Executing database query for bookmarks");
-    const dbStartTime = Date.now();
-    const bookmarks = (await prisma.bookmark.findMany(
-      queryOptions
-    )) as BookmarkWithPost[];
-    const dbDuration = Date.now() - dbStartTime;
-
-    actionLogger.info(
-      { bookmarksCount: bookmarks.length, dbDuration },
-      "Bookmarks retrieved from database"
+      cursor as string | undefined
     );
+    const serviceDuration = Date.now() - serviceStartTime;
 
-    const posts = bookmarks.map((bookmark) => bookmark.post);
-    const transformedPosts = posts.map(
-      transformPostTagsToFlat as (post: Partial<RawPost>) => TransformedPost
-    );
-
-    const result = processPaginatedResults(transformedPosts, limit);
     const totalDuration = Date.now() - startTime;
-
     actionLogger.info(
       {
         userId: user.id,
-        totalBookmarks: bookmarks.length,
+        totalBookmarks: result.posts.length,
         hasMore: result.pagination.hasMore,
         nextCursor: result.pagination.nextCursor,
-        dbDuration,
+        serviceDuration,
         totalDuration,
       },
       "User bookmarks fetched successfully"
     );
 
-    return res.status(200).json(result);
+    return res.status(200).json({
+      data: result.posts,
+      pagination: result.pagination,
+    });
   } catch (error: unknown) {
     return handleError(error, res);
   }

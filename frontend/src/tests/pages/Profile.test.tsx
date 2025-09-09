@@ -6,7 +6,7 @@ import userEvent from "@testing-library/user-event";
 
 import Profile from "@/pages/Profile";
 import { useProfilePosts } from "@/queries/usePosts";
-import useProfile from "@/queries/useProfile";
+import useProfileUser from "@/queries/useProfile";
 import type { ActiveUser, PublicUser } from "@/types/user.type";
 
 vi.mock("@/queries/useProfile", () => ({
@@ -24,7 +24,7 @@ vi.mock("react-router-dom", async () => {
   };
 });
 
-const mockUseProfile = vi.mocked(useProfile);
+const mockUseProfileUser = vi.mocked(useProfileUser);
 const mockUseProfilePosts = vi.mocked(useProfilePosts);
 const mockUseParams = vi.mocked(useParams);
 
@@ -251,11 +251,11 @@ describe("Profile Component", () => {
   describe("Loading States", () => {
     it("shows Spinner when loading", async () => {
       mockUseParams.mockReturnValue({});
-      mockUseProfile.mockReturnValue({
+      mockUseProfileUser.mockReturnValue({
         data: undefined,
         isLoading: true,
         error: null,
-      } as unknown as ReturnType<typeof useProfile>);
+      } as unknown as ReturnType<typeof useProfileUser>);
 
       mockUseProfilePosts.mockReturnValue({
         data: undefined,
@@ -276,11 +276,11 @@ describe("Profile Component", () => {
 
     it("shows Spinner for posts tabs after user data is loaded", async () => {
       mockUseParams.mockReturnValue({ id: mockPublicUserId });
-      mockUseProfile.mockReturnValue({
+      mockUseProfileUser.mockReturnValue({
         data: mockPublicUser,
         isLoading: false,
         error: null,
-      } as unknown as ReturnType<typeof useProfile>);
+      } as unknown as ReturnType<typeof useProfileUser>);
 
       mockUseProfilePosts.mockReturnValue({
         data: undefined,
@@ -295,7 +295,7 @@ describe("Profile Component", () => {
       );
 
       await waitFor(() => {
-        expect(mockUseProfile).toHaveBeenCalledWith(mockPublicUserId);
+        expect(mockUseProfileUser).toHaveBeenCalledWith(mockPublicUserId);
         expect(screen.getByTestId("spinner")).toBeInTheDocument();
       });
     });
@@ -304,11 +304,11 @@ describe("Profile Component", () => {
   describe("Success States", () => {
     it("renders profile header and tabs when user data is loaded", async () => {
       mockUseParams.mockReturnValue({ id: mockPublicUserId });
-      mockUseProfile.mockReturnValue({
+      mockUseProfileUser.mockReturnValue({
         data: mockPublicUser,
         isLoading: false,
         error: null,
-      } as unknown as ReturnType<typeof useProfile>);
+      } as unknown as ReturnType<typeof useProfileUser>);
 
       mockUseProfilePosts.mockReturnValue({
         data: {
@@ -329,7 +329,7 @@ describe("Profile Component", () => {
       );
 
       await waitFor(() => {
-        expect(mockUseProfile).toHaveBeenCalledWith(mockPublicUserId);
+        expect(mockUseProfileUser).toHaveBeenCalledWith(mockPublicUserId);
         expect(
           screen.getAllByRole("heading", { name: /janedoe/i })
         ).toHaveLength(2);
@@ -339,11 +339,11 @@ describe("Profile Component", () => {
 
     it("handles self profile when isSelf prop is true", async () => {
       mockUseParams.mockReturnValue({});
-      mockUseProfile.mockReturnValue({
+      mockUseProfileUser.mockReturnValue({
         data: mockActiveUser,
         isLoading: false,
         error: null,
-      } as unknown as ReturnType<typeof useProfile>);
+      } as unknown as ReturnType<typeof useProfileUser>);
 
       mockUseProfilePosts.mockReturnValue({
         data: {
@@ -364,7 +364,7 @@ describe("Profile Component", () => {
       );
 
       await waitFor(() => {
-        expect(mockUseProfile).toHaveBeenCalledWith(undefined);
+        expect(mockUseProfileUser).toHaveBeenCalledWith(undefined);
         expect(
           screen.getAllByRole("heading", { name: /johndoe/i })
         ).toHaveLength(2);
@@ -374,11 +374,11 @@ describe("Profile Component", () => {
 
     it("renders self profile with Posts, Liked, and Saved tabs", async () => {
       mockUseParams.mockReturnValue({});
-      mockUseProfile.mockReturnValue({
+      mockUseProfileUser.mockReturnValue({
         data: mockActiveUser,
         isLoading: false,
         error: null,
-      } as unknown as ReturnType<typeof useProfile>);
+      } as unknown as ReturnType<typeof useProfileUser>);
 
       mockUseProfilePosts.mockReturnValue({
         data: {
@@ -399,7 +399,7 @@ describe("Profile Component", () => {
       );
 
       await waitFor(() => {
-        expect(mockUseProfile).toHaveBeenCalledWith(undefined);
+        expect(mockUseProfileUser).toHaveBeenCalledWith(undefined);
         expect(
           screen.getAllByRole("heading", { name: /johndoe/i })
         ).toHaveLength(2);
@@ -412,11 +412,11 @@ describe("Profile Component", () => {
 
     it("renders other profile with Posts, Replies, and media tabs", async () => {
       mockUseParams.mockReturnValue({ id: mockPublicUserId });
-      mockUseProfile.mockReturnValue({
+      mockUseProfileUser.mockReturnValue({
         data: mockPublicUser,
         isLoading: false,
         error: null,
-      } as unknown as ReturnType<typeof useProfile>);
+      } as unknown as ReturnType<typeof useProfileUser>);
 
       mockUseProfilePosts.mockReturnValue({
         data: {
@@ -437,7 +437,7 @@ describe("Profile Component", () => {
       );
 
       await waitFor(() => {
-        expect(mockUseProfile).toHaveBeenCalledWith(mockPublicUserId);
+        expect(mockUseProfileUser).toHaveBeenCalledWith(mockPublicUserId);
         expect(
           screen.getAllByRole("heading", { name: /janedoe/i })
         ).toHaveLength(2);
@@ -459,7 +459,7 @@ describe("Profile Component", () => {
         </TestWrapper>
       );
 
-      expect(mockUseProfile).toHaveBeenCalledWith(undefined);
+      expect(mockUseProfileUser).toHaveBeenCalledWith(undefined);
 
       mockUseParams.mockReturnValue({ id: mockPublicUserId });
       rerender(
@@ -468,16 +468,16 @@ describe("Profile Component", () => {
         </TestWrapper>
       );
 
-      expect(mockUseProfile).toHaveBeenCalledWith(mockPublicUserId);
+      expect(mockUseProfileUser).toHaveBeenCalledWith(mockPublicUserId);
     });
 
     it("shows a message when no posts are found", async () => {
       mockUseParams.mockReturnValue({ id: mockPublicUserId });
-      mockUseProfile.mockReturnValue({
+      mockUseProfileUser.mockReturnValue({
         data: mockPublicUser,
         isLoading: false,
         error: null,
-      } as unknown as ReturnType<typeof useProfile>);
+      } as unknown as ReturnType<typeof useProfileUser>);
 
       mockUseProfilePosts.mockReturnValue({
         data: {
@@ -507,11 +507,11 @@ describe("Profile Component", () => {
     it("allows switching from one tab to another", async () => {
       const user = userEvent.setup();
       mockUseParams.mockReturnValue({ id: mockPublicUserId });
-      mockUseProfile.mockReturnValue({
+      mockUseProfileUser.mockReturnValue({
         data: mockPublicUser,
         isLoading: false,
         error: null,
-      } as unknown as ReturnType<typeof useProfile>);
+      } as unknown as ReturnType<typeof useProfileUser>);
 
       mockUseProfilePosts.mockReturnValue({
         data: {
@@ -545,11 +545,11 @@ describe("Profile Component", () => {
 
     it("renders posts when they are found", async () => {
       mockUseParams.mockReturnValue({ id: mockPublicUserId });
-      mockUseProfile.mockReturnValue({
+      mockUseProfileUser.mockReturnValue({
         data: mockPublicUser,
         isLoading: false,
         error: null,
-      } as unknown as ReturnType<typeof useProfile>);
+      } as unknown as ReturnType<typeof useProfileUser>);
 
       mockUseProfilePosts.mockReturnValue({
         data: {
@@ -589,11 +589,11 @@ describe("Profile Component", () => {
 
     it("renders posts and show Load More button when hasNextPage is true", async () => {
       mockUseParams.mockReturnValue({});
-      mockUseProfile.mockReturnValue({
+      mockUseProfileUser.mockReturnValue({
         data: mockActiveUser,
         isLoading: false,
         error: null,
-      } as unknown as ReturnType<typeof useProfile>);
+      } as unknown as ReturnType<typeof useProfileUser>);
 
       mockUseProfilePosts.mockReturnValue({
         data: {
@@ -638,11 +638,11 @@ describe("Profile Component", () => {
       const mockFetchNextPage = vi.fn();
 
       mockUseParams.mockReturnValue({});
-      mockUseProfile.mockReturnValue({
+      mockUseProfileUser.mockReturnValue({
         data: mockActiveUser,
         isLoading: false,
         error: null,
-      } as unknown as ReturnType<typeof useProfile>);
+      } as unknown as ReturnType<typeof useProfileUser>);
 
       mockUseProfilePosts.mockReturnValue({
         data: {
@@ -673,15 +673,14 @@ describe("Profile Component", () => {
     });
 
     it("shows loading state for Load More button when isFetchingNextPage is true", async () => {
-      const user = userEvent.setup();
       const mockFetchNextPage = vi.fn();
 
       mockUseParams.mockReturnValue({});
-      mockUseProfile.mockReturnValue({
+      mockUseProfileUser.mockReturnValue({
         data: mockActiveUser,
         isLoading: false,
         error: null,
-      } as unknown as ReturnType<typeof useProfile>);
+      } as unknown as ReturnType<typeof useProfileUser>);
 
       mockUseProfilePosts.mockReturnValue({
         data: {
@@ -717,11 +716,11 @@ describe("Profile Component", () => {
   describe("Error States", () => {
     it("handles useProfile error gracefully", async () => {
       mockUseParams.mockReturnValue({ id: mockPublicUserId });
-      mockUseProfile.mockReturnValue({
+      mockUseProfileUser.mockReturnValue({
         data: undefined,
         isLoading: false,
         error: new Error("Failed to fetch user"),
-      } as unknown as ReturnType<typeof useProfile>);
+      } as unknown as ReturnType<typeof useProfileUser>);
 
       render(
         <TestWrapper>
@@ -738,11 +737,11 @@ describe("Profile Component", () => {
 
     it("handles useProfilePosts error gracefully", async () => {
       mockUseParams.mockReturnValue({ id: mockPublicUserId });
-      mockUseProfile.mockReturnValue({
+      mockUseProfileUser.mockReturnValue({
         data: mockPublicUser,
         isLoading: false,
         error: null,
-      } as unknown as ReturnType<typeof useProfile>);
+      } as unknown as ReturnType<typeof useProfileUser>);
 
       mockUseProfilePosts.mockReturnValue({
         data: undefined,
@@ -768,11 +767,11 @@ describe("Profile Component", () => {
 
     it("shows error message when user is undefined and not loading", async () => {
       mockUseParams.mockReturnValue({ id: mockPublicUserId });
-      mockUseProfile.mockReturnValue({
+      mockUseProfileUser.mockReturnValue({
         data: undefined,
         isLoading: false,
         error: null,
-      } as unknown as ReturnType<typeof useProfile>);
+      } as unknown as ReturnType<typeof useProfileUser>);
 
       render(
         <TestWrapper>

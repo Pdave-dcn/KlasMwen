@@ -5,7 +5,11 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import Profile from "@/pages/Profile";
-import { useProfilePosts } from "@/queries/usePosts";
+import {
+  useProfilePosts,
+  useProfileLikedPosts,
+  useProfileBookmarks,
+} from "@/queries/usePosts";
 import useProfileUser from "@/queries/useProfile";
 import type { ActiveUser, PublicUser } from "@/types/user.type";
 
@@ -14,6 +18,8 @@ vi.mock("@/queries/useProfile", () => ({
 }));
 vi.mock("@/queries/usePosts", () => ({
   useProfilePosts: vi.fn(),
+  useProfileLikedPosts: vi.fn(),
+  useProfileBookmarks: vi.fn(),
 }));
 
 vi.mock("react-router-dom", async () => {
@@ -26,6 +32,8 @@ vi.mock("react-router-dom", async () => {
 
 const mockUseProfileUser = vi.mocked(useProfileUser);
 const mockUseProfilePosts = vi.mocked(useProfilePosts);
+const mockUseProfileLikedPosts = vi.mocked(useProfileLikedPosts);
+const mockUserProfileBookmarks = vi.mocked(useProfileBookmarks);
 const mockUseParams = vi.mocked(useParams);
 
 vi.mock("@/components/ui/spinner", () => ({
@@ -299,6 +307,109 @@ describe("Profile Component", () => {
         expect(screen.getByTestId("spinner")).toBeInTheDocument();
       });
     });
+
+    it("shows spinner when the authenticated user switch to the liked tab", async () => {
+      const user = userEvent.setup();
+      mockUseParams.mockReturnValue({});
+      mockUseProfileUser.mockReturnValue({
+        data: mockActiveUser,
+        isLoading: false,
+        error: null,
+      } as unknown as ReturnType<typeof useProfileUser>);
+
+      mockUseProfilePosts.mockReturnValue({
+        data: {
+          pages: [{ data: [] }],
+          pageParams: [],
+        },
+        isLoading: false,
+        error: null,
+      } as unknown as ReturnType<typeof useProfilePosts>);
+
+      mockUseProfileLikedPosts.mockReturnValue({
+        data: undefined,
+        isLoading: true,
+        error: null,
+      } as unknown as ReturnType<typeof useProfileLikedPosts>);
+
+      render(
+        <TestWrapper>
+          <Profile isSelf />
+        </TestWrapper>
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole("heading", { name: /no posts/i })
+        ).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole("tab", { name: /liked/i }));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("spinner")).toBeInTheDocument();
+      });
+    });
+
+    it("shows spinner when the authenticated user switch from liked tab to saved tab", async () => {
+      const user = userEvent.setup();
+      mockUseParams.mockReturnValue({});
+      mockUseProfileUser.mockReturnValue({
+        data: mockActiveUser,
+        isLoading: false,
+        error: null,
+      } as unknown as ReturnType<typeof useProfileUser>);
+
+      mockUseProfilePosts.mockReturnValue({
+        data: {
+          pages: [{ data: [] }],
+          pageParams: [],
+        },
+        isLoading: false,
+        error: null,
+      } as unknown as ReturnType<typeof useProfilePosts>);
+
+      mockUseProfileLikedPosts.mockReturnValue({
+        data: {
+          pages: [{ data: [] }],
+          pageParams: [],
+        },
+        isLoading: false,
+        error: null,
+      } as unknown as ReturnType<typeof useProfileLikedPosts>);
+
+      mockUserProfileBookmarks.mockReturnValue({
+        data: undefined,
+        isLoading: true,
+        error: null,
+      } as unknown as ReturnType<typeof useProfileBookmarks>);
+
+      render(
+        <TestWrapper>
+          <Profile isSelf />
+        </TestWrapper>
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole("heading", { name: /no posts/i })
+        ).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole("tab", { name: /liked/i }));
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole("heading", { name: /no liked/i })
+        ).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole("tab", { name: /saved/i }));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("spinner")).toBeInTheDocument();
+      });
+    });
   });
 
   describe("Success States", () => {
@@ -471,36 +582,451 @@ describe("Profile Component", () => {
       expect(mockUseProfileUser).toHaveBeenCalledWith(mockPublicUserId);
     });
 
-    it("shows a message when no posts are found", async () => {
-      mockUseParams.mockReturnValue({ id: mockPublicUserId });
-      mockUseProfileUser.mockReturnValue({
-        data: mockPublicUser,
-        isLoading: false,
-        error: null,
-      } as unknown as ReturnType<typeof useProfileUser>);
+    describe("Posts tab", () => {
+      it("shows a message when no posts are found", async () => {
+        mockUseParams.mockReturnValue({ id: mockPublicUserId });
+        mockUseProfileUser.mockReturnValue({
+          data: mockPublicUser,
+          isLoading: false,
+          error: null,
+        } as unknown as ReturnType<typeof useProfileUser>);
 
-      mockUseProfilePosts.mockReturnValue({
-        data: {
-          pages: [{ data: [] }],
-          pageParams: [],
-        },
-        isLoading: false,
-        error: null,
-        fetchNextPage: vi.fn(),
-        hasNextPage: false,
-        isFetchingNextPage: false,
-      } as unknown as ReturnType<typeof useProfilePosts>);
+        mockUseProfilePosts.mockReturnValue({
+          data: {
+            pages: [{ data: [] }],
+            pageParams: [],
+          },
+          isLoading: false,
+          error: null,
+          fetchNextPage: vi.fn(),
+          hasNextPage: false,
+          isFetchingNextPage: false,
+        } as unknown as ReturnType<typeof useProfilePosts>);
 
-      render(
-        <TestWrapper>
-          <Profile />
-        </TestWrapper>
-      );
+        render(
+          <TestWrapper>
+            <Profile />
+          </TestWrapper>
+        );
 
-      await waitFor(() => {
-        expect(
-          screen.getByRole("heading", { name: /no posts/i })
-        ).toBeInTheDocument();
+        await waitFor(() => {
+          expect(
+            screen.getByRole("heading", { name: /no posts/i })
+          ).toBeInTheDocument();
+        });
+      });
+
+      it("renders posts when they are found", async () => {
+        mockUseParams.mockReturnValue({ id: mockPublicUserId });
+        mockUseProfileUser.mockReturnValue({
+          data: mockPublicUser,
+          isLoading: false,
+          error: null,
+        } as unknown as ReturnType<typeof useProfileUser>);
+
+        mockUseProfilePosts.mockReturnValue({
+          data: {
+            pages: [
+              {
+                data: mockPublicUserPosts.data,
+                pagination: mockPublicUserPosts.pagination,
+              },
+            ],
+            pageParams: [],
+          },
+          isLoading: false,
+          error: null,
+          fetchNextPage: vi.fn(),
+          hasNextPage: mockPublicUserPosts.pagination.hasMore,
+          isFetchingNextPage: false,
+        } as unknown as ReturnType<typeof useProfilePosts>);
+
+        render(
+          <TestWrapper>
+            <Profile />
+          </TestWrapper>
+        );
+
+        await waitFor(() => {
+          expect(
+            screen.getByRole("heading", {
+              name: /getting started with node.js/i,
+            })
+          ).toBeInTheDocument();
+          expect(
+            screen.getByRole("heading", {
+              name: /how do i center a div in css/i,
+            })
+          ).toBeInTheDocument();
+          expect(
+            screen.getByRole("heading", { name: /graphql api best practices/i })
+          ).toBeInTheDocument();
+        });
+      });
+
+      it("renders posts and show Load More button when hasNextPage is true", async () => {
+        mockUseParams.mockReturnValue({});
+        mockUseProfileUser.mockReturnValue({
+          data: mockActiveUser,
+          isLoading: false,
+          error: null,
+        } as unknown as ReturnType<typeof useProfileUser>);
+
+        mockUseProfilePosts.mockReturnValue({
+          data: {
+            pages: [
+              {
+                data: mockActiveUserPosts.data,
+                pagination: mockActiveUserPosts.pagination,
+              },
+            ],
+            pageParams: [],
+          },
+          isLoading: false,
+          error: null,
+          fetchNextPage: vi.fn(),
+          hasNextPage: mockActiveUserPosts.pagination.hasMore,
+          isFetchingNextPage: false,
+        } as unknown as ReturnType<typeof useProfilePosts>);
+
+        render(
+          <TestWrapper>
+            <Profile />
+          </TestWrapper>
+        );
+
+        await waitFor(() => {
+          expect(
+            screen.getByRole("heading", {
+              name: /Understanding Async\/Await in JavaScript/i,
+            })
+          ).toBeInTheDocument();
+          expect(
+            screen.getByRole("heading", { name: /React Hooks Cheatsheet/i })
+          ).toBeInTheDocument();
+          expect(
+            screen.getByRole("button", { name: /load more/i })
+          ).toBeInTheDocument();
+        });
+      });
+    });
+
+    describe("Liked Posts Tab", () => {
+      it("shows a message when no liked posts are found", async () => {
+        const user = userEvent.setup();
+        mockUseParams.mockReturnValue({});
+        mockUseProfileUser.mockReturnValue({
+          data: mockActiveUser,
+          isLoading: false,
+          error: null,
+        } as unknown as ReturnType<typeof useProfileUser>);
+
+        mockUseProfilePosts.mockReturnValue({
+          data: {
+            pages: [{ data: [] }],
+            pageParams: [],
+          },
+          isLoading: false,
+          error: null,
+          fetchNextPage: vi.fn(),
+          hasNextPage: false,
+          isFetchingNextPage: false,
+        } as unknown as ReturnType<typeof useProfilePosts>);
+
+        mockUseProfileLikedPosts.mockReturnValue({
+          data: {
+            pages: [{ data: [] }],
+            pageParams: [],
+          },
+          isLoading: false,
+          error: null,
+          fetchNextPage: vi.fn(),
+          hasNextPage: false,
+          isFetchingNextPage: false,
+        } as unknown as ReturnType<typeof useProfileLikedPosts>);
+
+        render(
+          <TestWrapper>
+            <Profile isSelf />
+          </TestWrapper>
+        );
+
+        await user.click(screen.getByRole("tab", { name: /liked/i }));
+
+        await waitFor(() => {
+          expect(
+            screen.getByRole("heading", { name: /no liked posts yet/i })
+          ).toBeInTheDocument();
+        });
+      });
+
+      it("shows error message when liked posts fail to load", async () => {
+        const user = userEvent.setup();
+        mockUseParams.mockReturnValue({});
+        mockUseProfileUser.mockReturnValue({
+          data: mockActiveUser,
+          isLoading: false,
+          error: null,
+        } as unknown as ReturnType<typeof useProfileUser>);
+
+        mockUseProfilePosts.mockReturnValue({
+          data: {
+            pages: [{ data: [] }],
+            pageParams: [],
+          },
+          isLoading: false,
+          error: null,
+          fetchNextPage: vi.fn(),
+          hasNextPage: false,
+          isFetchingNextPage: false,
+        } as unknown as ReturnType<typeof useProfilePosts>);
+
+        mockUseProfileLikedPosts.mockReturnValue({
+          data: undefined,
+          isLoading: false,
+          error: new Error("Failed to load liked posts"),
+          fetchNextPage: vi.fn(),
+          hasNextPage: false,
+          isFetchingNextPage: false,
+        } as unknown as ReturnType<typeof useProfileLikedPosts>);
+
+        render(
+          <TestWrapper>
+            <Profile isSelf />
+          </TestWrapper>
+        );
+
+        await user.click(screen.getByRole("tab", { name: /liked/i }));
+
+        await waitFor(() => {
+          expect(
+            screen.getByRole("heading", { name: /error loading liked posts/i })
+          ).toBeInTheDocument();
+        });
+      });
+
+      it("displays liked posts when data is available", async () => {
+        const user = userEvent.setup();
+        mockUseParams.mockReturnValue({});
+        mockUseProfileUser.mockReturnValue({
+          data: mockActiveUser,
+          isLoading: false,
+          error: null,
+        } as unknown as ReturnType<typeof useProfileUser>);
+
+        mockUseProfilePosts.mockReturnValue({
+          data: {
+            pages: [{ data: [] }],
+            pageParams: [],
+          },
+          isLoading: false,
+          error: null,
+          fetchNextPage: vi.fn(),
+          hasNextPage: false,
+          isFetchingNextPage: false,
+        } as unknown as ReturnType<typeof useProfilePosts>);
+
+        mockUseProfileLikedPosts.mockReturnValue({
+          data: {
+            pages: [{ data: mockActiveUserPosts.data }],
+            pageParams: [],
+          },
+          isLoading: false,
+          error: null,
+          fetchNextPage: vi.fn(),
+          hasNextPage: false,
+          isFetchingNextPage: false,
+        } as unknown as ReturnType<typeof useProfileLikedPosts>);
+
+        render(
+          <TestWrapper>
+            <Profile isSelf />
+          </TestWrapper>
+        );
+
+        await user.click(screen.getByRole("tab", { name: /liked/i }));
+
+        await waitFor(() => {
+          expect(
+            screen.queryByRole("heading", { name: /no liked posts yet/ })
+          ).not.toBeInTheDocument();
+          expect(
+            screen.getByRole("heading", {
+              name: /Understanding Async\/Await in JavaScript/i,
+            })
+          ).toBeInTheDocument();
+        });
+      });
+    });
+
+    describe("Saved Posts Tab", () => {
+      it("shows a message when no saved posts are found", async () => {
+        const user = userEvent.setup();
+        mockUseParams.mockReturnValue({});
+        mockUseProfileUser.mockReturnValue({
+          data: mockActiveUser,
+          isLoading: false,
+          error: null,
+        } as unknown as ReturnType<typeof useProfileUser>);
+
+        mockUseProfilePosts.mockReturnValue({
+          data: {
+            pages: [{ data: [] }],
+            pageParams: [],
+          },
+          isLoading: false,
+          error: null,
+          fetchNextPage: vi.fn(),
+          hasNextPage: false,
+          isFetchingNextPage: false,
+        } as unknown as ReturnType<typeof useProfilePosts>);
+
+        mockUseProfileLikedPosts.mockReturnValue({
+          data: {
+            pages: [{ data: [] }],
+            pageParams: [],
+          },
+          isLoading: false,
+          error: null,
+          fetchNextPage: vi.fn(),
+          hasNextPage: false,
+          isFetchingNextPage: false,
+        } as unknown as ReturnType<typeof useProfileLikedPosts>);
+
+        mockUserProfileBookmarks.mockReturnValue({
+          data: {
+            pages: [{ data: [] }],
+            pageParams: [],
+          },
+          isLoading: false,
+          error: null,
+          fetchNextPage: vi.fn(),
+          hasNextPage: false,
+          isFetchingNextPage: false,
+        } as unknown as ReturnType<typeof useProfileBookmarks>);
+
+        render(
+          <TestWrapper>
+            <Profile isSelf />
+          </TestWrapper>
+        );
+
+        await user.click(screen.getByRole("tab", { name: /saved/i }));
+
+        await waitFor(() => {
+          expect(
+            screen.getByRole("heading", { name: /no saved posts yet/i })
+          ).toBeInTheDocument();
+        });
+      });
+
+      it("shows error message when saved posts fail to load", async () => {
+        const user = userEvent.setup();
+        mockUseParams.mockReturnValue({});
+        mockUseProfileUser.mockReturnValue({
+          data: mockActiveUser,
+          isLoading: false,
+          error: null,
+        } as unknown as ReturnType<typeof useProfileUser>);
+
+        mockUseProfilePosts.mockReturnValue({
+          data: {
+            pages: [{ data: [] }],
+            pageParams: [],
+          },
+          isLoading: false,
+          error: null,
+          fetchNextPage: vi.fn(),
+          hasNextPage: false,
+          isFetchingNextPage: false,
+        } as unknown as ReturnType<typeof useProfilePosts>);
+
+        mockUserProfileBookmarks.mockReturnValue({
+          data: undefined,
+          isLoading: false,
+          error: new Error("Failed to load saved posts"),
+          fetchNextPage: vi.fn(),
+          hasNextPage: false,
+          isFetchingNextPage: false,
+        } as unknown as ReturnType<typeof useProfileBookmarks>);
+
+        render(
+          <TestWrapper>
+            <Profile isSelf />
+          </TestWrapper>
+        );
+
+        await user.click(screen.getByRole("tab", { name: /saved/i }));
+
+        await waitFor(() => {
+          expect(
+            screen.getByRole("heading", { name: /error loading saved posts/i })
+          ).toBeInTheDocument();
+        });
+      });
+
+      it("displays saved posts when data is available", async () => {
+        const user = userEvent.setup();
+        mockUseParams.mockReturnValue({});
+        mockUseProfileUser.mockReturnValue({
+          data: mockActiveUser,
+          isLoading: false,
+          error: null,
+        } as unknown as ReturnType<typeof useProfileUser>);
+
+        mockUseProfilePosts.mockReturnValue({
+          data: {
+            pages: [{ data: [] }],
+            pageParams: [],
+          },
+          isLoading: false,
+          error: null,
+          fetchNextPage: vi.fn(),
+          hasNextPage: false,
+          isFetchingNextPage: false,
+        } as unknown as ReturnType<typeof useProfilePosts>);
+
+        mockUserProfileBookmarks.mockReturnValue({
+          data: {
+            pages: [
+              {
+                data: mockActiveUserPosts.data,
+                pagination: mockActiveUserPosts.pagination,
+              },
+            ],
+            pageParams: [],
+          },
+          isLoading: false,
+          error: null,
+          fetchNextPage: vi.fn(),
+          hasNextPage: mockActiveUserPosts.pagination.hasMore,
+          isFetchingNextPage: false,
+        } as unknown as ReturnType<typeof useProfileBookmarks>);
+
+        render(
+          <TestWrapper>
+            <Profile isSelf />
+          </TestWrapper>
+        );
+
+        await waitFor(() => {
+          expect(
+            screen.getByRole("heading", { name: /no posts/i })
+          ).toBeInTheDocument();
+        });
+
+        await user.click(screen.getByRole("tab", { name: /saved/i }));
+
+        await waitFor(() => {
+          expect(
+            screen.queryByRole("heading", { name: /no saved posts yet/i })
+          ).not.toBeInTheDocument();
+          expect(
+            screen.getByRole("heading", {
+              name: /Understanding Async\/Await in JavaScript/i,
+            })
+          ).toBeInTheDocument();
+        });
       });
     });
 
@@ -539,96 +1065,6 @@ describe("Profile Component", () => {
         ).not.toBeInTheDocument();
         expect(
           screen.getByRole("heading", { name: /no replies/i })
-        ).toBeInTheDocument();
-      });
-    });
-
-    it("renders posts when they are found", async () => {
-      mockUseParams.mockReturnValue({ id: mockPublicUserId });
-      mockUseProfileUser.mockReturnValue({
-        data: mockPublicUser,
-        isLoading: false,
-        error: null,
-      } as unknown as ReturnType<typeof useProfileUser>);
-
-      mockUseProfilePosts.mockReturnValue({
-        data: {
-          pages: [
-            {
-              data: mockPublicUserPosts.data,
-              pagination: mockPublicUserPosts.pagination,
-            },
-          ],
-          pageParams: [],
-        },
-        isLoading: false,
-        error: null,
-        fetchNextPage: vi.fn(),
-        hasNextPage: mockPublicUserPosts.pagination.hasMore,
-        isFetchingNextPage: false,
-      } as unknown as ReturnType<typeof useProfilePosts>);
-
-      render(
-        <TestWrapper>
-          <Profile />
-        </TestWrapper>
-      );
-
-      await waitFor(() => {
-        expect(
-          screen.getByRole("heading", { name: /getting started with node.js/i })
-        ).toBeInTheDocument();
-        expect(
-          screen.getByRole("heading", { name: /how do i center a div in css/i })
-        ).toBeInTheDocument();
-        expect(
-          screen.getByRole("heading", { name: /graphql api best practices/i })
-        ).toBeInTheDocument();
-      });
-    });
-
-    it("renders posts and show Load More button when hasNextPage is true", async () => {
-      mockUseParams.mockReturnValue({});
-      mockUseProfileUser.mockReturnValue({
-        data: mockActiveUser,
-        isLoading: false,
-        error: null,
-      } as unknown as ReturnType<typeof useProfileUser>);
-
-      mockUseProfilePosts.mockReturnValue({
-        data: {
-          pages: [
-            {
-              data: mockActiveUserPosts.data,
-              pagination: mockActiveUserPosts.pagination,
-            },
-          ],
-          pageParams: [],
-        },
-        isLoading: false,
-        error: null,
-        fetchNextPage: vi.fn(),
-        hasNextPage: mockActiveUserPosts.pagination.hasMore,
-        isFetchingNextPage: false,
-      } as unknown as ReturnType<typeof useProfilePosts>);
-
-      render(
-        <TestWrapper>
-          <Profile />
-        </TestWrapper>
-      );
-
-      await waitFor(() => {
-        expect(
-          screen.getByRole("heading", {
-            name: /Understanding Async\/Await in JavaScript/i,
-          })
-        ).toBeInTheDocument();
-        expect(
-          screen.getByRole("heading", { name: /React Hooks Cheatsheet/i })
-        ).toBeInTheDocument();
-        expect(
-          screen.getByRole("button", { name: /load more/i })
         ).toBeInTheDocument();
       });
     });

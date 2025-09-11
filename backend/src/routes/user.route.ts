@@ -5,6 +5,7 @@ import {
   getMyPosts,
   getPostsLikedByMe,
   getUserById,
+  getUserComments,
   getUserPosts,
   updateUserProfile,
 } from "../controllers/user.controller";
@@ -354,5 +355,8 @@ router.get("/users/:id", generalApiLimiter, getUserById);
  *         description: Internal server error
  */
 router.get("/users/:id/posts", generalApiLimiter, getUserPosts);
+
+// todo: write openApi docs for this endpoint
+router.get("/users/:id/comments", generalApiLimiter, getUserComments);
 
 export default router;

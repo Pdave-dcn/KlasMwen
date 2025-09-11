@@ -1,4 +1,5 @@
 import handleZodValidationError from "@/utils/zodErrorHandler.util";
+import { ProfileCommentsResponseSchema } from "@/zodSchemas/comment.zod";
 import {
   GetActiveUserResponseSchema,
   GetUserProfileResponseSchema,
@@ -13,7 +14,7 @@ const getUserProfile = async (userId: string) => {
 
     return validatedData.data;
   } catch (error) {
-    handleZodValidationError(error);
+    handleZodValidationError(error, "getUserProfile");
     throw error;
   }
 };
@@ -25,9 +26,26 @@ const getActiveUserProfile = async () => {
 
     return validatedData.data;
   } catch (error) {
-    handleZodValidationError(error);
+    handleZodValidationError(error, "getActiveUserProfile");
     throw error;
   }
 };
 
-export { getUserProfile, getActiveUserProfile };
+const getUserProfileComments = async (
+  userId: string,
+  cursor?: string | number,
+  limit = 10
+) => {
+  try {
+    const res = await api.get(`/users/${userId}/comments`, {
+      params: { cursor, limit },
+    });
+    const validatedData = ProfileCommentsResponseSchema.parse(res.data);
+
+    return validatedData;
+  } catch (error) {
+    handleZodValidationError(error, "getUserProfileComments");
+    throw error;
+  }
+};
+export { getUserProfile, getActiveUserProfile, getUserProfileComments };

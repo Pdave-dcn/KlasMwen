@@ -82,7 +82,7 @@ export const PostCard = ({
   };
 
   return (
-    <Card className="card-hover interactive-hover border-border bg-card">
+    <Card className="w-full max-w-2xl">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">

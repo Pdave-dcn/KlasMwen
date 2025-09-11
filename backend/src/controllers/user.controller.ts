@@ -1,12 +1,15 @@
 /* eslint-disable max-lines-per-function*/
-
 import prisma from "../core/config/db.js";
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index";
+import CommentService from "../features/comments/commentService.js";
 import PostService from "../features/posts/postService.js";
 import { ensureAuthenticated } from "../utils/auth.util.js";
 import createActionLogger from "../utils/logger.util.js";
-import { uuidPaginationSchema } from "../utils/pagination.util.js";
+import {
+  createPaginationSchema,
+  uuidPaginationSchema,
+} from "../utils/pagination.util.js";
 import {
   UpdateUserProfileSchema,
   UserIdParamSchema,
@@ -460,6 +463,86 @@ const getUserPosts = async (req: Request, res: Response) => {
   }
 };
 
+// todo: write tests for this controller
+const getUserComments = async (req: Request, res: Response) => {
+  const actionLogger = createActionLogger(
+    controllerLogger,
+    "getUserComments",
+    req
+  );
+  try {
+    actionLogger.info("Fetching user comments and replies");
+    const startTime = Date.now();
+
+    actionLogger.debug("Validating user ID parameter");
+    const { id: userId } = UserIdParamSchema.parse(req.params);
+
+    actionLogger.debug("Parsing pagination parameters");
+    const customPaginationSchema = createPaginationSchema(10, 50, "number");
+    const { limit, cursor } = customPaginationSchema.parse(req.query);
+
+    actionLogger.info(
+      {
+        requestedUserId: userId,
+        limit,
+        cursor,
+        hasCursor: !!cursor,
+      },
+      "User ID validated and pagination parameters parsed"
+    );
+
+    actionLogger.debug("Verifying user exists");
+    const userExists = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
+
+    if (!userExists) {
+      const totalDuration = Date.now() - startTime;
+      actionLogger.warn(
+        {
+          requestedUserId: userId,
+          totalDuration,
+        },
+        "User comments and replies fetch failed - user not found"
+      );
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    actionLogger.debug("Processing user comments and replies fetching request");
+    const serviceStartTime = Date.now();
+    const result = await CommentService.getUserCommentsWithRelations(
+      userId,
+      limit,
+      cursor as string | undefined
+    );
+    const serviceDuration = Date.now() - serviceStartTime;
+
+    const totalDuration = Date.now() - startTime;
+
+    actionLogger.info(
+      {
+        requestedUserId: userId,
+        limit,
+        cursor,
+        commentsCount: result.comments.length,
+        hasMore: result.pagination.hasMore,
+        nextCursor: result.pagination.nextCursor,
+        serviceDuration,
+        totalDuration,
+      },
+      "User comments and replies fetched successfully"
+    );
+
+    return res.status(200).json({
+      data: result.comments,
+      pagination: result.pagination,
+    });
+  } catch (error: unknown) {
+    return handleError(error, res);
+  }
+};
+
 export {
   getUserById,
   updateUserProfile,
@@ -467,4 +550,5 @@ export {
   getUserPosts,
   getActiveUser,
   getPostsLikedByMe,
+  getUserComments,
 };

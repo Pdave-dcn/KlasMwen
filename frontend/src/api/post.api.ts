@@ -16,7 +16,7 @@ const getUserPosts = async (
 
     return validated;
   } catch (error) {
-    handleZodValidationError(error);
+    handleZodValidationError(error, "getUserProfile");
     throw error;
   }
 };
@@ -30,7 +30,7 @@ const getActiveUserPosts = async (cursor?: string | number, limit = 10) => {
 
     return validatedData;
   } catch (error) {
-    handleZodValidationError(error);
+    handleZodValidationError(error, "getActiveUserPosts");
     throw error;
   }
 };
@@ -45,7 +45,7 @@ const getHomePagePosts = async (cursor?: string | number, limit = 10) => {
 
     return validatedData;
   } catch (error) {
-    handleZodValidationError(error);
+    handleZodValidationError(error, "getHomePagePosts");
     throw error;
   }
 };
@@ -63,7 +63,7 @@ const getActiveUserLikedPosts = async (
 
     return validatedData;
   } catch (error) {
-    handleZodValidationError(error);
+    handleZodValidationError(error, "getActiveUserLikedPosts");
     throw error;
   }
 };
@@ -78,7 +78,7 @@ const getActiveUserBookmarks = async (cursor?: string | number, limit = 10) => {
 
     return validatedData;
   } catch (error) {
-    handleZodValidationError(error);
+    handleZodValidationError(error, "getActiveUserBookmarks");
     throw error;
   }
 };

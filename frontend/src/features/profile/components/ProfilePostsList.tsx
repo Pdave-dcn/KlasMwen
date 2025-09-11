@@ -83,7 +83,7 @@ const ProfilePostsList = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 flex flex-col items-center">
       {posts?.pages.flatMap((page) =>
         page.data.map((post) => (
           <PostCard

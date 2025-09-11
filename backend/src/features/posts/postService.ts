@@ -1,3 +1,23 @@
+/**
+ * @file This file contains the `PostService` class, which provides a data access layer for retrieving post-related data from the database.
+ * @exports {class} PostService - The primary service class for all post-related database operations.
+ *
+ * @description
+ * This service handles fetching various types of post data, including:
+ * - Posts by a specific user, with pagination.
+ * - Posts liked and bookmarked by a user, with compound cursors.
+ * - A single post by its ID, with its comments.
+ * - Metadata and edit-specific data for posts.
+ *
+ * The file defines several key components:
+ * - **PostFragments:** Reusable Prisma `select` clauses for common relational data like authors and tags.
+ * - **BaseSelectors:** Predefined selectors for different views of a post (e.g., `post`, `extendedPost`).
+ * - **Prisma Validators:** Custom Prisma types for handling complex queries with included relations (e.g., `likeWithPost`).
+ * - **PostService Class:** A static class with methods for all public-facing queries.
+ *
+ * It uses a combination of Prisma's `findMany` and `findUnique` methods and helper functions (`buildPaginatedQuery`, `buildCompoundCursorQuery`, `processPaginatedResults`) for efficient, cursor-based pagination.
+ */
+
 import { Prisma } from "@prisma/client";
 
 import prisma from "../../core/config/db";

@@ -25,7 +25,7 @@ const signIn = async (data: FormValues): Promise<SignInResponse> => {
 
     return validatedData;
   } catch (error) {
-    handleZodValidationError(error);
+    handleZodValidationError(error, "signIn");
     throw error;
   }
 };
@@ -38,7 +38,7 @@ const signUp = async (data: FormValues): Promise<SignUpResponse> => {
 
     return validatedData;
   } catch (error) {
-    handleZodValidationError(error);
+    handleZodValidationError(error, "signUp");
     throw error;
   }
 };

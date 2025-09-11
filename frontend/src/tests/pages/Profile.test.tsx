@@ -10,12 +10,14 @@ import {
   useProfileLikedPosts,
   useProfileBookmarks,
 } from "@/queries/usePosts";
-import useProfileUser from "@/queries/useProfile";
+import { useProfileUser, useProfileComments } from "@/queries/useProfile";
 import type { ActiveUser, PublicUser } from "@/types/user.type";
 
 vi.mock("@/queries/useProfile", () => ({
-  default: vi.fn(),
+  useProfileUser: vi.fn(),
+  useProfileComments: vi.fn(),
 }));
+
 vi.mock("@/queries/usePosts", () => ({
   useProfilePosts: vi.fn(),
   useProfileLikedPosts: vi.fn(),
@@ -34,6 +36,7 @@ const mockUseProfileUser = vi.mocked(useProfileUser);
 const mockUseProfilePosts = vi.mocked(useProfilePosts);
 const mockUseProfileLikedPosts = vi.mocked(useProfileLikedPosts);
 const mockUserProfileBookmarks = vi.mocked(useProfileBookmarks);
+const mockUseProfileComments = vi.mocked(useProfileComments);
 const mockUseParams = vi.mocked(useParams);
 
 vi.mock("@/components/ui/spinner", () => ({
@@ -1050,6 +1053,15 @@ describe("Profile Component", () => {
         hasNextPage: false,
         isFetchingNextPage: false,
       } as unknown as ReturnType<typeof useProfilePosts>);
+
+      mockUseProfileComments.mockReturnValue({
+        data: {
+          pages: [{ data: [] }],
+          pageParams: [],
+        },
+        isLoading: false,
+        error: null,
+      } as unknown as ReturnType<typeof useProfileComments>);
 
       render(
         <TestWrapper>

@@ -13,6 +13,7 @@ import { useProfilePosts } from "@/queries/usePosts";
 import ProfileBookmarks from "./ProfileBookmarks";
 import ProfileLikedPosts from "./ProfileLikedPosts";
 import ProfilePosts from "./ProfilePosts";
+import ProfileReplies from "./ProfileReplies";
 
 interface ProfileTabsProps {
   activeTab: string;
@@ -89,15 +90,7 @@ const ProfileTabs = ({
         ) : (
           <>
             <TabsContent value="replies">
-              <Card className="p-8 text-center">
-                <MessageCircle className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  No replies yet
-                </h3>
-                <p className="text-muted-foreground">
-                  User replies and comments will appear here.
-                </p>
-              </Card>
+              <ProfileReplies />
             </TabsContent>
 
             <TabsContent value="media">

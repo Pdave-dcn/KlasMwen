@@ -216,4 +216,8 @@ export default defineConfig([
   },
 
   eslintConfigPrettier,
+
+  {
+    ignores: ["vitest.config.ts"],
+  },
 ]);

@@ -127,4 +127,5 @@ class CommentService {
   }
 }
 
+export { CommentWithRelations };
 export default CommentService;

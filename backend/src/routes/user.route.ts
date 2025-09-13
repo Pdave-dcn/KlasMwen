@@ -356,7 +356,53 @@ router.get("/users/:id", generalApiLimiter, getUserById);
  */
 router.get("/users/:id/posts", generalApiLimiter, getUserPosts);
 
-// todo: write openApi docs for this endpoint
+/**
+ * @openapi
+ * /users/{id}/comments:
+ *   get:
+ *     tags: [Users, Comments]
+ *     summary: Get user's comments and replies
+ *     description: Retrieves a paginated list of all comments and replies made by a specific user, including related post and parent comment information.
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: The unique identifier of the user
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         example: "123e4567-e89b-12d3-a456-426614174000"
+ *       - name: limit
+ *         in: query
+ *         required: false
+ *         description: Number of comments to return per page (default 10, max 50)
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 50
+ *           default: 10
+ *         example: 20
+ *       - name: cursor
+ *         in: query
+ *         required: false
+ *         description: Cursor for pagination to get the next set of results
+ *         schema:
+ *           type: number
+ *         example: 12
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved user comments and replies
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserCommentsResponse'
+ *       404:
+ *         description: User not found
+ *       429:
+ *         description: Rate limit exceeded
+ *       500:
+ *         description: Internal server error
+ */
 router.get("/users/:id/comments", generalApiLimiter, getUserComments);
 
 export default router;

@@ -10,7 +10,7 @@ import passport from "passport";
 import { corsOptions } from "./core/config/cors.js";
 import initializePassport from "./core/config/passport.js";
 import router from "./routes/index.route.js";
-import setupSwagger from "./swagger.js";
+import setupSwagger from "./swagger/index.js";
 
 const app = express();
 

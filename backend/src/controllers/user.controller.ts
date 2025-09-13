@@ -463,7 +463,6 @@ const getUserPosts = async (req: Request, res: Response) => {
   }
 };
 
-// todo: write tests for this controller
 const getUserComments = async (req: Request, res: Response) => {
   const actionLogger = createActionLogger(
     controllerLogger,

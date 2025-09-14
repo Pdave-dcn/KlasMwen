@@ -4,8 +4,11 @@ import { handleError } from "../../../core/error/index.js";
 import { CommentWithRelations } from "../../../features/comments/commentService.js";
 
 import { expectValidationError } from "./shared/helpers.js";
-import { mockUser , createMockRequest, createMockResponse } from "./shared/mocks.js";
-
+import {
+  mockUser,
+  createMockRequest,
+  createMockResponse,
+} from "./shared/mocks.js";
 
 import type { Request, Response } from "express";
 
@@ -62,7 +65,7 @@ vi.mock("../../../core/error/index.js", () => ({
   handleError: vi.fn(),
 }));
 
-export const mockUserComments: CommentWithRelations[] = [
+const mockUserComments: CommentWithRelations[] = [
   {
     id: 1,
     parentId: null,

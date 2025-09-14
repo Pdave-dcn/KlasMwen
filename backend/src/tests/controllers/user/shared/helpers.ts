@@ -7,14 +7,12 @@ import { createMockRequest, createMockResponse } from "./mocks";
 
 import type { Request, Response } from "express";
 
-
-
 type Controller = (
   req: Request,
   res: Response
-) => Promise<Response<any, Record<string, any>>>;
+) => Promise<Response<any, Record<string, any>> | undefined>;
 
-export async function expectValidationError(
+async function expectValidationError(
   controller: Controller,
   reqOverrides: Partial<Request>,
   shouldCheckPrisma: boolean = true
@@ -31,10 +29,12 @@ export async function expectValidationError(
   }
 }
 
-export const createAuthenticatedUser = (overrides = {}) => ({
+const createAuthenticatedUser = (overrides = {}) => ({
   id: "123e4567-e89b-12d3-a456-426614174000",
   username: "testuser",
   email: "test@example.com",
   role: "STUDENT" as Role,
   ...overrides,
 });
+
+export { expectValidationError, createAuthenticatedUser };

@@ -4,6 +4,7 @@ import { createLogger } from "../core/config/logger.js";
 import SeedingError from "../core/error/custom/seed.error.js";
 
 import seedAvatars from "./seeders/avatar.seeder.js";
+import seedBookmarks from "./seeders/bookmark.seeder.js";
 import cleanupDatabase from "./seeders/cleanup.seeder.js";
 import seedComments from "./seeders/comment.seeder.js";
 import seedLikes from "./seeders/like.seeder.js";
@@ -42,6 +43,9 @@ const main = async () => {
     // phase 7: Create likes
     const likeStats = await seedLikes(users, posts);
 
+    // phase 8: Create bookmarks
+    const bookmarksStats = await seedBookmarks(users, posts);
+
     const totalSeedingDuration = Date.now() - seedingStartTime;
 
     logger.info(
@@ -57,6 +61,7 @@ const main = async () => {
           likesDistribution: likeStats.distribution,
           totalAvatars: avatarStats.totalAvatarsCreated,
           avatarsDistribution: avatarStats.avatarDistribution,
+          bookmarksDistribution: bookmarksStats.distribution,
         },
         phases: {
           cleanupDuration: cleanupStats.cleanupDuration,
@@ -66,6 +71,7 @@ const main = async () => {
           postCreationDuration: postStats.postCreationDuration,
           commentCreationDuration: commentStats.commentCreationDuration,
           likeCreationDuration: likeStats.likeSeedingDuration,
+          bookmarkCreationDuration: bookmarksStats.bookmarkSeedingDuration,
         },
         totalSeedingDuration,
       },

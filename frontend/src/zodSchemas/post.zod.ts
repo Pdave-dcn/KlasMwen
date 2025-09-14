@@ -37,6 +37,11 @@ const PostDataSchema = z.object({
   _count: CountSchema,
 });
 
+const MediaPostDataSchema = PostDataSchema.extend({
+  content: z.null(),
+  type: z.literal("RESOURCE"),
+});
+
 const PaginationSchema = z.object({
   hasMore: z.boolean(),
   nextCursor: z.union([z.string(), z.number().int()]).nullable().optional(),
@@ -47,6 +52,17 @@ const PostResponseSchema = z.object({
   pagination: PaginationSchema,
 });
 
+const MediaPostResponseSchema = z.object({
+  data: z.array(MediaPostDataSchema),
+  pagination: PaginationSchema,
+});
+
 type Post = z.infer<typeof PostDataSchema>;
 
-export { PostDataSchema, PaginationSchema, PostResponseSchema, type Post };
+export {
+  PostDataSchema,
+  PaginationSchema,
+  PostResponseSchema,
+  type Post,
+  MediaPostResponseSchema,
+};

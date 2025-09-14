@@ -4,6 +4,7 @@ import {
   getActiveUserProfile,
   getUserProfile,
   getUserProfileComments,
+  getUserProfileMediaPosts,
 } from "@/api/user.api";
 
 const useProfileUser = (userId?: string) => {
@@ -30,4 +31,18 @@ const useProfileComments = (userId: string, limit = 10) => {
   });
 };
 
-export { useProfileUser, useProfileComments };
+const useProfileMedia = (userId: string, limit = 10) => {
+  return useInfiniteQuery({
+    queryKey: ["profile", userId, "media"],
+    queryFn: ({ pageParam }: { pageParam?: string | number }) => {
+      return getUserProfileMediaPosts(userId, pageParam as string, limit);
+    },
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination.hasMore
+        ? lastPage.pagination.nextCursor
+        : undefined;
+    },
+  });
+};
+export { useProfileUser, useProfileComments, useProfileMedia };

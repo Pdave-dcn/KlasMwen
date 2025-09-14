@@ -1,5 +1,6 @@
 import handleZodValidationError from "@/utils/zodErrorHandler.util";
 import { ProfileCommentsResponseSchema } from "@/zodSchemas/comment.zod";
+import { MediaPostResponseSchema } from "@/zodSchemas/post.zod";
 import {
   GetActiveUserResponseSchema,
   GetUserProfileResponseSchema,
@@ -48,4 +49,28 @@ const getUserProfileComments = async (
     throw error;
   }
 };
-export { getUserProfile, getActiveUserProfile, getUserProfileComments };
+
+const getUserProfileMediaPosts = async (
+  userId: string,
+  cursor?: string | number,
+  limit = 10
+) => {
+  try {
+    const res = await api.get(`/users/${userId}/posts/media`, {
+      params: { cursor, limit },
+    });
+
+    const validatedData = MediaPostResponseSchema.parse(res.data);
+
+    return validatedData;
+  } catch (error) {
+    handleZodValidationError(error, "getUserMediaPosts");
+    throw error;
+  }
+};
+export {
+  getUserProfile,
+  getActiveUserProfile,
+  getUserProfileComments,
+  getUserProfileMediaPosts,
+};

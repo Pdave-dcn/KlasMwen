@@ -34,6 +34,9 @@ const cleanupDatabase = async () => {
     logger.debug("Deleting existing tags");
     const tagDeleteCount = await prisma.tag.deleteMany();
 
+    logger.debug("Deleting existing bookmarks");
+    const bookmarkDeleteCount = await prisma.bookmark.deleteMany();
+
     const cleanupDuration = Date.now() - cleanupStartTime;
     const cleanupStats = {
       postTagsDeleted: postTagDeleteCount.count,
@@ -43,6 +46,7 @@ const cleanupDatabase = async () => {
       usersDeleted: userDeleteCount.count,
       tagsDeleted: tagDeleteCount.count,
       avatarsDeleted: avatarDeleteCount.count,
+      bookmarksDeleted: bookmarkDeleteCount.count,
       cleanupDuration,
     };
 

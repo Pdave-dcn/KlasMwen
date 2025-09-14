@@ -46,8 +46,11 @@ const seedPosts = async (users: User[], tags: Tag[], postsPerUser = 5) => {
 
         // Base post data
         const postData = {
-          title: faker.lorem.sentence(),
-          content: faker.lorem.paragraphs(),
+          title:
+            randomType === "QUESTION"
+              ? `${faker.lorem.sentence().replace(/\.$/, "")}??`
+              : faker.lorem.sentence(),
+          content: randomType === "RESOURCE" ? null : faker.lorem.paragraphs(),
           authorId: user.id,
           type: randomType,
         };

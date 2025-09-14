@@ -6,6 +6,7 @@ import {
   getPostsLikedByMe,
   getUserById,
   getUserComments,
+  getUserMediaPosts,
   getUserPosts,
   updateUserProfile,
 } from "../controllers/user.controller";
@@ -355,6 +356,72 @@ router.get("/users/:id", generalApiLimiter, getUserById);
  *         description: Internal server error
  */
 router.get("/users/:id/posts", generalApiLimiter, getUserPosts);
+
+/**
+ * @openapi
+ * /users/{id}/posts/media:
+ *   get:
+ *     summary: Get user's media posts
+ *     description: Retrieves paginated media posts (posts without text content) created by a specific user
+ *     tags: [Posts, Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The unique identifier of the user
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 20
+ *         description: Maximum number of posts to return
+ *       - in: query
+ *         name: cursor
+ *         required: false
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Cursor for pagination (post ID to start after)
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved user's media posts
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Post'
+ *                   description: Array of media posts
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     hasMore:
+ *                       type: boolean
+ *                       description: Whether there are more posts available
+ *                     nextCursor:
+ *                       type: string
+ *                       format: uuid
+ *                       description: Cursor for the next page (if hasMore is true)
+ *                       nullable: true
+ *       404:
+ *         description: User not found
+ *       400:
+ *         description: Invalid request parameters
+ *       429:
+ *         description: Rate limit exceeded
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/users/:id/posts/media", generalApiLimiter, getUserMediaPosts);
 
 /**
  * @openapi

@@ -6,6 +6,7 @@
  * This service handles fetching various types of post data, including:
  * - Posts by a specific user, with pagination.
  * - Posts liked and bookmarked by a user, with compound cursors.
+ * - Media posts (posts without text content) by a specific user.
  * - A single post by its ID, with its comments.
  * - Metadata and edit-specific data for posts.
  *
@@ -113,10 +114,20 @@ const bookmarkWithPost = Prisma.validator<Prisma.BookmarkFindManyArgs>()({
 
 type BookmarkWithPost = Prisma.BookmarkGetPayload<typeof bookmarkWithPost>;
 
+/**
+ * PostService provides a data access layer for retrieving post-related data from the database.
+ * It handles various queries, including paginated lists, user-specific posts, and detailed post data.
+ *
+ * @class PostService
+ */
 class PostService {
-  static async getUserPosts(userId: string, limit: number, cursor?: string) {
+  private static async getPostsAndProcess(
+    where: Prisma.PostWhereInput = {},
+    limit: number,
+    cursor?: string
+  ) {
     const baseQuery: Prisma.PostFindManyArgs = {
-      where: { authorId: userId },
+      where,
       select: BaseSelectors.post,
       orderBy: { createdAt: "desc" },
     };
@@ -127,11 +138,7 @@ class PostService {
       cursorField: "id",
     });
 
-    const [posts, totalCount] = await Promise.all([
-      prisma.post.findMany(paginatedQuery),
-      prisma.post.count({ where: { authorId: userId } }),
-    ]);
-
+    const posts = await prisma.post.findMany(paginatedQuery);
     const transformedPosts = posts.map(
       transformPostTagsToFlat as (post: Partial<RawPost>) => TransformedPost
     );
@@ -141,14 +148,45 @@ class PostService {
       "id"
     );
 
+    return { posts: data, pagination };
+  }
+
+  static getAllPosts(limit: number, cursor?: string) {
+    return this.getPostsAndProcess({}, limit, cursor);
+  }
+
+  static async getUserPosts(userId: string, limit: number, cursor?: string) {
+    const where = { authorId: userId };
+    const { posts, pagination } = await this.getPostsAndProcess(
+      where,
+      limit,
+      cursor
+    );
+
+    const totalCount = await prisma.post.count({ where });
+
     return {
-      posts: data,
+      posts,
       pagination: {
-        hasMore: pagination.hasMore,
-        nextCursor: pagination.nextCursor,
+        ...pagination,
         totalPosts: totalCount,
       },
     };
+  }
+
+  static async getUserMediaPosts(
+    userId: string,
+    limit: number,
+    cursor?: string
+  ) {
+    const where = { authorId: userId, content: null };
+    const { posts, pagination } = await this.getPostsAndProcess(
+      where,
+      limit,
+      cursor
+    );
+
+    return { posts, pagination };
   }
 
   static async getUserLikedPosts(
@@ -217,34 +255,6 @@ class PostService {
     const { data, pagination } = processPaginatedResults(
       transformedPosts,
       limit
-    );
-
-    return {
-      posts: data,
-      pagination,
-    };
-  }
-
-  static async getAllPosts(limit: number, cursor?: string) {
-    const baseQuery: Prisma.PostFindManyArgs = {
-      select: BaseSelectors.post,
-      orderBy: { createdAt: "desc" },
-    };
-
-    const paginatedQuery = buildPaginatedQuery<"post">(baseQuery, {
-      limit,
-      cursor,
-      cursorField: "id",
-    });
-
-    const posts = await prisma.post.findMany(paginatedQuery);
-    const transformedPosts = posts.map(
-      transformPostTagsToFlat as (post: Partial<RawPost>) => TransformedPost
-    );
-    const { data, pagination } = processPaginatedResults(
-      transformedPosts,
-      limit,
-      "id"
     );
 
     return {

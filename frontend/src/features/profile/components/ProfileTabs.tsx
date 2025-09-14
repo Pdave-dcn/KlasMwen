@@ -6,12 +6,12 @@ import {
   Image,
 } from "lucide-react";
 
-import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useProfilePosts } from "@/queries/usePosts";
 
 import ProfileBookmarks from "./ProfileBookmarks";
 import ProfileLikedPosts from "./ProfileLikedPosts";
+import ProfileMediaPosts from "./ProfileMediaPosts";
 import ProfilePosts from "./ProfilePosts";
 import ProfileReplies from "./ProfileReplies";
 
@@ -59,7 +59,11 @@ const ProfileTabs = ({
     >
       <TabsList className="grid w-full max-w-md grid-cols-3 self-center">
         {currentTabs.map(({ value, icon: Icon, label }) => (
-          <TabsTrigger key={value} value={value} className="gap-2">
+          <TabsTrigger
+            key={value}
+            value={value}
+            className="gap-2 cursor-pointer"
+          >
             <Icon className="w-4 h-4" /> {label}
           </TabsTrigger>
         ))}
@@ -94,15 +98,7 @@ const ProfileTabs = ({
             </TabsContent>
 
             <TabsContent value="media">
-              <Card className="p-8 text-center">
-                <Image className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  No media posts yet
-                </h3>
-                <p className="text-muted-foreground">
-                  Posts with images and media will appear here.
-                </p>
-              </Card>
+              <ProfileMediaPosts />
             </TabsContent>
           </>
         )}

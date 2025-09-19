@@ -9,16 +9,26 @@ export const userSchemas = {
       },
       username: { type: "string", example: "johndoe" },
       bio: { type: "string", nullable: true, example: "I love coding!" },
-      avatarUrl: {
-        type: "string",
+      email: { type: "string", format: "email", example: "johndoe@gmail.com" },
+      avatar: {
+        type: "object",
         nullable: true,
-        example: "https://example.com/avatar.jpg",
+        properties: {
+          id: {
+            type: "number",
+            example: 456,
+          },
+          url: {
+            type: "string",
+            example: "https://example.com/avatar.svg",
+          },
+        },
       },
       role: { type: "string", enum: ["STUDENT", "ADMIN"] },
       createdAt: {
         type: "string",
         format: "date-time",
-        example: "2025-08-16T12:34:56.000Z",
+        example: "2025-08-16 12:34:56",
       },
     },
   },
@@ -27,11 +37,19 @@ export const userSchemas = {
     type: "object",
     properties: {
       bio: { type: "string", nullable: true, example: "I love coding!" },
-      avatarUrl: {
-        type: "string",
+      avatarId: {
+        type: "number",
         nullable: true,
-        example: "https://example.com/avatar.jpg",
+        example: 123,
       },
+    },
+  },
+
+  UpdatedUserServerResponse: {
+    type: "object",
+    properties: {
+      message: { type: "string", example: "Profile updated successfully" },
+      user: { $ref: "#/components/schemas/User" },
     },
   },
 

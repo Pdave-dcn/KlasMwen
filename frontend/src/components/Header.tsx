@@ -83,7 +83,7 @@ export const Header = () => {
                   className="gap-2 cursor-pointer"
                 >
                   <Avatar className="w-8 h-8">
-                    <AvatarImage src={`${user?.avatar?.url}`} />
+                    <AvatarImage src={user?.avatar?.url} />
                     <AvatarFallback>
                       {user?.username.charAt(0).toUpperCase()}
                     </AvatarFallback>

@@ -186,9 +186,7 @@ const updateUserProfile = async (req: Request, res: Response) => {
     const startTime = Date.now();
 
     actionLogger.debug("Authenticating user");
-    const authStartTime = Date.now();
     const user = ensureAuthenticated(req);
-    const authDuration = Date.now() - authStartTime;
 
     actionLogger.debug("Validating profile update data");
     const validationStartTime = Date.now();
@@ -201,33 +199,19 @@ const updateUserProfile = async (req: Request, res: Response) => {
         hasBioUpdate: !!bio,
         hasAvatarUpdate: !!avatarId,
         bioLength: bio?.length,
-        authDuration,
         validationDuration,
       },
       "User authenticated and profile data validated"
     );
 
-    actionLogger.debug("Checking if user exists");
-    const userCheckStartTime = Date.now();
-    const isExist = await prisma.user.findUnique({
-      where: { id: user.id },
-    });
-    const userCheckDuration = Date.now() - userCheckStartTime;
-
-    if (!isExist) {
-      const totalDuration = Date.now() - startTime;
-      actionLogger.warn(
-        {
-          userId: user.id,
-          authDuration,
-          validationDuration,
-          userCheckDuration,
-          totalDuration,
-        },
-        "Profile update failed - user not found"
-      );
-      return res.status(404).json({ message: "User not found" });
-    }
+    actionLogger.debug("Checking user exists");
+    const isExists = await ensureUserExists(
+      user.id,
+      res,
+      actionLogger,
+      startTime
+    );
+    if (!isExists) return;
 
     actionLogger.debug("Updating user profile in database");
     const dbUpdateStartTime = Date.now();
@@ -237,11 +221,13 @@ const updateUserProfile = async (req: Request, res: Response) => {
       select: {
         id: true,
         username: true,
+        email: true,
         bio: true,
         Avatar: {
           select: { id: true, url: true },
         },
         role: true,
+        createdAt: true,
       },
     });
     const dbUpdateDuration = Date.now() - dbUpdateStartTime;
@@ -254,18 +240,24 @@ const updateUserProfile = async (req: Request, res: Response) => {
         updatedBio: !!updatedUser.bio,
         updatedAvatar: !!updatedUser.Avatar,
         bioLength: updatedUser.bio?.length,
-        authDuration,
         validationDuration,
-        userCheckDuration,
         dbUpdateDuration,
         totalDuration,
       },
       "User profile updated successfully"
     );
 
-    return res.json({
+    return res.status(200).json({
       message: "Profile updated successfully",
-      data: updatedUser,
+      user: {
+        id: updatedUser.id,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        bio: updatedUser.bio,
+        role: updatedUser.role,
+        createdAt: updatedUser.createdAt,
+        avatar: updatedUser.Avatar,
+      },
     });
   } catch (error: unknown) {
     return handleError(error, res);

@@ -44,6 +44,7 @@ const seedUsers = async (userCount = 10, avatars: Avatar[]) => {
           email: faker.internet.email(),
           password: hashedPassword,
           avatarId: avatar.id,
+          bio: faker.lorem.paragraph(),
         },
       });
       const dbCreateDuration = Date.now() - dbCreateStartTime;

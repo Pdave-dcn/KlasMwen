@@ -33,11 +33,9 @@ const RegisterSchema = SignInSchema.extend({
     ),
 });
 
-const AuthUserDataSchema = UserDataSchema.omit({ bio: true });
-
 const AuthResponseSchema = z.object({
   message: z.string(),
-  user: AuthUserDataSchema,
+  user: UserDataSchema,
 });
 
-export { SignInSchema, RegisterSchema, AuthResponseSchema, AuthUserDataSchema };
+export { SignInSchema, RegisterSchema, AuthResponseSchema };

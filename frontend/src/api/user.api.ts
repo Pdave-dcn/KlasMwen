@@ -4,9 +4,28 @@ import { MediaPostResponseSchema } from "@/zodSchemas/post.zod";
 import {
   GetActiveUserResponseSchema,
   GetUserProfileResponseSchema,
+  UpdatedUserServerResponseSchema,
 } from "@/zodSchemas/user.zod";
 
 import api from "./api";
+
+interface UpdateValues {
+  bio?: string;
+  avatarId?: number;
+}
+
+const updateUserInfo = async (data: UpdateValues) => {
+  try {
+    const res = await api.put("/users/me", data);
+
+    const validatedData = UpdatedUserServerResponseSchema.parse(res.data);
+
+    return validatedData;
+  } catch (error) {
+    console.error("Error updating user profile info: ", error);
+    throw error;
+  }
+};
 
 const getUserProfile = async (userId: string) => {
   try {
@@ -68,9 +87,11 @@ const getUserProfileMediaPosts = async (
     throw error;
   }
 };
+
 export {
   getUserProfile,
   getActiveUserProfile,
   getUserProfileComments,
   getUserProfileMediaPosts,
+  updateUserInfo,
 };

@@ -1,19 +1,25 @@
+import { useNavigate } from "react-router-dom";
+
 import { Edit2 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { userStats } from "@/pages/profilePageMockData";
-import type { ActiveUser, PublicUser } from "@/types/user.type";
+import type { User } from "@/types/auth.type";
 
 import ProfileBio from "./ProfileBio";
 import ProfileStats from "./ProfileStats";
 
 interface ProfileHeaderProps {
-  user: ActiveUser | PublicUser;
+  user: User;
   isSelf: boolean;
 }
 
 const ProfileHeader = ({ user, isSelf }: ProfileHeaderProps) => {
+  const navigate = useNavigate();
+  const handleNavigate = async () => {
+    await navigate("/profile/edit");
+  };
   return (
     <>
       {/* Mobile layout */}
@@ -31,7 +37,12 @@ const ProfileHeader = ({ user, isSelf }: ProfileHeaderProps) => {
               {user?.username}
             </h1>
             {isSelf && (
-              <Button variant="outline" size="sm" className="flex-1">
+              <Button
+                onClick={handleNavigate}
+                variant="outline"
+                size="sm"
+                className="flex-1"
+              >
                 Edit Profile
               </Button>
             )}
@@ -44,7 +55,7 @@ const ProfileHeader = ({ user, isSelf }: ProfileHeaderProps) => {
       </div>
 
       {/* Desktop layout */}
-      <div className="hidden md:flex items-center justify-center">
+      <div className="hidden md:flex w-full max-w-2xl">
         <div className="items-center gap-10 mt-5 p-10 flex">
           <Avatar className="w-32 h-32 border-4 border-background shadow-lg">
             <AvatarImage src={user?.avatar?.url} alt={user?.username} />
@@ -60,7 +71,12 @@ const ProfileHeader = ({ user, isSelf }: ProfileHeaderProps) => {
                   {user?.username}
                 </h1>
                 {isSelf && (
-                  <Button variant="outline" size="sm" className="gap-2">
+                  <Button
+                    onClick={handleNavigate}
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 cursor-pointer"
+                  >
                     <Edit2 className="w-4 h-4" />
                     Edit Profile
                   </Button>

@@ -12,16 +12,24 @@ const UserDataSchema = z.object({
   bio: z.string().nullable().optional(),
   role: z.enum(["STUDENT", "ADMIN"]),
   avatar: AvatarSchema.nullable().optional(),
+  createdAt: z.string().nullable().optional(),
 });
 
-const ActiveUserProfileDataSchema = UserDataSchema.extend({
-  createdAt: z.string(),
+const UpdateProfileSchema = z.object({
+  bio: z.string().trim().max(160, "Bio must be less than 160 characters."),
+  avatarId: z.number().int(),
+  twitter: z.string(),
+  instagram: z.string(),
 });
 
+const UpdatedUserServerResponseSchema = z.object({
+  message: z.string(),
+  user: UserDataSchema,
+});
 const PublicUserProfileDataSchema = UserDataSchema.omit({ email: true });
 
 const GetActiveUserResponseSchema = z.object({
-  data: ActiveUserProfileDataSchema,
+  data: UserDataSchema,
 });
 
 const GetUserProfileResponseSchema = z.object({
@@ -30,9 +38,10 @@ const GetUserProfileResponseSchema = z.object({
 
 export {
   UserDataSchema,
-  ActiveUserProfileDataSchema,
   GetActiveUserResponseSchema,
   PublicUserProfileDataSchema,
   GetUserProfileResponseSchema,
   AvatarSchema,
+  UpdateProfileSchema,
+  UpdatedUserServerResponseSchema,
 };

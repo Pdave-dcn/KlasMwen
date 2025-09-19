@@ -1,13 +1,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import type { AuthenticatedUser } from "@/types/auth.type";
+import type { User } from "@/types/auth.type";
 
 interface AuthState {
-  user: AuthenticatedUser | null;
+  user: User | null;
   isAuthenticated: boolean;
 
-  login: (user: AuthenticatedUser) => void;
+  login: (user: User) => void;
   logout: () => void;
 }
 

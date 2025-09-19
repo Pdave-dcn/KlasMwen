@@ -17,7 +17,7 @@ const Profile = ({ isSelf = false }: { isSelf?: boolean }) => {
   const actualSelf = isSelf || !id;
   const userId = !actualSelf ? id : undefined;
 
-  const { data: user, isLoading, error } = useProfileUser(userId);
+  const { data: user, isLoading, error } = useProfileUser(userId as string);
 
   if (isLoading) {
     return (
@@ -88,7 +88,7 @@ const Profile = ({ isSelf = false }: { isSelf?: boolean }) => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="relative px-4 md:px-8 pb-6">
+      <div className="relative px-4 md:px-8 pb-6 flex justify-center">
         <ProfileHeader user={user} isSelf={actualSelf} />
       </div>
       <div className="px-4 md:px-8 pb-8">

@@ -12,6 +12,7 @@ import HomePage from "./pages/HomePage";
 import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
+import ProfileEdit from "./pages/ProfileEdit";
 import { useAuthStore } from "./stores/auth.store";
 
 const App = () => {
@@ -75,6 +76,14 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile/edit"
+            element={
+              <ProtectedRoute>
+                <ProfileEdit />
               </ProtectedRoute>
             }
           />

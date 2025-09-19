@@ -2,10 +2,10 @@ import { GraduationCap, MapPin } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { mockUser } from "@/pages/profilePageMockData";
-import type { ActiveUser, PublicUser } from "@/types/user.type";
+import type { User } from "@/types/auth.type";
 
 interface ProfileBioProps {
-  user: ActiveUser | PublicUser;
+  user: User;
 }
 
 const ProfileBio = ({ user }: ProfileBioProps) => (

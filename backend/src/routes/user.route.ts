@@ -111,11 +111,8 @@ router.get("/users/me", generalApiLimiter, requireAuth, getActiveUser);
  *             schema:
  *               type: object
  *               properties:
- *                 message:
- *                   type: string
- *                   example: "Profile updated successfully"
- *                 data:
- *                   $ref: '#/components/schemas/User'
+ *                 schema:
+ *                   $ref: '#/components/schemas/UpdatedUserServerResponse'
  *       401:
  *         description: User not authenticated
  *       404:

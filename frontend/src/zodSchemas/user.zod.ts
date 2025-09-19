@@ -8,7 +8,7 @@ const AvatarSchema = z.object({
 const UserDataSchema = z.object({
   id: z.string(),
   username: z.string(),
-  email: z.email(),
+  email: z.email().optional(),
   bio: z.string().nullable().optional(),
   role: z.enum(["STUDENT", "ADMIN"]),
   avatar: AvatarSchema.nullable().optional(),

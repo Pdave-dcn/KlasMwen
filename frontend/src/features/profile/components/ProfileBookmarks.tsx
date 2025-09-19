@@ -1,6 +1,6 @@
 import { MessageSquare } from "lucide-react";
 
-import { useProfileBookmarks } from "@/queries/usePosts";
+import { useProfileBookmarks } from "@/queries/useProfile";
 
 import ProfilePostsList from "./ProfilePostsList";
 

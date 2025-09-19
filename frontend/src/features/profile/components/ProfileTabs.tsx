@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useProfilePosts } from "@/queries/usePosts";
+import { useProfilePosts } from "@/queries/useProfile";
 
 import ProfileBookmarks from "./ProfileBookmarks";
 import ProfileLikedPosts from "./ProfileLikedPosts";

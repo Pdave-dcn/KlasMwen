@@ -41,7 +41,7 @@ const AvatarModal = ({
     url: string;
   } | null>(null);
 
-  const allAvatars = avatars?.pages.flatMap((page) => page.data) ?? [];
+  const allAvatars = avatars?.pages?.flatMap((page) => page.data) ?? [];
 
   const handleAvatarClick = (avatar: { id: number; url: string }) => {
     setSelectedAvatar(avatar);

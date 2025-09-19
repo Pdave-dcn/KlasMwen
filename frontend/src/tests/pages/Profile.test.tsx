@@ -9,20 +9,19 @@ import {
   useProfilePosts,
   useProfileLikedPosts,
   useProfileBookmarks,
-} from "@/queries/usePosts";
-import { useProfileUser, useProfileComments } from "@/queries/useProfile";
-import type { ActiveUser, PublicUser } from "@/types/user.type";
+  useProfileUser,
+  useProfileComments,
+} from "@/queries/useProfile";
+import type { User } from "@/types/auth.type";
 
 vi.mock("@/queries/useProfile", () => ({
   useProfileUser: vi.fn(),
   useProfileComments: vi.fn(),
-}));
-
-vi.mock("@/queries/usePosts", () => ({
   useProfilePosts: vi.fn(),
   useProfileLikedPosts: vi.fn(),
   useProfileBookmarks: vi.fn(),
 }));
+vi.mock("@/queries/usePosts");
 
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom");
@@ -46,7 +45,7 @@ vi.mock("@/components/ui/spinner", () => ({
 const mockActiveUserId = "a8e4fabb-429e-4532-bec5-e0e2c41abef5";
 const mockPublicUserId = "7cbe74a6-6575-448c-8c24-f5e371a4f0df";
 
-const mockActiveUser: ActiveUser = {
+const mockActiveUser: User = {
   id: mockActiveUserId,
   username: "johnDoe",
   email: "john@example.com",
@@ -59,7 +58,7 @@ const mockActiveUser: ActiveUser = {
   createdAt: "2025-08-31",
 };
 
-const mockPublicUser: PublicUser = {
+const mockPublicUser: User = {
   id: mockPublicUserId,
   username: "janeDoe",
   role: "STUDENT" as const,

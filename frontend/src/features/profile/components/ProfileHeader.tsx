@@ -23,8 +23,8 @@ const ProfileHeader = ({ user, isSelf }: ProfileHeaderProps) => {
   return (
     <>
       {/* Mobile layout */}
-      <div className="md:hidden mb-10">
-        <div className="flex items-center gap-4 mt-5">
+      <div className="md:hidden mb-10 w-full">
+        <div className="flex items-center justify-center gap-4 py-5">
           <Avatar className="w-20 h-20 border-2 border-background">
             <AvatarImage src={user?.avatar?.url} alt={user?.username} />
             <AvatarFallback className="text-lg font-semibold bg-primary text-primary-foreground">
@@ -32,7 +32,7 @@ const ProfileHeader = ({ user, isSelf }: ProfileHeaderProps) => {
             </AvatarFallback>
           </Avatar>
 
-          <div className="flex-1">
+          <div>
             <h1 className="text-xl font-bold text-foreground mb-2">
               {user?.username}
             </h1>

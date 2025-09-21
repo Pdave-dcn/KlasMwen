@@ -5,7 +5,6 @@ import { Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 
 import ProtectedRoute from "./components/ProtectedRoute";
-import { ThemeToggle } from "./components/ThemeToggle";
 import { Spinner } from "./components/ui/spinner";
 import AuthForm from "./pages/AuthForm";
 import HomePage from "./pages/HomePage";
@@ -48,52 +47,47 @@ const App = () => {
   return (
     <>
       <Toaster position="top-center" richColors />
-      <div className="relative">
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/register" element={<AuthForm defaultMode="signup" />} />
-          <Route path="/sign-in" element={<AuthForm />} />
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/register" element={<AuthForm defaultMode="signup" />} />
+        <Route path="/sign-in" element={<AuthForm />} />
 
-          <Route
-            path="/home"
-            element={
-              <ProtectedRoute>
-                <HomePage />
-              </ProtectedRoute>
-            }
-          />
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute>
+              <HomePage />
+            </ProtectedRoute>
+          }
+        />
 
-          <Route
-            path="/profile/me"
-            element={
-              <ProtectedRoute>
-                <Profile isSelf />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile/:id"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile/edit"
-            element={
-              <ProtectedRoute>
-                <ProfileEdit />
-              </ProtectedRoute>
-            }
-          />
+        <Route
+          path="/profile/me"
+          element={
+            <ProtectedRoute>
+              <Profile isSelf />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/:id"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/edit"
+          element={
+            <ProtectedRoute>
+              <ProfileEdit />
+            </ProtectedRoute>
+          }
+        />
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <div className="fixed bottom-4 right-4 z-50">
-          <ThemeToggle />
-        </div>
-      </div>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
     </>
   );
 };

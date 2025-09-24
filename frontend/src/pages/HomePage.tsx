@@ -1,6 +1,5 @@
 import { BookOpen } from "lucide-react";
 
-//import { Header } from "@/components/layout/Header";
 import { PostCard } from "@/components/PostCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -42,8 +41,6 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* <Header /> */}
-
       <div className="py-8 flex justify-center">
         <div className="w-full max-w-2xl px-4">
           <div className="space-y-6">

@@ -59,7 +59,7 @@ interface TransformedPost extends Omit<RawPost, "postTags"> {
 interface TransformedPostWithPagination extends TransformedPost {
   commentsPagination: {
     hasMore: boolean;
-    nextCursor: string | null;
+    nextCursor: number | null;
     totalComments: number;
   };
 }
@@ -117,7 +117,7 @@ interface CommentPaginationResult {
   paginatedComments: Comment[];
   paginationMeta: {
     hasMore: boolean;
-    nextCursor: string | null;
+    nextCursor: number | null;
     totalComments: number;
   };
 }

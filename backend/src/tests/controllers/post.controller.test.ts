@@ -10,13 +10,11 @@ import {
   deletePost,
 } from "../../controllers/post.controller.js";
 import prisma from "../../core/config/db.js";
-import { createLogger } from "../../core/config/logger.js";
 import {
   AuthenticationError,
   AuthorizationError,
 } from "../../core/error/custom/auth.error.js";
 import { handleError } from "../../core/error/index.js";
-import { handlePostWithCommentPagination } from "../../features/comments/commentPaginationHandler.js";
 import {
   deleteFromCloudinary,
   extractPublicIdFromUrl,
@@ -31,7 +29,6 @@ import {
   UpdatedPostSchema,
 } from "../../zodSchemas/post.zod.js";
 
-// Import all required types for a clean test setup
 import type {
   CreatePostInput,
   RawPost,
@@ -82,7 +79,6 @@ vi.mock("../../features/posts/postCreationHandler.js");
 vi.mock("../../features/posts/postTagFlattener.js");
 vi.mock("../../features/posts/createEditResponse.js");
 vi.mock("../../features/posts/postUpdateHandler.js");
-vi.mock("../../features/comments/commentPaginationHandler.js");
 vi.mock("../../features/media/cloudinaryServices.js");
 vi.mock("../../zodSchemas/post.zod.js");
 
@@ -258,7 +254,6 @@ describe("Post Controllers", () => {
     });
   });
 
-  // --- getAllPosts controller tests ---
   describe("getAllPosts", () => {
     it("should return a list of posts with default pagination", async () => {
       const req = mockRequest();
@@ -376,7 +371,7 @@ describe("Post Controllers", () => {
   });
 
   describe("getPostById", () => {
-    it("should return a specific post with comments", async () => {
+    it("should return a specific post", async () => {
       const req = mockRequest(null, { id: "1" });
       const res = mockResponse();
       const mockPost = {
@@ -387,181 +382,30 @@ describe("Post Controllers", () => {
         fileUrl: null,
         fileName: null,
         fileSize: null,
-        mimeType: null,
         createdAt: new Date(),
-        updatedAt: new Date(),
         author: {
           id: 1,
           username: "testUser",
           Avatar: { id: 56, url: "mock-url-56.com" },
         },
         postTags: [],
-        comments: [
-          {
-            id: 1,
-            content: "Comment 1",
-            createdAt: new Date(),
-            author: {
-              id: 2,
-              username: "commenter",
-              Avatar: { id: 1, url: "mock-url.com" },
-            },
-          },
-        ],
         _count: { comments: 1, likes: 0 },
-      };
-      const mockTransformedPost = {
-        ...mockPost,
-        hasMoreComments: false,
-        nextCommentCursor: null,
       };
 
       vi.mocked(PostIdParamSchema.parse).mockReturnValue({ id: "1" } as any);
       vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPost as any);
-      vi.mocked(handlePostWithCommentPagination).mockReturnValue(
-        mockTransformedPost as any
-      );
 
       await getPostById(req, res);
 
       expect(PostIdParamSchema.parse).toHaveBeenCalledWith(req.params);
-      expect(prisma.post.findUnique).toHaveBeenCalledWith({
-        where: { id: "1" },
-        select: {
-          id: true,
-          title: true,
-          content: true,
-          type: true,
-          fileUrl: true,
-          fileName: true,
-          fileSize: true,
-          mimeType: true,
-          createdAt: true,
-          updatedAt: true,
-          author: {
-            select: {
-              id: true,
-              username: true,
-              Avatar: { select: { id: true, url: true } },
-            },
-          },
-          postTags: {
-            include: { tag: true },
-          },
-          comments: {
-            select: {
-              id: true,
-              content: true,
-              createdAt: true,
-              author: {
-                select: {
-                  id: true,
-                  username: true,
-                  Avatar: { select: { id: true, url: true } },
-                },
-              },
-            },
-            orderBy: { createdAt: "asc" },
-            take: 21,
-          },
-          _count: {
-            select: { comments: true, likes: true },
-          },
-        },
-      });
-      expect(handlePostWithCommentPagination).toHaveBeenCalledWith(
-        mockPost,
-        20
+      expect(prisma.post.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: "1" },
+        })
       );
+
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({ data: mockTransformedPost });
-    });
-
-    it("should handle custom comment pagination parameters", async () => {
-      const req = mockRequest(null, { id: "1" }, { limit: "30", cursor: "5" });
-      const res = mockResponse();
-      const mockPost = {
-        id: 1,
-        title: "Test",
-        content: "Test content",
-        type: "NOTE",
-        fileUrl: null,
-        fileName: null,
-        fileSize: null,
-        mimeType: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        author: {
-          id: 1,
-          username: "testuser",
-          Avatar: { select: { id: true, url: true } },
-        },
-        postTags: [],
-        comments: [],
-        _count: { comments: 0, likes: 0 },
-      };
-
-      vi.mocked(PostIdParamSchema.parse).mockReturnValue({ id: "1" } as any);
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPost as any);
-      vi.mocked(handlePostWithCommentPagination).mockReturnValue(
-        mockPost as any
-      );
-
-      await getPostById(req, res);
-
-      expect(handleError).not.toHaveBeenCalled();
-      expect(prisma.post.findUnique).toHaveBeenCalledWith({
-        where: { id: "1" },
-        select: {
-          id: true,
-          title: true,
-          content: true,
-          type: true,
-          fileUrl: true,
-          fileName: true,
-          fileSize: true,
-          mimeType: true,
-          createdAt: true,
-          updatedAt: true,
-          author: {
-            select: {
-              id: true,
-              username: true,
-              Avatar: { select: { id: true, url: true } },
-            },
-          },
-          postTags: {
-            include: { tag: true },
-          },
-          comments: {
-            select: {
-              id: true,
-              content: true,
-              createdAt: true,
-              author: {
-                select: {
-                  id: true,
-                  username: true,
-                  Avatar: { select: { id: true, url: true } },
-                },
-              },
-            },
-            orderBy: { createdAt: "asc" },
-            take: 31,
-            cursor: { id: 5 },
-            skip: 1,
-          },
-          _count: {
-            select: { comments: true, likes: true },
-          },
-        },
-      });
-
-      expect(handlePostWithCommentPagination).toHaveBeenCalledWith(
-        mockPost,
-        30
-      );
-      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalled();
     });
 
     it("should return 404 if post is not found", async () => {

@@ -136,6 +136,20 @@ export const commentSchemas = {
     required: ["id", "content", "author"],
   },
 
+  BaseCommentResponse: {
+    type: "object",
+    properties: {
+      id: { type: "integer", example: 123 },
+      content: { type: "string", example: "This is a comment" },
+      author: { $ref: "#/components/schemas/Author" },
+      createdAt: {
+        type: "string",
+        format: "date-time",
+        example: "2025-08-16 12:34:56",
+      },
+    },
+  },
+
   Comment: {
     type: "object",
     properties: {
@@ -173,6 +187,24 @@ export const commentSchemas = {
         example: "Comment created successfully",
       },
       data: { $ref: "#/components/schemas/Comment" },
+    },
+  },
+
+  ParentCommentsResponse: {
+    type: "object",
+    properties: {
+      data: {
+        type: "array",
+        items: { $ref: "#/components/schemas/BaseCommentResponse" },
+      },
+      pagination: {
+        type: "object",
+        properties: {
+          hasMore: { type: "boolean" },
+          nextCursor: { type: "number", nullable: true, example: 21 },
+          totalComments: { type: "number", example: 456 },
+        },
+      },
     },
   },
 

@@ -6,6 +6,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { formatTimeAgo } from "@/utils/dateFormatter.util";
+import { getInitials } from "@/utils/getInitials.util";
 import type { ProfileComment } from "@/zodSchemas/comment.zod";
 
 interface Author {
@@ -25,28 +27,11 @@ interface ProfileCommentCardProps {
   onUserClick?: (userId: string) => void;
 }
 
-const formatTimeAgo = (dateString: string) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-  if (diffInSeconds < 60) return "just now";
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-  if (diffInSeconds < 2592000)
-    return `${Math.floor(diffInSeconds / 86400)}d ago`;
-  return date.toLocaleDateString();
-};
-
 const ProfileCommentCard: React.FC<ProfileCommentCardProps> = ({
   comment,
   onPostClick,
   onUserClick,
 }) => {
-  const getInitials = (username: string) => {
-    return username.substring(0, 2).toUpperCase();
-  };
-
   const handlePostClick = () => {
     onPostClick?.(comment.post.id);
   };

@@ -3,6 +3,7 @@ import express from "express";
 import {
   createComment,
   deleteComment,
+  getParentComments,
   getReplies,
 } from "../controllers/comment.controller";
 import {
@@ -18,6 +19,52 @@ router.use(attachLogContext("commentController"));
 
 /**
  * @openapi
+ * /posts/{id}/comments:
+ *   get:
+ *     summary: Get parent comments for a specific post
+ *     description: Fetch paginated parent comments for a given post ID.
+ *     tags: [Comments]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The id of the post
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of parent comments to return
+ *       - in: query
+ *         name: cursor
+ *         required: false
+ *         schema:
+ *           type: integer
+ *         description: ID of the last parent comment from the previous page (pagination)
+ *     responses:
+ *       200:
+ *         description: A paginated list of parent comments
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/ParentCommentsResponse"
+ *       400:
+ *         description: Invalid parent ID
+ *       404:
+ *         description: Parent comment not found
+ *       429:
+ *         description: Too many requests (rate limit exceeded)
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/posts/:id/comments", generalApiLimiter, getParentComments);
+
+/**
+ * @openapi
  * /comments/{id}/replies:
  *   get:
  *     summary: Get replies for a parent comment
@@ -29,7 +76,6 @@ router.use(attachLogContext("commentController"));
  *         required: true
  *         schema:
  *           type: string
- *           format: uuid
  *         description: The id of the parent comment
  *       - in: query
  *         name: limit

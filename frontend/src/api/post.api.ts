@@ -1,5 +1,8 @@
 import handleZodValidationError from "@/utils/zodErrorHandler.util";
-import { PostResponseSchema } from "@/zodSchemas/post.zod";
+import {
+  PostResponseSchema,
+  SinglePostResponseSchema,
+} from "@/zodSchemas/post.zod";
 
 import api from "./api";
 
@@ -83,10 +86,24 @@ const getActiveUserBookmarks = async (cursor?: string | number, limit = 10) => {
   }
 };
 
+const getPostById = async (postId: string) => {
+  try {
+    const res = await api.get(`/posts/${postId}`);
+
+    const validatedData = SinglePostResponseSchema.parse(res.data);
+
+    return validatedData.data;
+  } catch (error) {
+    handleZodValidationError(error, "getPostById");
+    throw error;
+  }
+};
+
 export {
   getUserPosts,
   getActiveUserPosts,
   getHomePagePosts,
   getActiveUserLikedPosts,
   getActiveUserBookmarks,
+  getPostById,
 };

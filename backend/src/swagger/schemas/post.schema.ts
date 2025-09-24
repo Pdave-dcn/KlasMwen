@@ -25,35 +25,30 @@ export const postSchemas = {
     },
   },
 
-  PostWithComments: {
-    allOf: [
-      { $ref: "#/components/schemas/Post" },
-      {
+  SinglePostResponse: {
+    type: "object",
+    properties: {
+      id: { type: "string", format: "uuid" },
+      title: { type: "string" },
+      content: { type: "string" },
+      type: { type: "string", enum: ["NOTE", "QUESTION", "RESOURCE"] },
+      fileUrl: { type: "string", nullable: true },
+      fileName: { type: "string", nullable: true },
+      fileSize: { type: "number", nullable: true },
+      createdAt: { type: "string", format: "date-time" },
+      author: { $ref: "#/components/schemas/Author" },
+      tags: {
+        type: "array",
+        items: { $ref: "#/components/schemas/Tag" },
+      },
+      _count: {
         type: "object",
         properties: {
-          comments: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                id: { type: "integer" },
-                content: { type: "string" },
-                createdAt: { type: "string", format: "date-time" },
-                author: { $ref: "#/components/schemas/Author" },
-              },
-            },
-          },
-          commentsPagination: {
-            type: "object",
-            properties: {
-              hasMore: { type: "boolean" },
-              nextCursor: { type: "integer", nullable: true },
-              totalComments: { type: "integer" },
-            },
-          },
+          comments: { type: "integer" },
+          likes: { type: "integer" },
         },
       },
-    ],
+    },
   },
 
   PostMetadata: {

@@ -50,7 +50,12 @@ const seedPosts = async (users: User[], tags: Tag[], postsPerUser = 5) => {
             randomType === "QUESTION"
               ? `${faker.lorem.sentence().replace(/\.$/, "")}??`
               : faker.lorem.sentence(),
-          content: randomType === "RESOURCE" ? null : faker.lorem.paragraphs(),
+          content:
+            randomType === "RESOURCE"
+              ? null
+              : randomType === "QUESTION"
+              ? faker.lorem.paragraphs()
+              : faker.lorem.paragraphs({ min: 5, max: 7 }),
           authorId: user.id,
           type: randomType,
         };

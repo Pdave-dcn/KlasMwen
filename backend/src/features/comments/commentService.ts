@@ -15,6 +15,14 @@ const CommentFragments = {
     },
   },
 
+  extendedCommentAuthor: {
+    select: {
+      id: true,
+      username: true,
+      Avatar: { select: { id: true, url: true } },
+    },
+  },
+
   commentPost: {
     select: {
       id: true,
@@ -48,6 +56,13 @@ const CommentFragments = {
 } as const;
 
 const BaseSelectors = {
+  comment: {
+    id: true,
+    content: true,
+    createdAt: true,
+    author: CommentFragments.extendedCommentAuthor,
+  } satisfies Prisma.CommentSelect,
+
   commentRelations: {
     author: CommentFragments.commentAuthor,
     post: CommentFragments.commentPost,
@@ -123,6 +138,31 @@ class CommentService {
     return {
       comments: transformedComments,
       pagination,
+    };
+  }
+
+  static async getParentComments(postId: string, limit = 10, cursor?: number) {
+    const baseQuery: Prisma.CommentFindManyArgs = {
+      where: { postId, parentId: null },
+      select: BaseSelectors.comment,
+    };
+
+    const paginatedQuery = buildPaginatedQuery<"comment">(baseQuery, {
+      limit,
+      cursor,
+      cursorField: "id",
+    });
+
+    const [comments, totalComments] = await Promise.all([
+      prisma.comment.findMany(paginatedQuery),
+      prisma.comment.count({ where: { postId } }),
+    ]);
+
+    const { data, pagination } = processPaginatedResults(comments, limit, "id");
+
+    return {
+      comments: data,
+      pagination: { ...pagination, totalComments },
     };
   }
 }

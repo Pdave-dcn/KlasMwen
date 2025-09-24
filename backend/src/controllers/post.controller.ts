@@ -2,7 +2,6 @@
 import prisma from "../core/config/db.js";
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index";
-import { handlePostWithCommentPagination } from "../features/comments/commentPaginationHandler.js";
 import {
   deleteFromCloudinary,
   extractPublicIdFromUrl,
@@ -19,10 +18,7 @@ import {
   ensureAuthenticated,
 } from "../utils/auth.util.js";
 import createActionLogger from "../utils/logger.util.js";
-import {
-  createPaginationSchema,
-  uuidPaginationSchema,
-} from "../utils/pagination.util.js";
+import { uuidPaginationSchema } from "../utils/pagination.util.js";
 import {
   PostIdParamSchema,
   UpdatedPostSchema,
@@ -183,47 +179,25 @@ const getPostById = async (req: Request, res: Response) => {
     const startTime = Date.now();
 
     const { id: postId } = PostIdParamSchema.parse(req.params);
-    const customPostCommentSchema = createPaginationSchema(20, 50, "number");
-    const { limit, cursor } = customPostCommentSchema.parse(req.query);
 
     actionLogger.debug(
       {
         postId,
-        limit,
-        cursor,
-        hasCursor: !!cursor,
       },
-      "Parameters parsed"
+      "Parameter parsed"
     );
 
     actionLogger.debug("Processing user post fetching by ID request");
     const serviceStartTime = Date.now();
     const post = await PostService.getPostById(
       postId,
-      limit,
-      cursor as number | undefined
+      startTime,
+      actionLogger,
+      res
     );
     const serviceDuration = Date.now() - serviceStartTime;
+    if (!post) return;
 
-    if (!post) {
-      actionLogger.warn({ postId, serviceDuration }, "Post not found");
-      return res.status(404).json({ message: "Post not found" });
-    }
-
-    actionLogger.info(
-      {
-        postId: post.id,
-        postType: post.type,
-        authorId: post.author.id,
-        commentsLoaded: post.comments.length,
-        totalComments: post._count.comments,
-        totalLikes: post._count.likes,
-        serviceDuration,
-      },
-      "Post found, processing comments pagination"
-    );
-
-    const transformedPost = handlePostWithCommentPagination(post, limit);
     const totalDuration = Date.now() - startTime;
 
     actionLogger.info(
@@ -233,10 +207,10 @@ const getPostById = async (req: Request, res: Response) => {
         serviceDuration,
         totalDuration,
       },
-      "Post retrieved successfully with comments"
+      "Post retrieved successfully"
     );
 
-    return res.status(200).json({ data: transformedPost });
+    return res.status(200).json({ data: post });
   } catch (error: unknown) {
     return handleError(error, res);
   }

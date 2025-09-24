@@ -38,18 +38,40 @@ export const PostCard = ({
   const [isBookmarked, setIsBookmarked] = useState(bookmarkedByUser);
   const navigate = useNavigate();
 
-  const handleLike = () => {
+  const handleLike = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card navigation
     setIsLiked(!isLiked);
     onLike?.(post.id);
   };
 
-  const handleBookmark = () => {
+  const handleBookmark = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card navigation
     setIsBookmarked(!isBookmarked);
     onBookmark?.(post.id);
   };
 
-  const handleNavigation = async (userId: string) => {
+  const handleComment = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card navigation
+    onComment?.(post.id);
+  };
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card navigation
+    // Handle share logic here
+  };
+
+  const handleMoreOptions = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card navigation
+    // Handle more options logic here
+  };
+
+  const handleUserNavigation = async (e: React.MouseEvent, userId: string) => {
+    e.stopPropagation(); // Prevent card navigation
     await navigate(`/profile/${userId}`);
+  };
+
+  const handlePostNavigation = async () => {
+    await navigate(`/@${post.author.username}/post/${post.id}`);
   };
 
   const getTypeClassName = (type: string) => {
@@ -82,7 +104,10 @@ export const PostCard = ({
   };
 
   return (
-    <Card className="w-full max-w-2xl">
+    <Card
+      className="w-full max-w-2xl cursor-pointer hover:bg-muted/50 transition-colors"
+      onClick={handlePostNavigation}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
@@ -100,7 +125,7 @@ export const PostCard = ({
                 <Button
                   variant="ghost"
                   className="font-semibold text-sm cursor-pointer"
-                  onClick={() => handleNavigation(post.author.id)}
+                  onClick={(e) => handleUserNavigation(e, post.author.id)}
                   aria-label="Go to user profile"
                 >
                   @{post.author.username}
@@ -118,7 +143,7 @@ export const PostCard = ({
               </div>
             </div>
           </div>
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" onClick={handleMoreOptions}>
             <MoreHorizontal className="w-4 h-4" />
           </Button>
         </div>
@@ -176,7 +201,7 @@ export const PostCard = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onComment?.(post.id)}
+              onClick={handleComment}
               className="gap-2 text-muted-foreground hover:text-primary"
             >
               <MessageCircle className="w-4 h-4" />
@@ -204,6 +229,7 @@ export const PostCard = ({
               variant="ghost"
               size="sm"
               className="text-muted-foreground hover:text-primary"
+              onClick={handleShare}
             >
               <Share2 className="w-4 h-4" />
             </Button>

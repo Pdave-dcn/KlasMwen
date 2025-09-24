@@ -37,6 +37,17 @@ const PostDataSchema = z.object({
   _count: CountSchema,
 });
 
+const ExtendedPostDataSchema = PostDataSchema.extend({
+  fileSize: z.number().int().nullable(),
+  mimeType: z.string().nullable(),
+  updatedAt: z.string(),
+});
+
+const LessExtendedPostDataSchema = ExtendedPostDataSchema.omit({
+  mimeType: true,
+  updatedAt: true,
+});
+
 const MediaPostDataSchema = PostDataSchema.extend({
   content: z.null(),
   type: z.literal("RESOURCE"),
@@ -57,12 +68,19 @@ const MediaPostResponseSchema = z.object({
   pagination: PaginationSchema,
 });
 
-type Post = z.infer<typeof PostDataSchema>;
+const SinglePostResponseSchema = z.object({
+  data: LessExtendedPostDataSchema,
+});
+
+export type Post = z.infer<typeof PostDataSchema>;
 
 export {
   PostDataSchema,
   PaginationSchema,
   PostResponseSchema,
-  type Post,
   MediaPostResponseSchema,
+  AuthorSchema,
+  ExtendedPostDataSchema,
+  LessExtendedPostDataSchema,
+  SinglePostResponseSchema,
 };

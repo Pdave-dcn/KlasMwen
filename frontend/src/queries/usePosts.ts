@@ -1,6 +1,6 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
-import { getHomePagePosts } from "@/api/post.api";
+import { getHomePagePosts, getPostById } from "@/api/post.api";
 
 const useHomePagePosts = (limit = 10) => {
   return useInfiniteQuery({
@@ -17,4 +17,13 @@ const useHomePagePosts = (limit = 10) => {
   });
 };
 
-export { useHomePagePosts };
+const useSinglePostQuery = (postId: string) => {
+  return useQuery({
+    queryKey: ["single-post", postId],
+    queryFn: () => {
+      return getPostById(postId);
+    },
+  });
+};
+
+export { useHomePagePosts, useSinglePostQuery };

@@ -92,7 +92,7 @@ router.post(
  * @openapi
  * /posts/{id}:
  *   get:
- *     summary: Get a post by ID (with comments pagination)
+ *     summary: Get a post by ID
  *     tags: [Posts]
  *     parameters:
  *       - in: path
@@ -102,24 +102,13 @@ router.post(
  *         schema:
  *           type: string
  *           format: uuid
- *       - in: query
- *         name: limit
- *         description: Number of comments to return per page
- *         schema:
- *           type: integer
- *           default: 20
- *       - in: query
- *         name: cursor
- *         description: Cursor for pagination (ID of the last comment from previous page)
- *         schema:
- *           type: integer
  *     responses:
  *       200:
  *         description: Post details with comments
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/PostWithComments'
+ *               $ref: '#/components/schemas/SinglePostResponse'
  *       400:
  *         description: Bad request (e.g., Post ID is not a valid uuid)
  *       404:

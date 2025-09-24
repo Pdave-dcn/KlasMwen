@@ -2,6 +2,7 @@
 import prisma from "../core/config/db";
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index";
+import CommentService from "../features/comments/commentService";
 import { checkPermission, ensureAuthenticated } from "../utils/auth.util";
 import createActionLogger from "../utils/logger.util.js";
 import {
@@ -141,6 +142,68 @@ const createComment = async (req: Request, res: Response) => {
     return res.status(201).json({
       message: "Comment created successfully",
       data: newComment,
+    });
+  } catch (error: unknown) {
+    return handleError(error, res);
+  }
+};
+
+// todo: write tests
+const getParentComments = async (req: Request, res: Response) => {
+  const actionLogger = createActionLogger(
+    controllerLogger,
+    "getParentComments",
+    req
+  );
+
+  try {
+    actionLogger.info("Fetching parent comments for post");
+    const startTime = Date.now();
+
+    actionLogger.debug("Validating post ID");
+    const { id: postId } = PostIdParamSchema.parse(req.params);
+
+    actionLogger.debug("Checking if post exists");
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { id: true },
+    });
+
+    if (!post) {
+      const totalDuration = Date.now() - startTime;
+      actionLogger.warn({ postId, totalDuration }, "Post not found");
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    actionLogger.debug("Parsing pagination parameters");
+    const customRepliesSchema = createPaginationSchema(10, 40, "number");
+    const { limit, cursor } = customRepliesSchema.parse(req.query);
+
+    actionLogger.debug("Processing post parent comments fetch request");
+    const serviceStartTime = Date.now();
+    const result = await CommentService.getParentComments(
+      postId,
+      limit,
+      cursor as number
+    );
+    const serviceDuration = Date.now() - serviceStartTime;
+
+    const totalDuration = Date.now() - startTime;
+
+    actionLogger.info(
+      {
+        postId,
+        totalComments: result.pagination.totalComments,
+        nextCursor: result.pagination.nextCursor,
+        serviceDuration,
+        totalDuration,
+      },
+      "Parent comments fetched successfully"
+    );
+
+    return res.status(200).json({
+      data: result.comments,
+      pagination: result.pagination,
     });
   } catch (error: unknown) {
     return handleError(error, res);
@@ -361,4 +424,4 @@ const deleteComment = async (req: Request, res: Response) => {
   }
 };
 
-export { createComment, deleteComment, getReplies };
+export { createComment, deleteComment, getReplies, getParentComments };

@@ -1,5 +1,37 @@
 import { z } from "zod";
 
+import { AvatarSchema as BaseAvatarSchema } from "./user.zod";
+
+const BaseAuthorSchema = z
+  .object({
+    id: z.string(),
+    username: z.string(),
+    Avatar: BaseAvatarSchema,
+  })
+  .transform((data) => ({
+    id: data.id,
+    username: data.username,
+    avatar: data.Avatar,
+  }));
+
+const BaseCommentSchema = z.object({
+  id: z.number().int(),
+  content: z.string(),
+  createdAt: z.string(),
+  author: BaseAuthorSchema,
+});
+
+const CommentPaginationSchema = z.object({
+  hasMore: z.boolean(),
+  nextCursor: z.number().int().nullable(),
+  totalComments: z.number(),
+});
+
+const ParentCommentsResponseSchema = z.object({
+  data: z.array(BaseCommentSchema),
+  pagination: CommentPaginationSchema,
+});
+
 const AuthorSchema = z.object({
   id: z.string(),
   username: z.string(),
@@ -53,6 +85,7 @@ const ProfileCommentsResponseSchema = z.object({
 });
 
 export type ProfileComment = z.infer<typeof CommentSchema>;
+export type Comment = z.infer<typeof BaseCommentSchema>;
 
 export {
   CommentSchema,
@@ -63,4 +96,5 @@ export {
   AvatarSchema,
   PaginationSchema,
   ProfileCommentsResponseSchema,
+  ParentCommentsResponseSchema,
 };

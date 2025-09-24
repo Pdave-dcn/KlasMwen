@@ -10,6 +10,7 @@ import AuthForm from "./pages/AuthForm";
 import HomePage from "./pages/HomePage";
 import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
+import PostView from "./pages/PostView";
 import Profile from "./pages/Profile";
 import ProfileEdit from "./pages/ProfileEdit";
 import { useAuthStore } from "./stores/auth.store";
@@ -57,6 +58,15 @@ const App = () => {
           element={
             <ProtectedRoute>
               <HomePage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/:username/post/:id"
+          element={
+            <ProtectedRoute>
+              <PostView />
             </ProtectedRoute>
           }
         />

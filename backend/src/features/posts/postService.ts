@@ -28,9 +28,12 @@ import {
   processPaginatedResults,
 } from "../../utils/pagination.util";
 
+import { truncatePostContentValue } from "./postContentValueFormatter";
 import transformPostTagsToFlat from "./postTagFlattener";
 
 import type { RawPost, TransformedPost } from "../../types/postTypes";
+import type { Response } from "express";
+import type pino from "pino";
 
 const PostFragments = {
   author: {
@@ -92,6 +95,20 @@ const BaseSelectors = {
     postTags: PostFragments.postTags,
     _count: PostFragments.counts,
   } satisfies Prisma.PostSelect,
+
+  lessExtendedPost: {
+    id: true,
+    title: true,
+    content: true,
+    type: true,
+    fileUrl: true,
+    fileName: true,
+    fileSize: true,
+    createdAt: true,
+    author: PostFragments.author,
+    postTags: PostFragments.postTags,
+    _count: PostFragments.counts,
+  } satisfies Prisma.PostSelect,
 } as const;
 
 const likeWithPost = Prisma.validator<Prisma.LikeFindManyArgs>()({
@@ -142,8 +159,11 @@ class PostService {
     const transformedPosts = posts.map(
       transformPostTagsToFlat as (post: Partial<RawPost>) => TransformedPost
     );
+
+    const postsWithTruncatedContent =
+      truncatePostContentValue(transformedPosts);
     const { data, pagination } = processPaginatedResults(
-      transformedPosts,
+      postsWithTruncatedContent,
       limit,
       "id"
     );
@@ -265,31 +285,28 @@ class PostService {
 
   static async getPostById(
     postId: string,
-    commentLimit: number,
-    commentCursor?: number
+    startTime: number,
+    actionLogger: pino.Logger,
+    res: Response
   ) {
     const post = await prisma.post.findUnique({
       where: { id: postId },
       select: {
-        ...BaseSelectors.extendedPost,
-        comments: {
-          select: {
-            id: true,
-            content: true,
-            createdAt: true,
-            author: PostFragments.commentAuthor,
-          },
-          orderBy: { createdAt: "asc" },
-          take: commentLimit + 1,
-          ...(commentCursor && {
-            cursor: { id: commentCursor },
-            skip: 1,
-          }),
-        },
+        ...BaseSelectors.lessExtendedPost,
       },
     });
 
-    return post;
+    if (!post) {
+      const totalDuration = Date.now() - startTime;
+      actionLogger.warn({ postId, totalDuration }, "Post not found");
+      res.status(404).json({ message: "Post not found" });
+
+      return null;
+    }
+
+    const transformedPost = transformPostTagsToFlat(post as RawPost);
+
+    return transformedPost;
   }
 
   static getPostForEdit(postId: string) {

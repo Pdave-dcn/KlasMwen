@@ -17,7 +17,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { useProfileUser as useGetActiveUserInfo } from "@/queries/useProfile";
 import { useUpdateUserInfo } from "@/queries/useUserMutation";
-import formatMemberSince from "@/utils/userCreationDateFormatter";
+import formatMemberSince from "@/utils/dateFormatter.util";
 import { UpdateProfileSchema } from "@/zodSchemas/user.zod";
 
 type FormData = {

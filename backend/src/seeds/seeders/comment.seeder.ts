@@ -25,11 +25,11 @@ const seedComments = async (users: User[], posts: Post[]) => {
     const rootCommentsData: Prisma.CommentUncheckedCreateInput[] = [];
 
     for (const post of posts) {
-      const commentCount = faker.number.int({ min: 0, max: 8 });
+      const commentCount = faker.number.int({ min: 0, max: 15 });
 
       for (let i = 0; i < commentCount; i++) {
         rootCommentsData.push({
-          content: faker.lorem.paragraphs(faker.number.int({ min: 1, max: 3 })),
+          content: faker.lorem.sentences(faker.number.int({ min: 1, max: 5 })),
           postId: post.id,
           authorId: faker.helpers.arrayElement(users).id,
         });

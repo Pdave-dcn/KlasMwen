@@ -29,15 +29,11 @@ const createComment = async (req: Request, res: Response) => {
     const startTime = Date.now();
 
     actionLogger.debug("Authenticating user");
-    const authStartTime = Date.now();
     const user = ensureAuthenticated(req);
-    const authDuration = Date.now() - authStartTime;
 
     actionLogger.debug("Validating request parameters and body");
-    const validationStartTime = Date.now();
     const { id: postId } = PostIdParamSchema.parse(req.params);
     const { content, parentId } = CreateCommentSchema.parse(req.body);
-    const validationDuration = Date.now() - validationStartTime;
 
     actionLogger.info(
       {
@@ -45,83 +41,30 @@ const createComment = async (req: Request, res: Response) => {
         postId,
         parentId,
         contentLength: content.length,
-        authDuration,
-        validationDuration,
       },
       "User authenticated and request data validated"
     );
 
-    actionLogger.debug("Checking if post exists");
-    const postCheckStartTime = Date.now();
-    const postExists = await prisma.post.findUnique({ where: { id: postId } });
-    const postCheckDuration = Date.now() - postCheckStartTime;
-
-    if (!postExists) {
-      actionLogger.warn(
-        { postId, postCheckDuration },
-        "Comment creation failed - post not found"
-      );
-      return res.status(404).json({ message: "Post not found!" });
-    }
-
-    actionLogger.debug(
-      { postId, postCheckDuration },
-      "Post exists validation passed"
+    actionLogger.debug("Processing comment creation");
+    const serviceStartTime = Date.now();
+    const newComment = await CommentService.createComment(
+      { content, authorId: user.id, postId, parentId },
+      res
     );
+    if (!newComment) {
+      const serviceDuration = Date.now() - serviceStartTime;
+      const totalDuration = Date.now() - startTime;
 
-    let parentCheckDuration = 0;
-    if (parentId) {
-      actionLogger.debug("Validating parent comment");
-      const parentCheckStartTime = Date.now();
-      const parentComment = await prisma.comment.findUnique({
-        where: { id: parentId },
-      });
-      parentCheckDuration = Date.now() - parentCheckStartTime;
-
-      if (!parentComment) {
-        actionLogger.warn(
-          { parentId, parentCheckDuration },
-          "Comment creation failed - parent comment not found"
-        );
-        return res.status(404).json({
-          error: "Parent comment not found",
-        });
-      }
-
-      if (parentComment.postId !== postId) {
-        actionLogger.warn(
-          {
-            parentId,
-            parentPostId: parentComment.postId,
-            requestedPostId: postId,
-            parentCheckDuration,
-          },
-          "Comment creation failed - parent comment belongs to different post"
-        );
-        return res.status(400).json({
-          error: "Parent comment does not belong to this post",
-        });
-      }
-
-      actionLogger.debug(
-        { parentId, parentCheckDuration },
-        "Parent comment validation passed"
+      actionLogger.warn(
+        { serviceDuration, totalDuration },
+        "Comment creation failed"
       );
+      return;
     }
 
-    actionLogger.debug("Creating comment in database");
-    const dbStartTime = Date.now();
-    const newComment = await prisma.comment.create({
-      data: {
-        content,
-        authorId: user.id,
-        postId,
-        parentId: parentId ?? null,
-      },
-    });
-    const dbDuration = Date.now() - dbStartTime;
-
+    const serviceDuration = Date.now() - serviceStartTime;
     const totalDuration = Date.now() - startTime;
+
     actionLogger.info(
       {
         commentId: newComment.id,
@@ -129,11 +72,7 @@ const createComment = async (req: Request, res: Response) => {
         postId,
         parentId,
         contentLength: content.length,
-        authDuration,
-        validationDuration,
-        postCheckDuration,
-        parentCheckDuration: parentId ? parentCheckDuration : undefined,
-        dbDuration,
+        serviceDuration,
         totalDuration,
       },
       "Comment created successfully"
@@ -148,7 +87,6 @@ const createComment = async (req: Request, res: Response) => {
   }
 };
 
-// todo: write tests
 const getParentComments = async (req: Request, res: Response) => {
   const actionLogger = createActionLogger(
     controllerLogger,
@@ -226,6 +164,10 @@ const getReplies = async (req: Request, res: Response) => {
 
     const parentId = parseInt(id, 10);
 
+    actionLogger.debug("Parsing pagination parameters");
+    const customRepliesSchema = createPaginationSchema(10, 40, "number");
+    const { limit, cursor } = customRepliesSchema.parse(req.query);
+
     actionLogger.debug("Checking if parent comment exists");
     const parentCheckStartTime = Date.now();
     const parent = await prisma.comment.findUnique({
@@ -240,10 +182,6 @@ const getReplies = async (req: Request, res: Response) => {
       );
       return res.status(404).json({ message: "Parent comment not found" });
     }
-
-    actionLogger.debug("Parsing pagination parameters");
-    const customRepliesSchema = createPaginationSchema(10, 40, "number");
-    const { limit, cursor } = customRepliesSchema.parse(req.query);
 
     actionLogger.info(
       {
@@ -336,9 +274,7 @@ const deleteComment = async (req: Request, res: Response) => {
     const startTime = Date.now();
 
     actionLogger.debug("Authenticating user");
-    const authStartTime = Date.now();
     const user = ensureAuthenticated(req);
-    const authDuration = Date.now() - authStartTime;
 
     actionLogger.debug("Validating comment ID");
     const { id: commentIdParam } = req.params;
@@ -346,7 +282,7 @@ const deleteComment = async (req: Request, res: Response) => {
 
     if (isNaN(commentId)) {
       actionLogger.warn(
-        { commentId: commentIdParam, authDuration },
+        { commentId: commentIdParam },
         "Comment deletion failed - invalid comment ID"
       );
       return res.status(400).json({ message: "Invalid comment ID" });
@@ -356,13 +292,11 @@ const deleteComment = async (req: Request, res: Response) => {
       {
         userId: user.id,
         commentId,
-        authDuration,
       },
       "User authenticated and comment ID validated"
     );
 
     actionLogger.debug("Fetching comment for permission check");
-    const commentFetchStartTime = Date.now();
     const comment = await prisma.comment.findUnique({
       where: { id: commentId },
       select: {
@@ -370,38 +304,31 @@ const deleteComment = async (req: Request, res: Response) => {
         authorId: true,
       },
     });
-    const commentFetchDuration = Date.now() - commentFetchStartTime;
 
     if (!comment) {
       actionLogger.warn(
-        { commentId, commentFetchDuration },
+        { commentId },
         "Comment deletion failed - comment not found"
       );
       return res.status(404).json({ message: "Comment not found" });
     }
 
     actionLogger.debug("Checking user permissions");
-    const permissionStartTime = Date.now();
     checkPermission(user, comment);
-    const permissionDuration = Date.now() - permissionStartTime;
 
     actionLogger.info(
       {
         commentId,
         authorId: comment.authorId,
         requestingUserId: user.id,
-        commentFetchDuration,
-        permissionDuration,
       },
       "Comment found and permission check passed"
     );
 
     actionLogger.debug("Deleting comment from database");
-    const dbStartTime = Date.now();
     await prisma.comment.delete({
       where: { id: commentId },
     });
-    const dbDuration = Date.now() - dbStartTime;
 
     const totalDuration = Date.now() - startTime;
     actionLogger.info(
@@ -409,10 +336,6 @@ const deleteComment = async (req: Request, res: Response) => {
         commentId,
         authorId: comment.authorId,
         deletedByUserId: user.id,
-        authDuration,
-        commentFetchDuration,
-        permissionDuration,
-        dbDuration,
         totalDuration,
       },
       "Comment deleted successfully"

@@ -119,7 +119,10 @@ describe("Post Controllers", () => {
 
   describe("createPost", () => {
     it("should successfully create a post and return a 201 status", async () => {
-      const req = mockRequest({ id: 1, role: "STUDENT" });
+      const req = mockRequest({
+        id: "60676309-9958-4a6a-b4bc-463199dab4ee",
+        role: "STUDENT",
+      });
       const res = mockResponse();
 
       const mockValidatedData: CreatePostInput = {
@@ -186,8 +189,14 @@ describe("Post Controllers", () => {
 
       await createPost(req, res);
 
-      expect(handleRequestValidation).toHaveBeenCalledWith(req, 1);
-      expect(handlePostCreation).toHaveBeenCalledWith(mockValidatedData, 1);
+      expect(handleRequestValidation).toHaveBeenCalledWith(
+        req,
+        "60676309-9958-4a6a-b4bc-463199dab4ee"
+      );
+      expect(handlePostCreation).toHaveBeenCalledWith(
+        mockValidatedData,
+        "60676309-9958-4a6a-b4bc-463199dab4ee"
+      );
       expect(transformPostTagsToFlat).toHaveBeenCalledWith(mockPostResult);
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith({
@@ -209,7 +218,10 @@ describe("Post Controllers", () => {
     });
 
     it("should return 500 and clean up the file if post creation fails", async () => {
-      const req = mockRequest({ id: 1, role: "USER" });
+      const req = mockRequest({
+        id: "60676309-9958-4a6a-b4bc-463199dab4ee",
+        role: "USER",
+      });
       const res = mockResponse();
       const mockValidatedData = {
         title: "Test Title",
@@ -230,7 +242,10 @@ describe("Post Controllers", () => {
 
       await createPost(req, res);
 
-      expect(handlePostCreation).toHaveBeenCalledWith(mockValidatedData, 1);
+      expect(handlePostCreation).toHaveBeenCalledWith(
+        mockValidatedData,
+        "60676309-9958-4a6a-b4bc-463199dab4ee"
+      );
       expect(deleteFromCloudinary).toHaveBeenCalledWith(
         mockUploadedFileInfo.publicId,
         "raw"
@@ -242,7 +257,10 @@ describe("Post Controllers", () => {
     });
 
     it("should call handleError if validation fails", async () => {
-      const req = mockRequest({ id: 1, role: "USER" });
+      const req = mockRequest({
+        id: "60676309-9958-4a6a-b4bc-463199dab4ee",
+        role: "USER",
+      });
       const res = mockResponse();
       const mockValidationError = new Error("Invalid request");
 

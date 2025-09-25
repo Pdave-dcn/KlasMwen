@@ -6,6 +6,8 @@ import {
   processPaginatedResults,
 } from "../../utils/pagination.util";
 
+import type { Response } from "express";
+
 const CommentFragments = {
   commentAuthor: {
     select: {
@@ -77,6 +79,13 @@ const commentWithRelations = Prisma.validator<Prisma.CommentFindManyArgs>()({
 type CommentWithRelations = Prisma.CommentGetPayload<
   typeof commentWithRelations
 >;
+
+interface CreateCommentData {
+  content: string;
+  authorId: string;
+  postId: string;
+  parentId?: number;
+}
 
 const transformCommentsForResponse = (comments: CommentWithRelations[]) => {
   return comments.map((comment) => ({
@@ -164,6 +173,48 @@ class CommentService {
       comments: data,
       pagination: { ...pagination, totalComments },
     };
+  }
+
+  static async createComment(data: CreateCommentData, res: Response) {
+    const postExists = await prisma.post.findUnique({
+      where: { id: data.postId },
+    });
+
+    if (!postExists) {
+      res.status(404).json({ message: "Post not found!" });
+      return null;
+    }
+
+    if (data.parentId) {
+      const parentComment = await prisma.comment.findUnique({
+        where: { id: data.parentId },
+      });
+
+      if (!parentComment) {
+        res.status(404).json({
+          error: "Parent comment not found",
+        });
+        return null;
+      }
+
+      if (parentComment.postId !== data.postId) {
+        res.status(400).json({
+          error: "Parent comment does not belong to this post",
+        });
+        return null;
+      }
+    }
+
+    const newComment = await prisma.comment.create({
+      data: {
+        content: data.content,
+        authorId: data.authorId,
+        postId: data.postId,
+        parentId: data.parentId ?? null,
+      },
+    });
+
+    return newComment;
   }
 }
 

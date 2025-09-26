@@ -1,4 +1,5 @@
 /* eslint-disable max-lines-per-function*/
+
 import prisma from "../core/config/db";
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index";
@@ -13,6 +14,7 @@ import {
 import { CreateCommentSchema } from "../zodSchemas/comment.zod";
 import { PostIdParamSchema } from "../zodSchemas/post.zod";
 
+import type { Prisma } from "@prisma/client";
 import type { Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "CommentController" });
@@ -194,13 +196,24 @@ const getReplies = async (req: Request, res: Response) => {
       "Parent comment validated and pagination parameters parsed"
     );
 
-    const baseQuery = {
+    const baseQuery: Prisma.CommentFindManyArgs = {
       where: { parentId },
       orderBy: { createdAt: "asc" as const },
       select: {
         id: true,
         content: true,
-        author: { select: { id: true, username: true, avatarUrl: true } },
+        author: {
+          select: {
+            id: true,
+            username: true,
+            Avatar: {
+              select: {
+                id: true,
+                url: true,
+              },
+            },
+          },
+        },
         createdAt: true,
       },
     };
@@ -213,16 +226,12 @@ const getReplies = async (req: Request, res: Response) => {
 
     actionLogger.debug("Executing database queries for replies and count");
     const dbStartTime = Date.now();
-    const [replies, totalItems] = await Promise.all([
-      prisma.comment.findMany(paginatedQuery),
-      prisma.comment.count({ where: { parentId } }),
-    ]);
+    const replies = await prisma.comment.findMany(paginatedQuery);
     const dbDuration = Date.now() - dbStartTime;
 
     actionLogger.info(
       {
         repliesCount: replies.length,
-        totalItems,
         dbDuration,
       },
       "Replies and count retrieved from database"
@@ -239,7 +248,6 @@ const getReplies = async (req: Request, res: Response) => {
       {
         parentId,
         repliesReturned: replies.length,
-        totalItems,
         hasMore: pagination.hasMore,
         nextCursor: pagination.nextCursor,
         parentCheckDuration,
@@ -251,11 +259,7 @@ const getReplies = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       data: repliesData,
-      pagination: {
-        nextCursor: pagination.nextCursor,
-        hasMore: pagination.hasMore,
-        totalItems,
-      },
+      pagination,
     });
   } catch (error: unknown) {
     return handleError(error, res);

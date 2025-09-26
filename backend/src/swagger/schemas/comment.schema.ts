@@ -170,6 +170,20 @@ export const commentSchemas = {
     },
   },
 
+  Reply: {
+    type: "object",
+    properties: {
+      id: { type: "integer", example: 123 },
+      content: { type: "string", example: "This is a reply" },
+      author: { $ref: "#/components/schemas/Author" },
+      createdAt: {
+        type: "string",
+        format: "date-time",
+        example: "2025-08-16 12:34:56",
+      },
+    },
+  },
+
   CreateCommentRequest: {
     type: "object",
     properties: {
@@ -208,19 +222,18 @@ export const commentSchemas = {
     },
   },
 
-  CommentsResponse: {
+  RepliesResponse: {
     type: "object",
     properties: {
       data: {
         type: "array",
-        items: { $ref: "#/components/schemas/Comment" },
+        items: { $ref: "#/components/schemas/Reply" },
       },
       pagination: {
         type: "object",
         properties: {
           nextCursor: { type: "integer", nullable: true, example: 456 },
           hasMore: { type: "boolean", example: true },
-          totalItems: { type: "integer", example: 25 },
         },
       },
     },

@@ -1,6 +1,6 @@
 import { BookOpen } from "lucide-react";
 
-import { PostCard } from "@/components/PostCard";
+import { PostCard } from "@/components/cards/PostCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";

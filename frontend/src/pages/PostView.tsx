@@ -11,7 +11,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-import CommentCard from "@/components/cards/CommentCard";
+import CommentCard from "@/components/cards/Comment/CommentCard";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";

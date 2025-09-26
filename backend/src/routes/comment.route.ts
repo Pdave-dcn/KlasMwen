@@ -96,7 +96,7 @@ router.get("/posts/:id/comments", generalApiLimiter, getParentComments);
  *         content:
  *           application/json:
  *             schema:
- *               $ref: "#/components/schemas/CommentsResponse"
+ *               $ref: "#/components/schemas/RepliesResponse"
  *       400:
  *         description: Invalid parent ID
  *       404:

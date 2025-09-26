@@ -53,7 +53,7 @@ const CommentFragments = {
   },
 
   count: {
-    select: { comments: true },
+    select: { comment: true },
   },
 } as const;
 
@@ -63,6 +63,11 @@ const BaseSelectors = {
     content: true,
     createdAt: true,
     author: CommentFragments.extendedCommentAuthor,
+    _count: {
+      select: {
+        Comment: true,
+      },
+    },
   } satisfies Prisma.CommentSelect,
 
   commentRelations: {

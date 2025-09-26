@@ -39,34 +39,34 @@ export const PostCard = ({
   const navigate = useNavigate();
 
   const handleLike = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card navigation
+    e.stopPropagation();
     setIsLiked(!isLiked);
     onLike?.(post.id);
   };
 
   const handleBookmark = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card navigation
+    e.stopPropagation();
     setIsBookmarked(!isBookmarked);
     onBookmark?.(post.id);
   };
 
   const handleComment = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card navigation
+    e.stopPropagation();
     onComment?.(post.id);
   };
 
   const handleShare = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card navigation
-    // Handle share logic here
+    e.stopPropagation();
+    // share logic here
   };
 
   const handleMoreOptions = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card navigation
-    // Handle more options logic here
+    e.stopPropagation();
+    // more options logic here
   };
 
   const handleUserNavigation = async (e: React.MouseEvent, userId: string) => {
-    e.stopPropagation(); // Prevent card navigation
+    e.stopPropagation();
     await navigate(`/profile/${userId}`);
   };
 

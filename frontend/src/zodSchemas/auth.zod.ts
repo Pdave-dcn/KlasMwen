@@ -33,9 +33,25 @@ const RegisterSchema = SignInSchema.extend({
     ),
 });
 
+const AuthVerificationPayloadSchema = z.object({
+  id: z.uuid(),
+  username: z.string(),
+  email: z.email(),
+  role: z.enum(["ADMIN", "STUDENT"]),
+});
+
 const AuthResponseSchema = z.object({
   message: z.string(),
   user: UserDataSchema,
 });
 
-export { SignInSchema, RegisterSchema, AuthResponseSchema };
+const AuthVerificationResponseSchema = z.object({
+  user: AuthVerificationPayloadSchema,
+});
+
+export {
+  SignInSchema,
+  RegisterSchema,
+  AuthResponseSchema,
+  AuthVerificationResponseSchema,
+};

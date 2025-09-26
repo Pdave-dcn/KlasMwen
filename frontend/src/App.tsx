@@ -4,6 +4,7 @@ import { Routes, Route } from "react-router-dom";
 
 import { Toaster } from "sonner";
 
+import api from "./api/api";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { Spinner } from "./components/ui/spinner";
 import AuthForm from "./pages/AuthForm";
@@ -14,9 +15,12 @@ import PostView from "./pages/PostView";
 import Profile from "./pages/Profile";
 import ProfileEdit from "./pages/ProfileEdit";
 import { useAuthStore } from "./stores/auth.store";
+import { AuthVerificationResponseSchema } from "./zodSchemas/auth.zod";
 
 const App = () => {
   const [isHydrated, setIsHydrated] = useState(false);
+  const login = useAuthStore((state) => state.login);
+  const logout = useAuthStore((state) => state.logout);
 
   useEffect(() => {
     const hasPersistedState = useAuthStore.persist.hasHydrated();
@@ -36,6 +40,22 @@ const App = () => {
       };
     }
   }, []);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    const verifyAuth = async () => {
+      try {
+        const res = await api.get("/auth/me");
+        const validatedData = AuthVerificationResponseSchema.parse(res.data);
+        login(validatedData.user);
+      } catch {
+        logout();
+      }
+    };
+
+    void verifyAuth();
+  }, [isHydrated, login, logout]);
 
   if (!isHydrated) {
     return (

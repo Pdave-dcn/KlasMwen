@@ -7,82 +7,19 @@ import {
   Tag,
   Download,
   Heart,
-  RefreshCw,
-  AlertCircle,
 } from "lucide-react";
 
 import CommentCard from "@/components/cards/Comment/CommentCard";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
+import PostError from "@/features/postView/components/PostError";
+import PostLoading from "@/features/postView/components/PostLoading";
+import PostNotFound from "@/features/postView/components/PostNotFound";
 import { useSinglePostQuery } from "@/queries/usePosts";
 import { formatDate } from "@/utils/dateFormatter.util";
 import { getInitials } from "@/utils/getInitials.util";
-
-const PostLoading = () => (
-  <Card>
-    <CardHeader>
-      <CardTitle />
-    </CardHeader>
-    <CardContent className="flex items-center justify-center space-y-10">
-      <Spinner />
-    </CardContent>
-  </Card>
-);
-
-const PostError = ({ onRetry }: { error: Error; onRetry: () => void }) => (
-  <div className="max-w-4xl mx-auto p-6">
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2 text-destructive">
-          <AlertCircle className="w-5 h-5" />
-          <span>Failed to Load Post</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">Something went wrong</p>
-              <p className="text-sm mt-1">
-                We couldn't load this post. Please try again.
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onRetry}
-              className="ml-4 flex-shrink-0"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Retry
-            </Button>
-          </AlertDescription>
-        </Alert>
-      </CardContent>
-    </Card>
-  </div>
-);
-
-const PostNotFound = () => (
-  <div className="max-w-4xl mx-auto p-6">
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <AlertCircle className="w-5 h-5" />
-          <span>Post Not Found</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p>This post doesn't exist or has been removed.</p>
-      </CardContent>
-    </Card>
-  </div>
-);
 
 const PostView = () => {
   const { id: postId } = useParams();

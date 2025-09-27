@@ -8,11 +8,13 @@ import { useRepliesQuery } from "@/queries/useComment";
 import { formatTimeAgo } from "@/utils/dateFormatter.util";
 import { getInitials } from "@/utils/getInitials.util";
 
+import LoadMoreButton from "./LoadMoreButton";
+
 interface RepliesListProps {
   parentId: number;
 }
 
-export const RepliesList = ({ parentId }: RepliesListProps) => {
+const RepliesList = ({ parentId }: RepliesListProps) => {
   const {
     data,
     isLoading,
@@ -79,15 +81,14 @@ export const RepliesList = ({ parentId }: RepliesListProps) => {
       ))}
 
       {hasNextPage && (
-        <Button
+        <LoadMoreButton
           variant="outline"
-          size="sm"
-          onClick={() => fetchNextPage()}
-          disabled={isFetchingNextPage}
-        >
-          {isFetchingNextPage ? "Loading more..." : "Load more replies"}
-        </Button>
+          onClick={fetchNextPage}
+          isLoading={isFetchingNextPage}
+        />
       )}
     </div>
   );
 };
+
+export default RepliesList;

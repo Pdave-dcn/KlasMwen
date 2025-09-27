@@ -9,7 +9,7 @@ import { useParentCommentsQuery } from "@/queries/useComment";
 import { formatTimeAgo } from "@/utils/dateFormatter.util";
 import { getInitials } from "@/utils/getInitials.util";
 
-import { RepliesList } from "../../RepliesList";
+import RepliesList from "../../RepliesList";
 import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
 import { Button } from "../../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";

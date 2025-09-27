@@ -123,7 +123,8 @@ export const PostCard = ({
             <div>
               <div className="flex items-center gap-2">
                 <Button
-                  variant="ghost"
+                  variant="link"
+                  size="sm"
                   className="font-semibold text-sm cursor-pointer"
                   onClick={(e) => handleUserNavigation(e, post.author.id)}
                   aria-label="Go to user profile"

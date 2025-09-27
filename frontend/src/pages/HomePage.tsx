@@ -1,7 +1,7 @@
 import { BookOpen } from "lucide-react";
 
 import { PostCard } from "@/components/cards/PostCard";
-import { Button } from "@/components/ui/button";
+import LoadMoreButton from "@/components/LoadMoreButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { useHomePagePosts } from "@/queries/usePosts";
@@ -62,14 +62,12 @@ const HomePage = () => {
             {/* Load More button */}
             {hasNextPage && (
               <div className="flex justify-center">
-                <Button
+                <LoadMoreButton
+                  isLoading={isFetchingNextPage}
+                  onClick={fetchNextPage}
                   variant="ghost"
-                  className="cursor-pointer"
-                  onClick={() => fetchNextPage()}
-                  disabled={isFetchingNextPage}
-                >
-                  {isFetchingNextPage ? "Loading..." : "Load more"}
-                </Button>
+                  style="max-w-xs"
+                />
               </div>
             )}
           </div>

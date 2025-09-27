@@ -64,6 +64,12 @@ export const RepliesList = ({ parentId }: RepliesListProps) => {
                 <span className="text-xs text-muted-foreground">
                   {formatTimeAgo(reply.createdAt)}
                 </span>
+                <button
+                  type="button"
+                  className="text-xs text-muted-foreground cursor-pointer hover:underline"
+                >
+                  Reply
+                </button>
               </div>
               <p className="text-sm leading-relaxed">{reply.content}</p>
             </div>

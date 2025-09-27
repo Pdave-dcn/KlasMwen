@@ -16,6 +16,8 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAvatars } from "@/queries/useAvatar";
 
+import LoadMoreButton from "./LoadMoreButton";
+
 const AvatarModal = ({
   isOpen,
   onClose,
@@ -141,21 +143,11 @@ const AvatarModal = ({
               {/* Load More Button */}
               {hasNextPage && (
                 <div className="flex justify-center pt-4">
-                  <Button
-                    variant="outline"
+                  <LoadMoreButton
+                    isLoading={isFetchingNextPage}
                     onClick={handleLoadMore}
-                    disabled={isFetchingNextPage}
-                    className="w-full max-w-xs cursor-pointer"
-                  >
-                    {isFetchingNextPage ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                        Loading more...
-                      </>
-                    ) : (
-                      "Load More Avatars"
-                    )}
-                  </Button>
+                    style="max-w-xs"
+                  />
                 </div>
               )}
 

@@ -141,6 +141,7 @@ const CommentCard = ({ postId }: CommentCardProps) => {
               <LoadMoreButton
                 isLoading={isFetchingComments}
                 onClick={() => fetchMoreComments()}
+                style="mt-6"
               />
             )}
           </div>

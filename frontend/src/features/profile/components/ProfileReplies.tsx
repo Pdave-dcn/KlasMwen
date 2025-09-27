@@ -2,7 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { MessageSquare } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import LoadMoreButton from "@/components/LoadMoreButton";
 import { Card } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { useProfileComments } from "@/queries/useProfile";
@@ -82,14 +82,12 @@ const ProfileReplies = () => {
       {/* Load More button */}
       {hasNextPage && (
         <div className="flex justify-center">
-          <Button
+          <LoadMoreButton
             variant="ghost"
-            className="cursor-pointer"
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-          >
-            {isFetchingNextPage ? "Loading..." : "Load more"}
-          </Button>
+            onClick={fetchNextPage}
+            isLoading={isFetchingNextPage}
+            style="max-w-xs"
+          />
         </div>
       )}
     </div>

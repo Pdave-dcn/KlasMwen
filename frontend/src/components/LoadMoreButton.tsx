@@ -1,23 +1,31 @@
 import { RefreshCw } from "lucide-react";
 
-import { Button } from "./ui/button";
+import { Button, type buttonVariants } from "./ui/button";
+
+import type { VariantProps } from "class-variance-authority";
+
+interface LoadMoreButtonProps {
+  isLoading: boolean;
+  onClick: () => void;
+  variant?: VariantProps<typeof buttonVariants>["variant"];
+  style?: string;
+}
 
 const LoadMoreButton = ({
   isLoading,
   onClick,
-}: {
-  isLoading: boolean;
-  onClick: () => void;
-}) => (
+  variant = "outline",
+  style,
+}: LoadMoreButtonProps) => (
   <Button
-    variant="outline"
+    variant={variant}
     onClick={onClick}
     disabled={isLoading}
-    className="w-full mt-6"
+    className={`w-full ${style}`}
   >
     {isLoading ? (
       <>
-        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+        <RefreshCw className="w-4 h-4 animate-spin" />
         Loading more...
       </>
     ) : (

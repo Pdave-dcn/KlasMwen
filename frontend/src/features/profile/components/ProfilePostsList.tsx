@@ -1,5 +1,5 @@
 import { PostCard } from "@/components/cards/PostCard";
-import { Button } from "@/components/ui/button";
+import LoadMoreButton from "@/components/LoadMoreButton";
 import { Card } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import type { Post } from "@/zodSchemas/post.zod";
@@ -101,14 +101,11 @@ const ProfilePostsList = ({
       {/* Load More button */}
       {hasNextPage && (
         <div className="flex justify-center">
-          <Button
+          <LoadMoreButton
+            onClick={fetchNextPage}
+            isLoading={isFetchingNextPage}
             variant="ghost"
-            className="cursor-pointer"
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-          >
-            {isFetchingNextPage ? "Loading..." : "Load more"}
-          </Button>
+          />
         </div>
       )}
     </div>

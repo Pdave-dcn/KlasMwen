@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const RoleSchema = z.enum(["STUDENT", "ADMIN"]);
+
 const AvatarSchema = z.object({
   id: z.number().int(),
   url: z.string(),
@@ -10,7 +12,7 @@ const UserDataSchema = z.object({
   username: z.string(),
   email: z.email().optional(),
   bio: z.string().nullable().optional(),
-  role: z.enum(["STUDENT", "ADMIN"]),
+  role: RoleSchema,
   avatar: AvatarSchema.nullable().optional(),
   createdAt: z.string().nullable().optional(),
 });
@@ -37,6 +39,7 @@ const GetUserProfileResponseSchema = z.object({
 });
 
 export {
+  RoleSchema,
   UserDataSchema,
   GetActiveUserResponseSchema,
   PublicUserProfileDataSchema,

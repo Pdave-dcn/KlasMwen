@@ -2,6 +2,8 @@ import { z } from "zod";
 
 import { AvatarSchema } from "./user.zod";
 
+const PostTypeSchema = z.enum(["NOTE", "QUESTION", "RESOURCE"]);
+
 const AuthorSchema = z
   .object({
     id: z.string(),
@@ -28,7 +30,7 @@ const PostDataSchema = z.object({
   id: z.string(),
   title: z.string(),
   content: z.string().nullable(),
-  type: z.enum(["NOTE", "QUESTION", "RESOURCE"]),
+  type: PostTypeSchema,
   fileUrl: z.string().nullable(),
   fileName: z.string().nullable(),
   createdAt: z.string(),
@@ -75,6 +77,7 @@ const SinglePostResponseSchema = z.object({
 export type Post = z.infer<typeof PostDataSchema>;
 
 export {
+  PostTypeSchema,
   PostDataSchema,
   PaginationSchema,
   PostResponseSchema,

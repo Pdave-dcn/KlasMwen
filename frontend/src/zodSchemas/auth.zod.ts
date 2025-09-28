@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { UserDataSchema } from "./user.zod";
+import { RoleSchema, UserDataSchema } from "./user.zod";
 
 const SignInSchema = z.object({
   email: z.email("Please enter a valid email address."),
@@ -37,7 +37,7 @@ const AuthVerificationPayloadSchema = z.object({
   id: z.uuid(),
   username: z.string(),
   email: z.email(),
-  role: z.enum(["ADMIN", "STUDENT"]),
+  role: RoleSchema,
 });
 
 const AuthResponseSchema = z.object({

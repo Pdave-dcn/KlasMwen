@@ -1,14 +1,8 @@
-/* eslint-disable max-lines-per-function*/
 import prisma from "../core/config/db";
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index";
 import validateTagOperation from "../features/tag/tagValidationOperation.js";
 import createActionLogger from "../utils/logger.util.js";
-import {
-  buildPaginatedQuery,
-  createPaginationSchema,
-  processPaginatedResults,
-} from "../utils/pagination.util";
 import { CreateTagSchema } from "../zodSchemas/tag.zod.js";
 
 import type { Request, Response } from "express";
@@ -146,62 +140,23 @@ const getAllTags = async (req: Request, res: Response) => {
     actionLogger.info("Fetching all tags");
     const startTime = Date.now();
 
-    const customTagsSchema = createPaginationSchema(20, 60, "number");
-    const { limit, cursor } = customTagsSchema.parse(req.query);
-    const sortOrder = (req.query.sortOrder as "asc" | "desc") || "asc";
-
-    actionLogger.debug(
-      {
-        limit,
-        cursor,
-        sortOrder,
-        hasCursor: !!cursor,
-      },
-      "Pagination and sorting parameters parsed"
-    );
-
-    const baseQuery = {
-      orderBy: { name: sortOrder },
-    };
-
-    const paginatedQuery = buildPaginatedQuery<"tag">(baseQuery, {
-      limit,
-      cursor,
-      cursorField: "id",
-      orderBy: { name: sortOrder },
-    });
-
-    actionLogger.debug("Executing database queries for tags and count");
+    actionLogger.debug("Executing database query for tags");
     const dbStartTime = Date.now();
-    const [tags, totalCount] = await Promise.all([
-      prisma.tag.findMany(paginatedQuery),
-      prisma.tag.count(),
-    ]);
+    const tags = await prisma.tag.findMany();
     const dbDuration = Date.now() - dbStartTime;
 
     actionLogger.info(
       {
         tagsCount: tags.length,
-        totalCount,
         dbDuration,
       },
-      "Tags and count retrieved from database"
-    );
-
-    const { data: tagsData, pagination } = processPaginatedResults(
-      tags,
-      limit,
-      "id"
+      "Tags retrieved from database"
     );
 
     const totalDuration = Date.now() - startTime;
     actionLogger.info(
       {
         totalTags: tags.length,
-        totalCount,
-        hasMore: pagination.hasMore,
-        nextCursor: pagination.nextCursor,
-        sortOrder,
         dbDuration,
         totalDuration,
       },
@@ -209,12 +164,7 @@ const getAllTags = async (req: Request, res: Response) => {
     );
 
     return res.status(200).json({
-      data: tagsData,
-      pagination: {
-        nextCursor: pagination.nextCursor,
-        hasMore: pagination.hasMore,
-        totalCount,
-      },
+      data: tags,
     });
   } catch (error: unknown) {
     return handleError(error, res);

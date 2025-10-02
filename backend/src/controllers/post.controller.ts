@@ -24,6 +24,7 @@ import {
   UpdatedPostSchema,
 } from "../zodSchemas/post.zod.js";
 
+import type { RawPost } from "../types/postTypes.js";
 import type { Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "PostController" });
@@ -103,7 +104,7 @@ const createPost = async (req: Request, res: Response) => {
         .json({ message: "Unexpected error: post creation failed." });
     }
 
-    const transformedPost = transformPostTagsToFlat(result);
+    const transformedPost = transformPostTagsToFlat(result as RawPost);
     const totalDuration = Date.now() - startTime;
 
     actionLogger.info(

@@ -33,10 +33,22 @@ const handleRequestValidation = async (
   req: Request,
   userId: string
 ): Promise<FileUploadData> => {
+  let parsedTagIds: number[] = [];
+
+  if (typeof req.body.tagIds === "string") {
+    try {
+      parsedTagIds = JSON.parse(req.body.tagIds);
+    } catch {
+      parsedTagIds = [];
+    }
+  } else if (Array.isArray(req.body.tagIds)) {
+    parsedTagIds = req.body.tagIds;
+  }
+
   const bodyValidation = NewPostRequestSchema.parse({
     title: req.body.title,
     type: req.body.type,
-    tagIds: req.body.tagIds ? JSON.parse(req.body.tagIds) : [],
+    tagIds: parsedTagIds,
     ...(req.body.content && { content: req.body.content }),
   });
 

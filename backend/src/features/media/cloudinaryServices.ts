@@ -2,6 +2,7 @@
 import { Readable } from "stream";
 
 import cloudinary from "../../core/config/cloudinary.js";
+import { logger } from "../../core/config/logger.js";
 
 interface CloudinaryUploadResult {
   publicId: string;
@@ -56,10 +57,13 @@ const uploadToCloudinary = async (
       uploadOptions,
       (error, result) => {
         if (error) {
-          console.error("❌ Cloudinary upload failed:", error);
+          logger.error({ error }, "Cloudinary upload failed");
           reject(new Error(`Upload failed: ${error.message}`));
         } else if (result) {
-          console.log("✅ File uploaded to Cloudinary:", result.secure_url);
+          logger.info(
+            { fileUrl: result.secure_url },
+            "File uploaded to Cloudinary"
+          );
           resolve({
             publicId: result.public_id,
             url: result.url,

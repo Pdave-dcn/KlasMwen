@@ -29,11 +29,11 @@ import { useAuthStore } from "@/stores/auth.store";
 const navItems = [
   { title: "Home", url: "/home", icon: Home },
   { title: "Search", url: "/search", icon: Search },
-  { title: "Create", url: "/post/create", icon: Plus },
+  { title: "Create", action: true, icon: Plus },
   { title: "Profile", url: "/profile/me", icon: User },
 ];
 
-export default function MobileTabBar() {
+const MobileTabBar = ({ onCreateClick }: { onCreateClick: () => void }) => {
   const { logout } = useAuthStore();
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
@@ -87,32 +87,44 @@ export default function MobileTabBar() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-background border-t shadow-sm md:hidden">
       <ul className="flex justify-around py-2">
-        {navItems.map((item) => (
-          <li key={item.title}>
-            <NavLink
-              to={item.url}
-              className={({ isActive }) =>
-                clsx(
-                  "flex flex-col items-center text-xs transition-colors px-2 py-1",
-                  isActive
-                    ? "text-primary font-medium"
-                    : "text-muted-foreground hover:text-foreground"
-                )
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <item.icon
-                    className={clsx(
-                      "h-6 w-6 mb-0.5",
-                      isActive ? "stroke-primary" : "stroke-muted-foreground"
-                    )}
-                  />
-                </>
+        {navItems.map((item) =>
+          item.action ? (
+            <button
+              key={item.title}
+              onClick={() => onCreateClick()}
+              className={clsx(
+                "flex gap-1.5 items-center text-muted-foreground"
               )}
-            </NavLink>
-          </li>
-        ))}
+            >
+              <item.icon className="h-6 w-6 mb-0.5" />
+            </button>
+          ) : (
+            <li key={item.title}>
+              <NavLink
+                to={item.url as string}
+                className={({ isActive }) =>
+                  clsx(
+                    "flex flex-col items-center text-xs transition-colors px-2 py-1",
+                    isActive
+                      ? "text-primary font-medium"
+                      : "text-muted-foreground hover:text-foreground"
+                  )
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <item.icon
+                      className={clsx(
+                        "h-6 w-6 mb-0.5",
+                        isActive ? "stroke-primary" : "stroke-muted-foreground"
+                      )}
+                    />
+                  </>
+                )}
+              </NavLink>
+            </li>
+          )
+        )}
 
         {/* More Dropdown */}
         <li>
@@ -155,4 +167,6 @@ export default function MobileTabBar() {
       </ul>
     </nav>
   );
-}
+};
+
+export default MobileTabBar;

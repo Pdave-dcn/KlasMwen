@@ -286,166 +286,34 @@ describe("Tag controllers", () => {
   });
 
   describe("getAllTags", () => {
-    it("should return first page with correct pagination metadata", async () => {
-      mockRequest = {
-        query: {
-          limit: "3",
-        },
-      };
-
+    it("should return tags", async () => {
       const mockTags = [
         { id: 1, name: "javascript" },
         { id: 2, name: "react" },
         { id: 3, name: "nodejs" },
       ];
 
-      vi.mocked(prisma.tag.findMany).mockResolvedValue([
-        ...mockTags,
-        { id: 4, name: "extra" },
-      ]);
-      vi.mocked(prisma.tag.count).mockResolvedValue(15);
-
-      await getAllTags(mockRequest as Request, mockResponse as Response);
-
-      expect(prisma.tag.findMany).toHaveBeenCalledWith({
-        take: 4,
-        orderBy: { name: "asc" },
-      });
-      expect(prisma.tag.count).toHaveBeenCalled();
-
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        data: mockTags,
-        pagination: {
-          nextCursor: 3,
-          hasMore: true,
-          totalCount: 15,
-        },
-      });
-    });
-
-    it("should return subsequent page when cursor is provided", async () => {
-      mockRequest = {
-        query: {
-          limit: "3",
-          cursor: "3",
-          sortOrder: "desc",
-        },
-      };
-
-      const mockTags = [
-        { id: 4, name: "history" },
-        { id: 5, name: "maths" },
-        { id: 6, name: "physics" },
-      ];
-
-      vi.mocked(prisma.tag.findMany).mockResolvedValue([
-        ...mockTags,
-        { id: 7, name: "extra" },
-      ]);
-      vi.mocked(prisma.tag.count).mockResolvedValue(15);
-
-      await getAllTags(mockRequest as Request, mockResponse as Response);
-
-      expect(prisma.tag.findMany).toHaveBeenCalledWith({
-        take: 4,
-        cursor: { id: 3 },
-        skip: 1,
-        orderBy: { name: "desc" },
-      });
-
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        data: mockTags,
-        pagination: {
-          nextCursor: 6,
-          hasMore: true,
-          totalCount: 15,
-        },
-      });
-    });
-
-    it("should call handleError when the cursor ID is an invalid format", async () => {
-      mockRequest = {
-        query: {
-          limit: "3",
-          cursor: "abc",
-          sortOrder: "desc",
-        },
-      };
-
-      await getAllTags(mockRequest as Request, mockResponse as Response);
-
-      expect(handleError).toHaveBeenCalled();
-      expect(prisma.tag.findMany).not.toHaveBeenCalledWith();
-    });
-
-    it("should return hasMore false when no more results exist", async () => {
-      mockRequest = {
-        query: { limit: "3" },
-      };
-
-      const mockTags = [
-        { id: 1, name: "javascript" },
-        { id: 2, name: "react" },
-      ];
-
       vi.mocked(prisma.tag.findMany).mockResolvedValue(mockTags);
-      vi.mocked(prisma.tag.count).mockResolvedValue(2);
 
       await getAllTags(mockRequest as Request, mockResponse as Response);
 
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
         data: mockTags,
-        pagination: {
-          nextCursor: null,
-          hasMore: false,
-          totalCount: 2,
-        },
       });
     });
 
     it("should handle empty tag list", async () => {
-      mockRequest = {
-        query: {},
-      };
-
       vi.mocked(prisma.tag.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.tag.count).mockResolvedValue(0);
 
       await getAllTags(mockRequest as Request, mockResponse as Response);
 
       expect(mockResponse.json).toHaveBeenCalledWith({
         data: [],
-        pagination: {
-          nextCursor: null,
-          hasMore: false,
-          totalCount: 0,
-        },
-      });
-    });
-
-    it("should use default limit and sort order when not provided", async () => {
-      mockRequest = {
-        query: {},
-      };
-
-      vi.mocked(prisma.tag.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.tag.count).mockResolvedValue(0);
-
-      await getAllTags(mockRequest as Request, mockResponse as Response);
-
-      expect(prisma.tag.findMany).toHaveBeenCalledWith({
-        take: 21,
-        orderBy: { name: "asc" },
       });
     });
 
     it("should handle database error", async () => {
-      mockRequest = {
-        query: { limit: "3" },
-      };
-
       vi.mocked(prisma.tag.findMany).mockRejectedValue(
         new Error("Database connection failed")
       );
@@ -456,31 +324,6 @@ describe("Tag controllers", () => {
         new Error("Database connection failed"),
         mockResponse
       );
-    });
-
-    it("should sort tags in ascending order when specified", async () => {
-      mockRequest = {
-        query: {
-          limit: "2",
-          sortOrder: "asc",
-        },
-        params: {},
-      };
-
-      const mockTags = [
-        { id: 1, name: "apple" },
-        { id: 2, name: "banana" },
-      ];
-
-      vi.mocked(prisma.tag.findMany).mockResolvedValue(mockTags);
-      vi.mocked(prisma.tag.count).mockResolvedValue(2);
-
-      await getAllTags(mockRequest as Request, mockResponse as Response);
-
-      expect(prisma.tag.findMany).toHaveBeenCalledWith({
-        take: 3,
-        orderBy: { name: "asc" },
-      });
     });
   });
 

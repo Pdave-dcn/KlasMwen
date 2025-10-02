@@ -23,25 +23,8 @@ router.use(attachLogContext("TagController"));
  * /tags:
  *   get:
  *     summary: Get all tags
- *     description: Retrieves a paginated list of all tags.
+ *     description: Retrieves a list of all tags.
  *     tags: [Tags]
- *     parameters:
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 20
- *       - in: query
- *         name: cursor
- *         schema:
- *           type: integer
- *           nullable: true
- *       - in: query
- *         name: sortOrder
- *         schema:
- *           type: string
- *           enum: [asc, desc]
- *           default: asc
  *     responses:
  *       200:
  *         description: Tags retrieved successfully

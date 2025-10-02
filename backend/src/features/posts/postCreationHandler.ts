@@ -17,7 +17,7 @@ import type { CreatePostInput, RawPost } from "../../types/postTypes.js";
 const handlePostCreation = async (
   completeValidatedData: CreatePostInput,
   userId: string
-): Promise<RawPost | null> => {
+): Promise<Partial<RawPost> | null> => {
   return await prisma.$transaction(async (tx) => {
     // Build post data based on type
     const baseData = {
@@ -72,13 +72,19 @@ const handlePostCreation = async (
         mimeType: true,
         createdAt: true,
         author: {
-          select: { id: true, username: true, avatarUrl: true },
+          select: {
+            id: true,
+            username: true,
+            Avatar: {
+              select: {
+                id: true,
+                url: true,
+              },
+            },
+          },
         },
         postTags: {
           include: { tag: true },
-        },
-        _count: {
-          select: { comments: true, likes: true },
         },
       },
     });

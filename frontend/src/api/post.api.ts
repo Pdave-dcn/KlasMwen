@@ -1,10 +1,32 @@
 import handleZodValidationError from "@/utils/zodErrorHandler.util";
 import {
+  CreatedPostResponseSchema,
   PostResponseSchema,
   SinglePostResponseSchema,
+  type PostFormValues,
 } from "@/zodSchemas/post.zod";
 
 import api from "./api";
+
+const createNewPost = async (data: PostFormValues | FormData) => {
+  try {
+    let res;
+
+    if (data instanceof FormData) {
+      res = await api.post("/posts", data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+    } else {
+      res = await api.post("/posts", data);
+    }
+
+    const validatedData = CreatedPostResponseSchema.parse(res.data);
+    return validatedData;
+  } catch (error) {
+    handleZodValidationError(error, "createNewPost");
+    throw error;
+  }
+};
 
 const getUserPosts = async (
   userId: string,
@@ -106,4 +128,5 @@ export {
   getActiveUserLikedPosts,
   getActiveUserBookmarks,
   getPostById,
+  createNewPost,
 };

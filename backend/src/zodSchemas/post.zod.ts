@@ -14,7 +14,7 @@ import { z } from "zod";
 const BasePostSchema = z.object({
   title: z.string().trim().min(5).max(100),
   type: z.enum(Object.values(PostType) as [string, ...string[]]),
-  tagIds: z.array(z.number().int().positive()).max(10).optional().default([]),
+  tagIds: z.array(z.number().int().positive()).max(10).default([]),
 });
 
 // Text posts (QUESTION/NOTE) - includes content field

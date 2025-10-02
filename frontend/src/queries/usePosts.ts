@@ -1,6 +1,22 @@
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 
-import { getHomePagePosts, getPostById } from "@/api/post.api";
+import { createNewPost, getHomePagePosts, getPostById } from "@/api/post.api";
+
+const usePostMutation = () => {
+  return useMutation({
+    mutationFn: createNewPost,
+    onMutate: () => {
+      toast("Creating post...");
+    },
+    onSuccess: () => {
+      toast("Your post has been published successfully");
+    },
+    onError: () => {
+      toast.error("Failed to create post");
+    },
+  });
+};
 
 const useHomePagePosts = (limit = 10) => {
   return useInfiniteQuery({
@@ -26,4 +42,4 @@ const useSinglePostQuery = (postId: string) => {
   });
 };
 
-export { useHomePagePosts, useSinglePostQuery };
+export { useHomePagePosts, useSinglePostQuery, usePostMutation };

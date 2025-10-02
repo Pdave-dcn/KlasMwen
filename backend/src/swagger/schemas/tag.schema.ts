@@ -30,14 +30,6 @@ export const tagSchemas = {
         type: "array",
         items: { $ref: "#/components/schemas/Tag" },
       },
-      pagination: {
-        type: "object",
-        properties: {
-          nextCursor: { type: "integer", nullable: true, example: 45 },
-          hasMore: { type: "boolean", example: true },
-          totalItems: { type: "integer", example: 70 },
-        },
-      },
     },
   },
 };

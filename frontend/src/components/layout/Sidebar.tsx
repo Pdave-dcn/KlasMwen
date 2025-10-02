@@ -34,12 +34,16 @@ import { useAuthStore } from "@/stores/auth.store";
 const items = [
   { title: "Home", url: "/home", icon: Home },
   { title: "Search", url: "/search", icon: Search },
-  { title: "Create", url: "/post/create", icon: Plus },
+  { title: "Create", action: true, icon: Plus },
   { title: "Profile", url: "/profile/me", icon: User },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 
-const Sidebar = () => {
+interface SidebarProps {
+  onCreateClick: () => void;
+}
+
+const Sidebar = ({ onCreateClick }: SidebarProps) => {
   const { logout } = useAuthStore();
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
@@ -82,23 +86,36 @@ const Sidebar = () => {
 
       {/* Nav items */}
       <div className="flex flex-col gap-10">
-        {items.map((item) => (
-          <NavLink
-            key={item.title}
-            to={item.url}
-            className={({ isActive }) =>
-              clsx(
-                `flex gap-1.5 items-center transition-colors`,
-                isActive
-                  ? "text-primary font-medium"
-                  : "text-muted-foreground hover:text-foreground"
-              )
-            }
-          >
-            <item.icon className="h-7 w-7" />
-            <span className="hidden lg:block">{item.title}</span>
-          </NavLink>
-        ))}
+        {items.map((item) =>
+          item.action ? (
+            <button
+              key={item.title}
+              onClick={() => onCreateClick()}
+              className={clsx(
+                "flex gap-1.5 cursor-pointer items-center text-muted-foreground hover:text-foreground transition-colors"
+              )}
+            >
+              <item.icon className="h-7 w-7" />
+              <span className="hidden lg:block">{item.title}</span>
+            </button>
+          ) : (
+            <NavLink
+              key={item.title}
+              to={item.url as string}
+              className={({ isActive }) =>
+                clsx(
+                  `flex gap-1.5 items-center transition-colors`,
+                  isActive
+                    ? "text-primary font-medium"
+                    : "text-muted-foreground hover:text-foreground"
+                )
+              }
+            >
+              <item.icon className="h-7 w-7" />
+              <span className="hidden lg:block">{item.title}</span>
+            </NavLink>
+          )
+        )}
       </div>
 
       {/* More Dropdown */}

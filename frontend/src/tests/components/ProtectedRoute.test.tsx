@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
-import { vi } from "vitest";
 
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuthStore } from "@/stores/auth.store";
@@ -11,60 +11,6 @@ vi.mock("@/stores/auth.store");
 const LocationDisplay = () => {
   const location = useLocation();
   return <div data-testid="current-path">{location.pathname}</div>;
-};
-
-const TestWrapper = ({
-  children,
-  initialPath = "/",
-}: {
-  children: React.ReactNode;
-  initialPath?: string;
-}) => {
-  return (
-    <BrowserRouter>
-      <LocationDisplay />
-      <Routes>
-        <Route
-          path="/"
-          element={<div data-testid="home-page">Home Page</div>}
-        />
-        <Route
-          path="/protected"
-          element={<ProtectedRoute>{children}</ProtectedRoute>}
-        />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <div data-testid="dashboard">Dashboard</div>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <div data-testid="profile">User Profile</div>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/login"
-          element={<div data-testid="login-page">Login Page</div>}
-        />
-      </Routes>
-    </BrowserRouter>
-  );
-};
-
-// Custom render function that starts at a specific path
-const renderWithPath = (
-  component: React.ReactElement,
-  initialPath: string = "/"
-) => {
-  return render(
-    <TestWrapper initialPath={initialPath}>{component}</TestWrapper>
-  );
 };
 
 describe("ProtectedRoute component", () => {
@@ -85,20 +31,29 @@ describe("ProtectedRoute component", () => {
     });
 
     it("should render children when user is authenticated", () => {
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false },
+          mutations: { retry: false },
+        },
+      });
+
       render(
-        <BrowserRouter>
-          <LocationDisplay />
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <div data-testid="protected-content">Secret Content</div>
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <LocationDisplay />
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <div data-testid="protected-content">Secret Content</div>
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </BrowserRouter>
+        </QueryClientProvider>
       );
 
       expect(screen.getByTestId("protected-content")).toBeInTheDocument();
@@ -106,6 +61,13 @@ describe("ProtectedRoute component", () => {
     });
 
     it("should render complex nested components", () => {
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false },
+          mutations: { retry: false },
+        },
+      });
+
       const ComplexComponent = () => (
         <div data-testid="complex-component">
           <h1>Complex Page</h1>
@@ -120,18 +82,20 @@ describe("ProtectedRoute component", () => {
       );
 
       render(
-        <BrowserRouter>
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <ComplexComponent />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <ComplexComponent />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </BrowserRouter>
+        </QueryClientProvider>
       );
 
       expect(screen.getByTestId("complex-component")).toBeInTheDocument();
@@ -144,6 +108,13 @@ describe("ProtectedRoute component", () => {
     });
 
     it("should handle multiple child elements", () => {
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false },
+          mutations: { retry: false },
+        },
+      });
+
       const MultipleChildren = () => (
         <>
           <header data-testid="header">Header Content</header>
@@ -153,18 +124,20 @@ describe("ProtectedRoute component", () => {
       );
 
       render(
-        <BrowserRouter>
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <MultipleChildren />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <MultipleChildren />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </BrowserRouter>
+        </QueryClientProvider>
       );
 
       expect(screen.getByTestId("header")).toBeInTheDocument();
@@ -187,23 +160,32 @@ describe("ProtectedRoute component", () => {
     });
 
     it("should redirect to home page when accessing protected route", () => {
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false },
+          mutations: { retry: false },
+        },
+      });
+
       render(
-        <BrowserRouter>
-          <Routes>
-            <Route
-              path="/"
-              element={<div data-testid="home-page">Home Page</div>}
-            />
-            <Route
-              path="/protected"
-              element={
-                <ProtectedRoute>
-                  <div data-testid="protected-content">Secret Content</div>
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <Routes>
+              <Route
+                path="/"
+                element={<div data-testid="home-page">Home Page</div>}
+              />
+              <Route
+                path="/protected"
+                element={
+                  <ProtectedRoute>
+                    <div data-testid="protected-content">Secret Content</div>
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </BrowserRouter>
+        </QueryClientProvider>
       );
 
       // Should not render the protected content
@@ -216,6 +198,13 @@ describe("ProtectedRoute component", () => {
     });
 
     it("should not render any protected content", () => {
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false },
+          mutations: { retry: false },
+        },
+      });
+
       const ProtectedContent = () => (
         <div data-testid="sensitive-data">
           <h1>Sensitive Information</h1>
@@ -225,22 +214,24 @@ describe("ProtectedRoute component", () => {
       );
 
       render(
-        <BrowserRouter>
-          <Routes>
-            <Route
-              path="/"
-              element={<div data-testid="home-page">Home Page</div>}
-            />
-            <Route
-              path="/protected"
-              element={
-                <ProtectedRoute>
-                  <ProtectedContent />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <Routes>
+              <Route
+                path="/"
+                element={<div data-testid="home-page">Home Page</div>}
+              />
+              <Route
+                path="/protected"
+                element={
+                  <ProtectedRoute>
+                    <ProtectedContent />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </BrowserRouter>
+        </QueryClientProvider>
       );
 
       expect(screen.queryByTestId("sensitive-data")).not.toBeInTheDocument();
@@ -257,6 +248,13 @@ describe("ProtectedRoute component", () => {
     });
 
     it("should handle redirect with complex nested components", () => {
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false },
+          mutations: { retry: false },
+        },
+      });
+
       const ComplexProtectedComponent = () => (
         <div data-testid="complex-protected">
           <div>
@@ -268,22 +266,24 @@ describe("ProtectedRoute component", () => {
       );
 
       render(
-        <BrowserRouter>
-          <Routes>
-            <Route
-              path="/"
-              element={<div data-testid="home-page">Home Page</div>}
-            />
-            <Route
-              path="/protected"
-              element={
-                <ProtectedRoute>
-                  <ComplexProtectedComponent />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <Routes>
+              <Route
+                path="/"
+                element={<div data-testid="home-page">Home Page</div>}
+              />
+              <Route
+                path="/protected"
+                element={
+                  <ProtectedRoute>
+                    <ComplexProtectedComponent />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </BrowserRouter>
+        </QueryClientProvider>
       );
 
       expect(screen.queryByTestId("complex-protected")).not.toBeInTheDocument();
@@ -296,6 +296,13 @@ describe("ProtectedRoute component", () => {
 
   describe("authentication state changes", () => {
     it("should handle authentication state changing from false to true", () => {
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false },
+          mutations: { retry: false },
+        },
+      });
+
       // Start with unauthenticated state
       mockUseAuthStore.mockReturnValue({
         isAuthenticated: false,
@@ -305,22 +312,24 @@ describe("ProtectedRoute component", () => {
       } as any);
 
       const { rerender } = render(
-        <BrowserRouter>
-          <Routes>
-            <Route
-              path="/"
-              element={<div data-testid="home-page">Home Page</div>}
-            />
-            <Route
-              path="/protected"
-              element={
-                <ProtectedRoute>
-                  <div data-testid="protected-content">Protected Content</div>
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <Routes>
+              <Route
+                path="/"
+                element={<div data-testid="home-page">Home Page</div>}
+              />
+              <Route
+                path="/protected"
+                element={
+                  <ProtectedRoute>
+                    <div data-testid="protected-content">Protected Content</div>
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </BrowserRouter>
+        </QueryClientProvider>
       );
 
       // Should be redirected to home
@@ -337,26 +346,35 @@ describe("ProtectedRoute component", () => {
 
       // Re-render with new auth state
       rerender(
-        <BrowserRouter>
-          <Routes>
-            <Route
-              path="/"
-              element={<div data-testid="home-page">Home Page</div>}
-            />
-            <Route
-              path="/protected"
-              element={
-                <ProtectedRoute>
-                  <div data-testid="protected-content">Protected Content</div>
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <Routes>
+              <Route
+                path="/"
+                element={<div data-testid="home-page">Home Page</div>}
+              />
+              <Route
+                path="/protected"
+                element={
+                  <ProtectedRoute>
+                    <div data-testid="protected-content">Protected Content</div>
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </BrowserRouter>
+        </QueryClientProvider>
       );
     });
 
     it("should handle authentication state changing from true to false", () => {
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false },
+          mutations: { retry: false },
+        },
+      });
+
       window.history.pushState({}, "Test page", "/protected");
 
       // Start with authenticated state
@@ -368,22 +386,24 @@ describe("ProtectedRoute component", () => {
       } as any);
 
       const { rerender } = render(
-        <BrowserRouter>
-          <Routes>
-            <Route
-              path="/"
-              element={<div data-testid="home-page">Home Page</div>}
-            />
-            <Route
-              path="/protected"
-              element={
-                <ProtectedRoute>
-                  <div data-testid="protected-content">Protected Content</div>
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <Routes>
+              <Route
+                path="/"
+                element={<div data-testid="home-page">Home Page</div>}
+              />
+              <Route
+                path="/protected"
+                element={
+                  <ProtectedRoute>
+                    <div data-testid="protected-content">Protected Content</div>
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </BrowserRouter>
+        </QueryClientProvider>
       );
 
       // Should show protected content initially
@@ -399,22 +419,24 @@ describe("ProtectedRoute component", () => {
 
       // Re-render with new auth state
       rerender(
-        <BrowserRouter>
-          <Routes>
-            <Route
-              path="/"
-              element={<div data-testid="home-page">Home Page</div>}
-            />
-            <Route
-              path="/protected"
-              element={
-                <ProtectedRoute>
-                  <div data-testid="protected-content">Protected Content</div>
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <Routes>
+              <Route
+                path="/"
+                element={<div data-testid="home-page">Home Page</div>}
+              />
+              <Route
+                path="/protected"
+                element={
+                  <ProtectedRoute>
+                    <div data-testid="protected-content">Protected Content</div>
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </BrowserRouter>
+        </QueryClientProvider>
       );
 
       // Should redirect to home page
@@ -434,12 +456,24 @@ describe("ProtectedRoute component", () => {
     });
 
     it("should handle null children", () => {
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false },
+          mutations: { retry: false },
+        },
+      });
+
       render(
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<ProtectedRoute>{null}</ProtectedRoute>} />
-          </Routes>
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <Routes>
+              <Route
+                path="/"
+                element={<ProtectedRoute>{null}</ProtectedRoute>}
+              />
+            </Routes>
+          </BrowserRouter>
+        </QueryClientProvider>
       );
 
       // Should render without crashing
@@ -447,15 +481,24 @@ describe("ProtectedRoute component", () => {
     });
 
     it("should handle undefined children", () => {
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false },
+          mutations: { retry: false },
+        },
+      });
+
       render(
-        <BrowserRouter>
-          <Routes>
-            <Route
-              path="/"
-              element={<ProtectedRoute>{undefined}</ProtectedRoute>}
-            />
-          </Routes>
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <Routes>
+              <Route
+                path="/"
+                element={<ProtectedRoute>{undefined}</ProtectedRoute>}
+              />
+            </Routes>
+          </BrowserRouter>
+        </QueryClientProvider>
       );
 
       // Should render without crashing
@@ -463,19 +506,28 @@ describe("ProtectedRoute component", () => {
     });
 
     it("should handle empty children", () => {
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false },
+          mutations: { retry: false },
+        },
+      });
+
       render(
-        <BrowserRouter>
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <></>
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <></>
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </BrowserRouter>
+        </QueryClientProvider>
       );
 
       // Should render without crashing
@@ -483,39 +535,69 @@ describe("ProtectedRoute component", () => {
     });
 
     it("should handle string children", () => {
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false },
+          mutations: { retry: false },
+        },
+      });
+
       render(
-        <BrowserRouter>
-          <Routes>
-            <Route
-              path="/"
-              element={<ProtectedRoute>Simple text content</ProtectedRoute>}
-            />
-          </Routes>
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <Routes>
+              <Route
+                path="/"
+                element={<ProtectedRoute>Simple text content</ProtectedRoute>}
+              />
+            </Routes>
+          </BrowserRouter>
+        </QueryClientProvider>
       );
 
       expect(screen.getByText("Simple text content")).toBeInTheDocument();
     });
 
     it("should handle number children", () => {
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false },
+          mutations: { retry: false },
+        },
+      });
+
       render(
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<ProtectedRoute>{42}</ProtectedRoute>} />
-          </Routes>
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<ProtectedRoute>{42}</ProtectedRoute>} />
+            </Routes>
+          </BrowserRouter>
+        </QueryClientProvider>
       );
 
       expect(screen.getByText("42")).toBeInTheDocument();
     });
 
     it("should handle boolean children", () => {
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false },
+          mutations: { retry: false },
+        },
+      });
+
       render(
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<ProtectedRoute>{true}</ProtectedRoute>} />
-          </Routes>
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <Routes>
+              <Route
+                path="/"
+                element={<ProtectedRoute>{true}</ProtectedRoute>}
+              />
+            </Routes>
+          </BrowserRouter>
+        </QueryClientProvider>
       );
 
       // Boolean children render as empty in React - should not crash
@@ -534,23 +616,32 @@ describe("ProtectedRoute component", () => {
     });
 
     it("should use replace navigation to prevent back button issues", () => {
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false },
+          mutations: { retry: false },
+        },
+      });
+
       render(
-        <BrowserRouter>
-          <Routes>
-            <Route
-              path="/"
-              element={<div data-testid="home-page">Home Page</div>}
-            />
-            <Route
-              path="/protected"
-              element={
-                <ProtectedRoute>
-                  <div data-testid="protected-content">Secret</div>
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <Routes>
+              <Route
+                path="/"
+                element={<div data-testid="home-page">Home Page</div>}
+              />
+              <Route
+                path="/protected"
+                element={
+                  <ProtectedRoute>
+                    <div data-testid="protected-content">Secret</div>
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </BrowserRouter>
+        </QueryClientProvider>
       );
 
       // User should be at home page after redirect

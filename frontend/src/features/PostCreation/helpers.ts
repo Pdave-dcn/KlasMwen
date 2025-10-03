@@ -1,4 +1,8 @@
-import type { PostType } from "@/zodSchemas/post.zod";
+import type {
+  PostFormValues,
+  PostType,
+  TextPostData,
+} from "@/zodSchemas/post.zod";
 
 const getFormTitle = (postType: PostType | null) => {
   switch (postType) {
@@ -26,4 +30,31 @@ const getFormDescription = (postType: PostType | null) => {
   }
 };
 
-export { getFormTitle, getFormDescription };
+const buildResourceFormData = (
+  data: PostFormValues,
+  selectedTagIds: number[],
+  resourceFile?: File
+): FormData => {
+  const formData = new FormData();
+  formData.append("title", data.title);
+  formData.append("type", data.type);
+  formData.append("tagIds", JSON.stringify(selectedTagIds));
+  if (resourceFile) formData.append("resource", resourceFile);
+  return formData;
+};
+
+const buildTextPostData = (
+  data: PostFormValues,
+  selectedTagIds: number[]
+): TextPostData =>
+  ({
+    ...data,
+    tagIds: selectedTagIds,
+  } as unknown as TextPostData);
+
+export {
+  getFormTitle,
+  getFormDescription,
+  buildResourceFormData,
+  buildTextPostData,
+};

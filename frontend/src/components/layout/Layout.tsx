@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import PostForm from "@/features/PostCreation/components/PostForm";
+import PostForm from "@/features/PostCreation/components/postForm/PostForm";
 import PostTypeSelector from "@/features/PostCreation/components/PostTypeSelector";
 import type { PostType } from "@/zodSchemas/post.zod";
 
@@ -29,7 +29,6 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <div className="flex h-screen w-full">
-      {/* Sidebar - show only on md+ */}
       <aside className="hidden md:block w-auto lg:w-60 lg:border-r shrink-0">
         <Sidebar
           onCreateClick={() => {

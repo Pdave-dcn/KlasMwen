@@ -1,7 +1,21 @@
-import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type InfiniteData,
+} from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { createNewPost, getHomePagePosts, getPostById } from "@/api/post.api";
+import {
+  createNewPost,
+  deletePost,
+  getHomePagePosts,
+  getPostById,
+} from "@/api/post.api";
+import type { PostResponse } from "@/zodSchemas/post.zod";
+
+type FeedData = InfiniteData<PostResponse>;
 
 const usePostMutation = () => {
   return useMutation({
@@ -20,7 +34,7 @@ const usePostMutation = () => {
 
 const useHomePagePosts = (limit = 10) => {
   return useInfiniteQuery({
-    queryKey: ["home-posts"],
+    queryKey: ["posts", "feed"],
     queryFn: ({ pageParam }: { pageParam?: string | number }) => {
       return getHomePagePosts(pageParam, limit);
     },
@@ -35,11 +49,77 @@ const useHomePagePosts = (limit = 10) => {
 
 const useSinglePostQuery = (postId: string) => {
   return useQuery({
-    queryKey: ["single-post", postId],
+    queryKey: ["posts", postId],
     queryFn: () => {
       return getPostById(postId);
     },
   });
 };
 
-export { useHomePagePosts, useSinglePostQuery, usePostMutation };
+/**
+ * Custom hook that creates a mutation for deleting a post with optimistic updates.
+ * Implements optimistic UI updates by immediately removing the post from feed and user posts,
+ * then rolls back on error or revalidates on success.
+ *
+ * @param {string} postId - The unique identifier of the post to delete
+ */
+const useDeletePostMutation = (postId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => deletePost(postId),
+
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["posts"] });
+
+      const queryKeysToUpdate: (string | number)[][] = [
+        ["posts", "feed"],
+        ["posts", "me"],
+      ];
+
+      const prevDataMap: { key: (string | number)[]; data?: FeedData }[] = [];
+
+      for (const key of queryKeysToUpdate) {
+        const prevData = queryClient.getQueryData<FeedData>(key);
+        prevDataMap.push({ key, data: prevData });
+
+        queryClient.setQueryData<FeedData>(key, (old) => {
+          if (!old) return old;
+          return {
+            pageParams: old.pageParams,
+            pages: old.pages.map((page) => ({
+              ...page,
+              data: page.data.filter((p) => p.id !== postId),
+            })),
+          };
+        });
+      }
+
+      return { prevDataMap };
+    },
+
+    onError: (_err, _vars, context) => {
+      if (context?.prevDataMap) {
+        for (const { key, data } of context.prevDataMap) {
+          queryClient.setQueryData(key, data);
+        }
+      }
+      toast.error("Failed to delete post");
+    },
+
+    onSuccess: () => {
+      toast("Post deleted");
+    },
+
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["posts"] });
+    },
+  });
+};
+
+export {
+  useHomePagePosts,
+  useSinglePostQuery,
+  usePostMutation,
+  useDeletePostMutation,
+};

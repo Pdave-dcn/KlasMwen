@@ -81,7 +81,7 @@ model Comment {
   createdAt DateTime  @default(now()) @map("created_at")
   parent    Comment?  @relation("commentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   parentId  Int?      @map("parent_id")
-  post      Post      @relation(fields: [postId], references: [id])
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
   postId    String    @map("post_id")
   author    User      @relation(fields: [authorId], references: [id])
   authorId  String    @map("author_id")
@@ -101,9 +101,9 @@ model Tag {
 
 // Junction table for many-to-many relationship between posts and tags
 model PostTag {
-  post   Post   @relation(fields: [postId], references: [id])
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
   postId String @map("post_id")
-  tag    Tag    @relation(fields: [tagId], references: [id])
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
   tagId  Int    @map("tag_id")
 
   @@id([postId, tagId])

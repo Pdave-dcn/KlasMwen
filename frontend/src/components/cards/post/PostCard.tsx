@@ -2,19 +2,18 @@ import { useState } from "react";
 
 import { useNavigate } from "react-router-dom";
 
-import {
-  Heart,
-  MessageCircle,
-  Bookmark,
-  Share2,
-  MoreHorizontal,
-} from "lucide-react";
+import { Heart, MessageCircle, Bookmark, Share2 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useAuthStore } from "@/stores/auth.store";
+import { formatTimeAgo } from "@/utils/dateFormatter.util";
+import { getTypeDisplayName } from "@/utils/post.util";
 import type { Post } from "@/zodSchemas/post.zod";
+
+import { PostCardMenu } from "./PostCardMenu";
 
 interface PostCardProps {
   post: Post;
@@ -38,6 +37,9 @@ export const PostCard = ({
   const [isBookmarked, setIsBookmarked] = useState(bookmarkedByUser);
   const navigate = useNavigate();
 
+  const { user } = useAuthStore();
+  if (!user) return;
+
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsLiked(!isLiked);
@@ -60,11 +62,6 @@ export const PostCard = ({
     // share logic here
   };
 
-  const handleMoreOptions = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    // more options logic here
-  };
-
   const handleUserNavigation = async (e: React.MouseEvent, userId: string) => {
     e.stopPropagation();
     await navigate(`/profile/${userId}`);
@@ -72,35 +69,6 @@ export const PostCard = ({
 
   const handlePostNavigation = async () => {
     await navigate(`/@${post.author.username}/post/${post.id}`);
-  };
-
-  const getTypeClassName = (type: string) => {
-    return `post-type-${type.toLowerCase()}`;
-  };
-
-  const getTypeDisplayName = (type: string) => {
-    switch (type) {
-      case "NOTE":
-        return "Note";
-      case "QUESTION":
-        return "Question";
-      case "RESOURCE":
-        return "Resource";
-      default:
-        return type;
-    }
-  };
-
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const days = Math.floor(hours / 24);
-
-    if (days > 0) return `${days}d ago`;
-    if (hours > 0) return `${hours}h ago`;
-    return "Just now";
   };
 
   return (
@@ -135,18 +103,13 @@ export const PostCard = ({
                 <span className="text-xs text-muted-foreground">
                   {formatTimeAgo(post.createdAt)}
                 </span>
-                <Badge
-                  variant="outline"
-                  className={`text-xs ${getTypeClassName(post.type)}`}
-                >
+                <Badge variant="outline" className="text-xs}">
                   {getTypeDisplayName(post.type)}
                 </Badge>
               </div>
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleMoreOptions}>
-            <MoreHorizontal className="w-4 h-4" />
-          </Button>
+          <PostCardMenu user={user} post={post} />
         </div>
       </CardHeader>
 

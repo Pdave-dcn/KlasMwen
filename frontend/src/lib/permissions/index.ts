@@ -40,6 +40,7 @@ export const POLICY: PolicyMap = {
       read: true,
       update: (u, p) => u.id === p.author.id,
       delete: true,
+      report: true,
     },
     comments: {
       create: true,
@@ -54,6 +55,7 @@ export const POLICY: PolicyMap = {
       read: true,
       update: (u, p) => u.id === p.author.id,
       delete: (u, p) => u.id === p.author.id,
+      report: (u, p) => u.id !== p.author.id,
     },
     comments: {
       create: true,

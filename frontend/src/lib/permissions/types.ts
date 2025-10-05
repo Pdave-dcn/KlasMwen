@@ -17,7 +17,7 @@ export type CommentForPolicy = Pick<FullComment, "id" | "author">;
 export const registry = {
   posts: {
     datatype: {} as PostForPolicy,
-    action: ["create", "read", "update", "delete"],
+    action: ["create", "read", "update", "delete", "report"],
   },
   comments: {
     datatype: {} as CommentForPolicy,

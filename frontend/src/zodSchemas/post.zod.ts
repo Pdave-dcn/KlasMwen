@@ -132,8 +132,13 @@ const CreatedPostResponseSchema = z.object({
   data: ExtendedPostDataSchema.omit({ updatedAt: true, _count: true }),
 });
 
+const DeletePostResponseSchema = z.object({
+  message: z.string(),
+});
+
 export type Post = z.infer<typeof PostDataSchema>;
 export type PostType = z.infer<typeof PostTypeSchema>;
+export type PostResponse = z.infer<typeof PostResponseSchema>;
 export type PostFormValues = z.infer<typeof PostCreationSchema>;
 export type TextPostData = z.infer<typeof TextPostCreationSchema>;
 export type ResourcePostData = z.infer<typeof ResourcePostCreationSchema>;
@@ -152,4 +157,5 @@ export {
   ResourcePostCreationSchema,
   PostCreationSchema,
   CreatedPostResponseSchema,
+  DeletePostResponseSchema,
 };

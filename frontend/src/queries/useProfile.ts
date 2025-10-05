@@ -82,7 +82,7 @@ const useProfileMedia = (userId: string, limit = 10) => {
 
 const useProfilePosts = (userId?: string, limit = 10) => {
   return useInfiniteQuery({
-    queryKey: userId ? ["posts", userId] : ["me-posts"],
+    queryKey: userId ? ["posts", userId] : ["posts", "me"],
     queryFn: ({ pageParam }: { pageParam?: string | number }) => {
       return userId
         ? getUserPosts(userId, pageParam, limit)

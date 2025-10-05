@@ -1,6 +1,7 @@
 import handleZodValidationError from "@/utils/zodErrorHandler.util";
 import {
   CreatedPostResponseSchema,
+  DeletePostResponseSchema,
   PostResponseSchema,
   SinglePostResponseSchema,
   type PostFormValues,
@@ -121,6 +122,19 @@ const getPostById = async (postId: string) => {
   }
 };
 
+const deletePost = async (postId: string) => {
+  try {
+    const res = await api.delete(`/posts/${postId}`);
+
+    const validatedData = DeletePostResponseSchema.parse(res.data);
+
+    return validatedData;
+  } catch (error) {
+    handleZodValidationError(error, "deletePost");
+    throw error;
+  }
+};
+
 export {
   getUserPosts,
   getActiveUserPosts,
@@ -129,4 +143,5 @@ export {
   getActiveUserBookmarks,
   getPostById,
   createNewPost,
+  deletePost,
 };

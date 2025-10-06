@@ -48,7 +48,6 @@ const ProfilePosts = ({
         description:
           "Start sharing your knowledge and connect with your peers!",
       }}
-      showBookmarkAction
     />
   );
 };

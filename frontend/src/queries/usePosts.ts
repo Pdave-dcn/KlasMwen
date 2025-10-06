@@ -83,11 +83,11 @@ const useDeletePostMutation = (postId: string) => {
         const prevData = queryClient.getQueryData<FeedData>(key);
         prevDataMap.push({ key, data: prevData });
 
-        queryClient.setQueryData<FeedData>(key, (old) => {
-          if (!old) return old;
+        queryClient.setQueryData<FeedData>(key, (oldData) => {
+          if (!oldData) return oldData;
           return {
-            pageParams: old.pageParams,
-            pages: old.pages.map((page) => ({
+            pageParams: oldData.pageParams,
+            pages: oldData.pages.map((page) => ({
               ...page,
               data: page.data.filter((p) => p.id !== postId),
             })),

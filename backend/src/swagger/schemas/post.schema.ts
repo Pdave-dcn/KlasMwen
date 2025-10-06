@@ -25,6 +25,32 @@ export const postSchemas = {
     },
   },
 
+  PostWithBookmarkedState: {
+    type: "object",
+    properties: {
+      id: { type: "string", format: "uuid" },
+      title: { type: "string" },
+      content: { type: "string" },
+      type: { type: "string", enum: ["NOTE", "QUESTION", "RESOURCE"] },
+      fileUrl: { type: "string", nullable: true },
+      fileName: { type: "string", nullable: true },
+      createdAt: { type: "string", format: "date-time" },
+      isBookmarked: { type: "boolean" },
+      author: { $ref: "#/components/schemas/Author" },
+      tags: {
+        type: "array",
+        items: { $ref: "#/components/schemas/Tag" },
+      },
+      _count: {
+        type: "object",
+        properties: {
+          comments: { type: "integer" },
+          likes: { type: "integer" },
+        },
+      },
+    },
+  },
+
   SinglePostResponse: {
     type: "object",
     properties: {
@@ -127,7 +153,7 @@ export const postSchemas = {
     properties: {
       data: {
         type: "array",
-        items: { $ref: "#/components/schemas/Post" },
+        items: { $ref: "#/components/schemas/PostWithBookmarkedState" },
       },
       pagination: {
         type: "object",
@@ -145,7 +171,7 @@ export const postSchemas = {
       data: {
         type: "array",
         items: {
-          $ref: "#/components/schemas/Post",
+          $ref: "#/components/schemas/PostWithBookmarkedState",
         },
       },
       pagination: {

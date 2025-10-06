@@ -156,7 +156,7 @@ router.put("/users/me", writeOperationsLimiter, requireAuth, updateUserProfile);
  *                 data:
  *                   type: array
  *                   items:
- *                     $ref: '#/components/schemas/Post'
+ *                     $ref: '#/components/schemas/PostsResponse'
  *                 pagination:
  *                   type: object
  *                   properties:
@@ -218,7 +218,7 @@ router.get("/users/me/posts", generalApiLimiter, requireAuth, getMyPosts);
  *                 data:
  *                   type: array
  *                   items:
- *                     $ref: '#/components/schemas/Post'
+ *                     $ref: '#/components/schemas/PostsResponse'
  *                   description: Array of posts liked by the user
  *                 pagination:
  *                   type: object
@@ -396,7 +396,7 @@ router.get("/users/:id/posts", generalApiLimiter, getUserPosts);
  *                 data:
  *                   type: array
  *                   items:
- *                     $ref: '#/components/schemas/Post'
+ *                     $ref: '#/components/schemas/PostsResponse'
  *                   description: Array of media posts
  *                 pagination:
  *                   type: object

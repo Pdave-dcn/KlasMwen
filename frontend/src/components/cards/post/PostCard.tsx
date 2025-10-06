@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useToggleBookmarkMutation } from "@/queries/useBookmark";
 import { useAuthStore } from "@/stores/auth.store";
 import { formatTimeAgo } from "@/utils/dateFormatter.util";
 import { getTypeDisplayName } from "@/utils/post.util";
@@ -18,7 +19,6 @@ import { PostCardMenu } from "./PostCardMenu";
 interface PostCardProps {
   post: Post;
   onLike?: (postId: string) => void;
-  onBookmark?: (postId: string) => void;
   onComment?: (postId: string) => void;
 
   likedByUser?: boolean;
@@ -28,14 +28,16 @@ interface PostCardProps {
 export const PostCard = ({
   post,
   onLike,
-  onBookmark,
   onComment,
   likedByUser = false,
-  bookmarkedByUser = false,
 }: PostCardProps) => {
   const [isLiked, setIsLiked] = useState(likedByUser);
-  const [isBookmarked, setIsBookmarked] = useState(bookmarkedByUser);
   const navigate = useNavigate();
+
+  const toggleBookmarkMutation = useToggleBookmarkMutation(
+    post.id,
+    post.isBookmarked
+  );
 
   const { user } = useAuthStore();
   if (!user) return;
@@ -48,8 +50,7 @@ export const PostCard = ({
 
   const handleBookmark = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsBookmarked(!isBookmarked);
-    onBookmark?.(post.id);
+    toggleBookmarkMutation.mutate();
   };
 
   const handleComment = (e: React.MouseEvent) => {
@@ -178,14 +179,15 @@ export const PostCard = ({
               variant="ghost"
               size="sm"
               onClick={handleBookmark}
+              disabled={toggleBookmarkMutation.isPending}
               className={`${
-                isBookmarked
+                post.isBookmarked
                   ? "text-primary"
                   : "text-muted-foreground hover:text-primary"
               }`}
             >
               <Bookmark
-                className={`w-4 h-4 ${isBookmarked ? "fill-current" : ""}`}
+                className={`w-4 h-4 ${post.isBookmarked ? "fill-current" : ""}`}
               />
             </Button>
 

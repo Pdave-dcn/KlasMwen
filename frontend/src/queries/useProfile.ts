@@ -52,7 +52,7 @@ function useProfileUser(userId?: string) {
 
 const useProfileComments = (userId: string, limit = 10) => {
   return useInfiniteQuery({
-    queryKey: ["profile", userId, "comments"],
+    queryKey: ["comments", userId],
     queryFn: ({ pageParam }: { pageParam?: string | number }) => {
       return getUserProfileComments(userId, pageParam as number, limit);
     },
@@ -67,7 +67,7 @@ const useProfileComments = (userId: string, limit = 10) => {
 
 const useProfileMedia = (userId: string, limit = 10) => {
   return useInfiniteQuery({
-    queryKey: ["profile", userId, "media"],
+    queryKey: ["posts", userId, "media"],
     queryFn: ({ pageParam }: { pageParam?: string | number }) => {
       return getUserProfileMediaPosts(userId, pageParam as string, limit);
     },
@@ -99,7 +99,7 @@ const useProfilePosts = (userId?: string, limit = 10) => {
 
 const useProfileLikedPosts = (limit = 10) => {
   return useInfiniteQuery({
-    queryKey: ["me-posts", "liked"],
+    queryKey: ["posts", "liked"],
     queryFn: ({ pageParam }: { pageParam?: string | number }) => {
       return getActiveUserLikedPosts(pageParam, limit);
     },
@@ -114,7 +114,7 @@ const useProfileLikedPosts = (limit = 10) => {
 
 const useProfileBookmarks = (limit = 10) => {
   return useInfiniteQuery({
-    queryKey: ["me-posts", "bookmarked"],
+    queryKey: ["posts", "bookmarked"],
     queryFn: ({ pageParam }: { pageParam?: string | number }) => {
       return getActiveUserBookmarks(pageParam, limit);
     },

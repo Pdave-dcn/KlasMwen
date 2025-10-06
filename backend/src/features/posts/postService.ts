@@ -7,7 +7,7 @@
  * - Posts by a specific user, with pagination.
  * - Posts liked and bookmarked by a user, with compound cursors.
  * - Media posts (posts without text content) by a specific user.
- * - A single post by its ID, with its comments.
+ * - A single post by its ID.
  * - Metadata and edit-specific data for posts.
  *
  * The file defines several key components:
@@ -141,7 +141,8 @@ class PostService {
   private static async getPostsAndProcess(
     where: Prisma.PostWhereInput = {},
     limit: number,
-    cursor?: string
+    cursor?: string,
+    currentUserId?: string
   ) {
     const baseQuery: Prisma.PostFindManyArgs = {
       where,
@@ -156,14 +157,37 @@ class PostService {
     });
 
     const posts = await prisma.post.findMany(paginatedQuery);
+
+    let bookmarkedPostIds = new Set<string>();
+
+    if (currentUserId && posts.length > 0) {
+      const bookmarks = await prisma.bookmark.findMany({
+        where: {
+          userId: currentUserId,
+          postId: { in: posts.map((p) => p.id) },
+        },
+        select: {
+          postId: true,
+        },
+      });
+
+      bookmarkedPostIds = new Set(bookmarks.map((b) => b.postId));
+    }
+
     const transformedPosts = posts.map(
       transformPostTagsToFlat as (post: Partial<RawPost>) => TransformedPost
     );
 
     const postsWithTruncatedContent =
       truncatePostContentValue(transformedPosts);
+
+    const postsWithBookmarkState = postsWithTruncatedContent.map((post) => ({
+      ...post,
+      isBookmarked: currentUserId ? bookmarkedPostIds.has(post.id) : false,
+    }));
+
     const { data, pagination } = processPaginatedResults(
-      postsWithTruncatedContent,
+      postsWithBookmarkState,
       limit,
       "id"
     );
@@ -171,8 +195,8 @@ class PostService {
     return { posts: data, pagination };
   }
 
-  static getAllPosts(limit: number, cursor?: string) {
-    return this.getPostsAndProcess({}, limit, cursor);
+  static getAllPosts(userId: string, limit: number, cursor?: string) {
+    return this.getPostsAndProcess({}, limit, cursor, userId);
   }
 
   static async getUserPosts(userId: string, limit: number, cursor?: string) {
@@ -180,7 +204,8 @@ class PostService {
     const { posts, pagination } = await this.getPostsAndProcess(
       where,
       limit,
-      cursor
+      cursor,
+      userId
     );
 
     const totalCount = await prisma.post.count({ where });
@@ -203,7 +228,8 @@ class PostService {
     const { posts, pagination } = await this.getPostsAndProcess(
       where,
       limit,
-      cursor
+      cursor,
+      userId
     );
 
     return { posts, pagination };
@@ -229,12 +255,32 @@ class PostService {
     const likes = (await prisma.like.findMany(queryOptions)) as LikeWithPost[];
 
     const posts = likes.map((like) => like.post);
-    const transformedPosts = posts.map(
-      transformPostTagsToFlat as (post: Partial<RawPost>) => TransformedPost
+
+    const transformedPosts = posts.map((post) =>
+      transformPostTagsToFlat(post as RawPost)
     );
 
+    let bookmarkedPostIds = new Set<string>();
+
+    if (transformPostTagsToFlat.length > 0) {
+      const bookmarks = await prisma.bookmark.findMany({
+        where: {
+          userId,
+          postId: { in: posts.map((p) => p.id) },
+        },
+        select: { postId: true },
+      });
+
+      bookmarkedPostIds = new Set(bookmarks.map((b) => b.postId));
+    }
+
+    const postsWithBookmarkState = transformedPosts.map((post) => ({
+      ...post,
+      isBookmarked: bookmarkedPostIds.has(post.id),
+    }));
+
     const { data, pagination } = processPaginatedResults(
-      transformedPosts,
+      postsWithBookmarkState,
       limit
     );
 
@@ -268,12 +314,18 @@ class PostService {
     )) as BookmarkWithPost[];
 
     const posts = bookmarks.map((bookmark) => bookmark.post);
+
     const transformedPosts = posts.map(
       transformPostTagsToFlat as (post: Partial<RawPost>) => TransformedPost
     );
 
+    const postsWithBookmarkState = transformedPosts.map((post) => ({
+      ...post,
+      isBookmarked: true,
+    }));
+
     const { data, pagination } = processPaginatedResults(
-      transformedPosts,
+      postsWithBookmarkState,
       limit
     );
 

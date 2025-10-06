@@ -28,6 +28,8 @@ router.use(attachLogContext("PostController"));
  *     summary: Get all posts
  *     description: Fetch all posts with pagination metadata
  *     tags: [Posts]
+ *     security:
+ *       - cookieAuth: []
  *     parameters:
  *       - in: query
  *         name: limit
@@ -79,7 +81,7 @@ router.use(attachLogContext("PostController"));
  *       500:
  *         description: Unexpected error, post creation failed
  */
-router.get("/posts", generalApiLimiter, getAllPosts);
+router.get("/posts", generalApiLimiter, requireAuth, getAllPosts);
 router.post(
   "/posts",
   writeOperationsLimiter,

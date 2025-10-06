@@ -137,6 +137,12 @@ const getAllPosts = async (req: Request, res: Response) => {
     actionLogger.info("Fetching all posts");
     const startTime = Date.now();
 
+    const user = ensureAuthenticated(req);
+    actionLogger.info(
+      { userId: user.id, username: user.username },
+      "User authenticated for post update"
+    );
+
     const { limit, cursor } = uuidPaginationSchema.parse(req.query);
     actionLogger.debug(
       { limit, cursor, hasCursor: !!cursor },
@@ -146,6 +152,7 @@ const getAllPosts = async (req: Request, res: Response) => {
     actionLogger.debug("Processing user posts request");
     const serviceStartTime = Date.now();
     const result = await PostService.getAllPosts(
+      user.id,
       limit,
       cursor as string | undefined
     );

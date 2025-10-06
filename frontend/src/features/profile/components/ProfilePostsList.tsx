@@ -32,7 +32,6 @@ interface ProfilePostsListProps {
   loadingText: string;
   errorTitle: string;
   emptyState: EmptyStateConfig;
-  showBookmarkAction?: boolean;
 }
 
 const ProfilePostsList = ({
@@ -45,7 +44,6 @@ const ProfilePostsList = ({
   loadingText,
   errorTitle,
   emptyState,
-  showBookmarkAction = true,
 }: ProfilePostsListProps) => {
   if (isLoading) {
     return (
@@ -91,9 +89,6 @@ const ProfilePostsList = ({
             post={post}
             onLike={(postId) => console.log("Like post:", postId)}
             onComment={(postId) => console.log("Comment on post:", postId)}
-            {...(showBookmarkAction && {
-              onBookmark: (postId) => console.log("Bookmark post:", postId),
-            })}
           />
         ))
       )}

@@ -64,7 +64,7 @@ router.get("/users/bookmarks", generalApiLimiter, requireAuth, getBookmarks);
 
 /**
  * @openapi
- * /posts/{id}/bookmark:
+ * /bookmarks/{id}:
  *   post:
  *     summary: Create a bookmark
  *     description: Bookmark a post for the authenticated user
@@ -97,7 +97,7 @@ router.get("/users/bookmarks", generalApiLimiter, requireAuth, getBookmarks);
  *         description: Internal server error
  */
 router.post(
-  "/posts/:id/bookmark",
+  "/bookmarks/:id",
   writeOperationsLimiter,
   requireAuth,
   createBookmark
@@ -105,7 +105,7 @@ router.post(
 
 /**
  * @openapi
- * /users/{id}/bookmark:
+ * /bookmarks/{id}:
  *   delete:
  *     summary: Remove a bookmark
  *     description: Remove a bookmark for the authenticated user
@@ -136,7 +136,7 @@ router.post(
  *         description: Internal server error
  */
 router.delete(
-  "/users/:id/bookmark",
+  "/bookmarks/:id",
   writeOperationsLimiter,
   requireAuth,
   deleteBookmark

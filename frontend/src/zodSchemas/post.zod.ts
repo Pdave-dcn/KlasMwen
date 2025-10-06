@@ -37,6 +37,7 @@ const PostDataSchema = z.object({
   author: AuthorSchema,
   tags: z.array(TagSchema),
   _count: CountSchema,
+  isBookmarked: z.boolean().default(false),
 });
 
 const ExtendedPostDataSchema = PostDataSchema.extend({
@@ -48,6 +49,7 @@ const ExtendedPostDataSchema = PostDataSchema.extend({
 const LessExtendedPostDataSchema = ExtendedPostDataSchema.omit({
   mimeType: true,
   updatedAt: true,
+  isBookmarked: true,
 });
 
 const MediaPostDataSchema = PostDataSchema.extend({

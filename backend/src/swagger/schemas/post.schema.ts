@@ -25,7 +25,7 @@ export const postSchemas = {
     },
   },
 
-  PostWithBookmarkedState: {
+  PostWithBookmarkAndLikeStates: {
     type: "object",
     properties: {
       id: { type: "string", format: "uuid" },
@@ -36,6 +36,7 @@ export const postSchemas = {
       fileName: { type: "string", nullable: true },
       createdAt: { type: "string", format: "date-time" },
       isBookmarked: { type: "boolean" },
+      isLiked: { type: "boolean" },
       author: { $ref: "#/components/schemas/Author" },
       tags: {
         type: "array",
@@ -63,6 +64,8 @@ export const postSchemas = {
       fileSize: { type: "number", nullable: true },
       createdAt: { type: "string", format: "date-time" },
       author: { $ref: "#/components/schemas/Author" },
+      isBookmarked: { type: "boolean" },
+      isLiked: { type: "boolean" },
       tags: {
         type: "array",
         items: { $ref: "#/components/schemas/Tag" },
@@ -153,42 +156,13 @@ export const postSchemas = {
     properties: {
       data: {
         type: "array",
-        items: { $ref: "#/components/schemas/PostWithBookmarkedState" },
+        items: { $ref: "#/components/schemas/PostWithBookmarkAndLikeStates" },
       },
       pagination: {
         type: "object",
         properties: {
           hasMore: { type: "boolean" },
           nextCursor: { type: "string", nullable: true },
-        },
-      },
-    },
-  },
-
-  BookmarksResponse: {
-    type: "object",
-    properties: {
-      data: {
-        type: "array",
-        items: {
-          $ref: "#/components/schemas/PostWithBookmarkedState",
-        },
-      },
-      pagination: {
-        type: "object",
-        properties: {
-          hasMore: {
-            type: "boolean",
-            description: "Whether there are more results available",
-            example: true,
-          },
-          nextCursor: {
-            type: "string",
-            format: "uuid",
-            nullable: true,
-            description: "Cursor for the next page of results",
-            example: "660e8400-e29b-41d4-a716-446655440001",
-          },
         },
       },
     },

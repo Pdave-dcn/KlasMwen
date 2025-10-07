@@ -186,6 +186,12 @@ const getPostById = async (req: Request, res: Response) => {
     actionLogger.info("Fetching post by ID");
     const startTime = Date.now();
 
+    const user = ensureAuthenticated(req);
+    actionLogger.info(
+      { userId: user.id, username: user.username },
+      "User authenticated for post update"
+    );
+
     const { id: postId } = PostIdParamSchema.parse(req.params);
 
     actionLogger.debug(
@@ -201,7 +207,8 @@ const getPostById = async (req: Request, res: Response) => {
       postId,
       startTime,
       actionLogger,
-      res
+      res,
+      user.id
     );
     const serviceDuration = Date.now() - serviceStartTime;
     if (!post) return;

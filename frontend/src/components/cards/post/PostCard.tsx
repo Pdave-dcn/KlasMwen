@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 import { useNavigate } from "react-router-dom";
 
 import { Heart, MessageCircle, Bookmark, Share2 } from "lucide-react";
@@ -8,7 +6,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { useToggleBookmarkMutation } from "@/queries/useBookmark";
+import { useToggleBookmarkMutation } from "@/queries/useBookmarkMutation";
+import { useToggleLikeMutation } from "@/queries/useLikeMutation";
 import { useAuthStore } from "@/stores/auth.store";
 import { formatTimeAgo } from "@/utils/dateFormatter.util";
 import { getTypeDisplayName } from "@/utils/post.util";
@@ -18,20 +17,13 @@ import { PostCardMenu } from "./PostCardMenu";
 
 interface PostCardProps {
   post: Post;
-  onLike?: (postId: string) => void;
   onComment?: (postId: string) => void;
 
   likedByUser?: boolean;
   bookmarkedByUser?: boolean;
 }
 
-export const PostCard = ({
-  post,
-  onLike,
-  onComment,
-  likedByUser = false,
-}: PostCardProps) => {
-  const [isLiked, setIsLiked] = useState(likedByUser);
+export const PostCard = ({ post, onComment }: PostCardProps) => {
   const navigate = useNavigate();
 
   const toggleBookmarkMutation = useToggleBookmarkMutation(
@@ -39,13 +31,14 @@ export const PostCard = ({
     post.isBookmarked
   );
 
+  const toggleLikeMutation = useToggleLikeMutation(post.id);
+
   const { user } = useAuthStore();
   if (!user) return;
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsLiked(!isLiked);
-    onLike?.(post.id);
+    toggleLikeMutation.mutate();
   };
 
   const handleBookmark = (e: React.MouseEvent) => {
@@ -153,13 +146,16 @@ export const PostCard = ({
               variant="ghost"
               size="sm"
               onClick={handleLike}
+              disabled={toggleLikeMutation.isPending}
               className={`gap-2 ${
-                isLiked
+                post.isLiked
                   ? "text-red-500 hover:text-red-600"
                   : "text-muted-foreground hover:text-red-500"
               }`}
             >
-              <Heart className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`} />
+              <Heart
+                className={`w-4 h-4 ${post.isLiked ? "fill-current" : ""}`}
+              />
               <span className="text-sm">{post._count.likes}</span>
             </Button>
 

@@ -30,7 +30,6 @@ const ProfileLikedPosts = () => {
         description:
           "When you like posts, they'll show up here for easy access. Start exploring and engaging with the community!",
       }}
-      showBookmarkAction
     />
   );
 };

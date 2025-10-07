@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { hasPermission } from "@/lib/permissions";
 import type { User } from "@/lib/permissions/types";
-import { useToggleBookmarkMutation } from "@/queries/useBookmark";
+import { useToggleBookmarkMutation } from "@/queries/useBookmarkMutation";
 import { useDeletePostMutation } from "@/queries/usePosts";
 import type { Post } from "@/zodSchemas/post.zod";
 

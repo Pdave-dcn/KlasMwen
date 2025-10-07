@@ -83,14 +83,7 @@ const ProfilePostsList = ({
   return (
     <div className="space-y-4 flex flex-col items-center">
       {posts?.pages.flatMap((page) =>
-        page.data.map((post) => (
-          <PostCard
-            key={post.id}
-            post={post}
-            onLike={(postId) => console.log("Like post:", postId)}
-            onComment={(postId) => console.log("Comment on post:", postId)}
-          />
-        ))
+        page.data.map((post) => <PostCard key={post.id} post={post} />)
       )}
 
       {/* Load More button */}

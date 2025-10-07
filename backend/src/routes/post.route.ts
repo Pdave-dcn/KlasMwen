@@ -49,6 +49,8 @@ router.use(attachLogContext("PostController"));
  *               $ref: '#/components/schemas/PostsResponse'
  *       400:
  *         description: Bad request (e.g., Cursor is not a valid uuid)
+ *       401:
+ *         description: Unauthenticated
  *       429:
  *         description: Too many requests (rate limit exceeded)
  *       500:
@@ -96,6 +98,8 @@ router.post(
  *   get:
  *     summary: Get a post by ID
  *     tags: [Posts]
+ *     security:
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -113,6 +117,8 @@ router.post(
  *               $ref: '#/components/schemas/SinglePostResponse'
  *       400:
  *         description: Bad request (e.g., Post ID is not a valid uuid)
+ *       401:
+ *         description: Unauthenticated
  *       404:
  *         description: Post not found
  *       429:
@@ -120,7 +126,7 @@ router.post(
  *       500:
  *         description: Internal server error
  */
-router.get("/posts/:id", generalApiLimiter, getPostById);
+router.get("/posts/:id", generalApiLimiter, requireAuth, getPostById);
 
 /**
  * @openapi

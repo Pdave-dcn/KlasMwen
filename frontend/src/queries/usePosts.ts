@@ -17,7 +17,8 @@ import type { PostResponse } from "@/zodSchemas/post.zod";
 
 type FeedData = InfiniteData<PostResponse>;
 
-const usePostMutation = () => {
+const usePostCreationMutation = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createNewPost,
     onMutate: () => {
@@ -28,6 +29,9 @@ const usePostMutation = () => {
     },
     onError: () => {
       toast.error("Failed to create post");
+    },
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
   });
 };
@@ -120,6 +124,6 @@ const useDeletePostMutation = (postId: string) => {
 export {
   useHomePagePosts,
   useSinglePostQuery,
-  usePostMutation,
+  usePostCreationMutation,
   useDeletePostMutation,
 };

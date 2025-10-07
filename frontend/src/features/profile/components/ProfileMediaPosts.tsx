@@ -32,7 +32,6 @@ const ProfileMediaPosts = () => {
         title: "No media posts yet",
         description: "Posts with images and media will appear here.",
       }}
-      showBookmarkAction
     />
   );
 };

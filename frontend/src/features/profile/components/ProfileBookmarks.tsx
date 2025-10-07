@@ -30,7 +30,6 @@ const ProfileBookmarks = () => {
         description:
           "Save posts to read them later or reference them for your studies",
       }}
-      showBookmarkAction={false}
     />
   );
 };

@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { usePostMutation } from "@/queries/usePosts";
+import { usePostCreationMutation } from "@/queries/usePosts";
 import { useTagQuery } from "@/queries/useTag";
 import {
   ResourcePostCreationSchema,
@@ -67,7 +67,7 @@ const PostForm = ({ open, onClose, postType }: PostFormProps) => {
     error: tagsError,
   } = useTagQuery();
 
-  const mutation = usePostMutation();
+  const mutation = usePostCreationMutation();
 
   const resetForm = () => {
     reset();

@@ -50,7 +50,7 @@ router.use(attachLogContext("BookmarkController"));
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/BookmarksResponse'
+ *               $ref: '#/components/schemas/PostsResponse'
  *       400:
  *         description: Bad request (e.g., invalid query parameters)
  *       401:

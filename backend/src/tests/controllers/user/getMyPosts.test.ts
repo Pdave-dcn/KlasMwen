@@ -6,12 +6,13 @@ import { AuthenticationError } from "../../../core/error/custom/auth.error.js";
 import { handleError } from "../../../core/error/index.js";
 
 import { createAuthenticatedUser } from "./shared/helpers.js";
-import { mockUser , createMockRequest, createMockResponse } from "./shared/mocks.js";
+import {
+  mockUser,
+  createMockRequest,
+  createMockResponse,
+} from "./shared/mocks.js";
 
 import type { Request, Response } from "express";
-
-
-
 
 // Prisma mocks
 vi.mock("../../../core/config/db.js", () => ({
@@ -28,6 +29,9 @@ vi.mock("../../../core/config/db.js", () => ({
       findMany: vi.fn(),
     },
     comment: {
+      findMany: vi.fn(),
+    },
+    bookmark: {
       findMany: vi.fn(),
     },
   },
@@ -99,12 +103,18 @@ describe("getMyPosts controller", () => {
     it("should return user posts with pagination and total count", async () => {
       (prisma.post.findMany as any).mockResolvedValue(mockPosts);
       (prisma.post.count as any).mockResolvedValue(1);
+
+      // Handling bookmark and like states
+      vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.like.findMany).mockResolvedValue([]);
+
       mockReq.user = createAuthenticatedUser();
       mockReq.query = { postLimit: "10", postCursor: undefined };
 
       await getMyPosts(mockReq, mockRes);
 
       expect(prisma.post.findMany).toHaveBeenCalledTimes(1);
+
       expect(prisma.post.count).toHaveBeenCalledTimes(1);
 
       expect(prisma.post.findMany).toHaveBeenCalledWith(

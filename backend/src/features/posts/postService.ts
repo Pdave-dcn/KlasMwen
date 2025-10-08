@@ -28,7 +28,10 @@ import {
   processPaginatedResults,
 } from "../../utils/pagination.util";
 
-import { truncatePostContentValue } from "./postContentValueFormatter";
+import {
+  type PostPreview,
+  truncatePostContentValue,
+} from "./postContentValueFormatter";
 import transformPostTagsToFlat from "./postTagFlattener";
 
 import type { RawPost, TransformedPost } from "../../types/postTypes";
@@ -131,6 +134,11 @@ const bookmarkWithPost = Prisma.validator<Prisma.BookmarkFindManyArgs>()({
 
 type BookmarkWithPost = Prisma.BookmarkGetPayload<typeof bookmarkWithPost>;
 
+interface BookmarkAndLikeStates {
+  bookmarkedPostIds: Set<string>;
+  likedPostIds: Set<string>;
+}
+
 /**
  * PostService provides a data access layer for retrieving post-related data from the database.
  * It handles various queries, including paginated lists, user-specific posts, and detailed post data.
@@ -138,11 +146,65 @@ type BookmarkWithPost = Prisma.BookmarkGetPayload<typeof bookmarkWithPost>;
  * @class PostService
  */
 class PostService {
+  /**
+   * Fetches bookmark and like states for a list of posts for a specific user
+   */
+  private static async getBookmarkAndLikeStates(
+    userId: string,
+    postIds: string[]
+  ): Promise<BookmarkAndLikeStates> {
+    if (postIds.length === 0) {
+      return {
+        bookmarkedPostIds: new Set<string>(),
+        likedPostIds: new Set<string>(),
+      };
+    }
+
+    const [bookmarks, likes] = await Promise.all([
+      prisma.bookmark.findMany({
+        where: {
+          userId,
+          postId: { in: postIds },
+        },
+        select: { postId: true },
+      }),
+      prisma.like.findMany({
+        where: {
+          userId,
+          postId: { in: postIds },
+        },
+        select: { postId: true },
+      }),
+    ]);
+
+    return {
+      bookmarkedPostIds: new Set(bookmarks.map((b) => b.postId)),
+      likedPostIds: new Set(likes.map((l) => l.postId)),
+    };
+  }
+
+  /**
+   * Enriches posts with bookmark and like state flags
+   */
+  private static enrichPostsWithStates(
+    posts: TransformedPost[] | PostPreview[],
+    states: BookmarkAndLikeStates,
+    currentUserId: string
+  ) {
+    return posts.map((post) => ({
+      ...post,
+      isBookmarked: currentUserId
+        ? states.bookmarkedPostIds.has(post.id)
+        : false,
+      isLiked: currentUserId ? states.likedPostIds.has(post.id) : false,
+    }));
+  }
+
   private static async getPostsAndProcess(
     where: Prisma.PostWhereInput = {},
     limit: number,
-    cursor?: string,
-    currentUserId?: string
+    currentUserId: string,
+    cursor?: string
   ) {
     const baseQuery: Prisma.PostFindManyArgs = {
       where,
@@ -158,36 +220,6 @@ class PostService {
 
     const posts = await prisma.post.findMany(paginatedQuery);
 
-    let bookmarkedPostIds = new Set<string>();
-    let likedPostIds = new Set<string>();
-
-    if (currentUserId && posts.length > 0) {
-      const [bookmarks, likes] = await Promise.all([
-        await prisma.bookmark.findMany({
-          where: {
-            userId: currentUserId,
-            postId: { in: posts.map((p) => p.id) },
-          },
-          select: {
-            postId: true,
-          },
-        }),
-
-        await prisma.like.findMany({
-          where: {
-            userId: currentUserId,
-            postId: { in: posts.map((p) => p.id) },
-          },
-          select: {
-            postId: true,
-          },
-        }),
-      ]);
-
-      bookmarkedPostIds = new Set(bookmarks.map((b) => b.postId));
-      likedPostIds = new Set(likes.map((l) => l.postId));
-    }
-
     const transformedPosts = posts.map(
       transformPostTagsToFlat as (post: Partial<RawPost>) => TransformedPost
     );
@@ -195,16 +227,19 @@ class PostService {
     const postsWithTruncatedContent =
       truncatePostContentValue(transformedPosts);
 
-    const postsWithBookmarkAndLikeStates = postsWithTruncatedContent.map(
-      (post) => ({
-        ...post,
-        isBookmarked: currentUserId ? bookmarkedPostIds.has(post.id) : false,
-        isLiked: currentUserId ? likedPostIds.has(post.id) : false,
-      })
+    let postsWithStates = postsWithTruncatedContent;
+
+    const postIds = posts.map((p) => p.id);
+    const states = await this.getBookmarkAndLikeStates(currentUserId, postIds);
+
+    postsWithStates = this.enrichPostsWithStates(
+      postsWithTruncatedContent,
+      states,
+      currentUserId
     );
 
     const { data, pagination } = processPaginatedResults(
-      postsWithBookmarkAndLikeStates,
+      postsWithStates,
       limit,
       "id"
     );
@@ -213,7 +248,7 @@ class PostService {
   }
 
   static getAllPosts(userId: string, limit: number, cursor?: string) {
-    return this.getPostsAndProcess({}, limit, cursor, userId);
+    return this.getPostsAndProcess({}, limit, userId, cursor);
   }
 
   static async getUserPosts(userId: string, limit: number, cursor?: string) {
@@ -221,8 +256,8 @@ class PostService {
     const { posts, pagination } = await this.getPostsAndProcess(
       where,
       limit,
-      cursor,
-      userId
+      userId,
+      cursor
     );
 
     const totalCount = await prisma.post.count({ where });
@@ -245,8 +280,8 @@ class PostService {
     const { posts, pagination } = await this.getPostsAndProcess(
       where,
       limit,
-      cursor,
-      userId
+      userId,
+      cursor
     );
 
     return { posts, pagination };
@@ -277,28 +312,20 @@ class PostService {
       transformPostTagsToFlat(post as RawPost)
     );
 
-    let bookmarkedPostIds = new Set<string>();
+    const postIds = posts.map((p) => p.id);
+    const { bookmarkedPostIds } = await this.getBookmarkAndLikeStates(
+      userId,
+      postIds
+    );
 
-    if (transformedPosts.length > 0) {
-      const bookmarks = await prisma.bookmark.findMany({
-        where: {
-          userId,
-          postId: { in: posts.map((p) => p.id) },
-        },
-        select: { postId: true },
-      });
-
-      bookmarkedPostIds = new Set(bookmarks.map((b) => b.postId));
-    }
-
-    const postsWithBookmarkAndLikeStates = transformedPosts.map((post) => ({
+    const postsWithStates = transformedPosts.map((post) => ({
       ...post,
       isBookmarked: bookmarkedPostIds.has(post.id),
       isLiked: true,
     }));
 
     const { data, pagination } = processPaginatedResults(
-      postsWithBookmarkAndLikeStates,
+      postsWithStates,
       limit
     );
 
@@ -337,30 +364,20 @@ class PostService {
       transformPostTagsToFlat as (post: Partial<RawPost>) => TransformedPost
     );
 
-    let likedPostIds = new Set<string>();
+    const postIds = posts.map((p) => p.id);
+    const { likedPostIds } = await this.getBookmarkAndLikeStates(
+      userId,
+      postIds
+    );
 
-    if (transformedPosts.length > 0) {
-      const likes = await prisma.like.findMany({
-        where: {
-          userId,
-          postId: { in: posts.map((p) => p.id) },
-        },
-        select: {
-          postId: true,
-        },
-      });
-
-      likedPostIds = new Set(likes.map((l) => l.postId));
-    }
-
-    const postsWithBookmarkAndLikeStates = transformedPosts.map((post) => ({
+    const postsWithStates = transformedPosts.map((post) => ({
       ...post,
       isBookmarked: true,
       isLiked: likedPostIds.has(post.id),
     }));
 
     const { data, pagination } = processPaginatedResults(
-      postsWithBookmarkAndLikeStates,
+      postsWithStates,
       limit
     );
 
@@ -394,37 +411,29 @@ class PostService {
 
     const transformedPost = transformPostTagsToFlat(post as RawPost);
 
-    let isBookmarked = false;
-    let isLiked = false;
-
-    if (currentUserId) {
-      const [bookmark, like] = await Promise.all([
-        prisma.bookmark.findUnique({
-          where: {
-            userId_postId: {
-              userId: currentUserId,
-              postId,
-            },
+    const [bookmark, like] = await Promise.all([
+      prisma.bookmark.findUnique({
+        where: {
+          userId_postId: {
+            userId: currentUserId,
+            postId,
           },
-        }),
-        prisma.like.findUnique({
-          where: {
-            userId_postId: {
-              userId: currentUserId,
-              postId,
-            },
+        },
+      }),
+      prisma.like.findUnique({
+        where: {
+          userId_postId: {
+            userId: currentUserId,
+            postId,
           },
-        }),
-      ]);
-
-      isBookmarked = !!bookmark;
-      isLiked = !!like;
-    }
+        },
+      }),
+    ]);
 
     return {
       ...transformedPost,
-      isBookmarked,
-      isLiked,
+      isBookmarked: !!bookmark,
+      isLiked: !!like,
     };
   }
 

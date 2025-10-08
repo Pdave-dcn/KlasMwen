@@ -24,7 +24,7 @@ function truncateByWords(text: string, wordLimit: number): string {
  * @param {number} [wordLimit=50] - Max words in preview
  * @return {PostPreview[]} Posts with truncated content
  */
-export const truncatePostContentValue = (
+const truncatePostContentValue = (
   posts: PostForTruncation[],
   wordLimit = 50
 ): PostPreview[] => {
@@ -41,3 +41,5 @@ export const truncatePostContentValue = (
     };
   });
 };
+
+export { truncatePostContentValue, PostPreview };

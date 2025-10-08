@@ -43,6 +43,14 @@ vi.mock("../../core/config/db.js", () => ({
       findUnique: vi.fn(),
       delete: vi.fn(),
     },
+    bookmark: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+    },
+    like: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+    },
   },
 }));
 
@@ -111,6 +119,13 @@ vi.mock("../../zodSchemas/post.zod.js", () => {
   };
   return { PostIdParamSchema, UpdatedPostSchema };
 });
+
+const mockUser = {
+  id: "123e4567-e89b-12d3-a456-426614174000",
+  username: "testUser",
+  email: "test@example.com",
+  role: "STUDENT",
+};
 
 describe("Post Controllers", () => {
   beforeEach(() => {
@@ -274,7 +289,7 @@ describe("Post Controllers", () => {
 
   describe("getAllPosts", () => {
     it("should return a list of posts with default pagination", async () => {
-      const req = mockRequest();
+      const req = mockRequest(mockUser);
       const res = mockResponse();
       const mockPosts = [
         {
@@ -302,16 +317,24 @@ describe("Post Controllers", () => {
           author: { id: 1, username: "testuser", avatarUrl: null },
           tags: ["tag1"],
           _count: { comments: 0, likes: 0 },
+          isBookmarked: false,
+          isLiked: false,
         },
       ];
 
       vi.mocked(prisma.post.findMany).mockResolvedValue(mockPosts as any);
+
+      // Handling bookmark and like states
+      vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.like.findMany).mockResolvedValue([]);
+
       vi.mocked(transformPostTagsToFlat).mockReturnValue(
         mockTransformedPosts[0] as any
       );
 
       await getAllPosts(req, res);
 
+      expect(handleError).not.toHaveBeenCalled();
       expect(prisma.post.findMany).toHaveBeenCalled();
       expect(transformPostTagsToFlat).toHaveBeenCalledTimes(mockPosts.length);
       expect(res.status).toHaveBeenCalledWith(200);
@@ -325,7 +348,7 @@ describe("Post Controllers", () => {
     });
 
     it("should handle custom pagination parameters", async () => {
-      const req = mockRequest(null, null, { limit: "2" });
+      const req = mockRequest(mockUser, null, { limit: "2" });
       const res = mockResponse();
       const mockPosts = [
         {
@@ -353,10 +376,17 @@ describe("Post Controllers", () => {
           author: { id: 1, username: "testuser", avatarUrl: null },
           tags: [],
           _count: { comments: 0, likes: 0 },
+          isBookmarked: false,
+          isLiked: false,
         },
       ];
 
       vi.mocked(prisma.post.findMany).mockResolvedValue(mockPosts as any);
+
+      // Handling bookmark and like states
+      vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.like.findMany).mockResolvedValue([]);
+
       vi.mocked(transformPostTagsToFlat).mockReturnValue(
         mockTransformedPosts[0] as any
       );
@@ -376,7 +406,7 @@ describe("Post Controllers", () => {
     });
 
     it("should call handleError if database query fails", async () => {
-      const req = mockRequest();
+      const req = mockRequest(mockUser);
       const res = mockResponse();
       const mockError = new Error("Database error");
 
@@ -390,7 +420,7 @@ describe("Post Controllers", () => {
 
   describe("getPostById", () => {
     it("should return a specific post", async () => {
-      const req = mockRequest(null, { id: "1" });
+      const req = mockRequest(mockUser, { id: "1" });
       const res = mockResponse();
       const mockPost = {
         id: 1,
@@ -413,6 +443,11 @@ describe("Post Controllers", () => {
       vi.mocked(PostIdParamSchema.parse).mockReturnValue({ id: "1" } as any);
       vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPost as any);
 
+      // For "isLiked" state in each post
+      vi.mocked(prisma.like.findUnique).mockResolvedValue(null);
+      // For "isBookmark" state in each post
+      vi.mocked(prisma.bookmark.findUnique).mockResolvedValue(null);
+
       await getPostById(req, res);
 
       expect(PostIdParamSchema.parse).toHaveBeenCalledWith(req.params);
@@ -427,7 +462,7 @@ describe("Post Controllers", () => {
     });
 
     it("should return 404 if post is not found", async () => {
-      const req = mockRequest(null, { id: "99" });
+      const req = mockRequest(mockUser, { id: "99" });
       const res = mockResponse();
 
       vi.mocked(PostIdParamSchema.parse).mockReturnValue({ id: "99" } as any);
@@ -435,6 +470,7 @@ describe("Post Controllers", () => {
 
       await getPostById(req, res);
 
+      expect(handleError).not.toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(404);
       expect(res.json).toHaveBeenCalledWith({ message: "Post not found" });
     });

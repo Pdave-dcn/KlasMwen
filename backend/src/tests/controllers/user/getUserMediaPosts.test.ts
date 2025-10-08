@@ -27,6 +27,9 @@ vi.mock("../../../core/config/db.js", () => ({
     comment: {
       findMany: vi.fn(),
     },
+    bookmark: {
+      findMany: vi.fn(),
+    },
   },
 }));
 
@@ -149,6 +152,10 @@ describe("getUserMediaPosts controller", () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
       (prisma.post.findMany as any).mockResolvedValue(mockMediaPosts);
 
+      // Handling bookmark and like states
+      vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.like.findMany).mockResolvedValue([]);
+
       await getUserMediaPosts(mockReq, mockRes);
 
       expect(prisma.post.findMany).toHaveBeenCalledWith(
@@ -184,6 +191,10 @@ describe("getUserMediaPosts controller", () => {
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
       (prisma.post.findMany as any).mockResolvedValue(mockMediaPosts);
+
+      // Handling bookmark and like states
+      vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
       await getUserMediaPosts(mockReq, mockRes);
 

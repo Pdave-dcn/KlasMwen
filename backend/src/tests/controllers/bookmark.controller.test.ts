@@ -7,7 +7,6 @@ import {
   getBookmarks,
 } from "../../controllers/bookmark.controller.js";
 import prisma from "../../core/config/db.js";
-import { createLogger } from "../../core/config/logger.js";
 import { AuthenticationError } from "../../core/error/custom/auth.error.js";
 import { handleError } from "../../core/error/index.js";
 
@@ -23,6 +22,9 @@ vi.mock("../../core/config/db.js", () => ({
       findMany: vi.fn(),
       create: vi.fn(),
       delete: vi.fn(),
+    },
+    like: {
+      findMany: vi.fn(),
     },
   },
 }));
@@ -422,6 +424,9 @@ describe("Bookmark controller", () => {
         mockBookmarksWithPosts
       );
 
+      // For setup "isLiked" state in each post
+      vi.mocked(prisma.like.findMany).mockResolvedValue([]);
+
       await getBookmarks(mockRequest as Request, mockResponse as Response);
 
       expect(prisma.bookmark.findMany).toHaveBeenCalledWith({
@@ -530,6 +535,9 @@ describe("Bookmark controller", () => {
       vi.mocked(prisma.bookmark.findMany).mockResolvedValue(
         mockBookmarksWithPosts
       );
+
+      // For setup "isLiked" state in each post
+      vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
       await getBookmarks(mockRequest as Request, mockResponse as Response);
 

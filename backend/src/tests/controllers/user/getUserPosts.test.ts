@@ -4,7 +4,10 @@ import { getUserPosts } from "../../../controllers/user.controller.js";
 import prisma from "../../../core/config/db.js";
 import { handleError } from "../../../core/error/index.js";
 
-import { expectValidationError } from "./shared/helpers.js";
+import {
+  createAuthenticatedUser,
+  expectValidationError,
+} from "./shared/helpers.js";
 import {
   mockUser,
   createMockRequest,
@@ -28,6 +31,9 @@ vi.mock("../../../core/config/db.js", () => ({
       findMany: vi.fn(),
     },
     comment: {
+      findMany: vi.fn(),
+    },
+    bookmark: {
       findMany: vi.fn(),
     },
   },
@@ -119,6 +125,8 @@ const mockTransformedPosts = [
     createdAt: new Date(),
     updatedAt: new Date(),
     authorId: mockUser.id,
+    isBookmarked: false,
+    isLiked: false,
     tags: [],
     comments: [],
     _count: {
@@ -138,6 +146,8 @@ const mockTransformedPosts = [
     createdAt: new Date(),
     updatedAt: new Date(),
     authorId: mockUser.id,
+    isBookmarked: false,
+    isLiked: false,
     tags: [],
     _count: { comments: 0, likes: 3 },
   },
@@ -165,8 +175,13 @@ describe("getUserPosts controller", () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
       vi.mocked(prisma.post.findMany).mockResolvedValue(mockPosts);
 
+      // Handling bookmark and like states
+      vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.like.findMany).mockResolvedValue([]);
+
       await getUserPosts(mockReq, mockRes);
 
+      expect(handleError).not.toHaveBeenCalled();
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: { id: mockUser.id },
         select: { id: true },

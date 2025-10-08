@@ -11,7 +11,6 @@ import {
 } from "./shared/helpers.js";
 import { createMockRequest, createMockResponse } from "./shared/mocks.js";
 
-
 import type { Request, Response } from "express";
 
 // Prisma mocks
@@ -29,6 +28,9 @@ vi.mock("../../../core/config/db.js", () => ({
       findMany: vi.fn(),
     },
     comment: {
+      findMany: vi.fn(),
+    },
+    bookmark: {
       findMany: vi.fn(),
     },
   },
@@ -175,6 +177,9 @@ describe("getPostsLikedByMe controller", () => {
 
       vi.mocked(prisma.like.findMany).mockResolvedValue(mockLikeWithPosts);
 
+      // Handling bookmark state
+      vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
+
       await getPostsLikedByMe(mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
@@ -204,6 +209,9 @@ describe("getPostsLikedByMe controller", () => {
       mockReq.query = { limit: "2", cursor: mockLikedPostId1 };
 
       vi.mocked(prisma.like.findMany).mockResolvedValue(mockLikeWithPosts);
+
+      // Handling bookmark state
+      vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
 
       await getPostsLikedByMe(mockReq, mockRes);
 
@@ -424,8 +432,12 @@ describe("getPostsLikedByMe controller", () => {
 
       vi.mocked(prisma.like.findMany).mockResolvedValue(likesWithMissingAuthor);
 
+      // Handling bookmark state
+      vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
+
       await getPostsLikedByMe(mockReq, mockRes);
 
+      expect(handleError).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -468,8 +480,12 @@ describe("getPostsLikedByMe controller", () => {
 
       vi.mocked(prisma.like.findMany).mockResolvedValue(likesWithNoTags);
 
+      // Handling bookmark state
+      vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
+
       await getPostsLikedByMe(mockReq, mockRes);
 
+      expect(handleError).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -505,8 +521,12 @@ describe("getPostsLikedByMe controller", () => {
 
       vi.mocked(prisma.like.findMany).mockResolvedValue(mockLikeWithPosts);
 
+      // Handling bookmark state
+      vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
+
       await getPostsLikedByMe(mockReq, mockRes);
 
+      expect(handleError).not.toHaveBeenCalled();
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.arrayContaining([
@@ -518,6 +538,8 @@ describe("getPostsLikedByMe controller", () => {
                 id: expect.any(String),
                 username: expect.any(String),
               }),
+              isBookmarked: expect.any(Boolean),
+              isLiked: expect.any(Boolean),
             }),
           ]),
         })

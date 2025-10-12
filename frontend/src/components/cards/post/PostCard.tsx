@@ -18,9 +18,6 @@ import { PostCardMenu } from "./PostCardMenu";
 interface PostCardProps {
   post: Post;
   onComment?: (postId: string) => void;
-
-  likedByUser?: boolean;
-  bookmarkedByUser?: boolean;
 }
 
 export const PostCard = ({ post, onComment }: PostCardProps) => {

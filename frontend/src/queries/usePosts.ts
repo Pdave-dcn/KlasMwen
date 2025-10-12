@@ -12,8 +12,17 @@ import {
   deletePost,
   getHomePagePosts,
   getPostById,
+  getPostForEdit,
+  updatePost,
 } from "@/api/post.api";
 import type { PostResponse } from "@/zodSchemas/post.zod";
+
+export type UpdatePostData = {
+  title: string;
+  content: string | null | undefined;
+  tagIds: number[];
+  type: "NOTE" | "QUESTION" | "RESOURCE";
+};
 
 type FeedData = InfiniteData<PostResponse>;
 
@@ -56,6 +65,27 @@ const useSinglePostQuery = (postId: string) => {
     queryKey: ["posts", postId],
     queryFn: () => {
       return getPostById(postId);
+    },
+  });
+};
+
+const usePostEditQuery = (postId: string) => {
+  return useQuery({
+    queryKey: ["posts", postId],
+    queryFn: () => {
+      return getPostForEdit(postId);
+    },
+  });
+};
+
+const usePostUpdateMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ postId, data }: { postId: string; data: UpdatePostData }) =>
+      updatePost(postId, data),
+
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
   });
 };
@@ -126,4 +156,6 @@ export {
   useSinglePostQuery,
   usePostCreationMutation,
   useDeletePostMutation,
+  usePostEditQuery,
+  usePostUpdateMutation,
 };

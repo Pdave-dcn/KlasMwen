@@ -1,7 +1,9 @@
+import type { UpdatePostData } from "@/queries/usePosts";
 import handleZodValidationError from "@/utils/zodErrorHandler.util";
 import {
   CreatedPostResponseSchema,
   DeletePostResponseSchema,
+  PostEditResponseSchema,
   PostResponseSchema,
   SinglePostResponseSchema,
   type PostFormValues,
@@ -122,6 +124,32 @@ const getPostById = async (postId: string) => {
   }
 };
 
+const getPostForEdit = async (postId: string) => {
+  try {
+    const res = await api.get(`/posts/${postId}/edit`);
+
+    const validatedData = PostEditResponseSchema.parse(res.data);
+
+    return validatedData.data;
+  } catch (error) {
+    handleZodValidationError(error, "getPostForEdit");
+    throw error;
+  }
+};
+
+const updatePost = async (postId: string, data: UpdatePostData) => {
+  try {
+    const res = await api.put(`/posts/${postId}`, data);
+
+    const validatedData = res.data;
+
+    return validatedData;
+  } catch (error) {
+    handleZodValidationError(error, "updatePost");
+    throw error;
+  }
+};
+
 const deletePost = async (postId: string) => {
   try {
     const res = await api.delete(`/posts/${postId}`);
@@ -142,6 +170,8 @@ export {
   getActiveUserLikedPosts,
   getActiveUserBookmarks,
   getPostById,
+  getPostForEdit,
   createNewPost,
   deletePost,
+  updatePost,
 };

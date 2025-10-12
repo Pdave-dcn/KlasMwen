@@ -35,6 +35,7 @@ import {
 import transformPostTagsToFlat from "./postTagFlattener";
 
 import type { RawPost, TransformedPost } from "../../types/postTypes";
+import type { ValidatedPostUpdateData } from "../../zodSchemas/post.zod";
 import type { Response } from "express";
 import type pino from "pino";
 
@@ -200,6 +201,9 @@ class PostService {
     }));
   }
 
+  /**
+   * Fetches posts with pagination, transforms tags, truncates content, enriches with bookmark/like states, and returns formatted results.
+   */
   private static async getPostsAndProcess(
     where: Prisma.PostWhereInput = {},
     limit: number,
@@ -441,6 +445,46 @@ class PostService {
     return prisma.post.findUnique({
       where: { id: postId },
       select: BaseSelectors.extendedPost,
+    });
+  }
+
+  static async handlePostUpdate(
+    validatedData: ValidatedPostUpdateData,
+    postId: string
+  ) {
+    return await prisma.$transaction(async (tx) => {
+      // Update post fields based on type
+      const updateData =
+        validatedData.type === "RESOURCE"
+          ? { title: validatedData.title }
+          : { title: validatedData.title, content: validatedData.content };
+
+      await tx.post.update({
+        where: { id: postId },
+        data: updateData,
+      });
+
+      // Replace existing tags with new ones by first deleting all old tags
+      // and then creating the new ones.
+      await tx.postTag.deleteMany({
+        where: { postId },
+      });
+
+      // Only create new tags if there are any to add
+      if (validatedData.tagIds?.length > 0) {
+        await tx.postTag.createMany({
+          data: validatedData.tagIds.map((tagId) => ({
+            postId,
+            tagId,
+          })),
+        });
+      }
+
+      // Return updated post with all relations
+      return await tx.post.findUnique({
+        where: { id: postId },
+        select: BaseSelectors.post,
+      });
     });
   }
 

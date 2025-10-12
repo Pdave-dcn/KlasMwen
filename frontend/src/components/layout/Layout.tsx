@@ -2,6 +2,8 @@ import { useState } from "react";
 
 import PostForm from "@/features/PostCreation/components/postForm/PostForm";
 import PostTypeSelector from "@/features/PostCreation/components/PostTypeSelector";
+import PostEditForm from "@/features/postEdit/components/PostEditForm";
+import { usePostEditStore } from "@/stores/postEdit.store";
 import type { PostType } from "@/zodSchemas/post.zod";
 
 import MobileTabBar from "./MobileSidebar";
@@ -14,16 +16,18 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const [showTypeSelector, setShowTypeSelector] = useState(false);
   const [selectedType, setSelectedType] = useState<PostType | null>(null);
-  const [showForm, setShowForm] = useState(false);
+  const [showPostCreationForm, setShowPostCreationForm] = useState(false);
+
+  const { isOpen, closeEditForm } = usePostEditStore();
 
   const handleTypeSelect = (type: PostType) => {
     setSelectedType(type);
     setShowTypeSelector(false);
-    setShowForm(true);
+    setShowPostCreationForm(true);
   };
 
-  const handleFormClose = () => {
-    setShowForm(false);
+  const handlePostCreationFormClose = () => {
+    setShowPostCreationForm(false);
     setSelectedType(null);
   };
 
@@ -52,10 +56,12 @@ const Layout = ({ children }: LayoutProps) => {
       />
 
       <PostForm
-        open={showForm}
-        onClose={handleFormClose}
+        open={showPostCreationForm}
+        onClose={handlePostCreationFormClose}
         postType={selectedType}
       />
+
+      <PostEditForm open={isOpen} onClose={closeEditForm} />
     </div>
   );
 };

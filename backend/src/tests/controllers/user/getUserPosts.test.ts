@@ -4,10 +4,7 @@ import { getUserPosts } from "../../../controllers/user.controller.js";
 import prisma from "../../../core/config/db.js";
 import { handleError } from "../../../core/error/index.js";
 
-import {
-  createAuthenticatedUser,
-  expectValidationError,
-} from "./shared/helpers.js";
+import { expectValidationError } from "./shared/helpers.js";
 import {
   mockUser,
   createMockRequest,

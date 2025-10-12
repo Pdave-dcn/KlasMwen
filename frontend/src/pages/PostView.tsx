@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 import { useParams } from "react-router-dom";
 
 import {
@@ -7,6 +8,7 @@ import {
   Tag,
   Download,
   Heart,
+  Bookmark,
 } from "lucide-react";
 
 import CommentCard from "@/components/cards/Comment/CommentCard";
@@ -17,6 +19,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PostError from "@/features/postView/components/PostError";
 import PostLoading from "@/features/postView/components/PostLoading";
 import PostNotFound from "@/features/postView/components/PostNotFound";
+import { useToggleBookmarkMutation } from "@/queries/useBookmarkMutation";
+import { useToggleLikeMutation } from "@/queries/useLikeMutation";
 import { useSinglePostQuery } from "@/queries/usePosts";
 import { formatDate } from "@/utils/dateFormatter.util";
 import { getInitials } from "@/utils/getInitials.util";
@@ -29,6 +33,13 @@ const PostView = () => {
     error,
     refetch,
   } = useSinglePostQuery(postId ?? "");
+
+  const toggleBookmarkMutation = useToggleBookmarkMutation(
+    post?.id as string,
+    post?.isBookmarked as boolean
+  );
+
+  const toggleLikeMutation = useToggleLikeMutation(post?.id as string);
 
   if (isLoading) {
     return <PostLoading />;
@@ -57,6 +68,20 @@ const PostView = () => {
                 {post.title}
               </CardTitle>
             </div>
+            {/* Bookmark Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => toggleBookmarkMutation.mutate()}
+              disabled={toggleBookmarkMutation.isPending}
+              className="shrink-0"
+            >
+              <Bookmark
+                className={`w-5 h-5 ${
+                  post.isBookmarked ? "fill-current text-primary" : ""
+                }`}
+              />
+            </Button>
           </div>
 
           {/* Author and Date Info */}
@@ -127,17 +152,28 @@ const PostView = () => {
             </Card>
           )}
 
-          {/* Post Stats */}
-          <div className="flex items-center space-x-6 text-sm text-muted-foreground">
-            {post._count.likes && (
-              <div className="flex items-center space-x-1">
-                <Heart className="w-4 h-4" />
-                <span>{post._count.likes} likes</span>
-              </div>
-            )}
+          {/* Post Stats and Actions */}
+          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => toggleLikeMutation.mutate()}
+              disabled={toggleLikeMutation.isPending}
+              className={`gap-2 ${
+                post.isLiked
+                  ? "text-red-500 hover:text-red-600"
+                  : "text-muted-foreground hover:text-red-500"
+              }`}
+            >
+              <Heart
+                className={`w-4 h-4 ${post.isLiked ? "fill-current" : ""}`}
+              />
+              <span className="text-sm">{post._count.likes}</span>
+            </Button>
+
             <div className="flex items-center space-x-1">
               <MessageCircle className="w-4 h-4" />
-              <span>{post._count.comments} comments</span>
+              <span>{post._count.comments}</span>
             </div>
           </div>
         </CardContent>

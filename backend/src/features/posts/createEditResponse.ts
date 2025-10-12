@@ -5,7 +5,6 @@ import type { TransformedPost } from "../../types/postTypes";
 type EditResponse = {
   id: string;
   title: string;
-  type: TransformedPost["type"];
   tags: TransformedPost["tags"];
   hasFile: boolean;
 } & (
@@ -13,7 +12,6 @@ type EditResponse = {
       hasFile: true;
       fileName: string;
       fileSize: number;
-      mimeType: string;
     }
   | {
       hasFile: false;
@@ -42,7 +40,6 @@ const createEditResponse = (post: TransformedPost): EditResponse => {
       ...baseEditData,
       fileName: post.fileName,
       fileSize: post.fileSize,
-      mimeType: post.mimeType,
       hasFile: true,
     };
   } else if (isTextPost(post)) {

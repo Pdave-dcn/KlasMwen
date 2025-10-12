@@ -61,6 +61,8 @@ const UpdatedPostSchema = z.discriminatedUnion("type", [
   UpdatedResourceSchema,
 ]);
 
+export type ValidatedPostUpdateData = z.infer<typeof UpdatedPostSchema>;
+
 export {
   NewPostRequestSchema,
   CompletePostSchema,

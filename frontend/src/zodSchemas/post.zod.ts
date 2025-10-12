@@ -57,6 +57,17 @@ const MediaPostDataSchema = PostDataSchema.extend({
   type: z.literal("RESOURCE"),
 });
 
+const PostEditDataSchema = z.object({
+  id: z.string(),
+  hasFile: z.boolean(),
+  title: z.string(),
+  type: PostTypeSchema,
+  tags: z.array(TagSchema),
+  content: z.string().nullish(),
+  fileName: z.string().nullish(),
+  fileSize: z.number().int().nullish(),
+});
+
 const allowedMimes = [
   "application/pdf",
   "application/msword",
@@ -129,6 +140,10 @@ const SinglePostResponseSchema = z.object({
   data: LessExtendedPostDataSchema,
 });
 
+const PostEditResponseSchema = z.object({
+  data: PostEditDataSchema,
+});
+
 const CreatedPostResponseSchema = z.object({
   message: z.string(),
   data: ExtendedPostDataSchema.omit({ updatedAt: true, _count: true }),
@@ -142,6 +157,7 @@ export type Post = z.infer<typeof PostDataSchema>;
 export type PostType = z.infer<typeof PostTypeSchema>;
 export type PostResponse = z.infer<typeof PostResponseSchema>;
 export type PostFormValues = z.infer<typeof PostCreationSchema>;
+export type PostEdit = z.infer<typeof PostEditDataSchema>;
 export type TextPostData = z.infer<typeof TextPostCreationSchema>;
 export type ResourcePostData = z.infer<typeof ResourcePostCreationSchema>;
 
@@ -150,6 +166,7 @@ export {
   PostDataSchema,
   PaginationSchema,
   PostResponseSchema,
+  PostEditResponseSchema,
   MediaPostResponseSchema,
   AuthorSchema,
   ExtendedPostDataSchema,

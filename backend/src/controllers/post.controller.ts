@@ -10,7 +10,6 @@ import createEditResponse from "../features/posts/createEditResponse.js";
 import handlePostCreation from "../features/posts/postCreationHandler.js";
 import PostService from "../features/posts/postService.js";
 import transformPostTagsToFlat from "../features/posts/postTagFlattener.js";
-import handlePostUpdate from "../features/posts/postUpdateHandler.js";
 import handleRequestValidation from "../features/posts/requestPostParser.js";
 import {
   checkAdminAuth,
@@ -382,7 +381,7 @@ const updatePost = async (req: Request, res: Response) => {
       title: req.body.title,
       type: req.body.type,
       content: req.body.content,
-      tagIds: req.body.tagIds ? JSON.parse(req.body.tagIds) : [],
+      tagIds: req.body.tagIds,
     });
 
     actionLogger.info(
@@ -424,7 +423,7 @@ const updatePost = async (req: Request, res: Response) => {
 
     actionLogger.debug("Executing post update");
     const dbUpdateStartTime = Date.now();
-    const result = await handlePostUpdate(validatedData, post.id);
+    const result = await PostService.handlePostUpdate(validatedData, post.id);
     const dbUpdateDuration = Date.now() - dbUpdateStartTime;
 
     if (!result) {

@@ -22,6 +22,7 @@ import { hasPermission } from "@/lib/permissions";
 import type { User } from "@/lib/permissions/types";
 import { useToggleBookmarkMutation } from "@/queries/useBookmarkMutation";
 import { useDeletePostMutation } from "@/queries/usePosts";
+import { usePostEditStore } from "@/stores/postEdit.store";
 import type { Post } from "@/zodSchemas/post.zod";
 
 interface PostCardMenuProps {
@@ -32,8 +33,15 @@ interface PostCardMenuProps {
 export function PostCardMenu({ post, user }: PostCardMenuProps) {
   const navigate = useNavigate();
 
+  const { openEditForm } = usePostEditStore();
+
   const deletePostMutation = useDeletePostMutation(post.id);
   const toggleBookmarkMutation = useToggleBookmarkMutation(post.id, false);
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    openEditForm(post);
+  };
 
   const handleDeletePost = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -57,7 +65,7 @@ export function PostCardMenu({ post, user }: PostCardMenuProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         {hasPermission(user, "posts", "update", post) && (
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={(e) => handleEditClick(e)}>
             <Pencil />
             Edit
           </DropdownMenuItem>

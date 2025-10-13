@@ -363,7 +363,6 @@ const getPostMetadata = async (req: Request, res: Response) => {
 
 const updatePost = async (req: Request, res: Response) => {
   const actionLogger = createActionLogger(controllerLogger, "updatePost", req);
-
   try {
     actionLogger.info("Post update attempt started");
     const startTime = Date.now();
@@ -380,8 +379,9 @@ const updatePost = async (req: Request, res: Response) => {
     const validatedData = UpdatedPostSchema.parse({
       title: req.body.title,
       type: req.body.type,
-      content: req.body.content,
       tagIds: req.body.tagIds,
+      ...(req.body.content !== undefined && { content: req.body.content }),
+      ...(req.body.fileName !== undefined && { fileName: req.body.fileName }),
     });
 
     actionLogger.info(
@@ -438,13 +438,12 @@ const updatePost = async (req: Request, res: Response) => {
         },
         "Post update failed - update handler returned null"
       );
-
       return res
         .status(400)
         .json({ message: "Unexpected error: post update failed." });
     }
-
     const totalDuration = Date.now() - startTime;
+
     actionLogger.info(
       {
         postId: result.id,

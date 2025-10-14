@@ -1,4 +1,6 @@
 /* eslint-disable complexity */
+import { useState } from "react";
+
 import { useParams } from "react-router-dom";
 
 import {
@@ -12,10 +14,17 @@ import {
 } from "lucide-react";
 
 import CommentCard from "@/components/cards/Comment/CommentCard";
+import CommentForm from "@/components/CommentForm";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import PostError from "@/features/postView/components/PostError";
 import PostLoading from "@/features/postView/components/PostLoading";
 import PostNotFound from "@/features/postView/components/PostNotFound";
@@ -26,6 +35,8 @@ import { formatDate } from "@/utils/dateFormatter.util";
 import { getInitials } from "@/utils/getInitials.util";
 
 const PostView = () => {
+  const [isCommentFormOpen, setIsCommentFormOpen] = useState(false);
+
   const { id: postId } = useParams();
   const {
     data: post,
@@ -171,12 +182,22 @@ const PostView = () => {
               <span className="text-sm">{post._count.likes}</span>
             </Button>
 
-            <div className="flex items-center space-x-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsCommentFormOpen(!isCommentFormOpen)}
+            >
               <MessageCircle className="w-4 h-4" />
               <span>{post._count.comments}</span>
-            </div>
+            </Button>
           </div>
         </CardContent>
+        {isCommentFormOpen && (
+          <div className="px-6">
+            <CommentForm postId={post.id} />
+          </div>
+        )}
+        <CardFooter />
       </Card>
 
       {/* Comments Section */}

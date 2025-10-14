@@ -33,14 +33,13 @@ const usePostCreationMutation = () => {
     onMutate: () => {
       toast("Creating post...");
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast("Your post has been published successfully");
+
+      await queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
     onError: () => {
       toast.error("Failed to create post");
-    },
-    onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
   });
 };
@@ -71,7 +70,7 @@ const useSinglePostQuery = (postId: string) => {
 
 const usePostEditQuery = (postId: string) => {
   return useQuery({
-    queryKey: ["posts", postId],
+    queryKey: ["posts", postId, "edit"],
     queryFn: () => {
       return getPostForEdit(postId);
     },
@@ -84,7 +83,7 @@ const usePostUpdateMutation = () => {
     mutationFn: ({ postId, data }: { postId: string; data: UpdatePostData }) =>
       updatePost(postId, data),
 
-    onSettled: async () => {
+    onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
   });

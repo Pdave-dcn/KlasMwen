@@ -200,7 +200,17 @@ export const commentSchemas = {
         type: "string",
         example: "Comment created successfully",
       },
-      data: { $ref: "#/components/schemas/Comment" },
+      data: {
+        type: "object",
+        properties: {
+          id: { type: "number" },
+          content: { type: "string" },
+          parentId: { type: "number", nullable: true },
+          createdAt: { type: "string", format: "date-time" },
+          postId: { type: "string", format: "uuid" },
+          authorId: { type: "string", format: "uuid" },
+        },
+      },
     },
   },
 

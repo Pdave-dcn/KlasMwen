@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import { MessageCircle } from "lucide-react";
 
+import CommentForm from "@/components/CommentForm";
 import LoadMoreButton from "@/components/LoadMoreButton";
 import { useParentCommentsQuery } from "@/queries/useComment";
 import { formatTimeAgo } from "@/utils/dateFormatter.util";
@@ -35,8 +36,23 @@ const CommentCard = ({ postId }: CommentCardProps) => {
   } = useParentCommentsQuery(postId);
 
   const [openReplies, setOpenReplies] = useState<Set<number>>(new Set());
+  const [openCommentForm, setOpenCommentForm] = useState<Set<number>>(
+    new Set()
+  );
+
   const toggleReplies = (commentId: number) => {
     setOpenReplies((prev: Set<number>) => {
+      const next = new Set(prev);
+      if (next.has(commentId)) {
+        next.delete(commentId);
+      } else {
+        next.add(commentId);
+      }
+      return next;
+    });
+  };
+  const toggleCommentForm = (commentId: number) => {
+    setOpenCommentForm((prev: Set<number>) => {
       const next = new Set(prev);
       if (next.has(commentId)) {
         next.delete(commentId);
@@ -91,6 +107,7 @@ const CommentCard = ({ postId }: CommentCardProps) => {
                       {getInitials(comment.author.username)}
                     </AvatarFallback>
                   </Avatar>
+
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center space-x-2">
                       <Button
@@ -105,13 +122,27 @@ const CommentCard = ({ postId }: CommentCardProps) => {
                         {formatTimeAgo(comment.createdAt)}
                       </span>
                       <button
+                        onClick={() => toggleCommentForm(comment.id)}
                         type="button"
                         className="text-xs text-muted-foreground cursor-pointer hover:underline"
                       >
                         Reply
                       </button>
                     </div>
+
                     <p className="text-sm leading-relaxed">{comment.content}</p>
+
+                    {openCommentForm.has(comment.id) && (
+                      <div className="mt-2">
+                        <CommentForm
+                          isReply
+                          author={comment.author.username}
+                          postId={postId}
+                          parentId={comment.id}
+                        />
+                      </div>
+                    )}
+
                     {comment.totalReplies > 0 && (
                       <div className="mt-4">
                         <button

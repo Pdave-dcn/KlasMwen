@@ -9,6 +9,8 @@ export const mockPost = {
   fileUrl: null,
   fileName: null,
   fileSize: null,
+  isBookmarked: true,
+  isLiked: false,
   author: {
     id: "author1",
     username: "testUser",
@@ -36,6 +38,8 @@ export const mockPost2 = {
   fileUrl: "https://example.com/file.pdf",
   fileName: "test-file.pdf",
   fileSize: 10000,
+  isBookmarked: true,
+  isLiked: false,
   author: {
     id: "author12",
     username: "testUser",

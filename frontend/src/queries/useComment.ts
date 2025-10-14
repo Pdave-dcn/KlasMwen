@@ -1,9 +1,16 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import {
+  createComment,
   getParentCommentReplies,
   getPostParentComments,
 } from "@/api/comment.api";
+import type { CommentCreationData } from "@/zodSchemas/comment.zod";
 
 const useParentCommentsQuery = (postId: string, limit = 10) => {
   return useInfiniteQuery({
@@ -35,4 +42,27 @@ const useRepliesQuery = (parentId: number, limit = 10) => {
   });
 };
 
-export { useParentCommentsQuery, useRepliesQuery };
+const useCommentMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      postId,
+      data,
+    }: {
+      postId: string;
+      data: CommentCreationData;
+    }) => createComment(postId, data),
+
+    onSuccess: async (_newComment, { postId }) => {
+      await queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+      await queryClient.invalidateQueries({ queryKey: ["posts", postId] });
+    },
+
+    onError: () => {
+      toast.error("Failed to create comment");
+    },
+  });
+};
+
+export { useParentCommentsQuery, useRepliesQuery, useCommentMutation };

@@ -189,8 +189,8 @@ describe("PostView Component", () => {
           </TestWrapper>
         );
 
-        expect(screen.getByText("5 likes")).toBeInTheDocument();
-        expect(screen.getByText("3 comments")).toBeInTheDocument();
+        expect(screen.getByText("5")).toBeInTheDocument();
+        expect(screen.getByText("3")).toBeInTheDocument();
       });
 
       it("should render comment card with correct postId", () => {
@@ -324,8 +324,8 @@ describe("PostView Component", () => {
         </TestWrapper>
       );
 
-      expect(screen.queryByText("0 likes")).not.toBeInTheDocument();
-      expect(screen.getByText("3 comments")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "0" })).toBeInTheDocument();
+      expect(screen.getByText("3")).toBeInTheDocument();
     });
   });
 });

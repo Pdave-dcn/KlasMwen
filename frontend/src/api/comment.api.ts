@@ -1,7 +1,9 @@
 import handleZodValidationError from "@/utils/zodErrorHandler.util";
 import {
+  CommentCreationServerResponseSchema,
   ParentCommentsResponseSchema,
-  ReplyResponseSchema,
+  RepliesResponseSchema,
+  type CommentCreationData,
 } from "@/zodSchemas/comment.zod";
 
 import api from "./api";
@@ -35,7 +37,7 @@ const getParentCommentReplies = async (
       params: { cursor, limit },
     });
 
-    const validatedData = ReplyResponseSchema.parse(res.data);
+    const validatedData = RepliesResponseSchema.parse(res.data);
 
     return validatedData;
   } catch (error) {
@@ -44,4 +46,17 @@ const getParentCommentReplies = async (
   }
 };
 
-export { getPostParentComments, getParentCommentReplies };
+const createComment = async (postId: string, data: CommentCreationData) => {
+  try {
+    const res = await api.post(`/posts/${postId}/comments`, data);
+
+    const validatedData = CommentCreationServerResponseSchema.parse(res.data);
+
+    return validatedData.data;
+  } catch (error) {
+    handleZodValidationError(error, "createComment");
+    throw error;
+  }
+};
+
+export { getPostParentComments, getParentCommentReplies, createComment };

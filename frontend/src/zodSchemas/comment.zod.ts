@@ -55,7 +55,7 @@ const ParentCommentsResponseSchema = z.object({
   pagination: CommentPaginationSchema,
 });
 
-const ReplyResponseSchema = z.object({
+const RepliesResponseSchema = z.object({
   data: z.array(ReplySchema),
   pagination: ReplyPaginationSchema,
 });
@@ -102,6 +102,28 @@ const CommentSchema = z.object({
   isReply: z.boolean(),
 });
 
+const CommentCreationSchema = z.object({
+  content: z
+    .string()
+    .trim()
+    .min(1, "Comment content cannot be empty.")
+    .max(2000, "Comment content cannot exceed 2000 characters."),
+
+  parentId: z.number().int().positive().optional(),
+});
+
+const CommentCreationServerResponseSchema = z.object({
+  message: z.string(),
+  data: z.object({
+    id: z.number().int(),
+    content: z.string(),
+    parentId: z.number().int().nullable(),
+    createdAt: z.string(),
+    postId: z.string(),
+    authorId: z.string(),
+  }),
+});
+
 const PaginationSchema = z.object({
   hasMore: z.boolean(),
   nextCursor: z.number().int().nullable(),
@@ -114,10 +136,17 @@ const ProfileCommentsResponseSchema = z.object({
 
 export type ProfileComment = z.infer<typeof CommentSchema>;
 export type Comment = z.infer<typeof BaseCommentSchema>;
+export type CommentCreationData = z.infer<typeof CommentCreationSchema>;
+export type ParentCommentsResponse = z.infer<
+  typeof ParentCommentsResponseSchema
+>;
+export type RepliesResponse = z.infer<typeof RepliesResponseSchema>;
 
 export {
   CommentSchema,
   CommentAuthorSchema,
+  CommentCreationSchema,
+  CommentCreationServerResponseSchema,
   PostSchema,
   ParentCommentSchema,
   AuthorSchema,
@@ -125,5 +154,5 @@ export {
   PaginationSchema,
   ProfileCommentsResponseSchema,
   ParentCommentsResponseSchema,
-  ReplyResponseSchema,
+  RepliesResponseSchema,
 };

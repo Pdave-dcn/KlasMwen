@@ -139,6 +139,7 @@ const CommentCard = ({ postId }: CommentCardProps) => {
                           author={comment.author.username}
                           postId={postId}
                           parentId={comment.id}
+                          onSubmitStart={() => toggleCommentForm(comment.id)}
                         />
                       </div>
                     )}
@@ -162,7 +163,7 @@ const CommentCard = ({ postId }: CommentCardProps) => {
                 </div>
 
                 {openReplies.has(comment.id) && (
-                  <RepliesList parentId={comment.id} />
+                  <RepliesList parentId={comment.id} postId={postId} />
                 )}
                 {index < comments.length - 1 && <Separator className="mt-4" />}
               </div>

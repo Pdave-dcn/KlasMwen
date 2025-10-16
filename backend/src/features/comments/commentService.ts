@@ -17,6 +17,13 @@ const CommentFragments = {
     },
   },
 
+  mentionedUser: {
+    select: {
+      id: true,
+      username: true,
+    },
+  },
+
   extendedCommentAuthor: {
     select: {
       id: true,
@@ -68,6 +75,14 @@ const BaseSelectors = {
         Comment: true,
       },
     },
+  } satisfies Prisma.CommentSelect,
+
+  reply: {
+    id: true,
+    content: true,
+    createdAt: true,
+    author: CommentFragments.extendedCommentAuthor,
+    mentionedUser: CommentFragments.mentionedUser,
   } satisfies Prisma.CommentSelect,
 
   commentRelations: {
@@ -180,7 +195,33 @@ class CommentService {
     };
   }
 
+  static async getReplies(parentId: number, limit = 10, cursor?: number) {
+    const baseQuery: Prisma.CommentFindManyArgs = {
+      where: { parentId },
+      orderBy: { createdAt: "asc" as const },
+      select: BaseSelectors.reply,
+    };
+
+    const paginatedQuery = buildPaginatedQuery<"comment">(baseQuery, {
+      limit,
+      cursor,
+      cursorField: "id",
+    });
+
+    const replies = await prisma.comment.findMany(paginatedQuery);
+
+    const { data, pagination } = processPaginatedResults(replies, limit, "id");
+
+    return {
+      replies: data,
+      pagination,
+    };
+  }
+
   static async createComment(data: CreateCommentData, res: Response) {
+    let mentionedUserId: string | undefined;
+    let finalParentId: number | null = data.parentId ?? null;
+
     const postExists = await prisma.post.findUnique({
       where: { id: data.postId },
     });
@@ -193,20 +234,26 @@ class CommentService {
     if (data.parentId) {
       const parentComment = await prisma.comment.findUnique({
         where: { id: data.parentId },
+        select: { id: true, parentId: true, authorId: true, postId: true },
       });
 
       if (!parentComment) {
-        res.status(404).json({
-          error: "Parent comment not found",
-        });
+        res.status(404).json({ message: "Parent comment not found" });
         return null;
       }
 
       if (parentComment.postId !== data.postId) {
-        res.status(400).json({
-          error: "Parent comment does not belong to this post",
-        });
+        res
+          .status(400)
+          .json({ message: "Parent comment does not belong to this post" });
         return null;
+      }
+
+      if (parentComment.parentId) {
+        finalParentId = parentComment.parentId;
+        mentionedUserId = parentComment.authorId;
+      } else {
+        finalParentId = parentComment.id;
       }
     }
 
@@ -215,7 +262,8 @@ class CommentService {
         content: data.content,
         authorId: data.authorId,
         postId: data.postId,
-        parentId: data.parentId ?? null,
+        parentId: finalParentId,
+        mentionedUserId,
       },
     });
 

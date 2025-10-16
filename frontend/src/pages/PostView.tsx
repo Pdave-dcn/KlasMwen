@@ -194,7 +194,10 @@ const PostView = () => {
         </CardContent>
         {isCommentFormOpen && (
           <div className="px-6">
-            <CommentForm postId={post.id} />
+            <CommentForm
+              postId={post.id}
+              onSubmitStart={() => setIsCommentFormOpen(false)}
+            />
           </div>
         )}
         <CardFooter />

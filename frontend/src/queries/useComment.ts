@@ -29,7 +29,7 @@ const useParentCommentsQuery = (postId: string, limit = 10) => {
 
 const useRepliesQuery = (parentId: number, limit = 10) => {
   return useInfiniteQuery({
-    queryKey: ["comments", parentId, "replies"],
+    queryKey: ["comments", "replies"],
     queryFn: ({ pageParam }: { pageParam?: string | number }) => {
       return getParentCommentReplies(parentId, pageParam as number, limit);
     },
@@ -55,7 +55,9 @@ const useCommentMutation = () => {
     }) => createComment(postId, data),
 
     onSuccess: async (_newComment, { postId }) => {
-      await queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+      await queryClient.invalidateQueries({
+        queryKey: ["comments"],
+      });
       await queryClient.invalidateQueries({ queryKey: ["posts", postId] });
     },
 

@@ -43,6 +43,12 @@ const ReplySchema = z.object({
   content: z.string(),
   author: BaseAuthorSchema,
   createdAt: z.string(),
+  mentionedUser: z
+    .object({
+      id: z.string(),
+      username: z.string(),
+    })
+    .nullish(),
 });
 
 const ReplyPaginationSchema = z.object({

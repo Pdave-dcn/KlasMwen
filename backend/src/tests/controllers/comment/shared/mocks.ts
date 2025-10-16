@@ -5,7 +5,7 @@ const mockComments = [
   {
     id: 7,
     content: "Reply 3",
-    author: { id: "authorC", username: "userC", avatarUrl: null },
+    author: { id: "authorC", username: "userC", Avatar: null },
     createdAt: new Date(),
     parentId: null,
     postId: "post123",
@@ -14,7 +14,7 @@ const mockComments = [
   {
     id: 6,
     content: "Reply 2",
-    author: { id: "authorB", username: "userB", avatarUrl: null },
+    author: { id: "authorB", username: "userB", Avatar: null },
     createdAt: new Date(),
     parentId: null,
     postId: "post123",
@@ -23,7 +23,7 @@ const mockComments = [
   {
     id: 5,
     content: "Reply 1",
-    author: { id: "authorA", username: "userA", avatarUrl: null },
+    author: { id: "authorA", username: "userA", Avatar: null },
     createdAt: new Date(),
     parentId: null,
     postId: "post123",
@@ -35,29 +35,32 @@ const mockReplies = [
   {
     id: 7,
     content: "Reply 3",
-    author: { id: "authorC", username: "userC", avatarUrl: null },
+    author: { id: "authorC", username: "userC", Avatar: null },
     createdAt: new Date(),
     parentId: 1,
     postId: "post123",
     authorId: "authorC",
+    mentionedUserId: null,
   },
   {
     id: 6,
     content: "Reply 2",
-    author: { id: "authorB", username: "userB", avatarUrl: null },
+    author: { id: "authorB", username: "userB", Avatar: null },
     createdAt: new Date(),
     parentId: 1,
     postId: "post123",
     authorId: "authorB",
+    mentionedUserId: null,
   },
   {
     id: 5,
     content: "Reply 1",
-    author: { id: "authorA", username: "userA", avatarUrl: null },
+    author: { id: "authorA", username: "userA", Avatar: null },
     createdAt: new Date(),
     parentId: 1,
     postId: "post123",
     authorId: "authorA",
+    mentionedUserId: null,
   },
 ];
 

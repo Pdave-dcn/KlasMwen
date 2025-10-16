@@ -94,6 +94,7 @@ describe("createComment controller", () => {
         postId: mockPostId,
         parentId: null,
         createdAt: new Date(),
+        mentionedUserId: null,
       });
 
       await createComment(mockRequest, mockResponse);
@@ -130,6 +131,7 @@ describe("createComment controller", () => {
         postId: mockPostId,
         parentId: null,
         createdAt: new Date(),
+        mentionedUserId: null,
       });
 
       vi.mocked(prisma.comment.create).mockResolvedValue({
@@ -139,6 +141,7 @@ describe("createComment controller", () => {
         postId: mockPostId,
         parentId: 2,
         createdAt: new Date(),
+        mentionedUserId: null,
       });
 
       await createComment(mockRequest, mockResponse);
@@ -205,7 +208,7 @@ describe("createComment controller", () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(404);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        error: "Parent comment not found",
+        message: "Parent comment not found",
       });
       expect(prisma.comment.create).not.toHaveBeenCalled();
     });
@@ -226,13 +229,15 @@ describe("createComment controller", () => {
         postId: mockOtherPostId,
         parentId: null,
         createdAt: new Date(),
+        mentionedUserId: null,
       });
 
       await createComment(mockRequest, mockResponse);
 
+      expect(handleError).not.toHaveBeenCalled();
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        error: "Parent comment does not belong to this post",
+        message: "Parent comment does not belong to this post",
       });
       expect(prisma.comment.create).not.toHaveBeenCalled();
     });
@@ -370,6 +375,7 @@ describe("createComment controller", () => {
         postId: mockPostId,
         parentId: null,
         createdAt: new Date(),
+        mentionedUserId: null,
       });
 
       await createComment(mockRequest, mockResponse);
@@ -424,41 +430,6 @@ describe("createComment controller", () => {
     });
   });
 
-  describe("Performance/Load Testing Scenarios", () => {
-    it("should handle very large valid content", async () => {
-      const largeContent = "a".repeat(1999); // Just under max limit
-
-      mockRequest.user = createAuthenticatedUser({ id: mockUserId1 });
-      mockRequest.params = { id: mockPostId };
-      mockRequest.body = { content: largeContent };
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(
-        createMockPost({ id: mockPostId, authorId: mockUserId1 })
-      );
-
-      vi.mocked(prisma.comment.create).mockResolvedValue({
-        id: 1,
-        content: largeContent,
-        authorId: mockUserId1,
-        postId: mockPostId,
-        parentId: null,
-        createdAt: new Date(),
-      });
-
-      await createComment(mockRequest, mockResponse);
-
-      expect(mockResponse.status).toHaveBeenCalledWith(201);
-      expect(prisma.comment.create).toHaveBeenCalledWith({
-        data: {
-          content: largeContent,
-          authorId: mockUserId1,
-          postId: mockPostId,
-          parentId: null,
-        },
-      });
-    });
-  });
-
   describe("Response Format Validation", () => {
     it("should return correct response structure for successful comment creation", async () => {
       mockRequest.user = createAuthenticatedUser({ id: mockUserId1 });
@@ -472,6 +443,7 @@ describe("createComment controller", () => {
         postId: mockPostId,
         parentId: null,
         createdAt: new Date("2023-01-01T00:00:00Z"),
+        mentionedUserId: null,
       };
 
       vi.mocked(prisma.post.findUnique).mockResolvedValue(

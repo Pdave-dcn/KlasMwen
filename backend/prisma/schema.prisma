@@ -36,6 +36,8 @@ model User {
   bookmarks Bookmark[]
   createdAt DateTime   @default(now()) @map("created_at")
 
+  mentionedInComments Comment[] @relation("mentionedUser")
+
   @@map("users")
 }
 
@@ -86,6 +88,9 @@ model Comment {
   author    User      @relation(fields: [authorId], references: [id])
   authorId  String    @map("author_id")
   Comment   Comment[] @relation("commentReplies")
+
+  mentionedUser   User?   @relation("mentionedUser", fields: [mentionedUserId], references: [id])
+  mentionedUserId String? @map("mentioned_user_id")
 
   @@map("comments")
 }

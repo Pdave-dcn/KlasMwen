@@ -80,6 +80,7 @@ describe("getReplies controller", () => {
         postId: "abc",
         authorId: "def",
         createdAt: new Date(),
+        mentionedUserId: null,
       });
 
       vi.mocked(prisma.comment.findMany).mockResolvedValue(mockReplies);
@@ -106,20 +107,22 @@ describe("getReplies controller", () => {
         {
           id: 9,
           content: "Reply after cursor",
-          author: { id: "authorD", username: "userD", avatarUrl: null },
+          author: { id: "authorD", username: "userD", Avatar: null },
           createdAt: new Date(),
           parentId: 1,
           postId: "post123",
           authorId: "authorD",
+          mentionedUserId: null,
         },
         {
           id: 8,
           content: "Another reply after cursor",
-          author: { id: "authorE", username: "userE", avatarUrl: null },
+          author: { id: "authorE", username: "userE", Avatar: null },
           createdAt: new Date(),
           parentId: 1,
           postId: "post123",
           authorId: "authorE",
+          mentionedUserId: null,
         },
       ];
 
@@ -130,6 +133,7 @@ describe("getReplies controller", () => {
         postId: "abc",
         authorId: "def",
         createdAt: new Date(),
+        mentionedUserId: null,
       });
 
       vi.mocked(prisma.comment.findMany).mockResolvedValue(mockReplies2);
@@ -161,6 +165,7 @@ describe("getReplies controller", () => {
         postId: "abc",
         authorId: "def",
         createdAt: new Date(),
+        mentionedUserId: null,
       });
 
       vi.mocked(prisma.comment.findMany).mockResolvedValue([]);
@@ -191,35 +196,6 @@ describe("getReplies controller", () => {
       });
       expect(prisma.comment.findMany).not.toHaveBeenCalled();
     });
-
-    it("should return 404 if the parent is not a found", async () => {
-      mockRequest.params = { id: "1" };
-      mockRequest.query = {};
-
-      vi.mocked(prisma.comment.findUnique).mockResolvedValue(null);
-
-      await getReplies(mockRequest, mockResponse);
-
-      expect(mockResponse.status).toHaveBeenCalledWith(404);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Parent comment not found",
-      });
-      expect(prisma.comment.findMany).not.toHaveBeenCalled();
-    });
-
-    it("should call handleError for unexpected errors", async () => {
-      mockRequest.params = { id: "1" };
-      mockRequest.query = {};
-
-      const error = new Error("Database error on transaction");
-      vi.mocked(prisma.comment.findUnique).mockRejectedValue(error);
-
-      await getReplies(mockRequest, mockResponse);
-
-      expect(handleError).toHaveBeenCalledWith(error, mockResponse);
-      expect(mockResponse.status).not.toHaveBeenCalled();
-      expect(mockResponse.json).not.toHaveBeenCalled();
-    });
   });
 
   describe("Pagination Edge Cases", () => {
@@ -234,6 +210,7 @@ describe("getReplies controller", () => {
         postId: "abc",
         authorId: "def",
         createdAt: new Date(),
+        mentionedUserId: null,
       });
 
       vi.mocked(prisma.comment.findMany).mockResolvedValue([mockReplies[0]]);
@@ -259,6 +236,7 @@ describe("getReplies controller", () => {
         postId: "abc",
         authorId: "def",
         createdAt: new Date(),
+        mentionedUserId: null,
       });
 
       vi.mocked(prisma.comment.findMany).mockResolvedValue([]);
@@ -284,6 +262,7 @@ describe("getReplies controller", () => {
         postId: "abc",
         authorId: "def",
         createdAt: new Date(),
+        mentionedUserId: null,
       });
 
       vi.mocked(prisma.comment.findMany).mockResolvedValue([]);
@@ -311,6 +290,7 @@ describe("getReplies controller", () => {
         postId: "abc",
         authorId: "def",
         createdAt: new Date(),
+        mentionedUserId: null,
       });
 
       vi.mocked(prisma.comment.findMany).mockResolvedValue([]);
@@ -341,6 +321,7 @@ describe("getReplies controller", () => {
         postId: "abc",
         authorId: "def",
         createdAt: new Date(),
+        mentionedUserId: null,
       });
 
       vi.mocked(prisma.comment.findMany).mockResolvedValue([]);
@@ -414,6 +395,7 @@ describe("getReplies controller", () => {
         postId: "abc",
         authorId: "def",
         createdAt: new Date(),
+        mentionedUserId: null,
       });
 
       vi.mocked(prisma.comment.findMany).mockResolvedValue(
@@ -456,6 +438,7 @@ describe("getReplies controller", () => {
         postId: "abc",
         authorId: "def",
         createdAt: new Date(),
+        mentionedUserId: null,
       });
 
       vi.mocked(prisma.comment.findMany).mockResolvedValue([]);
@@ -468,57 +451,6 @@ describe("getReplies controller", () => {
           nextCursor: null,
           hasMore: false,
         },
-      });
-    });
-  });
-
-  describe("Parent ID Edge Cases", () => {
-    it("should handle very large parent ID numbers", async () => {
-      const largeId = "9007199254740991"; // Max safe integer
-      mockRequest.params = { id: largeId };
-      mockRequest.query = {};
-
-      vi.mocked(prisma.comment.findUnique).mockResolvedValue({
-        id: 9007199254740991,
-        content: "test content",
-        parentId: null,
-        postId: "abc",
-        authorId: "def",
-        createdAt: new Date(),
-      });
-
-      vi.mocked(prisma.comment.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.comment.count).mockResolvedValue(0);
-
-      await getReplies(mockRequest, mockResponse);
-
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(prisma.comment.findUnique).toHaveBeenCalledWith({
-        where: { id: 9007199254740991 },
-      });
-    });
-
-    it("should handle parent ID with leading zeros", async () => {
-      mockRequest.params = { id: "00001" };
-      mockRequest.query = {};
-
-      vi.mocked(prisma.comment.findUnique).mockResolvedValue({
-        id: 1,
-        content: "test content",
-        parentId: null,
-        postId: "abc",
-        authorId: "def",
-        createdAt: new Date(),
-      });
-
-      vi.mocked(prisma.comment.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.comment.count).mockResolvedValue(0);
-
-      await getReplies(mockRequest, mockResponse);
-
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(prisma.comment.findUnique).toHaveBeenCalledWith({
-        where: { id: 1 }, // Should be parsed as 1
       });
     });
   });

@@ -9,18 +9,14 @@ import type { Post, Prisma, User } from "@prisma/client";
 
 const logger = createLogger({ module: "CommentSeeder" });
 
-/**
- * Create comments for posts with nested reply structure
- * @param {User[]} users - Array of user objects
- * @param {Post[]} posts - Array of post objects
- * @returns {Promise<CommentStats>} Comment creation statistics
- */
 const seedComments = async (users: User[], posts: Post[]) => {
   try {
     logger.info("Comment creation phase started");
     const commentCreationStartTime = Date.now();
 
-    // Phase 1: Create root comments
+    // -------------------------------
+    // PHASE 1: ROOT COMMENTS
+    // -------------------------------
     logger.debug("Creating root comments");
     const rootCommentsData: Prisma.CommentUncheckedCreateInput[] = [];
 
@@ -39,6 +35,7 @@ const seedComments = async (users: User[], posts: Post[]) => {
     const rootComments = await prisma.comment.createManyAndReturn({
       data: rootCommentsData,
     });
+
     logger.info(
       {
         rootCommentsCreated: rootComments.length,
@@ -47,7 +44,9 @@ const seedComments = async (users: User[], posts: Post[]) => {
       "Root comments created successfully"
     );
 
-    // Phase 2: Create first-level replies
+    // -------------------------------
+    // PHASE 2: FIRST-LEVEL REPLIES
+    // -------------------------------
     logger.debug("Creating first-level replies");
     const commentsEligibleForReplies = rootComments.filter(() =>
       faker.datatype.boolean({ probability: 0.3 })
@@ -56,14 +55,17 @@ const seedComments = async (users: User[], posts: Post[]) => {
     const firstLevelRepliesData: Prisma.CommentUncheckedCreateInput[] = [];
 
     for (const parentComment of commentsEligibleForReplies) {
-      const replyCount = faker.number.int({ min: 1, max: 4 });
+      const replyCount = faker.number.int({ min: 1, max: 6 });
 
       for (let i = 0; i < replyCount; i++) {
+        const author = faker.helpers.arrayElement(users);
+
         firstLevelRepliesData.push({
           content: faker.lorem.sentences(faker.number.int({ min: 1, max: 2 })),
           postId: parentComment.postId,
-          authorId: faker.helpers.arrayElement(users).id,
+          authorId: author.id,
           parentId: parentComment.id,
+          mentionedUserId: null,
         });
       }
     }
@@ -80,7 +82,9 @@ const seedComments = async (users: User[], posts: Post[]) => {
       "First-level replies created successfully"
     );
 
-    // Phase 3: Create deep replies (replies to replies)
+    // -------------------------------
+    // PHASE 3: DEEP REPLIES (replies to replies)
+    // -------------------------------
     logger.debug("Creating deep replies");
     const deepRepliesEligible = firstLevelReplies.filter(() =>
       faker.datatype.boolean({ probability: 0.15 })
@@ -89,14 +93,17 @@ const seedComments = async (users: User[], posts: Post[]) => {
     const deepRepliesData: Prisma.CommentUncheckedCreateInput[] = [];
 
     for (const reply of deepRepliesEligible) {
-      const deepReplyCount = faker.number.int({ min: 1, max: 2 });
+      const deepReplyCount = faker.number.int({ min: 1, max: 3 });
 
       for (let i = 0; i < deepReplyCount; i++) {
+        const author = faker.helpers.arrayElement(users);
+
         deepRepliesData.push({
           content: faker.lorem.sentences(faker.number.int({ min: 1, max: 2 })),
           postId: reply.postId,
-          authorId: faker.helpers.arrayElement(users).id,
-          parentId: reply.id,
+          authorId: author.id,
+          parentId: reply.parentId,
+          mentionedUserId: reply.authorId,
         });
       }
     }
@@ -113,6 +120,9 @@ const seedComments = async (users: User[], posts: Post[]) => {
       "Deep replies created successfully"
     );
 
+    // -------------------------------
+    // METRICS
+    // -------------------------------
     const metrics = calculateMetrics(
       commentCreationStartTime,
       rootComments.length + firstLevelReplies.length + deepReplies.length
@@ -141,7 +151,6 @@ const seedComments = async (users: User[], posts: Post[]) => {
     };
 
     logger.info(commentStats, "Comment creation phase completed");
-
     return commentStats;
   } catch (error) {
     return handleSeedingError(error, logger, "Comment creation", "comments", {

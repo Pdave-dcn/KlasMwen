@@ -1,20 +1,14 @@
 /* eslint-disable max-lines-per-function*/
-
 import prisma from "../core/config/db";
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index";
 import CommentService from "../features/comments/commentService";
 import { checkPermission, ensureAuthenticated } from "../utils/auth.util";
 import createActionLogger from "../utils/logger.util.js";
-import {
-  buildPaginatedQuery,
-  createPaginationSchema,
-  processPaginatedResults,
-} from "../utils/pagination.util";
+import { createPaginationSchema } from "../utils/pagination.util";
 import { CreateCommentSchema } from "../zodSchemas/comment.zod";
 import { PostIdParamSchema } from "../zodSchemas/post.zod";
 
-import type { Prisma } from "@prisma/client";
 import type { Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "CommentController" });
@@ -170,96 +164,31 @@ const getReplies = async (req: Request, res: Response) => {
     const customRepliesSchema = createPaginationSchema(10, 40, "number");
     const { limit, cursor } = customRepliesSchema.parse(req.query);
 
-    actionLogger.debug("Checking if parent comment exists");
-    const parentCheckStartTime = Date.now();
-    const parent = await prisma.comment.findUnique({
-      where: { id: parentId },
-    });
-    const parentCheckDuration = Date.now() - parentCheckStartTime;
-
-    if (!parent) {
-      actionLogger.warn(
-        { parentId, parentCheckDuration },
-        "Parent comment not found"
-      );
-      return res.status(404).json({ message: "Parent comment not found" });
-    }
-
-    actionLogger.info(
-      {
-        parentId,
-        limit,
-        cursor,
-        hasCursor: !!cursor,
-        parentCheckDuration,
-      },
-      "Parent comment validated and pagination parameters parsed"
-    );
-
-    const baseQuery: Prisma.CommentFindManyArgs = {
-      where: { parentId },
-      orderBy: { createdAt: "asc" as const },
-      select: {
-        id: true,
-        content: true,
-        author: {
-          select: {
-            id: true,
-            username: true,
-            Avatar: {
-              select: {
-                id: true,
-                url: true,
-              },
-            },
-          },
-        },
-        createdAt: true,
-      },
-    };
-
-    const paginatedQuery = buildPaginatedQuery<"comment">(baseQuery, {
+    actionLogger.debug("Processing replies fetch request");
+    const serviceStartTime = Date.now();
+    const result = await CommentService.getReplies(
+      parentId,
       limit,
-      cursor,
-      cursorField: "id",
-    });
-
-    actionLogger.debug("Executing database queries for replies and count");
-    const dbStartTime = Date.now();
-    const replies = await prisma.comment.findMany(paginatedQuery);
-    const dbDuration = Date.now() - dbStartTime;
-
-    actionLogger.info(
-      {
-        repliesCount: replies.length,
-        dbDuration,
-      },
-      "Replies and count retrieved from database"
+      cursor as number
     );
-
-    const { data: repliesData, pagination } = processPaginatedResults(
-      replies,
-      limit,
-      "id"
-    );
+    const serviceDuration = Date.now() - serviceStartTime;
 
     const totalDuration = Date.now() - startTime;
     actionLogger.info(
       {
         parentId,
-        repliesReturned: replies.length,
-        hasMore: pagination.hasMore,
-        nextCursor: pagination.nextCursor,
-        parentCheckDuration,
-        dbDuration,
+        repliesReturned: result.replies.length,
+        hasMore: result.pagination.hasMore,
+        nextCursor: result.pagination.nextCursor,
+        serviceDuration,
         totalDuration,
       },
       "Replies fetched successfully"
     );
 
     return res.status(200).json({
-      data: repliesData,
-      pagination,
+      data: result.replies,
+      pagination: result.pagination,
     });
   } catch (error: unknown) {
     return handleError(error, res);

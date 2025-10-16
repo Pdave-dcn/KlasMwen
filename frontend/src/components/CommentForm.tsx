@@ -12,6 +12,7 @@ interface CommentFormProps {
   parentId?: number;
   isReply?: boolean;
   author?: string;
+  onSubmitStart?: () => void;
 }
 
 interface CommentFormData {
@@ -26,6 +27,7 @@ const CommentForm = ({
   parentId,
   isReply = false,
   author,
+  onSubmitStart,
 }: CommentFormProps) => {
   const { register, handleSubmit, watch, reset } = useForm<CommentFormData>({
     defaultValues: { content: "" },
@@ -37,6 +39,7 @@ const CommentForm = ({
   const commentMutation = useCommentMutation();
 
   const onSubmit = (data: CommentFormData) => {
+    onSubmitStart?.();
     commentMutation.mutate({
       postId,
       data: {

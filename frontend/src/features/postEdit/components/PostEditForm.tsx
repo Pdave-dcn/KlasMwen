@@ -49,7 +49,7 @@ type ResourcePostData = {
 const PostEditForm = ({ open, onClose }: PostEditFormProps) => {
   const { postToEdit } = usePostEditStore();
   const { data: post, isLoading: postLoading } = usePostEditQuery(
-    postToEdit?.id ?? ""
+    postToEdit?.id
   );
 
   const {

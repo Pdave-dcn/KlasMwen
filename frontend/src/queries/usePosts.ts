@@ -68,12 +68,11 @@ const useSinglePostQuery = (postId: string) => {
   });
 };
 
-const usePostEditQuery = (postId: string) => {
+const usePostEditQuery = (postId?: string) => {
   return useQuery({
-    queryKey: ["posts", postId, "edit"],
-    queryFn: () => {
-      return getPostForEdit(postId);
-    },
+    queryKey: postId ? ["posts", postId, "edit"] : [],
+    queryFn: () => getPostForEdit(postId!),
+    enabled: !!postId,
   });
 };
 

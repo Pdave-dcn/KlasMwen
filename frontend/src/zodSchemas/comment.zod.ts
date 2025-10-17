@@ -146,6 +146,7 @@ export type CommentCreationData = z.infer<typeof CommentCreationSchema>;
 export type ParentCommentsResponse = z.infer<
   typeof ParentCommentsResponseSchema
 >;
+export type Reply = z.infer<typeof ReplySchema>;
 export type RepliesResponse = z.infer<typeof RepliesResponseSchema>;
 
 export {

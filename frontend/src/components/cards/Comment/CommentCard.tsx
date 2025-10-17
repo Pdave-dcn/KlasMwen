@@ -7,6 +7,7 @@ import { MessageCircle } from "lucide-react";
 import CommentForm from "@/components/CommentForm";
 import LoadMoreButton from "@/components/LoadMoreButton";
 import { useParentCommentsQuery } from "@/queries/useComment";
+import { useAuthStore } from "@/stores/auth.store";
 import { formatTimeAgo } from "@/utils/dateFormatter.util";
 import { getInitials } from "@/utils/getInitials.util";
 
@@ -16,6 +17,7 @@ import { Button } from "../../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
 import { Separator } from "../../ui/separator";
 
+import CommentCardMenu from "./CommentCardMenu";
 import CommentsEmpty from "./CommentsEmpty";
 import CommentsError from "./CommentsError";
 import CommentsLoading from "./CommentsLoading";
@@ -35,10 +37,15 @@ const CommentCard = ({ postId }: CommentCardProps) => {
     refetch,
   } = useParentCommentsQuery(postId);
 
+  const navigate = useNavigate();
+
   const [openReplies, setOpenReplies] = useState<Set<number>>(new Set());
   const [openCommentForm, setOpenCommentForm] = useState<Set<number>>(
     new Set()
   );
+
+  const { user } = useAuthStore();
+  if (!user) return;
 
   const toggleReplies = (commentId: number) => {
     setOpenReplies((prev: Set<number>) => {
@@ -51,6 +58,7 @@ const CommentCard = ({ postId }: CommentCardProps) => {
       return next;
     });
   };
+
   const toggleCommentForm = (commentId: number) => {
     setOpenCommentForm((prev: Set<number>) => {
       const next = new Set(prev);
@@ -62,8 +70,6 @@ const CommentCard = ({ postId }: CommentCardProps) => {
       return next;
     });
   };
-
-  const navigate = useNavigate();
 
   const comments = data?.pages.flatMap((page) => page?.data) ?? [];
   const totals =
@@ -97,7 +103,7 @@ const CommentCard = ({ postId }: CommentCardProps) => {
           <div className="flex flex-col gap-3">
             {comments.map((comment, index) => (
               <div key={comment.id}>
-                <div className="flex space-x-3">
+                <div className="flex space-x-3 group">
                   <Avatar className="w-8 h-8">
                     <AvatarImage
                       src={comment.author.avatar.url}
@@ -128,6 +134,8 @@ const CommentCard = ({ postId }: CommentCardProps) => {
                       >
                         Reply
                       </button>
+
+                      <CommentCardMenu comment={comment} user={user} />
                     </div>
 
                     <p className="text-sm leading-relaxed">{comment.content}</p>
@@ -147,11 +155,11 @@ const CommentCard = ({ postId }: CommentCardProps) => {
                     {comment.totalReplies > 0 && (
                       <div className="mt-4">
                         <button
-                          className="text-xs text-muted-foreground flex items-center gap-4 hover:cursor-pointer group"
+                          className="text-xs text-muted-foreground flex items-center gap-4 hover:cursor-pointer"
                           onClick={() => toggleReplies(comment.id)}
                         >
                           <span className="h-[1px] w-10 bg-muted-foreground" />
-                          <span className="group-hover:underline">
+                          <span className="hover:underline">
                             {openReplies.has(comment.id)
                               ? "Hide replies"
                               : `View replies (${comment.totalReplies})`}

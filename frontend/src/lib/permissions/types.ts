@@ -21,6 +21,6 @@ export const registry = {
   },
   comments: {
     datatype: {} as CommentForPolicy,
-    action: ["create", "read", "update", "delete"],
+    action: ["create", "read", "update", "delete", "report"],
   },
 } as const;

@@ -5,6 +5,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 import CommentCard from "@/components/cards/Comment/CommentCard";
 import { useParentCommentsQuery } from "@/queries/useComment";
+import { useAuthStore } from "@/stores/auth.store";
 
 import {
   mockComments,
@@ -23,6 +24,10 @@ vi.mock("react-router-dom", async () => {
 
 vi.mock("@/queries/useComment", () => ({
   useParentCommentsQuery: vi.fn(),
+}));
+
+vi.mock("@/stores/auth.store", () => ({
+  useAuthStore: vi.fn(),
 }));
 
 vi.mock("@/components/LoadMoreButton", () => ({
@@ -47,8 +52,10 @@ vi.mock("@/components/LoadMoreButton", () => ({
 }));
 
 vi.mock("@/components/RepliesList", () => ({
-  default: ({ parentId }: { parentId: number }) => (
-    <div data-testid="replies-list">Replies for comment {parentId}</div>
+  default: ({ parentId, postId }: { parentId: number; postId: string }) => (
+    <div data-testid="replies-list">
+      Replies for comment {parentId} in post {postId}
+    </div>
   ),
 }));
 
@@ -71,6 +78,25 @@ vi.mock("@/components/cards/Comment/CommentsEmpty", () => ({
   default: () => <div data-testid="comments-empty">No comments yet</div>,
 }));
 
+vi.mock("@/components/cards/Comment/CommentCardMenu", () => ({
+  default: () => <div data-testid="comment-card-menu">Menu</div>,
+}));
+
+vi.mock("@/components/CommentForm", () => ({
+  default: ({
+    author,
+    onSubmitStart,
+  }: {
+    author: string;
+    onSubmitStart: () => void;
+  }) => (
+    <div data-testid="comment-form">
+      <span>Reply to {author}</span>
+      <button onClick={onSubmitStart}>Submit</button>
+    </div>
+  ),
+}));
+
 vi.mock("@/utils/dateFormatter.util", () => ({
   formatTimeAgo: vi.fn((date) => `${date} ago`),
 }));
@@ -81,6 +107,13 @@ vi.mock("@/utils/getInitials.util", () => ({
 
 const mockUseNavigate = vi.mocked(useNavigate);
 const mockUseParentCommentsQuery = vi.mocked(useParentCommentsQuery);
+const mockUseAuthStore = vi.mocked(useAuthStore);
+
+const mockUser = {
+  id: "current-user",
+  username: "current_user",
+  email: "user@example.com",
+};
 
 const TestWrapper = ({ children }: { children: React.ReactNode }) => {
   const queryClient = new QueryClient({
@@ -103,6 +136,28 @@ describe("CommentCard Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseNavigate.mockReturnValue(mockNavigate);
+    mockUseAuthStore.mockReturnValue({ user: mockUser });
+  });
+
+  describe("Authentication", () => {
+    it("should not render anything when user is not authenticated", () => {
+      mockUseAuthStore.mockReturnValue({ user: null });
+      mockQueryStates(mockUseParentCommentsQuery, {
+        data: {
+          pages: mockQueryData.pages,
+          pageParams: mockQueryData.pageParams,
+        },
+        isLoading: false,
+      });
+
+      const { container } = render(
+        <TestWrapper>
+          <CommentCard postId="123" />
+        </TestWrapper>
+      );
+
+      expect(container.firstChild).toBeNull();
+    });
   });
 
   describe("Loading State", () => {
@@ -211,6 +266,17 @@ describe("CommentCard Component", () => {
       expect(screen.getAllByText("Reply")).toHaveLength(2);
     });
 
+    it("should render CommentCardMenu for each comment", () => {
+      render(
+        <TestWrapper>
+          <CommentCard postId="123" />
+        </TestWrapper>
+      );
+
+      const menus = screen.getAllByTestId("comment-card-menu");
+      expect(menus).toHaveLength(2);
+    });
+
     it("should show view replies button for comments with replies", () => {
       render(
         <TestWrapper>
@@ -237,7 +303,9 @@ describe("CommentCard Component", () => {
       // Click to show replies
       fireEvent.click(viewRepliesButton);
       expect(screen.getByTestId("replies-list")).toBeInTheDocument();
-      expect(screen.getByText("Replies for comment 1")).toBeInTheDocument();
+      expect(
+        screen.getByText("Replies for comment 1 in post 123")
+      ).toBeInTheDocument();
       expect(screen.getByText("Hide replies")).toBeInTheDocument();
 
       // Click to hide replies
@@ -270,6 +338,61 @@ describe("CommentCard Component", () => {
 
       const separators = screen.getAllByRole("separator");
       expect(separators).toHaveLength(1);
+    });
+  });
+
+  describe("Reply Form Functionality", () => {
+    beforeEach(() => {
+      mockQueryStates(mockUseParentCommentsQuery, {
+        data: {
+          pages: mockQueryData.pages,
+          pageParams: mockQueryData.pageParams,
+        },
+        isLoading: false,
+      });
+    });
+
+    it("should show comment form when Reply button is clicked", () => {
+      render(
+        <TestWrapper>
+          <CommentCard postId="123" />
+        </TestWrapper>
+      );
+
+      const replyButtons = screen.getAllByText("Reply");
+      fireEvent.click(replyButtons[0]);
+
+      expect(screen.getByText("Reply to john_doe")).toBeInTheDocument();
+    });
+
+    it("should hide comment form when Reply button is clicked again", () => {
+      render(
+        <TestWrapper>
+          <CommentCard postId="123" />
+        </TestWrapper>
+      );
+
+      const replyButtons = screen.getAllByText("Reply");
+      fireEvent.click(replyButtons[0]);
+      expect(screen.getByText("Reply to john_doe")).toBeInTheDocument();
+
+      fireEvent.click(replyButtons[0]);
+      expect(screen.queryByText("Reply to john_doe")).not.toBeInTheDocument();
+    });
+
+    it("should allow multiple reply forms to be open simultaneously", () => {
+      render(
+        <TestWrapper>
+          <CommentCard postId="123" />
+        </TestWrapper>
+      );
+
+      const replyButtons = screen.getAllByText("Reply");
+      fireEvent.click(replyButtons[0]);
+      fireEvent.click(replyButtons[1]);
+
+      expect(screen.getByText("Reply to john_doe")).toBeInTheDocument();
+      expect(screen.getByText("Reply to jane_smith")).toBeInTheDocument();
     });
   });
 
@@ -449,15 +572,21 @@ describe("CommentCard Component", () => {
 
       // Click first comment's replies
       fireEvent.click(viewRepliesButtons[0]);
-      expect(screen.getByText("Replies for comment 1")).toBeInTheDocument();
       expect(
-        screen.queryByText("Replies for comment 2")
+        screen.getByText("Replies for comment 1 in post 123")
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText("Replies for comment 2 in post 123")
       ).not.toBeInTheDocument();
 
       // Click second comment's replies
       fireEvent.click(viewRepliesButtons[1]);
-      expect(screen.getByText("Replies for comment 1")).toBeInTheDocument();
-      expect(screen.getByText("Replies for comment 2")).toBeInTheDocument();
+      expect(
+        screen.getByText("Replies for comment 1 in post 123")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Replies for comment 2 in post 123")
+      ).toBeInTheDocument();
     });
   });
 });

@@ -30,7 +30,7 @@ interface PostCardMenuProps {
   user: User;
 }
 
-export function PostCardMenu({ post, user }: PostCardMenuProps) {
+const PostCardMenu = ({ post, user }: PostCardMenuProps) => {
   const navigate = useNavigate();
 
   const { openEditForm } = usePostEditStore();
@@ -97,4 +97,6 @@ export function PostCardMenu({ post, user }: PostCardMenuProps) {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+};
+
+export default PostCardMenu;

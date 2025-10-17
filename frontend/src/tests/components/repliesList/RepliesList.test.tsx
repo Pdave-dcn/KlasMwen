@@ -5,6 +5,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 import RepliesList from "@/components/RepliesList";
 import { useRepliesQuery } from "@/queries/useComment";
+import { useAuthStore } from "@/stores/auth.store";
 
 import { mockQueryStates, mockQueryData, mockQueryDataWithMore } from "./mocks";
 
@@ -18,6 +19,10 @@ vi.mock("react-router-dom", async () => {
 
 vi.mock("@/queries/useComment", () => ({
   useRepliesQuery: vi.fn(),
+}));
+
+vi.mock("@/stores/auth.store", () => ({
+  useAuthStore: vi.fn(),
 }));
 
 vi.mock("@/components/LoadMoreButton", () => ({
@@ -53,8 +58,34 @@ vi.mock("@/utils/getInitials.util", () => ({
   getInitials: vi.fn((name) => name.substring(0, 2).toUpperCase()),
 }));
 
+vi.mock("@/components/cards/Comment/CommentCardMenu", () => ({
+  default: () => <div data-testid="comment-card-menu">Menu</div>,
+}));
+
+vi.mock("@/components/CommentForm", () => ({
+  default: ({
+    author,
+    onSubmitStart,
+  }: {
+    author: string;
+    onSubmitStart: () => void;
+  }) => (
+    <div data-testid="comment-form">
+      <span>Reply to {author}</span>
+      <button onClick={onSubmitStart}>Submit</button>
+    </div>
+  ),
+}));
+
 const mockUseNavigate = vi.mocked(useNavigate);
 const mockUseRepliesQuery = vi.mocked(useRepliesQuery);
+const mockUseAuthStore = vi.mocked(useAuthStore);
+
+const mockUser = {
+  id: "current-user",
+  username: "current_user",
+  email: "user@example.com",
+};
 
 const TestWrapper = ({ children }: { children: React.ReactNode }) => {
   const queryClient = new QueryClient({
@@ -79,6 +110,27 @@ describe("RepliesList Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseNavigate.mockReturnValue(mockNavigate);
+    mockUseAuthStore.mockReturnValue({ user: mockUser });
+  });
+
+  describe("Authentication", () => {
+    it("should not render anything when user is not authenticated", () => {
+      mockUseAuthStore.mockReturnValue({ user: null });
+      mockQueryStates(mockUseRepliesQuery, {
+        isLoading: false,
+        data: mockQueryData,
+        hasNextPage: false,
+        isFetchingNextPage: false,
+      });
+
+      const { container } = render(
+        <TestWrapper>
+          <RepliesList parentId={1} postId="post123" />
+        </TestWrapper>
+      );
+
+      expect(container.firstChild).toBeNull();
+    });
   });
 
   describe("Loading State", () => {
@@ -89,7 +141,7 @@ describe("RepliesList Component", () => {
 
       render(
         <TestWrapper>
-          <RepliesList parentId={1} />
+          <RepliesList parentId={1} postId="post123" />
         </TestWrapper>
       );
 
@@ -107,7 +159,7 @@ describe("RepliesList Component", () => {
 
       render(
         <TestWrapper>
-          <RepliesList parentId={1} />
+          <RepliesList parentId={1} postId="post123" />
         </TestWrapper>
       );
 
@@ -127,7 +179,7 @@ describe("RepliesList Component", () => {
 
       render(
         <TestWrapper>
-          <RepliesList parentId={1} />
+          <RepliesList parentId={1} postId="post123" />
         </TestWrapper>
       );
 
@@ -145,7 +197,7 @@ describe("RepliesList Component", () => {
 
       render(
         <TestWrapper>
-          <RepliesList parentId={1} />
+          <RepliesList parentId={1} postId="post123" />
         </TestWrapper>
       );
 
@@ -163,7 +215,7 @@ describe("RepliesList Component", () => {
 
       render(
         <TestWrapper>
-          <RepliesList parentId={1} />
+          <RepliesList parentId={1} postId="post123" />
         </TestWrapper>
       );
 
@@ -181,7 +233,7 @@ describe("RepliesList Component", () => {
 
       render(
         <TestWrapper>
-          <RepliesList parentId={1} />
+          <RepliesList parentId={1} postId="post123" />
         </TestWrapper>
       );
 
@@ -199,12 +251,30 @@ describe("RepliesList Component", () => {
 
       render(
         <TestWrapper>
-          <RepliesList parentId={1} />
+          <RepliesList parentId={1} postId="post123" />
         </TestWrapper>
       );
 
       const separators = screen.getAllByRole("separator");
       expect(separators).toHaveLength(1);
+    });
+
+    it("should render CommentCardMenu for each reply", () => {
+      mockQueryStates(mockUseRepliesQuery, {
+        isLoading: false,
+        data: mockQueryData,
+        hasNextPage: false,
+        isFetchingNextPage: false,
+      });
+
+      render(
+        <TestWrapper>
+          <RepliesList parentId={1} postId="post123" />
+        </TestWrapper>
+      );
+
+      const menus = screen.getAllByTestId("comment-card-menu");
+      expect(menus).toHaveLength(2);
     });
   });
 
@@ -219,7 +289,7 @@ describe("RepliesList Component", () => {
 
       render(
         <TestWrapper>
-          <RepliesList parentId={1} />
+          <RepliesList parentId={1} postId="post123" />
         </TestWrapper>
       );
 
@@ -241,7 +311,7 @@ describe("RepliesList Component", () => {
 
       render(
         <TestWrapper>
-          <RepliesList parentId={1} />
+          <RepliesList parentId={1} postId="post123" />
         </TestWrapper>
       );
 
@@ -251,6 +321,72 @@ describe("RepliesList Component", () => {
       await waitFor(() => {
         expect(mockNavigate).toHaveBeenCalledWith("/profile/user2");
       });
+    });
+  });
+
+  describe("Reply Form Functionality", () => {
+    it("should show comment form when Reply button is clicked", () => {
+      mockQueryStates(mockUseRepliesQuery, {
+        isLoading: false,
+        data: mockQueryData,
+        hasNextPage: false,
+        isFetchingNextPage: false,
+      });
+
+      render(
+        <TestWrapper>
+          <RepliesList parentId={1} postId="post123" />
+        </TestWrapper>
+      );
+
+      const replyButtons = screen.getAllByText("Reply");
+      fireEvent.click(replyButtons[0]);
+
+      expect(screen.getByText("Reply to john_doe")).toBeInTheDocument();
+    });
+
+    it("should hide comment form when Reply button is clicked again", () => {
+      mockQueryStates(mockUseRepliesQuery, {
+        isLoading: false,
+        data: mockQueryData,
+        hasNextPage: false,
+        isFetchingNextPage: false,
+      });
+
+      render(
+        <TestWrapper>
+          <RepliesList parentId={1} postId="post123" />
+        </TestWrapper>
+      );
+
+      const replyButtons = screen.getAllByText("Reply");
+      fireEvent.click(replyButtons[0]);
+      expect(screen.getByText("Reply to john_doe")).toBeInTheDocument();
+
+      fireEvent.click(replyButtons[0]);
+      expect(screen.queryByText("Reply to john_doe")).not.toBeInTheDocument();
+    });
+
+    it("should allow multiple reply forms to be open simultaneously", () => {
+      mockQueryStates(mockUseRepliesQuery, {
+        isLoading: false,
+        data: mockQueryData,
+        hasNextPage: false,
+        isFetchingNextPage: false,
+      });
+
+      render(
+        <TestWrapper>
+          <RepliesList parentId={1} postId="post123" />
+        </TestWrapper>
+      );
+
+      const replyButtons = screen.getAllByText("Reply");
+      fireEvent.click(replyButtons[0]);
+      fireEvent.click(replyButtons[1]);
+
+      expect(screen.getByText("Reply to john_doe")).toBeInTheDocument();
+      expect(screen.getByText("Reply to jane_smith")).toBeInTheDocument();
     });
   });
 
@@ -266,7 +402,7 @@ describe("RepliesList Component", () => {
 
       render(
         <TestWrapper>
-          <RepliesList parentId={1} />
+          <RepliesList parentId={1} postId="post123" />
         </TestWrapper>
       );
 
@@ -284,7 +420,7 @@ describe("RepliesList Component", () => {
 
       render(
         <TestWrapper>
-          <RepliesList parentId={1} />
+          <RepliesList parentId={1} postId="post123" />
         </TestWrapper>
       );
 
@@ -302,7 +438,7 @@ describe("RepliesList Component", () => {
 
       render(
         <TestWrapper>
-          <RepliesList parentId={1} />
+          <RepliesList parentId={1} postId="post123" />
         </TestWrapper>
       );
 
@@ -323,7 +459,7 @@ describe("RepliesList Component", () => {
 
       render(
         <TestWrapper>
-          <RepliesList parentId={1} />
+          <RepliesList parentId={1} postId="post123" />
         </TestWrapper>
       );
 
@@ -344,7 +480,7 @@ describe("RepliesList Component", () => {
 
       render(
         <TestWrapper>
-          <RepliesList parentId={parentId} />
+          <RepliesList parentId={parentId} postId="post123" />
         </TestWrapper>
       );
 

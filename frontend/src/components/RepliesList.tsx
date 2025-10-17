@@ -6,9 +6,11 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useRepliesQuery } from "@/queries/useComment";
+import { useAuthStore } from "@/stores/auth.store";
 import { formatTimeAgo } from "@/utils/dateFormatter.util";
 import { getInitials } from "@/utils/getInitials.util";
 
+import CommentCardMenu from "./cards/Comment/CommentCardMenu";
 import CommentForm from "./CommentForm";
 import LoadMoreButton from "./LoadMoreButton";
 import { Separator } from "./ui/separator";
@@ -16,7 +18,6 @@ import { Separator } from "./ui/separator";
 interface RepliesListProps {
   parentId: number;
   postId: string;
-  depth?: number;
 }
 
 const RepliesList = ({ parentId, postId }: RepliesListProps) => {
@@ -48,6 +49,9 @@ const RepliesList = ({ parentId, postId }: RepliesListProps) => {
   } = useRepliesQuery(parentId);
 
   const replies = data?.pages.flatMap((p) => p.data) ?? [];
+
+  const { user } = useAuthStore();
+  if (!user) return;
 
   const handleUserClick = async (userId: string) => {
     await navigate(`/profile/${userId}`);
@@ -96,6 +100,8 @@ const RepliesList = ({ parentId, postId }: RepliesListProps) => {
                   >
                     Reply
                   </button>
+
+                  <CommentCardMenu comment={reply} user={user} />
                 </div>
 
                 <div className="flex items-center space-x-1">

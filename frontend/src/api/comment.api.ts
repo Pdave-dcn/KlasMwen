@@ -59,4 +59,13 @@ const createComment = async (postId: string, data: CommentCreationData) => {
   }
 };
 
-export { getPostParentComments, getParentCommentReplies, createComment };
+const deleteComment = async (commentId: number) => {
+  await api.delete(`/comments/${commentId}`);
+};
+
+export {
+  getPostParentComments,
+  getParentCommentReplies,
+  createComment,
+  deleteComment,
+};

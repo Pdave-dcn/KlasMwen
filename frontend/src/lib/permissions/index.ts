@@ -47,6 +47,7 @@ export const POLICY: PolicyMap = {
       read: true,
       update: (u, c) => u.id === c.author.id,
       delete: true,
+      report: true,
     },
   },
   STUDENT: {
@@ -62,6 +63,7 @@ export const POLICY: PolicyMap = {
       read: true,
       update: (u, c) => u.id === c.author.id,
       delete: (u, c) => u.id === c.author.id,
+      report: (u, c) => u.id !== c.author.id,
     },
   },
 };

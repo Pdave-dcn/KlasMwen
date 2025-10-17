@@ -13,7 +13,7 @@ import { formatTimeAgo } from "@/utils/dateFormatter.util";
 import { getTypeDisplayName } from "@/utils/post.util";
 import type { Post } from "@/zodSchemas/post.zod";
 
-import { PostCardMenu } from "./PostCardMenu";
+import PostCardMenu from "./PostCardMenu";
 
 interface PostCardProps {
   post: Post;

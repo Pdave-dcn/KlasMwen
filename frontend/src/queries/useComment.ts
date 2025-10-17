@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import {
   createComment,
+  deleteComment,
   getParentCommentReplies,
   getPostParentComments,
 } from "@/api/comment.api";
@@ -42,7 +43,7 @@ const useRepliesQuery = (parentId: number, limit = 10) => {
   });
 };
 
-const useCommentMutation = () => {
+const useCreateCommentMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -67,4 +68,26 @@ const useCommentMutation = () => {
   });
 };
 
-export { useParentCommentsQuery, useRepliesQuery, useCommentMutation };
+const useDeleteCommentMutation = (commentId: number) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => deleteComment(commentId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["comments"],
+      });
+    },
+    onError: (error) => {
+      console.error("Failed to delete comment:", error);
+      toast.error("Failed to delete comment. Please try again.");
+    },
+  });
+};
+
+export {
+  useParentCommentsQuery,
+  useRepliesQuery,
+  useCreateCommentMutation,
+  useDeleteCommentMutation,
+};

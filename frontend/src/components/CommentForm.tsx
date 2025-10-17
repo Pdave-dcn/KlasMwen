@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { Send } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { useCommentMutation } from "@/queries/useComment";
+import { useCreateCommentMutation } from "@/queries/useComment";
 
 interface CommentFormProps {
   postId: string;
@@ -36,7 +36,7 @@ const CommentForm = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const content = watch("content") ?? "";
 
-  const commentMutation = useCommentMutation();
+  const commentMutation = useCreateCommentMutation();
 
   const onSubmit = (data: CommentFormData) => {
     onSubmitStart?.();

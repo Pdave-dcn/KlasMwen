@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 import PostView from "./pages/PostView";
 import Profile from "./pages/Profile";
 import ProfileEdit from "./pages/ProfileEdit";
+import Search from "./pages/Search";
 import { useAuthStore } from "./stores/auth.store";
 import { AuthVerificationResponseSchema } from "./zodSchemas/auth.zod";
 
@@ -112,6 +113,15 @@ const App = () => {
           element={
             <ProtectedRoute>
               <ProfileEdit />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/search"
+          element={
+            <ProtectedRoute>
+              <Search />
             </ProtectedRoute>
           }
         />

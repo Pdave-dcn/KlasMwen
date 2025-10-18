@@ -14,11 +14,6 @@ export const searchSchemas = {
         example: null,
         description: "Cursor for the next page (null if no more results)",
       },
-      total: {
-        type: "integer",
-        example: 2,
-        description: "Number of posts returned in current page",
-      },
     },
   },
 

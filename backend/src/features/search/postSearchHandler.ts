@@ -50,7 +50,12 @@ const handlePostSearch = async (
           select: {
             id: true,
             username: true,
-            avatarUrl: true,
+            Avatar: {
+              select: {
+                id: true,
+                url: true,
+              },
+            },
           },
         },
         _count: { select: { comments: true, likes: true } },
@@ -62,6 +67,7 @@ const handlePostSearch = async (
       }),
       orderBy: [{ createdAt: "desc" }],
     }),
+
     prisma.post.count({
       where: searchCondition,
     }),

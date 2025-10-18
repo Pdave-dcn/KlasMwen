@@ -47,15 +47,7 @@ const HomePage = () => {
             {/* Posts Feed */}
             <div className="space-y-6">
               {posts?.pages.flatMap((page) =>
-                page.data.map((post) => (
-                  <PostCard
-                    key={post.id}
-                    post={post}
-                    onLike={(id) => console.log("Like post:", id)}
-                    onBookmark={(id) => console.log("Bookmark post:", id)}
-                    onComment={(id) => console.log("Comment on post:", id)}
-                  />
-                ))
+                page.data.map((post) => <PostCard key={post.id} post={post} />)
               )}
             </div>
 

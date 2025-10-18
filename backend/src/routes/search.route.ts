@@ -7,7 +7,7 @@ const router = express.Router();
 
 /**
  * @openapi
- * /search/posts:
+ * /search:
  *   get:
  *     summary: Search for posts
  *     description: Search for posts by title and content with cursor-based pagination
@@ -49,6 +49,6 @@ const router = express.Router();
  *       500:
  *         description: Internal Server Error
  */
-router.get("/search/posts", generalApiLimiter, searchPosts);
+router.get("/search", generalApiLimiter, searchPosts);
 
 export default router;

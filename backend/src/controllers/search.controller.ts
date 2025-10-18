@@ -44,9 +44,7 @@ const searchPosts = async (req: Request, res: Response) => {
     const validationDuration = Date.now() - validationStartTime;
 
     actionLogger.debug("Sanitizing search term");
-    const sanitizationStartTime = Date.now();
     const sanitizedSearchTerm = searchTerm.replace(/[%_]/g, "\\$&");
-    const sanitizationDuration = Date.now() - sanitizationStartTime;
 
     actionLogger.info(
       {
@@ -57,7 +55,6 @@ const searchPosts = async (req: Request, res: Response) => {
         cursor,
         hasCursor: !!cursor,
         validationDuration,
-        sanitizationDuration,
       },
       "Search parameters validated and sanitized"
     );
@@ -81,40 +78,29 @@ const searchPosts = async (req: Request, res: Response) => {
     );
 
     actionLogger.debug("Transforming post data");
-    const transformStartTime = Date.now();
     const transformedPosts = posts.map(
       transformPostTagsToFlat as (post: Partial<RawPost>) => TransformedPost
     );
-    const transformDuration = Date.now() - transformStartTime;
 
     actionLogger.debug("Processing pagination results");
-    const paginationStartTime = Date.now();
     const { data: postsData, pagination } = processPaginatedResults(
       transformedPosts,
       limit,
       "id"
     );
-    const paginationDuration = Date.now() - paginationStartTime;
 
     const totalDuration = Date.now() - startTime;
     actionLogger.info(
       {
         searchTerm,
         sanitizedSearchTerm,
-        searchTermLength: searchTerm.length,
         limit,
         cursor,
-        rawPostsFound: posts.length,
         totalCount,
-        transformedPostsCount: transformedPosts.length,
-        currentPageSize: postsData.length,
         hasMore: pagination.hasMore,
         nextCursor: pagination.nextCursor,
         validationDuration,
-        sanitizationDuration,
         searchDuration,
-        transformDuration,
-        paginationDuration,
         totalDuration,
       },
       "Post search completed successfully"
@@ -125,7 +111,6 @@ const searchPosts = async (req: Request, res: Response) => {
       pagination: {
         hasMore: pagination.hasMore,
         nextCursor: pagination.nextCursor,
-        total: postsData.length,
       },
       meta: {
         searchTerm,

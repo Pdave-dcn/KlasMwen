@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { getPostById } from "../../../controllers/post.controller";
 import prisma from "../../../core/config/db";
 import { handleError } from "../../../core/error";
+import { PostNotFoundError } from "../../../core/error/custom/post.error";
 
 import { createAuthenticatedUser } from "./shared/helpers";
 import { createMockRequest, createMockResponse } from "./shared/mocks";
@@ -108,7 +109,7 @@ describe("getPostById", () => {
     expect(mockRes.json).toHaveBeenCalled();
   });
 
-  it("should return 404 if post is not found", async () => {
+  it("should call handleError with PostNotFoundError if post is not found", async () => {
     mockReq.user = createAuthenticatedUser();
     mockReq.params = { id: "60676309-9958-4a6a-b4bc-463199dab4ee" };
 
@@ -116,8 +117,9 @@ describe("getPostById", () => {
 
     await getPostById(mockReq, mockRes);
 
-    expect(handleError).not.toHaveBeenCalled();
-    expect(mockRes.status).toHaveBeenCalledWith(404);
-    expect(mockRes.json).toHaveBeenCalledWith({ message: "Post not found" });
+    expect(handleError).toHaveBeenCalledWith(
+      expect.any(PostNotFoundError),
+      mockRes
+    );
   });
 });

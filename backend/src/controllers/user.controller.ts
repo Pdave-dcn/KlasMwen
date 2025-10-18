@@ -3,7 +3,7 @@ import prisma from "../core/config/db.js";
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index";
 import CommentService from "../features/comments/commentService.js";
-import PostService from "../features/posts/postService.js";
+import PostService from "../features/posts/service/PostService.js";
 import ensureUserExists from "../features/user/isUserExistsHandler.js";
 import { ensureAuthenticated } from "../utils/auth.util.js";
 import createActionLogger from "../utils/logger.util.js";

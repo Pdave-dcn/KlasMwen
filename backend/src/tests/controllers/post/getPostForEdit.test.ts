@@ -8,6 +8,7 @@ import {
   AuthenticationError,
   AuthorizationError,
 } from "../../../core/error/custom/auth.error";
+import { PostNotFoundError } from "../../../core/error/custom/post.error";
 
 import { createAuthenticatedUser } from "./shared/helpers";
 import { createMockRequest, createMockResponse } from "./shared/mocks";
@@ -130,7 +131,7 @@ describe("getPostForEdit", () => {
     );
   });
 
-  it("should return 404 if the post is not found", async () => {
+  it("should call handleError with PostNotFoundError if the post is not found", async () => {
     mockReq.user = createAuthenticatedUser();
     mockReq.params = { id: mockPostId };
 
@@ -138,8 +139,10 @@ describe("getPostForEdit", () => {
 
     await getPostForEdit(mockReq, mockRes);
 
-    expect(mockRes.status).toHaveBeenCalledWith(404);
-    expect(mockRes.json).toHaveBeenCalledWith({ message: "Post not found" });
+    expect(handleError).toHaveBeenCalledWith(
+      expect.any(PostNotFoundError),
+      mockRes
+    );
   });
 
   it("should call handleError with AuthorizationError if the user is not the author", async () => {

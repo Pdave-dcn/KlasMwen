@@ -8,9 +8,9 @@ import {
 } from "../features/media/cloudinaryServices.js";
 import createEditResponse from "../features/posts/createEditResponse.js";
 import handlePostCreation from "../features/posts/postCreationHandler.js";
-import PostService from "../features/posts/postService.js";
 import transformPostTagsToFlat from "../features/posts/postTagFlattener.js";
 import handleRequestValidation from "../features/posts/requestPostParser.js";
+import PostService from "../features/posts/service/PostService.js";
 import {
   checkAdminAuth,
   checkPermission,
@@ -202,15 +202,8 @@ const getPostById = async (req: Request, res: Response) => {
 
     actionLogger.debug("Processing user post fetching by ID request");
     const serviceStartTime = Date.now();
-    const post = await PostService.getPostById(
-      postId,
-      startTime,
-      actionLogger,
-      res,
-      user.id
-    );
+    const post = await PostService.getPostById(postId, user.id);
     const serviceDuration = Date.now() - serviceStartTime;
-    if (!post) return;
 
     const totalDuration = Date.now() - startTime;
 
@@ -257,18 +250,6 @@ const getPostForEdit = async (req: Request, res: Response) => {
     const serviceStartTime = Date.now();
     const post = await PostService.getPostForEdit(postId);
     const serviceDuration = Date.now() - serviceStartTime;
-
-    if (!post) {
-      actionLogger.warn(
-        {
-          postId,
-          userId: user.id,
-          serviceDuration,
-        },
-        "Post not found for edit"
-      );
-      return res.status(404).json({ message: "Post not found" });
-    }
 
     actionLogger.info(
       {
@@ -332,14 +313,6 @@ const getPostMetadata = async (req: Request, res: Response) => {
     const serviceStartTime = Date.now();
     const post = await PostService.getPostMetadata(postId);
     const serviceDuration = Date.now() - serviceStartTime;
-
-    if (!post) {
-      actionLogger.warn(
-        { postId, serviceDuration },
-        "Post not found for metadata request"
-      );
-      return res.status(404).json({ message: "Post not found" });
-    }
 
     const totalDuration = Date.now() - startTime;
     actionLogger.info(

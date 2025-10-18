@@ -7,6 +7,7 @@ import {
   AuthenticationError,
   AuthorizationError,
 } from "../../../core/error/custom/auth.error";
+import { PostUpdateFailedError } from "../../../core/error/custom/post.error";
 
 import { createAuthenticatedUser } from "./shared/helpers";
 import { createMockRequest, createMockResponse } from "./shared/mocks";
@@ -501,7 +502,7 @@ describe("updatePost controller", () => {
   });
 
   describe("Service Layer Errors", () => {
-    it("should return 400 when PostService.handlePostUpdate returns null", async () => {
+    it("should  call handleError with PostUpdateFailedError if post update failed", async () => {
       mockReq.user = createAuthenticatedUser({ id: mockUserId });
       mockReq.params = { id: mockPostId };
       mockReq.body = mockRequestData;
@@ -525,10 +526,10 @@ describe("updatePost controller", () => {
 
       await updatePost(mockReq, mockRes);
 
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: "Unexpected error: post update failed.",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(PostUpdateFailedError),
+        mockRes
+      );
     });
   });
 

@@ -1,7 +1,7 @@
 import prisma from "../core/config/db.js";
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index.js";
-import PostService from "../features/posts/postService.js";
+import PostService from "../features/posts/service/PostService.js";
 import { ensureAuthenticated } from "../utils/auth.util.js";
 import createActionLogger from "../utils/logger.util.js";
 import { uuidPaginationSchema } from "../utils/pagination.util.js";

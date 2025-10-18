@@ -117,7 +117,12 @@ describe("Search Controller", () => {
             select: {
               id: true,
               username: true,
-              avatarUrl: true,
+              Avatar: {
+                select: {
+                  id: true,
+                  url: true,
+                },
+              },
             },
           },
           _count: { select: { comments: true, likes: true } },
@@ -151,7 +156,6 @@ describe("Search Controller", () => {
         pagination: {
           hasMore: false,
           nextCursor: null,
-          total: 2,
         },
         meta: {
           searchTerm,
@@ -297,7 +301,6 @@ describe("Search Controller", () => {
           pagination: {
             hasMore: true,
             nextCursor: "post-4",
-            total: expect.any(Number),
           },
           meta: expect.any(Object),
         });
@@ -337,7 +340,6 @@ describe("Search Controller", () => {
           pagination: {
             hasMore: false,
             nextCursor: null,
-            total: expect.any(Number),
           },
           meta: expect.any(Object),
         });
@@ -469,7 +471,6 @@ describe("Search Controller", () => {
           pagination: {
             hasMore: false,
             nextCursor: null,
-            total: 0,
           },
           meta: {
             searchTerm,

@@ -104,19 +104,23 @@ const RepliesList = ({ parentId, postId }: RepliesListProps) => {
                   <CommentCardMenu comment={reply} user={user} />
                 </div>
 
-                <div className="flex items-center space-x-1">
-                  {reply.mentionedUser && (
-                    <Button
-                      variant="link"
-                      size="sm"
-                      onClick={() =>
-                        handleUserClick(reply.mentionedUser?.id ?? "")
-                      }
-                    >
-                      @{reply.mentionedUser.username}
-                    </Button>
-                  )}
-                  <p className="text-sm leading-relaxed">{reply.content}</p>
+                <div>
+                  <p className="text-sm leading-relaxed">
+                    {reply.mentionedUser && (
+                      <Button
+                        variant="link"
+                        size="sm"
+                        onClick={() =>
+                          handleUserClick(reply.mentionedUser?.id ?? "")
+                        }
+                        className="mr-1"
+                      >
+                        @{reply.mentionedUser.username}
+                      </Button>
+                    )}
+
+                    {reply.content}
+                  </p>
                 </div>
 
                 {openCommentForm.has(reply.id) && (

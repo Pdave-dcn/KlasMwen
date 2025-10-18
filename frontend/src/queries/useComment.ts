@@ -30,7 +30,7 @@ const useParentCommentsQuery = (postId: string, limit = 10) => {
 
 const useRepliesQuery = (parentId: number, limit = 10) => {
   return useInfiniteQuery({
-    queryKey: ["comments", "replies"],
+    queryKey: ["comments", parentId, "replies"],
     queryFn: ({ pageParam }: { pageParam?: string | number }) => {
       return getParentCommentReplies(parentId, pageParam as number, limit);
     },

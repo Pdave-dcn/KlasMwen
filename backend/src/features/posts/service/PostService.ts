@@ -82,7 +82,6 @@ class PostService {
     const where = { authorId: userId };
     const result = await this.getPostsAndProcess(where, limit, userId, cursor);
 
-    // Add total count for user posts
     const totalCount = await PostRepository.countPosts(where);
 
     return {
@@ -104,6 +103,46 @@ class PostService {
   ): Promise<PaginatedPostsResponse> {
     const where = { authorId: userId, content: null };
     return this.getPostsAndProcess(where, limit, userId, cursor);
+  }
+
+  static async getPostsBySearchTerm(
+    userId: string,
+    searchTerm: string,
+    limit: number,
+    cursor?: string
+  ): Promise<PaginatedPostsResponse> {
+    const searchCondition: Prisma.PostWhereInput = {
+      OR: [
+        {
+          title: {
+            contains: searchTerm,
+            mode: "insensitive",
+          },
+        },
+        {
+          content: {
+            contains: searchTerm,
+            mode: "insensitive",
+          },
+        },
+      ],
+    };
+
+    const result = await this.getPostsAndProcess(
+      searchCondition,
+      limit,
+      userId,
+      cursor
+    );
+    const totalCount = await PostRepository.countPosts(searchCondition);
+
+    return {
+      ...result,
+      pagination: {
+        ...result.pagination,
+        totalPosts: totalCount,
+      },
+    };
   }
 
   /**

@@ -1,17 +1,11 @@
 /* eslint-disable max-lines-per-function*/
-import { z } from "zod";
-
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index";
-import transformPostTagsToFlat from "../features/posts/postTagFlattener.js";
-import handlePostSearch from "../features/search/postSearchHandler.js";
+import PostService from "../features/posts/service/PostService.js";
+import { ensureAuthenticated } from "../utils/auth.util.js";
 import createActionLogger from "../utils/logger.util.js";
-import {
-  processPaginatedResults,
-  uuidPaginationSchema,
-} from "../utils/pagination.util";
+import { SearchPostsSchema } from "../zodSchemas/search.zod.js";
 
-import type { RawPost, TransformedPost } from "../types/postTypes";
 import type { Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "SearchController" });
@@ -23,25 +17,14 @@ const searchPosts = async (req: Request, res: Response) => {
     actionLogger.info("Post search attempt started");
     const startTime = Date.now();
 
-    actionLogger.debug("Validating search parameters");
-    const validationStartTime = Date.now();
-    const searchPostsSchema = uuidPaginationSchema.extend({
-      search: z
-        .string()
-        .trim()
-        .min(2, "Search term must be at least 2 characters long")
-        .max(100, "Search term must be less than 100 characters")
-        .refine((val) => val.length > 0, {
-          message: "Search term is required",
-        }),
-    });
+    const user = ensureAuthenticated(req);
 
+    actionLogger.debug("Validating search parameters");
     const {
       limit,
       cursor,
       search: searchTerm,
-    } = searchPostsSchema.parse(req.query);
-    const validationDuration = Date.now() - validationStartTime;
+    } = SearchPostsSchema.parse(req.query);
 
     actionLogger.debug("Sanitizing search term");
     const sanitizedSearchTerm = searchTerm.replace(/[%_]/g, "\\$&");
@@ -50,44 +33,21 @@ const searchPosts = async (req: Request, res: Response) => {
       {
         searchTerm,
         sanitizedSearchTerm,
-        searchTermLength: searchTerm.length,
         limit,
-        cursor,
         hasCursor: !!cursor,
-        validationDuration,
       },
       "Search parameters validated and sanitized"
     );
 
     actionLogger.debug("Executing post search");
-    const searchStartTime = Date.now();
-    const { posts, totalCount } = await handlePostSearch(
+    const serviceStartTime = Date.now();
+    const result = await PostService.getPostsBySearchTerm(
+      user.id,
       sanitizedSearchTerm,
       limit,
       cursor as string | undefined
     );
-    const searchDuration = Date.now() - searchStartTime;
-
-    actionLogger.info(
-      {
-        rawPostsFound: posts.length,
-        totalCount,
-        searchDuration,
-      },
-      "Post search completed"
-    );
-
-    actionLogger.debug("Transforming post data");
-    const transformedPosts = posts.map(
-      transformPostTagsToFlat as (post: Partial<RawPost>) => TransformedPost
-    );
-
-    actionLogger.debug("Processing pagination results");
-    const { data: postsData, pagination } = processPaginatedResults(
-      transformedPosts,
-      limit,
-      "id"
-    );
+    const serviceDuration = Date.now() - serviceStartTime;
 
     const totalDuration = Date.now() - startTime;
     actionLogger.info(
@@ -96,26 +56,25 @@ const searchPosts = async (req: Request, res: Response) => {
         sanitizedSearchTerm,
         limit,
         cursor,
-        totalCount,
-        hasMore: pagination.hasMore,
-        nextCursor: pagination.nextCursor,
-        validationDuration,
-        searchDuration,
+        totalCount: result.pagination.totalPosts,
+        hasMore: result.pagination.hasMore,
+        nextCursor: result.pagination.nextCursor,
+        serviceDuration,
         totalDuration,
       },
       "Post search completed successfully"
     );
 
     return res.status(200).json({
-      data: postsData,
+      data: result.posts,
       pagination: {
-        hasMore: pagination.hasMore,
-        nextCursor: pagination.nextCursor,
+        hasMore: result.pagination.hasMore,
+        nextCursor: result.pagination.nextCursor,
       },
       meta: {
         searchTerm,
-        resultsFound: totalCount,
-        currentPageSize: postsData.length,
+        resultsFound: result.pagination.totalPosts,
+        currentPageSize: result.posts.length,
       },
     });
   } catch (error: unknown) {

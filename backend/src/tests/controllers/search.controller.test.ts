@@ -1,9 +1,37 @@
+import { Role } from "@prisma/client";
 import { Request, Response } from "express";
 import { it, expect, describe, vi, beforeEach } from "vitest";
 
 import { searchPosts } from "../../controllers/search.controller.js";
 import prisma from "../../core/config/db.js";
 import { handleError } from "../../core/error/index";
+
+vi.mock("../../core/config/logger.js", () => ({
+  createLogger: vi.fn(() => ({
+    child: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  })),
+  logger: {
+    child: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  },
+}));
 
 vi.mock("../../core/error/index");
 
@@ -13,8 +41,22 @@ vi.mock("../../core/config/db.js", () => ({
       findMany: vi.fn(),
       count: vi.fn(),
     },
+    bookmark: {
+      findMany: vi.fn(),
+    },
+    like: {
+      findMany: vi.fn(),
+    },
   },
 }));
+
+const createAuthenticatedUser = (overrides = {}) => ({
+  id: "123e4567-e89b-12d3-a456-426614174000",
+  username: "testUser",
+  email: "test@example.com",
+  role: "STUDENT" as Role,
+  ...overrides,
+});
 
 describe("Search Controller", () => {
   let mockRequest: Partial<Request>;
@@ -33,6 +75,110 @@ describe("Search Controller", () => {
       status: vi.fn(() => mockResponse as Response),
       json: vi.fn(),
     };
+  });
+
+  describe("Authentication", () => {
+    it("should call handleError when user is not authenticated", async () => {
+      mockRequest = {
+        query: {
+          search: "javascript",
+          limit: "10",
+        },
+        user: undefined,
+      };
+
+      await searchPosts(mockRequest as Request, mockResponse as Response);
+
+      expect(handleError).toHaveBeenCalled();
+      expect(prisma.post.findMany).not.toHaveBeenCalled();
+      expect(prisma.post.count).not.toHaveBeenCalled();
+    });
+
+    it("should call handleError when user object is missing id field", async () => {
+      mockRequest = {
+        query: {
+          search: "javascript",
+          limit: "10",
+        },
+        user: {
+          username: "testUser",
+          email: "test@example.com",
+        } as any,
+      };
+
+      await searchPosts(mockRequest as Request, mockResponse as Response);
+
+      expect(handleError).toHaveBeenCalled();
+      expect(prisma.post.findMany).not.toHaveBeenCalled();
+    });
+
+    it("should call handleError when user id is not a string", async () => {
+      mockRequest = {
+        query: {
+          search: "javascript",
+          limit: "10",
+        },
+        user: {
+          id: 123,
+          username: "testUser",
+          email: "test@example.com",
+        } as any,
+      };
+
+      await searchPosts(mockRequest as Request, mockResponse as Response);
+
+      expect(handleError).toHaveBeenCalled();
+      expect(prisma.post.findMany).not.toHaveBeenCalled();
+    });
+
+    it("should call handleError when user id is empty string", async () => {
+      mockRequest = {
+        query: {
+          search: "javascript",
+          limit: "10",
+        },
+        user: createAuthenticatedUser({ id: "" }),
+      };
+
+      await searchPosts(mockRequest as Request, mockResponse as Response);
+
+      expect(handleError).toHaveBeenCalled();
+      expect(prisma.post.findMany).not.toHaveBeenCalled();
+    });
+
+    it("should call handleError when user id is whitespace only", async () => {
+      mockRequest = {
+        query: {
+          search: "javascript",
+          limit: "10",
+        },
+        user: createAuthenticatedUser({ id: "   " }),
+      };
+
+      await searchPosts(mockRequest as Request, mockResponse as Response);
+
+      expect(handleError).toHaveBeenCalled();
+      expect(prisma.post.findMany).not.toHaveBeenCalled();
+    });
+
+    it("should proceed with search when user is properly authenticated", async () => {
+      mockRequest = {
+        query: {
+          search: "javascript",
+          limit: "10",
+        },
+        user: createAuthenticatedUser(),
+      };
+
+      (prisma.post.findMany as any).mockResolvedValue([]);
+      (prisma.post.count as any).mockResolvedValue(0);
+
+      await searchPosts(mockRequest as Request, mockResponse as Response);
+
+      expect(handleError).not.toHaveBeenCalled();
+      expect(prisma.post.findMany).toHaveBeenCalled();
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+    });
   });
 
   describe("SearchPosts", () => {
@@ -80,7 +226,12 @@ describe("Search Controller", () => {
           search: searchTerm,
           limit: "10",
         },
+        user: createAuthenticatedUser(),
       };
+
+      // Handling bookmark and like states
+      vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
       (prisma.post.findMany as any).mockResolvedValue([...mockPosts]);
       (prisma.post.count as any).mockResolvedValue(2);
@@ -128,7 +279,7 @@ describe("Search Controller", () => {
           _count: { select: { comments: true, likes: true } },
         },
         take: 11,
-        orderBy: [{ createdAt: "desc" }],
+        orderBy: { createdAt: "desc" },
       });
 
       expect(prisma.post.count).toHaveBeenCalledWith({
@@ -171,6 +322,7 @@ describe("Search Controller", () => {
           query: {
             limit: "10",
           },
+          user: createAuthenticatedUser(),
         };
 
         await searchPosts(mockRequest as Request, mockResponse as Response);
@@ -186,6 +338,7 @@ describe("Search Controller", () => {
             search: "",
             limit: "10",
           },
+          user: createAuthenticatedUser(),
         };
 
         await searchPosts(mockRequest as Request, mockResponse as Response);
@@ -200,6 +353,7 @@ describe("Search Controller", () => {
             search: "   ",
             limit: "10",
           },
+          user: createAuthenticatedUser(),
         };
 
         await searchPosts(mockRequest as Request, mockResponse as Response);
@@ -214,6 +368,7 @@ describe("Search Controller", () => {
             search: "a",
             limit: "10",
           },
+          user: createAuthenticatedUser(),
         };
 
         await searchPosts(mockRequest as Request, mockResponse as Response);
@@ -228,6 +383,7 @@ describe("Search Controller", () => {
             search: "a".repeat(101),
             limit: "10",
           },
+          user: createAuthenticatedUser(),
         };
 
         await searchPosts(mockRequest as Request, mockResponse as Response);
@@ -243,6 +399,7 @@ describe("Search Controller", () => {
             limit: "10",
             cursor: 123 as any,
           },
+          user: createAuthenticatedUser(),
         };
 
         await searchPosts(mockRequest as Request, mockResponse as Response);
@@ -257,6 +414,7 @@ describe("Search Controller", () => {
             search: 123 as any,
             limit: "10",
           },
+          user: createAuthenticatedUser(),
         };
 
         await searchPosts(mockRequest as Request, mockResponse as Response);
@@ -289,7 +447,12 @@ describe("Search Controller", () => {
             search: searchTerm,
             limit: limit.toString(),
           },
+          user: createAuthenticatedUser(),
         };
+
+        // Handling bookmark and like states
+        vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
+        vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
         (prisma.post.findMany as any).mockResolvedValue(mockPosts);
         (prisma.post.count as any).mockResolvedValue(10);
@@ -328,13 +491,19 @@ describe("Search Controller", () => {
             search: searchTerm,
             limit: limit.toString(),
           },
+          user: createAuthenticatedUser(),
         };
+
+        // Handling bookmark and like states
+        vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
+        vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
         (prisma.post.findMany as any).mockResolvedValue(mockPosts);
         (prisma.post.count as any).mockResolvedValue(5);
 
         await searchPosts(mockRequest as Request, mockResponse as Response);
 
+        expect(handleError).not.toHaveBeenCalled();
         expect(mockResponse.json).toHaveBeenCalledWith({
           data: expect.any(Array),
           pagination: {
@@ -355,6 +524,7 @@ describe("Search Controller", () => {
             limit: "10",
             cursor,
           },
+          user: createAuthenticatedUser(),
         };
 
         (prisma.post.findMany as any).mockResolvedValue([]);
@@ -379,6 +549,7 @@ describe("Search Controller", () => {
             search: searchTerm,
             limit: "100",
           },
+          user: createAuthenticatedUser(),
         };
 
         await expect(
@@ -395,6 +566,7 @@ describe("Search Controller", () => {
           query: {
             search: searchTerm,
           },
+          user: createAuthenticatedUser(),
         };
 
         (prisma.post.findMany as any).mockResolvedValue([]);
@@ -420,6 +592,7 @@ describe("Search Controller", () => {
             search: searchTerm,
             limit: "10",
           },
+          user: createAuthenticatedUser(),
         };
 
         (prisma.post.findMany as any).mockRejectedValue(mockError);
@@ -438,6 +611,7 @@ describe("Search Controller", () => {
             search: searchTerm,
             limit: "10",
           },
+          user: createAuthenticatedUser(),
         };
 
         (prisma.post.findMany as any).mockResolvedValue([]);
@@ -458,6 +632,7 @@ describe("Search Controller", () => {
             search: searchTerm,
             limit: "10",
           },
+          user: createAuthenticatedUser(),
         };
 
         (prisma.post.findMany as any).mockResolvedValue([]);
@@ -488,6 +663,7 @@ describe("Search Controller", () => {
             search: searchTerm,
             limit: "10",
           },
+          user: createAuthenticatedUser(),
         };
 
         (prisma.post.findMany as any).mockResolvedValue([]);
@@ -526,6 +702,7 @@ describe("Search Controller", () => {
             search: searchTermWithSpaces,
             limit: "10",
           },
+          user: createAuthenticatedUser(),
         };
 
         (prisma.post.findMany as any).mockResolvedValue([]);
@@ -550,6 +727,7 @@ describe("Search Controller", () => {
             search: searchTerm,
             limit: "10",
           },
+          user: createAuthenticatedUser(),
         };
 
         (prisma.post.findMany as any).mockResolvedValue([]);
@@ -585,6 +763,7 @@ describe("Search Controller", () => {
             search: searchTerm,
             limit: "10",
           },
+          user: createAuthenticatedUser(),
         };
 
         (prisma.post.findMany as any).mockResolvedValue([mockPost]);
@@ -625,13 +804,19 @@ describe("Search Controller", () => {
             search: searchTerm,
             limit: "10",
           },
+          user: createAuthenticatedUser(),
         };
+
+        // Handling bookmark and like states
+        vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
+        vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
         (prisma.post.findMany as any).mockResolvedValue([mockPost]);
         (prisma.post.count as any).mockResolvedValue(1);
 
         await searchPosts(mockRequest as Request, mockResponse as Response);
 
+        expect(handleError).not.toHaveBeenCalled();
         expect(mockResponse.status).toHaveBeenCalledWith(200);
         expect(mockResponse.json).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -651,6 +836,7 @@ describe("Search Controller", () => {
             search: searchTerm,
             limit: "10",
           },
+          user: createAuthenticatedUser(),
         };
 
         (prisma.post.findMany as any).mockResolvedValue([]);
@@ -658,6 +844,7 @@ describe("Search Controller", () => {
 
         await searchPosts(mockRequest as Request, mockResponse as Response);
 
+        expect(handleError).not.toHaveBeenCalled();
         expect(prisma.post.findMany).toHaveBeenCalledWith(
           expect.objectContaining({
             where: {

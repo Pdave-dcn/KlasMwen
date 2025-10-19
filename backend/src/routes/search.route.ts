@@ -2,6 +2,7 @@ import express from "express";
 
 import { searchPosts } from "../controllers/search.controller";
 import { generalApiLimiter } from "../middleware/coreRateLimits.middleware";
+import { requireAuth } from "../middleware/requireAuth.middleware";
 
 const router = express.Router();
 
@@ -12,6 +13,8 @@ const router = express.Router();
  *     summary: Search for posts
  *     description: Search for posts by title and content with cursor-based pagination
  *     tags: [Search]
+ *     security:
+ *       - cookieAuth: []
  *     parameters:
  *       - name: search
  *         in: query
@@ -44,11 +47,13 @@ const router = express.Router();
  *               $ref: '#/components/schemas/SearchPostsResponse'
  *       400:
  *         description: Bad Request (invalid parameters or validation error)
+ *       401:
+ *         description: Unauthenticated
  *       429:
  *         description: Too Many Requests (rate limit exceeded)
  *       500:
  *         description: Internal Server Error
  */
-router.get("/search", generalApiLimiter, searchPosts);
+router.get("/search", generalApiLimiter, requireAuth, searchPosts);
 
 export default router;

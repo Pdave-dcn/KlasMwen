@@ -43,7 +43,7 @@ export const searchSchemas = {
     properties: {
       data: {
         type: "array",
-        items: { $ref: "#/components/schemas/Post" },
+        items: { $ref: "#/components/schemas/PostWithBookmarkAndLikeStates" },
       },
       pagination: {
         $ref: "#/components/schemas/SearchPagination",

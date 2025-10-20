@@ -17,4 +17,7 @@ const PopularTagsResponseSchema = z.object({
   data: z.array(PopularTagDataSchema),
 });
 
+export type Tag = z.infer<typeof TagDataSchema>;
+export type PopularTag = z.infer<typeof PopularTagDataSchema>;
+
 export { TagsResponseSchema, PopularTagsResponseSchema };

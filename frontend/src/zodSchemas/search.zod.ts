@@ -18,4 +18,5 @@ const SearchServerResponseSchema = z.object({
   meta: SearchMetaSchema,
 });
 
+export type SearchData = z.infer<typeof SearchServerResponseSchema>;
 export { SearchServerResponseSchema };

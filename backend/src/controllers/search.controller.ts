@@ -24,28 +24,32 @@ const searchPosts = async (req: Request, res: Response) => {
       limit,
       cursor,
       search: searchTerm,
+      tagIds,
     } = SearchPostsSchema.parse(req.query);
 
     actionLogger.debug("Sanitizing search term");
-    const sanitizedSearchTerm = searchTerm.replace(/[%_]/g, "\\$&");
+    const sanitizedSearchTerm = searchTerm
+      ? searchTerm.replace(/[%_]/g, "\\$&")
+      : undefined;
 
     actionLogger.info(
       {
-        searchTerm,
-        sanitizedSearchTerm,
-        limit,
+        hasSearchTerm: !!searchTerm,
+        hasTagIds: tagIds.length > 0,
         hasCursor: !!cursor,
+        limit,
       },
       "Search parameters validated and sanitized"
     );
 
     actionLogger.debug("Executing post search");
     const serviceStartTime = Date.now();
-    const result = await PostService.getPostsBySearchTerm(
+    const result = await PostService.getSearchedPosts(
       user.id,
-      sanitizedSearchTerm,
       limit,
-      cursor as string | undefined
+      sanitizedSearchTerm,
+      cursor as string | undefined,
+      tagIds
     );
     const serviceDuration = Date.now() - serviceStartTime;
 
@@ -54,6 +58,7 @@ const searchPosts = async (req: Request, res: Response) => {
       {
         searchTerm,
         sanitizedSearchTerm,
+        totalTags: tagIds.length,
         limit,
         cursor,
         totalCount: result.pagination.totalPosts,

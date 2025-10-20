@@ -1,12 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { getTags } from "@/api/tag.api";
+import { getPopularTags, getTags } from "@/api/tag.api";
 
 const useTagQuery = () => {
   return useQuery({
     queryKey: ["tags"],
-    queryFn: () => getTags(),
+    queryFn: getTags,
   });
 };
 
-export { useTagQuery };
+const usePopularTagsQuery = () => {
+  return useQuery({
+    queryKey: ["tags", "popular"],
+    queryFn: getPopularTags,
+  });
+};
+
+export { useTagQuery, usePopularTagsQuery };

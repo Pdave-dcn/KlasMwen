@@ -4,6 +4,7 @@ import {
   createTag,
   deleteTag,
   getAllTags,
+  getPopularTags,
   getTagForEdit,
   updateTag,
 } from "../controllers/tag.controller.js";
@@ -90,6 +91,30 @@ router.use(attachLogContext("TagController"));
  *                   example: ["name"]
  *       403:
  *         description: Admin access required
+ *       429:
+ *         description: Too many requests (rate limit exceeded)
+ *       500:
+ *         description: Internal server error
+ *
+ * /tags/popular:
+ *   get:
+ *     summary: Get top ten most popular tags
+ *     description: Retrieves a list of 10 most used tags.
+ *     tags: [Tags]
+ *     responses:
+ *       200:
+ *         description: Tags retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: "#/components/schemas/PopularTagsResponse"
+ *       400:
+ *           description: Bad request (e.g., Invalid cursor format)
  *       429:
  *         description: Too many requests (rate limit exceeded)
  *       500:
@@ -209,6 +234,7 @@ router.use(attachLogContext("TagController"));
  *         description: Internal server error
  */
 router.get("/tags", generalApiLimiter, getAllTags);
+router.get("/tags/popular", generalApiLimiter, getPopularTags);
 router.get("/tags/:id/edit", generalApiLimiter, requireAuth, getTagForEdit);
 router.post("/tags", writeOperationsLimiter, requireAuth, createTag);
 router.put("/tags/:id", writeOperationsLimiter, requireAuth, updateTag);

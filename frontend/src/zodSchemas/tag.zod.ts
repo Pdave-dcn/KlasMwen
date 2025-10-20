@@ -5,8 +5,16 @@ const TagDataSchema = z.object({
   name: z.string(),
 });
 
-const TagResponseSchema = z.object({
+const PopularTagDataSchema = TagDataSchema.extend({
+  usageCount: z.number().int(),
+});
+
+const TagsResponseSchema = z.object({
   data: z.array(TagDataSchema),
 });
 
-export { TagResponseSchema };
+const PopularTagsResponseSchema = z.object({
+  data: z.array(PopularTagDataSchema),
+});
+
+export { TagsResponseSchema, PopularTagsResponseSchema };

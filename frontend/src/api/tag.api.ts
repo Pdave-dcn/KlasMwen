@@ -1,12 +1,15 @@
 import handleZodValidationError from "@/utils/zodErrorHandler.util";
-import { TagResponseSchema } from "@/zodSchemas/tag.zod";
+import {
+  PopularTagsResponseSchema,
+  TagsResponseSchema,
+} from "@/zodSchemas/tag.zod";
 
 import api from "./api";
 
 const getTags = async () => {
   try {
     const res = await api.get("/tags");
-    const validatedData = TagResponseSchema.parse(res.data);
+    const validatedData = TagsResponseSchema.parse(res.data);
 
     return validatedData.data;
   } catch (error) {
@@ -15,4 +18,16 @@ const getTags = async () => {
   }
 };
 
-export { getTags };
+const getPopularTags = async () => {
+  try {
+    const res = await api.get("/tags/popular");
+    const validatedData = PopularTagsResponseSchema.parse(res.data);
+
+    return validatedData.data;
+  } catch (error) {
+    handleZodValidationError(error, "getPopularTags");
+    throw error;
+  }
+};
+
+export { getTags, getPopularTags };

@@ -145,14 +145,6 @@ const getAllTags = async (req: Request, res: Response) => {
     const tags = await prisma.tag.findMany();
     const dbDuration = Date.now() - dbStartTime;
 
-    actionLogger.info(
-      {
-        tagsCount: tags.length,
-        dbDuration,
-      },
-      "Tags retrieved from database"
-    );
-
     const totalDuration = Date.now() - startTime;
     actionLogger.info(
       {
@@ -166,6 +158,56 @@ const getAllTags = async (req: Request, res: Response) => {
     return res.status(200).json({
       data: tags,
     });
+  } catch (error: unknown) {
+    return handleError(error, res);
+  }
+};
+
+// todo: write tests for this controller method
+const getPopularTags = async (req: Request, res: Response) => {
+  const actionLogger = createActionLogger(
+    controllerLogger,
+    "getPopularTags",
+    req
+  );
+
+  try {
+    actionLogger.info("Fetching popular tags");
+    const startTime = Date.now();
+
+    const dbStartTime = Date.now();
+    const tags = await prisma.tag.findMany({
+      include: {
+        _count: {
+          select: { postTags: true },
+        },
+      },
+      orderBy: {
+        postTags: {
+          _count: "desc",
+        },
+      },
+      take: 10,
+    });
+    const dbDuration = Date.now() - dbStartTime;
+
+    const totalDuration = Date.now() - startTime;
+    actionLogger.info(
+      {
+        totalTags: tags.length,
+        dbDuration,
+        totalDuration,
+      },
+      "Popular tags fetched successfully"
+    );
+
+    const formatted = tags.map((tag) => ({
+      id: tag.id,
+      name: tag.name,
+      usageCount: tag._count.postTags,
+    }));
+
+    return res.status(200).json({ data: formatted });
   } catch (error: unknown) {
     return handleError(error, res);
   }
@@ -191,16 +233,7 @@ const updateTag = async (req: Request, res: Response) => {
     const { name } = CreateTagSchema.parse(req.body);
     const normalizedName = normalizeTagName(name);
 
-    actionLogger.info(
-      {
-        tagId,
-        originalName: name,
-        normalizedName,
-        nameLength: name.length,
-        validationDuration,
-      },
-      "Tag update data validated and normalized"
-    );
+    actionLogger.info("Tag update data validated and normalized");
 
     actionLogger.debug("Updating tag in database");
     const dbStartTime = Date.now();
@@ -280,4 +313,11 @@ const deleteTag = async (req: Request, res: Response) => {
   }
 };
 
-export { createTag, getAllTags, getTagForEdit, updateTag, deleteTag };
+export {
+  createTag,
+  getAllTags,
+  getTagForEdit,
+  updateTag,
+  deleteTag,
+  getPopularTags,
+};

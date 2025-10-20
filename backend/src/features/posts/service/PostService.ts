@@ -105,28 +105,40 @@ class PostService {
     return this.getPostsAndProcess(where, limit, userId, cursor);
   }
 
-  static async getPostsBySearchTerm(
+  /**
+   * Get posts by a search term, by tags or by both
+   */
+  static async getSearchedPosts(
     userId: string,
-    searchTerm: string,
     limit: number,
-    cursor?: string
+    searchTerm?: string,
+    cursor?: string,
+    tagIds?: number[]
   ): Promise<PaginatedPostsResponse> {
-    const searchCondition: Prisma.PostWhereInput = {
-      OR: [
+    const searchCondition: Prisma.PostWhereInput = {};
+    const orCondition: Prisma.PostWhereInput[] = [];
+
+    if (searchTerm) {
+      orCondition.push(
+        { title: { contains: searchTerm, mode: "insensitive" } },
+        { content: { contains: searchTerm, mode: "insensitive" } }
+      );
+    }
+
+    if (tagIds && tagIds.length > 0) {
+      searchCondition.AND = [
+        ...(orCondition.length > 0 ? [{ OR: orCondition }] : []),
         {
-          title: {
-            contains: searchTerm,
-            mode: "insensitive",
+          postTags: {
+            some: {
+              tag: {
+                id: { in: tagIds },
+              },
+            },
           },
         },
-        {
-          content: {
-            contains: searchTerm,
-            mode: "insensitive",
-          },
-        },
-      ],
-    };
+      ];
+    }
 
     const result = await this.getPostsAndProcess(
       searchCondition,

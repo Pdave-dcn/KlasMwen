@@ -16,16 +16,41 @@ const seedTags = async () => {
     const initialTags = [
       { name: "algebra" },
       { name: "geometry" },
+      { name: "trigonometry" },
+      { name: "statistics" },
+      { name: "probability" },
+
       { name: "biology" },
       { name: "chemistry" },
       { name: "physics" },
+      { name: "earth science" },
+
       { name: "world history" },
-      { name: "haiti history" },
+      { name: "haitian history" },
+      { name: "economics" },
+      { name: "geography" },
+
       { name: "haitian lit" },
-      { name: "writing" },
-      { name: "computer science" },
-      { name: "art history" },
-      { name: "music theory" },
+      { name: "creative writing" },
+      { name: "grammar" },
+      { name: "french" },
+      { name: "haitian creole" },
+
+      { name: "programming" },
+      { name: "coding" },
+
+      { name: "study tips" },
+      { name: "homework help" },
+      { name: "note taking" },
+      { name: "time management" },
+      { name: "test strategies" },
+
+      { name: "group study" },
+      { name: "resources" },
+
+      { name: "research projects" },
+      { name: "presentations" },
+      { name: "debates" },
     ];
 
     await prisma.tag.createMany({
@@ -33,7 +58,6 @@ const seedTags = async () => {
       skipDuplicates: true,
     });
 
-    // Get all created tags
     const tags = await prisma.tag.findMany();
     const tagCreationDuration = Date.now() - tagCreationStartTime;
 

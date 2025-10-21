@@ -6,7 +6,7 @@ import {
   handleAuthError,
   getUniqueConstraintMessage,
   type AuthError,
-} from "@/features/auth/authErrorHandler";
+} from "@/features/auth/error/authErrorHandler";
 import type { FormData } from "@/types/form.type";
 
 import type { AxiosError } from "axios";

@@ -4,7 +4,7 @@ import { updateUserInfo } from "@/api/user.api";
 import {
   handleProfileUpdateError,
   type ApiErrorData,
-} from "@/features/profile/updateProfileErrorHandler";
+} from "@/features/profile/error/updateProfileErrorHandler";
 import { useAuthStore } from "@/stores/auth.store";
 
 import type { AxiosError } from "axios";

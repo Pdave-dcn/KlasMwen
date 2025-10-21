@@ -3,7 +3,6 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { toast } from "sonner";
 
 import {
   createComment,
@@ -61,10 +60,6 @@ const useCreateCommentMutation = () => {
       });
       await queryClient.invalidateQueries({ queryKey: ["posts", postId] });
     },
-
-    onError: () => {
-      toast.error("Failed to create comment");
-    },
   });
 };
 
@@ -77,10 +72,6 @@ const useDeleteCommentMutation = (commentId: number) => {
       await queryClient.invalidateQueries({
         queryKey: ["comments"],
       });
-    },
-    onError: (error) => {
-      console.error("Failed to delete comment:", error);
-      toast.error("Failed to delete comment. Please try again.");
     },
   });
 };

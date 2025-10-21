@@ -7,7 +7,7 @@ import { signIn, signUp } from "@/api/auth.api";
 import {
   handleAuthError,
   type AuthError,
-} from "@/features/auth/authErrorHandler";
+} from "@/features/auth/error/authErrorHandler";
 import { useAuthStore } from "@/stores/auth.store";
 import type { FormData } from "@/types/form.type";
 

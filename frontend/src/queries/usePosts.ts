@@ -38,9 +38,6 @@ const usePostCreationMutation = () => {
 
       await queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
-    onError: () => {
-      toast.error("Failed to create post");
-    },
   });
 };
 
@@ -136,7 +133,6 @@ const useDeletePostMutation = (postId: string) => {
           queryClient.setQueryData(key, data);
         }
       }
-      toast.error("Failed to delete post");
     },
 
     onSuccess: () => {

@@ -110,7 +110,7 @@ router.get("/comments/:id/replies", generalApiLimiter, getReplies);
 
 /**
  * @openapi
- * /posts/{id}/comments:
+ * /comments/{id}:
  *   post:
  *     summary: Create a comment
  *     description: Creates a new comment under a post
@@ -150,7 +150,7 @@ router.get("/comments/:id/replies", generalApiLimiter, getReplies);
  *         description: Internal server error
  */
 router.post(
-  "/posts/:id/comments",
+  "/comments/:id",
   writeOperationsLimiter,
   requireAuth,
   createComment

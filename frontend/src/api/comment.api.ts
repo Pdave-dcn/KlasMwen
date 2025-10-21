@@ -48,7 +48,7 @@ const getParentCommentReplies = async (
 
 const createComment = async (postId: string, data: CommentCreationData) => {
   try {
-    const res = await api.post(`/posts/${postId}/comments`, data);
+    const res = await api.post(`/comments/${postId}`, data);
 
     const validatedData = CommentCreationServerResponseSchema.parse(res.data);
 

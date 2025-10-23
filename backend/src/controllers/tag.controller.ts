@@ -22,7 +22,7 @@ const createTag = async (req: Request, res: Response) => {
 
     actionLogger.debug("Validating tag operation and authorization");
     const validationStartTime = Date.now();
-    const validation = await validateTagOperation(req, res);
+    const validation = await validateTagOperation(req, res, false);
     if (validation === null) {
       actionLogger.warn("Tag operation validation failed - stopping execution");
       return;
@@ -163,7 +163,6 @@ const getAllTags = async (req: Request, res: Response) => {
   }
 };
 
-// todo: write tests for this controller method
 const getPopularTags = async (req: Request, res: Response) => {
   const actionLogger = createActionLogger(
     controllerLogger,

@@ -130,14 +130,12 @@ class PostService {
         ...(orCondition.length > 0 ? [{ OR: orCondition }] : []),
         {
           postTags: {
-            some: {
-              tag: {
-                id: { in: tagIds },
-              },
-            },
+            some: { tag: { id: { in: tagIds } } },
           },
         },
       ];
+    } else if (orCondition.length > 0) {
+      searchCondition.OR = orCondition;
     }
 
     const result = await this.getPostsAndProcess(

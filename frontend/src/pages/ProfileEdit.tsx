@@ -74,7 +74,7 @@ const ProfileEdit = () => {
   };
 
   return (
-    <div className="flex justify-center items-center h-screen">
+    <main className="flex justify-center items-center h-screen">
       <Card className="w-full max-w-2xl mb-4">
         <CardHeader>
           <CardTitle className="text-2xl">Edit Profile</CardTitle>
@@ -246,7 +246,7 @@ const ProfileEdit = () => {
           currentAvatarUrl={currentAvatarUrl}
         />
       )}
-    </div>
+    </main>
   );
 };
 

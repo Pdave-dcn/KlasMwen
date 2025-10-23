@@ -21,15 +21,15 @@ const Profile = ({ isSelf = false }: { isSelf?: boolean }) => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <main className="flex items-center justify-center min-h-screen">
         <Spinner />
-      </div>
+      </main>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <main className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600">
             Error loading profile
@@ -38,14 +38,14 @@ const Profile = ({ isSelf = false }: { isSelf?: boolean }) => {
             Something went wrong. Please try again later.
           </p>
         </div>
-      </div>
+      </main>
     );
   }
 
   if (!user) {
     return (
       <>
-        <div className="md:hidden mb-10">
+        <main className="md:hidden mb-10">
           <div className="flex flex-col items-center justify-center py-12 px-4">
             <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
               <User className="w-8 h-8 text-gray-400" />
@@ -61,9 +61,9 @@ const Profile = ({ isSelf = false }: { isSelf?: boolean }) => {
               Try Again
             </Button>
           </div>
-        </div>
+        </main>
         {/* Desktop layout error */}
-        <div className="hidden md:flex items-center justify-center">
+        <main className="hidden md:flex items-center justify-center">
           <div className="flex flex-col items-center justify-center py-16 px-8">
             <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center mb-6">
               <User className="w-16 h-16 text-gray-400" />
@@ -80,14 +80,14 @@ const Profile = ({ isSelf = false }: { isSelf?: boolean }) => {
               Try Again
             </Button>
           </div>
-        </div>
+        </main>
         )
       </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background">
       <div className="relative px-4 md:px-8 pb-6 flex justify-center">
         <ProfileHeader user={user} isSelf={actualSelf} />
       </div>
@@ -99,7 +99,7 @@ const Profile = ({ isSelf = false }: { isSelf?: boolean }) => {
           isSelf={isSelf}
         />
       </div>
-    </div>
+    </main>
   );
 };
 

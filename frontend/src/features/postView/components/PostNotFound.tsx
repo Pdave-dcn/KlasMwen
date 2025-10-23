@@ -3,7 +3,7 @@ import { AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const PostNotFound = () => (
-  <div className="max-w-4xl mx-auto p-6">
+  <main className="max-w-4xl mx-auto p-6">
     <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
@@ -15,7 +15,7 @@ const PostNotFound = () => (
         <p>This post doesn't exist or has been removed.</p>
       </CardContent>
     </Card>
-  </div>
+  </main>
 );
 
 export default PostNotFound;

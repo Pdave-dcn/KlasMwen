@@ -17,15 +17,15 @@ const HomePage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-20">
+      <main className="flex items-center justify-center py-20">
         <Spinner />
-      </div>
+      </main>
     );
   }
 
   if (posts?.pages.every((page) => page.data.length === 0)) {
     return (
-      <div className="flex justify-center py-8">
+      <main className="flex justify-center py-8">
         <Card className="text-center py-12 max-w-md">
           <CardContent>
             <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
@@ -35,12 +35,12 @@ const HomePage = () => {
             </p>
           </CardContent>
         </Card>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background">
       <div className="py-8 flex justify-center">
         <div className="w-full max-w-2xl px-4">
           <div className="space-y-6">
@@ -65,7 +65,7 @@ const HomePage = () => {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 };
 

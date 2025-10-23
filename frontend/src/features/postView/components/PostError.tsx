@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const PostError = ({ onRetry }: { error: Error; onRetry: () => void }) => (
-  <div className="max-w-4xl mx-auto p-6">
+  <main className="max-w-4xl mx-auto p-6">
     <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center space-x-2 text-destructive">
@@ -36,7 +36,7 @@ const PostError = ({ onRetry }: { error: Error; onRetry: () => void }) => (
         </Alert>
       </CardContent>
     </Card>
-  </div>
+  </main>
 );
 
 export default PostError;

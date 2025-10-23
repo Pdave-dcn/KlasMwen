@@ -41,7 +41,7 @@ const Layout = ({ children }: LayoutProps) => {
         />
       </aside>
 
-      <main className="flex-1 overflow-auto">{children}</main>
+      <div className="flex-1 overflow-auto">{children}</div>
 
       <MobileTabBar
         onCreateClick={() => {

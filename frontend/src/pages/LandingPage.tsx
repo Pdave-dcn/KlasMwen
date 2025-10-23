@@ -19,7 +19,7 @@ const LandingPage = () => {
 
   const currentYear = new Date().getFullYear();
   return (
-    <div className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-primary to-accent py-10 text-center relative overflow-hidden">
         <nav className="flex justify-between items-center px-6 md:px-8 mb-16">
@@ -154,7 +154,7 @@ const LandingPage = () => {
           </div>
         </div>
       </footer>
-    </div>
+    </main>
   );
 };
 

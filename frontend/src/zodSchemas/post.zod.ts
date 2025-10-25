@@ -98,7 +98,7 @@ const TextPostCreationSchema = BasePostCreationSchema.extend({
     .string()
     .trim()
     .min(10, "The content must be at least 10 characters")
-    .max(10000, "The content must be less than 10000 characters"),
+    .max(5000, "The content must be less than 5000 characters"),
 });
 
 const ResourcePostCreationSchema = BasePostCreationSchema.extend({

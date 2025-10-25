@@ -124,11 +124,7 @@ const PostForm = ({ open, onClose, postType }: PostFormProps) => {
           <TitleField register={register} errors={errors} postType={postType} />
 
           {postType !== "RESOURCE" && (
-            <ContentField
-              register={register}
-              errors={errors}
-              postType={postType}
-            />
+            <ContentField setValue={setValue} watch={watch} errors={errors} />
           )}
 
           {postType === "RESOURCE" && (

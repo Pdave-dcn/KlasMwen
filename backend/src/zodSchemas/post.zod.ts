@@ -20,7 +20,7 @@ const BasePostSchema = z.object({
 // Text posts (QUESTION/NOTE) - includes content field
 const TextPostRequestSchema = BasePostSchema.extend({
   type: z.enum(["QUESTION", "NOTE"]),
-  content: z.string().trim().min(10).max(10000),
+  content: z.string().trim().min(10).max(5000),
 }).strict(); // Reject extra fields
 
 // Resource posts - file data comes from multer

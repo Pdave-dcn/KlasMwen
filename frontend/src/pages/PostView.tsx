@@ -3,6 +3,7 @@ import { useState } from "react";
 
 import { useParams } from "react-router-dom";
 
+import MarkdownPreview from "@uiw/react-markdown-preview";
 import {
   CalendarDays,
   FileText,
@@ -12,6 +13,9 @@ import {
   Heart,
   Bookmark,
 } from "lucide-react";
+import rehypeHighlight from "rehype-highlight";
+import rehypeSanitize from "rehype-sanitize";
+import "@uiw/react-markdown-preview/markdown.css";
 
 import CommentCard from "@/components/cards/Comment/CommentCard";
 import CommentForm from "@/components/CommentForm";
@@ -133,10 +137,12 @@ const PostView = () => {
         <CardContent className="space-y-6">
           {/* Content */}
           {post.content && (
-            <div className="prose max-w-none dark:prose-invert">
-              <p className="text-base leading-relaxed whitespace-pre-wrap">
-                {post.content}
-              </p>
+            <div className="prose prose-neutral max-w-none">
+              <MarkdownPreview
+                style={{ backgroundColor: "transparent" }}
+                source={post.content}
+                rehypePlugins={[rehypeHighlight, rehypeSanitize]}
+              />
             </div>
           )}
 

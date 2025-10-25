@@ -1,6 +1,10 @@
 import { useNavigate } from "react-router-dom";
 
+import MarkdownPreview from "@uiw/react-markdown-preview";
 import { Heart, MessageCircle, Bookmark, Share2 } from "lucide-react";
+import rehypeHighlight from "rehype-highlight";
+import rehypeSanitize from "rehype-sanitize";
+import "@uiw/react-markdown-preview/markdown.css";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -108,7 +112,13 @@ export const PostCard = ({ post, onComment }: PostCardProps) => {
         <h2 className="text-lg font-semibold leading-tight">{post.title}</h2>
 
         {post.content && (
-          <p className="text-foreground leading-relaxed">{post.content}</p>
+          <div className="prose prose-neutral //max-w-none">
+            <MarkdownPreview
+              style={{ backgroundColor: "transparent" }}
+              source={post.content}
+              rehypePlugins={[rehypeHighlight, rehypeSanitize]}
+            />
+          </div>
         )}
 
         {/* File attachment indicator */}

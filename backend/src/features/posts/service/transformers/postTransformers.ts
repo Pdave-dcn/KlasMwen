@@ -30,7 +30,7 @@ class PostTransformer {
     posts: Partial<RawPost>[]
   ): PostPreview[] {
     const transformed = this.transformPosts(posts);
-    return truncatePostContentValue(transformed);
+    return truncatePostContentValue(transformed, 100);
   }
 }
 

@@ -1,4 +1,4 @@
-import { PostCard } from "@/components/cards/post/PostCard";
+import PostCard from "@/components/cards/post/PostCard";
 import LoadMoreButton from "@/components/LoadMoreButton";
 import type { Post } from "@/zodSchemas/post.zod";
 

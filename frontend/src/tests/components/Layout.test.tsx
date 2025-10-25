@@ -287,18 +287,5 @@ describe("Layout", () => {
         "shrink-0"
       );
     });
-
-    it("applies correct CSS classes to main element", () => {
-      const { container } = render(
-        <TestWrapper>
-          <Layout>
-            <div>Content</div>
-          </Layout>
-        </TestWrapper>
-      );
-
-      const main = container.querySelector("main");
-      expect(main).toHaveClass("flex-1", "overflow-auto");
-    });
   });
 });

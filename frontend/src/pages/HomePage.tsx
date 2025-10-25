@@ -1,9 +1,9 @@
 import { BookOpen } from "lucide-react";
 
-import { PostCard } from "@/components/cards/post/PostCard";
+import PostCard from "@/components/cards/post/PostCard";
+import PostCardSkeleton from "@/components/cards/post/PostCardSkeleton";
 import LoadMoreButton from "@/components/LoadMoreButton";
 import { Card, CardContent } from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
 import { useHomePagePosts } from "@/queries/usePosts";
 
 const HomePage = () => {
@@ -17,8 +17,16 @@ const HomePage = () => {
 
   if (isLoading) {
     return (
-      <main className="flex items-center justify-center py-20">
-        <Spinner />
+      <main className="min-h-screen bg-background">
+        <div className="py-8 flex justify-center">
+          <div className="w-full max-w-2xl px-4">
+            <div className="space-y-6">
+              {[1, 2, 3, 4].map((i) => (
+                <PostCardSkeleton key={i} />
+              ))}
+            </div>
+          </div>
+        </div>
       </main>
     );
   }

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 
-import { createPost } from "../../../controllers/post.controller.js";
+import { createPost } from "../../../controllers/post/post.create.controller.js";
 import { AuthenticationError } from "../../../core/error/custom/auth.error.js";
 import { handleError } from "../../../core/error/index.js";
 import { deleteFromCloudinary } from "../../../features/media/cloudinaryServices.js";

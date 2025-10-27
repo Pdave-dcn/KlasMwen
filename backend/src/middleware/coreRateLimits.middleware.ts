@@ -46,6 +46,29 @@ const writeOperationsLimiter = rateLimit({
   },
 });
 
+const downloadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 3,
+  handler: () => {
+    throw new RateLimitError(
+      "Download limit reached. You can download up to 3 files per hour. Please try again later."
+    );
+  },
+  keyGenerator: (req: Request, _res: Response) => {
+    if (req.user) return `download:${req.user.id}`;
+
+    if (req.ip) return `download:${ipKeyGenerator(req.ip)}`;
+
+    return "download:unknown";
+  },
+  // Skip failed requests (don't count towards limit if download fails)
+  skipFailedRequests: true,
+  // Skip successful requests that were aborted by the client
+  skip: (_req: Request) => {
+    return false;
+  },
+});
+
 const reactionLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 500,
@@ -75,4 +98,5 @@ export {
   writeOperationsLimiter,
   reactionLimiter,
   generalApiLimiter,
+  downloadLimiter,
 };

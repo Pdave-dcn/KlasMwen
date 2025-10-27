@@ -4,12 +4,12 @@ import rehypeSanitize from "rehype-sanitize";
 
 import { CardContent } from "@/components/ui/card";
 import "@uiw/react-markdown-preview/markdown.css";
-import type { Post } from "@/zodSchemas/post.zod";
+import type { LessExtendedPost } from "@/zodSchemas/post.zod";
 
 import FileAttachment from "./FileAttachment";
 
 interface PostContentProps {
-  post: Post;
+  post: LessExtendedPost;
 }
 
 const PostContent = ({ post }: PostContentProps) => {
@@ -25,7 +25,7 @@ const PostContent = ({ post }: PostContentProps) => {
         </div>
       )}
 
-      {post.fileUrl && <FileAttachment fileName={post.fileName} />}
+      {post.fileUrl && <FileAttachment post={post} />}
     </CardContent>
   );
 };

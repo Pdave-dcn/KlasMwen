@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 
-import { updatePost } from "../../../controllers/post.controller";
+import { updatePost } from "../../../controllers/post/post.update.controller";
 import prisma from "../../../core/config/db";
 import { handleError } from "../../../core/error";
 import {

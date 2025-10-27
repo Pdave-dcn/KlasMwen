@@ -163,6 +163,44 @@ const deletePost = async (postId: string) => {
   }
 };
 
+const downloadPostResourceWithProgress = async (
+  postId: string,
+  fileName: string,
+  onProgress?: (percent: number) => void
+) => {
+  try {
+    const res = await api.get(`/posts/${postId}/download`, {
+      responseType: "blob",
+      timeout: 0,
+      onDownloadProgress: (progressEvent) => {
+        const total = progressEvent.total ?? 0;
+        if (total > 0) {
+          const current = progressEvent.loaded ?? 0;
+          const percent = Math.round((current / total) * 100);
+          onProgress?.(percent);
+        } else {
+          onProgress?.(50);
+        }
+      },
+    });
+
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+
+    link.click();
+
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    handleZodValidationError(error, "downloadPostResourceWithProgress");
+    throw error;
+  }
+};
+
 export {
   getUserPosts,
   getActiveUserPosts,
@@ -174,4 +212,5 @@ export {
   createNewPost,
   deletePost,
   updatePost,
+  downloadPostResourceWithProgress,
 };

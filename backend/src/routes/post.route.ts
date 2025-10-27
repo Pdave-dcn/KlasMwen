@@ -1,17 +1,19 @@
 import express from "express";
 
+import { createPost } from "../controllers/post/post.create.controller.js";
+import { deletePost } from "../controllers/post/post.delete.controller.js";
 import {
-  createPost,
-  deletePost,
-  updatePost,
+  downloadResource,
   getAllPosts,
   getPostById,
   getPostForEdit,
   getPostMetadata,
-} from "../controllers/post.controller.js";
+} from "../controllers/post/post.fetch.controller.js";
+import { updatePost } from "../controllers/post/post.update.controller.js";
 import {
   writeOperationsLimiter,
   generalApiLimiter,
+  downloadLimiter,
 } from "../middleware/coreRateLimits.middleware.js";
 import attachLogContext from "../middleware/logContext.middleware.js";
 import upload from "../middleware/multer.middleware.js";
@@ -162,6 +164,62 @@ router.get("/posts/:id", generalApiLimiter, requireAuth, getPostById);
  *         description: Internal server error
  */
 router.get("/posts/:id/edit", generalApiLimiter, requireAuth, getPostForEdit);
+
+/**
+ * @openapi
+ * /posts/{id}/download:
+ *   get:
+ *     summary: Download a post resource file
+ *     description: Streams a file attachment from a post. The file is streamed directly from Cloudinary to the client.
+ *     tags: [Posts]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The ID of the post containing the resource to download
+ *     responses:
+ *       200:
+ *         description: File stream
+ *         headers:
+ *           Content-Disposition:
+ *             schema:
+ *               type: string
+ *             description: Attachment with filename
+ *             example: 'attachment; filename="document.pdf"'
+ *           Content-Type:
+ *             schema:
+ *               type: string
+ *             description: MIME type of the file
+ *             example: application/pdf
+ *           Content-Length:
+ *             schema:
+ *               type: integer
+ *             description: Size of the file in bytes
+ *         content:
+ *           application/octet-stream:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Resource not found or post has no file attachment
+ *       429:
+ *         description: Too many requests (rate limit exceeded)
+ *       500:
+ *         description: Internal server error or error streaming file
+ */
+router.get(
+  "/posts/:id/download",
+  downloadLimiter,
+  requireAuth,
+  downloadResource
+);
 
 /**
  * @openapi

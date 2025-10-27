@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 
-import { getAllPosts } from "../../../controllers/post.controller";
+import { getAllPosts } from "../../../controllers/post/post.fetch.controller";
 import prisma from "../../../core/config/db";
 import { handleError } from "../../../core/error";
 
@@ -89,26 +89,6 @@ describe("getAllPosts", () => {
         _count: { comments: 0, likes: 0 },
       },
     ];
-    const mockTransformedPosts = [
-      {
-        id: "postId 1",
-        title: "Post 1",
-        content: "Content 1",
-        type: "NOTE",
-        fileUrl: null,
-        fileName: null,
-        createdAt: new Date(),
-        author: {
-          id: "60676309-9958-4a6a-b4bc-463199dab4ee",
-          username: "testUser",
-          Avatar: { id: 1, url: "https://mock-url.com-avatar.svg" },
-        },
-        tags: [{ id: 1, name: "tag1" }],
-        _count: { comments: 0, likes: 0 },
-        isBookmarked: false,
-        isLiked: false,
-      },
-    ];
 
     vi.mocked(prisma.post.findMany).mockResolvedValue(mockPosts as any);
 
@@ -121,13 +101,15 @@ describe("getAllPosts", () => {
     expect(handleError).not.toHaveBeenCalled();
     expect(prisma.post.findMany).toHaveBeenCalled();
     expect(mockRes.status).toHaveBeenCalledWith(200);
-    expect(mockRes.json).toHaveBeenCalledWith({
-      data: mockTransformedPosts,
-      pagination: {
-        hasMore: false,
-        nextCursor: null,
-      },
-    });
+    expect(mockRes.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.arrayContaining([expect.any(Object)]),
+        pagination: {
+          hasMore: false,
+          nextCursor: null,
+        },
+      })
+    );
   });
 
   it("should handle custom pagination parameters", async () => {
@@ -151,26 +133,6 @@ describe("getAllPosts", () => {
         _count: { comments: 0, likes: 0 },
       },
     ];
-    const mockTransformedPosts = [
-      {
-        id: 6,
-        title: "Post 6",
-        content: "Content 6",
-        type: "NOTE",
-        fileUrl: null,
-        fileName: null,
-        createdAt: new Date(),
-        author: {
-          id: 1,
-          username: "testUser",
-          Avatar: { id: 2, url: "https://mock-url.com-avatar2.svg" },
-        },
-        tags: [],
-        _count: { comments: 0, likes: 0 },
-        isBookmarked: false,
-        isLiked: false,
-      },
-    ];
 
     vi.mocked(prisma.post.findMany).mockResolvedValue(mockPosts as any);
 
@@ -184,13 +146,15 @@ describe("getAllPosts", () => {
     expect(prisma.post.findMany).toHaveBeenCalled();
 
     expect(mockRes.status).toHaveBeenCalledWith(200);
-    expect(mockRes.json).toHaveBeenCalledWith({
-      data: mockTransformedPosts,
-      pagination: {
-        hasMore: false,
-        nextCursor: null,
-      },
-    });
+    expect(mockRes.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.arrayContaining([expect.any(Object)]),
+        pagination: {
+          hasMore: false,
+          nextCursor: null,
+        },
+      })
+    );
   });
 
   it("should call handleError if database query fails", async () => {

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 
-import { getPostById } from "../../../controllers/post.controller";
+import { getPostById } from "../../../controllers/post/post.fetch.controller";
 import prisma from "../../../core/config/db";
 import { handleError } from "../../../core/error";
 import { PostNotFoundError } from "../../../core/error/custom/post.error";

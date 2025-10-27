@@ -59,6 +59,16 @@ class PostRepository {
   }
 
   /**
+   * Find an extended post by ID (with more metadata)
+   */
+  static findExtendedPostById(postId: string) {
+    return prisma.post.findUnique({
+      where: { id: postId },
+      select: BaseSelectors.extendedPost,
+    });
+  }
+
+  /**
    * Find post for editing (with all metadata)
    */
   static findPostForEdit(postId: string) {

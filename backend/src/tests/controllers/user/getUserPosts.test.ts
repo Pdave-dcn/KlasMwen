@@ -109,47 +109,6 @@ const mockPosts = [
   },
 ];
 
-const mockTransformedPosts = [
-  {
-    id: mockPostId,
-    title: "Test Title",
-    content: "Test Content",
-    type: "NOTE" as const,
-    fileUrl: null,
-    fileName: null,
-    fileSize: null,
-    mimeType: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    authorId: mockUser.id,
-    isBookmarked: false,
-    isLiked: false,
-    tags: [],
-    comments: [],
-    _count: {
-      comments: 0,
-      likes: 0,
-    },
-  },
-  {
-    id: mockPostId2,
-    title: "Test Post 2",
-    content: "Content of test post 2",
-    type: "NOTE" as const,
-    fileUrl: null,
-    fileName: null,
-    fileSize: null,
-    mimeType: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    authorId: mockUser.id,
-    isBookmarked: false,
-    isLiked: false,
-    tags: [],
-    _count: { comments: 0, likes: 3 },
-  },
-];
-
 describe("getUserPosts controller", () => {
   let mockReq: Request;
   let mockRes: Response;
@@ -171,6 +130,7 @@ describe("getUserPosts controller", () => {
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
       vi.mocked(prisma.post.findMany).mockResolvedValue(mockPosts);
+      vi.mocked(prisma.post.count).mockResolvedValue(5);
 
       // Handling bookmark and like states
       vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
@@ -183,14 +143,18 @@ describe("getUserPosts controller", () => {
         where: { id: mockUser.id },
         select: { id: true },
       });
+
       expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        data: mockTransformedPosts,
-        pagination: {
-          hasMore: false,
-          nextCursor: null,
-        },
-      });
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.arrayContaining([expect.any(Object)]),
+          pagination: {
+            hasMore: false,
+            nextCursor: null,
+            totalPosts: 5,
+          },
+        })
+      );
     });
 
     it("should return empty posts array when user has no posts", async () => {

@@ -1,7 +1,7 @@
 import { PostType } from "@prisma/client";
 import { Request, Response } from "express";
 
-import { getPostForEdit } from "../../../controllers/post.controller";
+import { getPostForEdit } from "../../../controllers/post/post.fetch.controller";
 import prisma from "../../../core/config/db";
 import { handleError } from "../../../core/error";
 import {

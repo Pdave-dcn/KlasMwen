@@ -4,7 +4,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, fireEvent } from "@testing-library/react";
 
 import PostView from "@/pages/PostView";
-import { useSinglePostQuery } from "@/queries/usePosts";
+import {
+  useSinglePostQuery,
+  useDownloadResourceWithProgressMutation,
+} from "@/queries/usePosts";
 
 import { mockPost, mockPost2, mockPostView } from "./mocks";
 
@@ -18,6 +21,7 @@ vi.mock("react-router-dom", async () => {
 
 vi.mock("@/queries/usePosts", () => ({
   useSinglePostQuery: vi.fn(),
+  useDownloadResourceWithProgressMutation: vi.fn(),
 }));
 
 vi.mock("@/features/postView/components/PostLoading", () => ({
@@ -55,6 +59,9 @@ vi.mock("@/utils/getInitials.util", () => ({
 
 const mockUseParams = vi.mocked(useParams);
 const mockUseSinglePostQuery = vi.mocked(useSinglePostQuery);
+const mockUseDownloadResourceMutation = vi.mocked(
+  useDownloadResourceWithProgressMutation
+);
 
 const TestWrapper = ({ children }: { children: React.ReactNode }) => {
   const queryClient = new QueryClient({
@@ -219,6 +226,13 @@ describe("PostView Component", () => {
           },
           { id: "6b2efb09-e634-41d9-b2eb-d4972fabb729" }
         );
+
+        mockUseDownloadResourceMutation.mockReturnValue({
+          mutate: vi.fn(),
+          isPending: false,
+          progress: 0,
+        } as unknown as ReturnType<typeof useDownloadResourceWithProgressMutation>);
+
         render(
           <TestWrapper>
             <PostView />

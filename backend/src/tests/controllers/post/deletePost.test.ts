@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 
-import { deletePost } from "../../../controllers/post.controller";
+import { deletePost } from "../../../controllers/post/post.delete.controller";
 import prisma from "../../../core/config/db";
 import { handleError } from "../../../core/error";
 import { AuthorizationError } from "../../../core/error/custom/auth.error";

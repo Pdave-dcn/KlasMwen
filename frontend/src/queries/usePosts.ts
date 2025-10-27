@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import {
   useInfiniteQuery,
   useMutation,
@@ -10,6 +12,7 @@ import { toast } from "sonner";
 import {
   createNewPost,
   deletePost,
+  downloadPostResourceWithProgress,
   getHomePagePosts,
   getPostById,
   getPostForEdit,
@@ -85,6 +88,26 @@ const usePostUpdateMutation = () => {
   });
 };
 
+const useDownloadResourceWithProgressMutation = () => {
+  const [progress, setProgress] = useState<number>(0);
+
+  const mutation = useMutation({
+    mutationFn: ({ postId, fileName }: { postId: string; fileName: string }) =>
+      downloadPostResourceWithProgress(postId, fileName, setProgress),
+    onMutate: () => {
+      toast("Starting download...");
+    },
+    onSuccess: () => {
+      toast("Download complete");
+    },
+    onError: () => {
+      setProgress(0);
+    },
+  });
+
+  return { ...mutation, progress };
+};
+
 /**
  * Custom hook that creates a mutation for deleting a post with optimistic updates.
  * Implements optimistic UI updates by immediately removing the post from feed and user posts,
@@ -152,4 +175,5 @@ export {
   useDeletePostMutation,
   usePostEditQuery,
   usePostUpdateMutation,
+  useDownloadResourceWithProgressMutation,
 };

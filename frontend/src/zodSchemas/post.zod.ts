@@ -154,6 +154,8 @@ const DeletePostResponseSchema = z.object({
 });
 
 export type Post = z.infer<typeof PostDataSchema>;
+export type ExtendedPost = z.infer<typeof ExtendedPostDataSchema>;
+export type LessExtendedPost = z.infer<typeof LessExtendedPostDataSchema>;
 export type PostType = z.infer<typeof PostTypeSchema>;
 export type PostResponse = z.infer<typeof PostResponseSchema>;
 export type PostFormValues = z.infer<typeof PostCreationSchema>;

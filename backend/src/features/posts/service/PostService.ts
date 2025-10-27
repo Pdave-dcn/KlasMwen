@@ -266,6 +266,22 @@ class PostService {
   }
 
   /**
+   * Get resource post by ID
+   * @throws {PostNotFoundError} if post not found
+   */
+  static async getResourcePostById(postId: string) {
+    const post = await PostRepository.findExtendedPostById(postId);
+
+    if (!post) {
+      throw new PostNotFoundError(postId);
+    } else if (!post.fileUrl) {
+      throw new Error("Post is not a resource post");
+    }
+
+    return post;
+  }
+
+  /**
    * Get post for editing
    * @throws {PostNotFoundError} if post not found
    */

@@ -34,13 +34,17 @@ import FileUploadField from "./FileUploadField";
 import TagsSelector from "./TagSelector";
 import TitleField from "./TitleField";
 
-interface PostFormProps {
+interface PostCreationFormProps {
   open: boolean;
   onClose: () => void;
   postType: PostType | null;
 }
 
-const PostForm = ({ open, onClose, postType }: PostFormProps) => {
+const PostCreationForm = ({
+  open,
+  onClose,
+  postType,
+}: PostCreationFormProps) => {
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
 
   const schema =
@@ -172,4 +176,4 @@ const PostForm = ({ open, onClose, postType }: PostFormProps) => {
   );
 };
 
-export default PostForm;
+export default PostCreationForm;

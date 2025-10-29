@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import PostForm from "@/features/PostCreation/components/postForm/PostForm";
+import PostCreationForm from "@/features/PostCreation/components/postForm/PostForm";
 import PostTypeSelector from "@/features/PostCreation/components/PostTypeSelector";
 import PostEditForm from "@/features/postEdit/components/PostEditForm";
 import { usePostEditStore } from "@/stores/postEdit.store";
@@ -55,7 +55,7 @@ const Layout = ({ children }: LayoutProps) => {
         onClose={() => setShowTypeSelector(false)}
       />
 
-      <PostForm
+      <PostCreationForm
         open={showPostCreationForm}
         onClose={handlePostCreationFormClose}
         postType={selectedType}

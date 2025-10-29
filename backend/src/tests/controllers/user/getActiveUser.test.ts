@@ -4,6 +4,7 @@ import { Request, Response } from "express";
 import { getActiveUser } from "../../../controllers/user.controller";
 import prisma from "../../../core/config/db";
 import { handleError } from "../../../core/error";
+import { UserNotFoundError } from "../../../core/error/custom/user.error";
 
 import { expectValidationError } from "./shared/helpers";
 import {
@@ -185,7 +186,7 @@ describe("getActiveUser controller", () => {
   });
 
   describe("User Not Found Cases", () => {
-    it("should return 404 when authenticated user not found in database", async () => {
+    it("should call handleError when authenticated user is not found in database", async () => {
       mockReq.user = {
         id: mockUser.id,
         username: mockUser.username,
@@ -199,10 +200,10 @@ describe("getActiveUser controller", () => {
       expect(prisma.user.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({ where: { id: mockUser.id } })
       );
-      expect(mockRes.status).toHaveBeenCalledWith(404);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: "User not found",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(UserNotFoundError),
+        mockRes
+      );
     });
 
     it("should handle case where user was deleted after authentication", async () => {
@@ -217,10 +218,10 @@ describe("getActiveUser controller", () => {
 
       await getActiveUser(mockReq, mockRes);
 
-      expect(mockRes.status).toHaveBeenCalledWith(404);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: "User not found",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(UserNotFoundError),
+        mockRes
+      );
     });
   });
 

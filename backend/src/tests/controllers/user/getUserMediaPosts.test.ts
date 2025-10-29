@@ -1,5 +1,6 @@
 import { getUserMediaPosts } from "../../../controllers/user.controller.js";
 import prisma from "../../../core/config/db.js";
+import { UserNotFoundError } from "../../../core/error/custom/user.error.js";
 import { handleError } from "../../../core/error/index.js";
 
 import {
@@ -225,7 +226,7 @@ describe("getUserMediaPosts controller", () => {
   });
 
   describe("Error Cases", () => {
-    it("should return 404 when user does not exist", async () => {
+    it("should call handleError when user does not exist", async () => {
       const nonExistentUserId = "123e4567-e89b-12d3-a456-426614174999";
       mockReq.params = { id: nonExistentUserId };
       mockReq.query = {};
@@ -238,10 +239,10 @@ describe("getUserMediaPosts controller", () => {
         where: { id: nonExistentUserId },
         select: { id: true },
       });
-      expect(mockRes.status).toHaveBeenCalledWith(404);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: "User not found",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(UserNotFoundError),
+        mockRes
+      );
       expect(prisma.post.findMany).not.toHaveBeenCalled();
     });
 

@@ -1,5 +1,6 @@
 import { getUserComments } from "../../../controllers/user.controller.js";
 import prisma from "../../../core/config/db.js";
+import { UserNotFoundError } from "../../../core/error/custom/user.error.js";
 import { handleError } from "../../../core/error/index.js";
 import { CommentWithRelations } from "../../../features/comments/commentService.js";
 
@@ -86,6 +87,7 @@ const mockUserComments: CommentWithRelations[] = [
       author: { id: "user_111222333", username: "tech_blogger" },
     },
     parent: null,
+    mentionedUserId: null,
   },
   {
     id: 2,
@@ -113,6 +115,7 @@ const mockUserComments: CommentWithRelations[] = [
         "What do you think about the new useEffect patterns that have emerged recently? ...",
       author: { id: "user_777888999", username: "frontend_dev" },
     },
+    mentionedUserId: null,
   },
 ];
 
@@ -260,10 +263,10 @@ describe("getUserComments Controller", () => {
           where: { id: "834dff96-5ac6-4392-b9c0-1db5c3ccf767" },
         })
       );
-      expect(mockRes.status).toHaveBeenCalledWith(404);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: expect.any(String),
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(UserNotFoundError),
+        mockRes
+      );
     });
 
     it("should not call comment service when user doesn't exist", async () => {

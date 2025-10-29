@@ -369,45 +369,6 @@ describe("downloadResource controller", () => {
 
       expect(mockStream.destroy).not.toHaveBeenCalled();
     });
-
-    it("should track download progress for large files", async () => {
-      const mockStream = new Readable();
-      const largeFileSize = 10 * 1024 * 1024; // 10MB
-
-      let dataHandler: (chunk: Buffer) => void;
-      mockStream.pipe = vi.fn();
-      mockStream.on = vi.fn((event, handler) => {
-        if (event === "data") {
-          dataHandler = handler;
-        }
-        return mockStream;
-      });
-
-      mockReq.user = createAuthenticatedUser();
-      mockReq.params = { id: resourceId };
-      mockReq.on = vi.fn();
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue({
-        ...mockResourcePost,
-        fileSize: largeFileSize,
-      });
-      vi.mocked(axios).mockResolvedValue({
-        data: mockStream,
-        headers: {
-          "content-length": largeFileSize.toString(),
-          "content-type": "application/pdf",
-        },
-      });
-
-      await downloadResource(mockReq, mockRes);
-
-      // Verify data handler was registered
-      expect(mockStream.on).toHaveBeenCalledWith("data", expect.any(Function));
-
-      // Simulate a large chunk to trigger progress logging
-      const chunkSize = 600 * 1024; // 600KB chunk
-      dataHandler!(Buffer.alloc(chunkSize));
-    });
   });
 
   describe("error handling", () => {

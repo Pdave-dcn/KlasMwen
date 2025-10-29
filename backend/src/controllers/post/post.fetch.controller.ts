@@ -174,8 +174,7 @@ const getPostForEdit = async (req: Request, res: Response) => {
   }
 };
 
-// todo: refactor this controller (too long)
-// eslint-disable-next-line max-lines-per-function
+/* eslint-disable-next-line max-lines-per-function */
 const downloadResource = async (req: Request, res: Response) => {
   const actionLogger = createActionLogger(
     controllerLogger,
@@ -188,29 +187,23 @@ const downloadResource = async (req: Request, res: Response) => {
     const startTime = Date.now();
 
     const user = ensureAuthenticated(req);
-    actionLogger.info(
-      { userId: user.id, username: user.username },
-      "User authenticated for resource download"
-    );
-
     const { id: postId } = PostIdParamSchema.parse(req.params);
-    actionLogger.debug({ postId }, "Post ID parameter parsed");
+    actionLogger.info(
+      { userId: user.id, postId },
+      "User authenticated and post ID parsed"
+    );
 
     const serviceStartTime = Date.now();
     const resource = await PostService.getResourcePostById(postId);
     const serviceDuration = Date.now() - serviceStartTime;
 
-    if (!resource?.fileUrl) {
-      actionLogger.warn({ postId }, "Resource missing fileUrl");
-      return res.status(404).json({ message: "Resource not found" });
-    }
-
-    const fileUrl = resource.fileUrl;
-    actionLogger.debug({ fileUrl }, "Fetching file from Cloudinary");
-
+    actionLogger.debug(
+      { fileUrl: resource.fileUrl },
+      "Fetching file from Cloudinary"
+    );
     const fileResponse = await axios({
       method: "GET",
-      url: fileUrl,
+      url: resource.fileUrl as string,
       responseType: "stream",
       timeout: 0,
     });
@@ -224,22 +217,7 @@ const downloadResource = async (req: Request, res: Response) => {
 
     res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
     res.setHeader("Content-Type", mimeType);
-    if (fileSize > 0) {
-      res.setHeader("Content-Length", fileSize);
-    }
-
-    let bytesSent = 0;
-    fileResponse.data.on("data", (chunk: Buffer) => {
-      bytesSent += chunk.length;
-      if (fileSize > 0 && bytesSent % (512 * 1024) < chunk.length) {
-        // log roughly every 512KB
-        const percent = ((bytesSent / fileSize) * 100).toFixed(1);
-        actionLogger.debug(
-          { postId, userId: user.id, percent },
-          "Download progress"
-        );
-      }
-    });
+    if (fileSize > 0) res.setHeader("Content-Length", fileSize);
 
     fileResponse.data.on("error", (err: Error) => {
       actionLogger.error(
@@ -257,16 +235,13 @@ const downloadResource = async (req: Request, res: Response) => {
       }
     });
 
-    fileResponse.data.pipe(res);
-
-    fileResponse.data.on("end", () => {
-      const totalDuration = Date.now() - startTime;
+    fileResponse.data.pipe(res).on("end", () => {
       actionLogger.info(
         {
           postId: resource.id,
           userId: user.id,
           fileSize,
-          totalDuration,
+          totalDuration: Date.now() - startTime,
           serviceDuration,
         },
         "Post resource streamed successfully"

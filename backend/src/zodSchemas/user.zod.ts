@@ -34,4 +34,6 @@ const UpdateUserProfileSchema = z
     }
   );
 
+export type UpdateUserProfileData = z.infer<typeof UpdateUserProfileSchema>;
+
 export { UserIdParamSchema, UpdateUserProfileSchema };

@@ -1,6 +1,7 @@
 import { updateUserProfile } from "../../../controllers/user.controller.js";
 import prisma from "../../../core/config/db.js";
 import { AuthenticationError } from "../../../core/error/custom/auth.error.js";
+import { UserNotFoundError } from "../../../core/error/custom/user.error.js";
 import { handleError } from "../../../core/error/index.js";
 
 import {
@@ -261,11 +262,10 @@ describe("updateUserProfile controller", () => {
 
       await updateUserProfile(mockReq, mockRes);
 
-      expect(mockRes.status).toHaveBeenCalledWith(404);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: "User not found",
-      });
-      expect(handleError).not.toHaveBeenCalled();
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(UserNotFoundError),
+        mockRes
+      );
     });
 
     it("should handle database connection errors during update", async () => {

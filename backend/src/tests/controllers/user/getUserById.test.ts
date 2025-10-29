@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 
 import { getUserById } from "../../../controllers/user.controller";
 import prisma from "../../../core/config/db";
+import { UserNotFoundError } from "../../../core/error/custom/user.error";
 import { handleError } from "../../../core/error/index";
 
 import { expectValidationError } from "./shared/helpers";
@@ -85,7 +86,7 @@ describe("getUserById controller", () => {
       expect(mockRes.status).toHaveBeenCalledWith(200);
     });
 
-    it("should return 404 when user is not found", async () => {
+    it("should call handleError when user is not found", async () => {
       mockReq.params = { id: mockUser.id };
       (prisma.user.findUnique as any).mockResolvedValue(null);
 
@@ -94,10 +95,11 @@ describe("getUserById controller", () => {
       expect(prisma.user.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({ where: { id: mockUser.id } })
       );
-      expect(mockRes.status).toHaveBeenCalledWith(404);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: "User not found",
-      });
+
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(UserNotFoundError),
+        mockRes
+      );
     });
   });
 

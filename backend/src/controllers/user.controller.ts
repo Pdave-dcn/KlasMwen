@@ -1,10 +1,8 @@
-/* eslint-disable max-lines-per-function*/
-import prisma from "../core/config/db.js";
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index";
 import CommentService from "../features/comments/commentService.js";
 import PostService from "../features/posts/service/PostService.js";
-import ensureUserExists from "../features/user/isUserExistsHandler.js";
+import { UserService as UserControllerService } from "../features/user/service/UserService.js";
 import { ensureAuthenticated } from "../utils/auth.util.js";
 import createActionLogger from "../utils/logger.util.js";
 import {
@@ -27,48 +25,18 @@ const getUserById = async (req: Request, res: Response) => {
     actionLogger.info("User fetch by ID attempt started");
     const startTime = Date.now();
 
-    actionLogger.debug("Validating user ID parameter");
-    const validationStartTime = Date.now();
     const { id: userId } = UserIdParamSchema.parse(req.params);
-    const validationDuration = Date.now() - validationStartTime;
-
     actionLogger.info(
       {
         requestedUserId: userId,
-        validationDuration,
       },
       "User ID parameter validated"
     );
 
     actionLogger.debug("Fetching user from database");
-    const dbStartTime = Date.now();
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        username: true,
-        bio: true,
-        Avatar: {
-          select: { id: true, url: true },
-        },
-        role: true,
-      },
-    });
-    const dbDuration = Date.now() - dbStartTime;
-
-    if (!user) {
-      const totalDuration = Date.now() - startTime;
-      actionLogger.warn(
-        {
-          requestedUserId: userId,
-          validationDuration,
-          dbDuration,
-          totalDuration,
-        },
-        "User fetch failed - user not found"
-      );
-      return res.status(404).json({ message: "User not found" });
-    }
+    const serviceStartTime = Date.now();
+    const user = await UserControllerService.findUserById(userId);
+    const serviceDuration = Date.now() - serviceStartTime;
 
     const totalDuration = Date.now() - startTime;
     actionLogger.info(
@@ -76,23 +44,16 @@ const getUserById = async (req: Request, res: Response) => {
         requestedUserId: userId,
         foundUsername: user.username,
         userRole: user.role,
-        hasAvatar: !!user.Avatar,
+        hasAvatar: !!user.avatar,
         hasBio: !!user.bio,
-        validationDuration,
-        dbDuration,
+        serviceDuration,
         totalDuration,
       },
       "User fetched successfully"
     );
 
     return res.status(200).json({
-      data: {
-        id: user.id,
-        username: user.username,
-        bio: user.bio,
-        role: user.role,
-        avatar: user.Avatar,
-      },
+      data: user,
     });
   } catch (error: unknown) {
     return handleError(error, res);
@@ -110,39 +71,16 @@ const getActiveUser = async (req: Request, res: Response) => {
     actionLogger.info("Active user fetch attempt started");
     const startTime = Date.now();
 
-    actionLogger.debug("Authenticating user");
     const validUser = ensureAuthenticated(req);
+    actionLogger.info(
+      { userId: validUser.id },
+      "User authenticated successfully"
+    );
 
-    actionLogger.debug("Fetching active user from database");
-    const dbStartTime = Date.now();
-    const user = await prisma.user.findUnique({
-      where: { id: validUser.id },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        bio: true,
-        Avatar: {
-          select: { id: true, url: true },
-        },
-        role: true,
-        createdAt: true,
-      },
-    });
-    const dbDuration = Date.now() - dbStartTime;
-
-    if (!user) {
-      const totalDuration = Date.now() - startTime;
-      actionLogger.warn(
-        {
-          authenticatedUserId: validUser.id,
-          dbDuration,
-          totalDuration,
-        },
-        "Active user fetch failed - authenticated user not found in database"
-      );
-      return res.status(404).json({ message: "User not found" });
-    }
+    actionLogger.debug("Fetching active user from database ");
+    const serviceStartTime = Date.now();
+    const user = await UserControllerService.getActiveUser(validUser.id);
+    const serviceDuration = Date.now() - serviceStartTime;
 
     const totalDuration = Date.now() - startTime;
     actionLogger.info(
@@ -150,24 +88,16 @@ const getActiveUser = async (req: Request, res: Response) => {
         authenticatedUserId: validUser.id,
         username: user.username,
         userRole: user.role,
-        hasAvatar: !!user.Avatar,
+        hasAvatar: !!user.avatar,
         hasBio: !!user.bio,
-        dbDuration,
+        serviceDuration,
         totalDuration,
       },
       "Active user fetched successfully"
     );
 
     return res.status(200).json({
-      data: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        bio: user.bio,
-        avatar: user.Avatar,
-        role: user.role,
-        createdAt: user.createdAt,
-      },
+      data: user,
     });
   } catch (error: unknown) {
     return handleError(error, res);
@@ -189,9 +119,7 @@ const updateUserProfile = async (req: Request, res: Response) => {
     const user = ensureAuthenticated(req);
 
     actionLogger.debug("Validating profile update data");
-    const validationStartTime = Date.now();
     const { bio, avatarId } = UpdateUserProfileSchema.parse(req.body);
-    const validationDuration = Date.now() - validationStartTime;
 
     actionLogger.info(
       {
@@ -199,38 +127,17 @@ const updateUserProfile = async (req: Request, res: Response) => {
         hasBioUpdate: !!bio,
         hasAvatarUpdate: !!avatarId,
         bioLength: bio?.length,
-        validationDuration,
       },
       "User authenticated and profile data validated"
     );
 
-    actionLogger.debug("Checking user exists");
-    const isExists = await ensureUserExists(
-      user.id,
-      res,
-      actionLogger,
-      startTime
-    );
-    if (!isExists) return;
-
-    actionLogger.debug("Updating user profile in database");
-    const dbUpdateStartTime = Date.now();
-    const updatedUser = await prisma.user.update({
-      where: { id: user.id },
-      data: { bio, avatarId },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        bio: true,
-        Avatar: {
-          select: { id: true, url: true },
-        },
-        role: true,
-        createdAt: true,
-      },
+    actionLogger.debug("Processing user profile update");
+    const serviceStartTime = Date.now();
+    const updatedUser = await UserControllerService.updateUserProfile(user.id, {
+      bio,
+      avatarId,
     });
-    const dbUpdateDuration = Date.now() - dbUpdateStartTime;
+    const serviceDuration = Date.now() - serviceStartTime;
 
     const totalDuration = Date.now() - startTime;
     actionLogger.info(
@@ -238,10 +145,9 @@ const updateUserProfile = async (req: Request, res: Response) => {
         userId: user.id,
         username: updatedUser.username,
         updatedBio: !!updatedUser.bio,
-        updatedAvatar: !!updatedUser.Avatar,
+        updatedAvatar: !!updatedUser.avatar,
         bioLength: updatedUser.bio?.length,
-        validationDuration,
-        dbUpdateDuration,
+        serviceDuration,
         totalDuration,
       },
       "User profile updated successfully"
@@ -249,15 +155,7 @@ const updateUserProfile = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       message: "Profile updated successfully",
-      user: {
-        id: updatedUser.id,
-        username: updatedUser.username,
-        email: updatedUser.email,
-        bio: updatedUser.bio,
-        role: updatedUser.role,
-        createdAt: updatedUser.createdAt,
-        avatar: updatedUser.Avatar,
-      },
+      user: updatedUser,
     });
   } catch (error: unknown) {
     return handleError(error, res);
@@ -405,8 +303,7 @@ const getUserPosts = async (req: Request, res: Response) => {
     );
 
     actionLogger.debug("Verifying user exists");
-    const user = await ensureUserExists(userId, res, actionLogger, startTime);
-    if (!user) return;
+    await UserControllerService.userExists(userId);
 
     actionLogger.debug("Processing user posts request");
     const serviceStartTime = Date.now();
@@ -470,8 +367,7 @@ const getUserComments = async (req: Request, res: Response) => {
     );
 
     actionLogger.debug("Verifying user exists");
-    const user = await ensureUserExists(userId, res, actionLogger, startTime);
-    if (!user) return;
+    await UserControllerService.userExists(userId);
 
     actionLogger.debug("Processing user comments and replies fetching request");
     const serviceStartTime = Date.now();
@@ -534,8 +430,7 @@ const getUserMediaPosts = async (req: Request, res: Response) => {
     );
 
     actionLogger.debug("Verifying user exists");
-    const user = await ensureUserExists(userId, res, actionLogger, startTime);
-    if (!user) return;
+    await UserControllerService.userExists(userId);
 
     actionLogger.debug("Processing user posts request");
     const serviceStartTime = Date.now();

@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 
 import { getUserPosts } from "../../../controllers/user.controller.js";
 import prisma from "../../../core/config/db.js";
+import { UserNotFoundError } from "../../../core/error/custom/user.error.js";
 import { handleError } from "../../../core/error/index.js";
 
 import { expectValidationError } from "./shared/helpers.js";
@@ -207,7 +208,7 @@ describe("getUserPosts controller", () => {
   });
 
   describe("User Not Found Cases", () => {
-    it("should return 404 when user does not exist", async () => {
+    it("should call handleError when user does not exist", async () => {
       mockReq.params = { id: mockUser.id };
       mockReq.query = {};
 
@@ -219,10 +220,10 @@ describe("getUserPosts controller", () => {
         where: { id: mockUser.id },
         select: { id: true },
       });
-      expect(mockRes.status).toHaveBeenCalledWith(404);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: "User not found",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(UserNotFoundError),
+        mockRes
+      );
       expect(prisma.post.findMany).not.toHaveBeenCalled();
     });
   });

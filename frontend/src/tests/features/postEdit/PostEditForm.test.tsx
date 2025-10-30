@@ -9,6 +9,14 @@ import { usePostEditQuery, usePostUpdateMutation } from "@/queries/usePosts";
 import { useTagQuery } from "@/queries/useTag";
 import { usePostEditStore } from "@/stores/postEdit.store";
 
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+global.ResizeObserver = ResizeObserverMock as any;
+
 vi.mock("@/queries/usePosts", () => ({
   usePostEditQuery: vi.fn(),
   usePostUpdateMutation: vi.fn(),
@@ -249,7 +257,7 @@ describe("PostEditForm Component", () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText("Title must be at least 5 characters")
+          screen.getByText("Title must be at least 10 characters")
         ).toBeInTheDocument();
       });
 

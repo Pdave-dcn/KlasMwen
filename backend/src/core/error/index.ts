@@ -16,6 +16,51 @@ import ValidationErrorHandler from "./handlers/validation.js";
 
 import type { Request, Response } from "express";
 
+/**
+ * Central error handling function for all API controllers.
+ *
+ * Processes errors from try-catch blocks throughout the application, logs them with context,
+ * and returns appropriate HTTP responses. This function acts as the single source of truth
+ * for error handling, ensuring consistent error responses across all endpoints.
+ *
+ * @remarks
+ * This function handles multiple error types in order of specificity:
+ * - Custom application errors (BaseCustomError and its subclasses)
+ * - Validation errors (Zod)
+ * - File upload errors (Multer)
+ * - Database errors (Prisma client errors)
+ * - Authentication errors (JWT and bcrypt)
+ * - Generic/unknown errors (fallback)
+ *
+ * The function also:
+ * - Logs errors with contextual information from the request
+ * - Formats Prisma errors for better readability
+ * - Includes stack traces in development environment
+ * - Delegates error handling to specialized handlers for each error type
+ *
+ * @param {unknown} error - The error caught in the try-catch block. Can be any type of error
+ *                          or thrown value (Error, PrismaClientError, ZodError, MulterError, etc.)
+ * @param {Response} res - Express Response object used to send the error response back to the client.
+ *                         Must contain a reference to the Request object for logging context.
+ *
+ * @returns {Response} Express Response object with appropriate status code and error message JSON
+ *
+ * @example
+ * // Usage in a controller
+ * try {
+ *   const user = await createUser(userData);
+ *   return res.status(201).json(user);
+ * } catch (error) {
+ *   return handleError(error, res);
+ * }
+ *
+ * @see {@link BaseCustomError} for custom application errors
+ * @see {@link ValidationErrorHandler} for Zod validation error handling
+ * @see {@link DatabaseErrorHandler} for Prisma error handling
+ * @see {@link AuthErrorHandler} for JWT and bcrypt error handling
+ * @see {@link FileUploadErrorHandler} for Multer error handling
+ * @see {@link GenericErrorHandler} for fallback error handling
+ */
 export const handleError = (error: unknown, res: Response): Response => {
   const req = res.req as
     | (Request & { logContext?: Record<string, unknown> })

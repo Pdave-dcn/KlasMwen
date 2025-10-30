@@ -86,7 +86,8 @@ const BasePostCreationSchema = z.object({
   title: z
     .string()
     .trim()
-    .min(5, "Title must be at least 5 characters")
+    .min(1, "Title is required")
+    .min(10, "Title must be at least 10 characters")
     .max(100, "Title must be less than 100 characters"),
   type: z.enum(Object.values(PostTypeSchema) as [string, ...string[]]),
   tagIds: z.array(z.number().int().positive()).max(10).nullish(),
@@ -97,6 +98,7 @@ const TextPostCreationSchema = BasePostCreationSchema.extend({
   content: z
     .string()
     .trim()
+    .min(1, "Content is required")
     .min(10, "The content must be at least 10 characters")
     .max(5000, "The content must be less than 5000 characters"),
 });

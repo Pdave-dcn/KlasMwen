@@ -37,7 +37,7 @@ import TitleField from "./TitleField";
 interface PostCreationFormProps {
   open: boolean;
   onClose: () => void;
-  postType: PostType | null;
+  postType: PostType;
 }
 
 const PostCreationForm = ({
@@ -52,11 +52,15 @@ const PostCreationForm = ({
       ? TextPostCreationSchema
       : ResourcePostCreationSchema;
 
-  const { register, handleSubmit, formState, reset, setValue, watch } =
+  const { register, handleSubmit, formState, reset, setValue, watch, control } =
     useForm<PostFormValues>({
       resolver: zodResolver(schema),
       defaultValues: {
         tagIds: [],
+        title: "",
+        content: "",
+        resource: undefined,
+        type: postType,
       },
     });
 
@@ -114,6 +118,8 @@ const PostCreationForm = ({
     setValue("tagIds", newTagIds.length > 0 ? newTagIds : null);
   };
 
+  if (!postType) return null;
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -125,7 +131,7 @@ const PostCreationForm = ({
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <TitleField register={register} errors={errors} postType={postType} />
+          <TitleField control={control} errors={errors} postType={postType} />
 
           {postType !== "RESOURCE" && (
             <ContentField setValue={setValue} watch={watch} errors={errors} />

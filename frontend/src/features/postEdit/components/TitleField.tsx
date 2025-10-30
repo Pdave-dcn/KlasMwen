@@ -11,7 +11,7 @@ interface TitleFieldProps {
   errors: FieldErrors<UpdatePostData>;
 }
 
-const MIN_LENGTH = 5;
+const MIN_LENGTH = 10;
 const MAX_LENGTH = 100;
 
 export const TitleField = ({ control, errors }: TitleFieldProps) => {

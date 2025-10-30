@@ -4,10 +4,12 @@ import { Label } from "@radix-ui/react-label";
 import { RotateCw } from "lucide-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import type { PostFormValues } from "@/zodSchemas/post.zod";
+import type { Tag } from "@/zodSchemas/tag.zod";
 
 interface TagsSelectorProps {
-  tags?: Array<{ id: number; name: string }>;
+  tags?: Tag[];
   tagsLoading: boolean;
   tagsError: Error | null;
   selectedTagIds: number[];
@@ -30,31 +32,33 @@ const TagsSelector = ({
       Tags {selectedTagIds.length > 0 && `(${selectedTagIds.length}/10)`}
     </Label>
 
-    <div className="flex flex-wrap gap-2">
-      {tagsLoading && !tagsError && <RotateCw className="animate-spin" />}
-      {!tagsLoading && tagsError && (
-        <span className="text-muted-foreground">Error loading tags</span>
-      )}
-      {tags?.map((tag) => {
-        const isSelected = selectedTagIds.includes(tag.id);
-        return (
-          <button
-            key={tag.id}
-            type="button"
-            onClick={() =>
-              isSelected ? onRemoveTag(tag.id) : onAddTag(tag.id)
-            }
-            className={`px-3 py-1 rounded-full border transition-colors ${
-              isSelected
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-muted text-foreground hover:bg-muted/70"
-            }`}
-          >
-            {tag.name}
-          </button>
-        );
-      })}
-    </div>
+    <ScrollArea className="h-32 w-full rounded-md border p-4">
+      <div className="flex flex-wrap gap-2">
+        {tagsLoading && !tagsError && <RotateCw className="animate-spin" />}
+        {!tagsLoading && tagsError && (
+          <span className="text-muted-foreground">Error loading tags</span>
+        )}
+        {tags?.map((tag) => {
+          const isSelected = selectedTagIds.includes(tag.id);
+          return (
+            <button
+              key={tag.id}
+              type="button"
+              onClick={() =>
+                isSelected ? onRemoveTag(tag.id) : onAddTag(tag.id)
+              }
+              className={`px-1.5 md:px-3 py-1 text-sm rounded-full border transition-colors ${
+                isSelected
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-muted text-foreground hover:bg-muted/70"
+              }`}
+            >
+              {tag.name}
+            </button>
+          );
+        })}
+      </div>
+    </ScrollArea>
 
     {errors.tagIds && (
       <Alert variant="destructive" className="py-2">

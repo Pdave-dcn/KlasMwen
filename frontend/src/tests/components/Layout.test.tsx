@@ -33,7 +33,7 @@ vi.mock("@/features/PostCreation/components/PostTypeSelector", () => ({
     ) : null,
 }));
 
-vi.mock("@/features/PostCreation/components/postForm/PostForm", () => ({
+vi.mock("@/features/PostCreation/components/postForm/PostCreationForm", () => ({
   default: ({ open, onClose, postType }: any) =>
     open ? (
       <div data-testid="post-form">

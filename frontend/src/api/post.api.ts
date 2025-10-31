@@ -138,16 +138,7 @@ const getPostForEdit = async (postId: string) => {
 };
 
 const updatePost = async (postId: string, data: UpdatePostData) => {
-  try {
-    const res = await api.put(`/posts/${postId}`, data);
-
-    const validatedData = res.data;
-
-    return validatedData;
-  } catch (error) {
-    handleZodValidationError(error, "updatePost");
-    throw error;
-  }
+  await api.put(`/posts/${postId}`, data);
 };
 
 const deletePost = async (postId: string) => {

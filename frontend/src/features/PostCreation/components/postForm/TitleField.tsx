@@ -28,6 +28,7 @@ const TitleField = ({ control, errors, postType }: TitleFieldProps) => {
             <Input
               id="title"
               type="text"
+              data-testid="title-input"
               value={field.value ?? ""}
               onChange={(e) => field.onChange(e.target.value)}
               placeholder={`Enter your ${postType?.toLowerCase()} title...`}

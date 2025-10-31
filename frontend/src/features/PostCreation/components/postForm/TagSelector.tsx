@@ -34,7 +34,9 @@ const TagsSelector = ({
 
     <ScrollArea className="h-32 w-full rounded-md border p-4">
       <div className="flex flex-wrap gap-2">
-        {tagsLoading && !tagsError && <RotateCw className="animate-spin" />}
+        {tagsLoading && !tagsError && (
+          <RotateCw data-testid="loading-spinner" className="animate-spin" />
+        )}
         {!tagsLoading && tagsError && (
           <span className="text-muted-foreground">Error loading tags</span>
         )}

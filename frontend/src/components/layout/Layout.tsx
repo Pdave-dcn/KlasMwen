@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import PostCreationForm from "@/features/PostCreation/components/postForm/PostForm";
+import PostCreationForm from "@/features/PostCreation/components/postForm/PostCreationForm";
 import PostTypeSelector from "@/features/PostCreation/components/PostTypeSelector";
 import PostEditForm from "@/features/postEdit/components/PostEditForm";
 import { usePostEditStore } from "@/stores/postEdit.store";

@@ -37,6 +37,8 @@ const ContentField = ({ setValue, watch, errors }: ContentFieldProps) => {
 
       <div className="relative rounded-md border overflow-hidden">
         <MDEditor
+          aria-label="Content"
+          data-testid="content-editor"
           value={content}
           onChange={(val) => setValue("content", val ?? "")}
           height={350}

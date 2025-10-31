@@ -1,3 +1,5 @@
+import { mock } from "node:test";
+
 import { Request, Response } from "express";
 
 import { updatePost } from "../../../controllers/post/post.update.controller";
@@ -7,7 +9,10 @@ import {
   AuthenticationError,
   AuthorizationError,
 } from "../../../core/error/custom/auth.error";
-import { PostUpdateFailedError } from "../../../core/error/custom/post.error";
+import {
+  PostNotFoundError,
+  PostUpdateFailedError,
+} from "../../../core/error/custom/post.error";
 
 import { createAuthenticatedUser } from "./shared/helpers";
 import { createMockRequest, createMockResponse } from "./shared/mocks";
@@ -131,9 +136,7 @@ describe("updatePost controller", () => {
 
       await updatePost(mockReq, mockRes);
 
-      expect(prisma.post.findUnique).toHaveBeenCalledWith({
-        where: { id: mockPostId },
-      });
+      expect(prisma.post.findUnique).toHaveBeenCalled();
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -310,10 +313,31 @@ describe("updatePost controller", () => {
         mockRes
       );
     });
+
+    it("should call handleError with PostUpdateError when edit time window has expired", async () => {
+      mockReq.user = createAuthenticatedUser({ id: mockUserId });
+      mockReq.params = { id: mockPostId };
+      mockReq.body = mockRequestData;
+
+      const mockPostInDbWithCreatedAt = {
+        ...mockPostInDb,
+        createdAt: new Date(Date.now() - 6 * 60 * 1000), // Set creation time to 6 minutes ago
+      };
+      vi.mocked(prisma.post.findUnique).mockResolvedValue(
+        mockPostInDbWithCreatedAt as any
+      );
+
+      await updatePost(mockReq, mockRes);
+
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(PostUpdateFailedError),
+        mockRes
+      );
+    });
   });
 
   describe("Not Found", () => {
-    it("should return 404 if the post is not found", async () => {
+    it("should call handleError when the post is not found", async () => {
       const mockMinimalBody = {
         title: "A valid title",
         content: "A valid content",
@@ -329,8 +353,10 @@ describe("updatePost controller", () => {
 
       await updatePost(mockReq, mockRes);
 
-      expect(mockRes.status).toHaveBeenCalledWith(404);
-      expect(mockRes.json).toHaveBeenCalledWith({ message: "Post not found" });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(PostNotFoundError),
+        mockRes
+      );
     });
   });
 

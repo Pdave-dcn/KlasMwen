@@ -15,9 +15,7 @@ class PostNotFoundError extends BaseCustomError {
  * Error thrown when post update fails
  */
 class PostUpdateFailedError extends BaseCustomError {
-  statusCode = 500;
-
-  constructor(postId: string, reason?: string) {
+  constructor(postId: string, reason?: string, public statusCode = 500) {
     super(
       reason
         ? `Failed to update post "${postId}": ${reason}`

@@ -19,6 +19,19 @@ import type { Prisma } from "@prisma/client";
  */
 class PostRepository {
   /**
+   * Check if a post exists by ID
+   */
+  static async exists(postId: string): Promise<Prisma.PostGetPayload<{
+    select: { id: true; authorId: true; createdAt: true };
+  }> | null> {
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { id: true, authorId: true, createdAt: true },
+    });
+    return post;
+  }
+
+  /**
    * Find posts with filters and pagination
    */
   static findManyPosts(

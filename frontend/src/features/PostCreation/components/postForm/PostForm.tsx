@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useForm } from "react-hook-form";
 
@@ -63,6 +63,26 @@ const PostCreationForm = ({
         type: postType,
       },
     });
+
+  useEffect(() => {
+    if (postType) {
+      if (postType === "RESOURCE") {
+        reset({
+          tagIds: [],
+          title: "",
+          resource: undefined as unknown as FileList,
+          type: "RESOURCE",
+        } as unknown as PostFormValues);
+      } else {
+        reset({
+          tagIds: [],
+          title: "",
+          content: "",
+          type: postType,
+        } as unknown as PostFormValues);
+      }
+    }
+  }, [postType, reset]);
 
   const resourceFileList = watch("resource") as unknown as FileList | undefined;
   const resourceFile = resourceFileList?.[0];

@@ -2,6 +2,7 @@ import {
   PostNotFoundError,
   PostUpdateFailedError,
 } from "../../../core/error/custom/post.error";
+import { checkPermission } from "../../../utils/auth.util";
 import { processPaginatedResults } from "../../../utils/pagination.util";
 
 import PostEnricher from "./enrichers/postEnrichers";
@@ -58,6 +59,21 @@ class PostService {
             : null,
       },
     };
+  }
+
+  /** Verify if post exists
+   * @throws PostNotFoundError if post does not exist
+   */
+  static async postExists(postId: string): Promise<Prisma.PostGetPayload<{
+    select: { id: true; authorId: true; createdAt: true };
+  }> | null> {
+    const post = await PostRepository.exists(postId);
+
+    if (!post) {
+      throw new PostNotFoundError(postId);
+    }
+
+    return post;
   }
 
   /**
@@ -301,8 +317,25 @@ class PostService {
    */
   static async handlePostUpdate(
     validatedData: ValidatedPostUpdateData,
-    postId: string
+    postId: string,
+    user: Express.User
   ) {
+    const post = await this.postExists(postId);
+    if (!post) return;
+
+    checkPermission(user, post, false);
+
+    const timeSinceCreation = Date.now() - new Date(post.createdAt).getTime();
+    const ALLOWED_EDIT_TIME_MS = 5 * 60 * 1000;
+
+    if (timeSinceCreation > ALLOWED_EDIT_TIME_MS) {
+      throw new PostUpdateFailedError(
+        postId,
+        "Edit time window has expired",
+        403
+      );
+    }
+
     const updateData =
       validatedData.type === "RESOURCE"
         ? { title: validatedData.title }

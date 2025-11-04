@@ -1,95 +1,92 @@
 # KlasMwen — Educational Social App
 
-**KlasMwen** is an educational social platform designed to connect students, promote knowledge sharing, and support their growth together as a community.
+![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-✓-blue)
+
+**KlasMwen** is an educational social platform designed to connect students, promote knowledge sharing, and support collective growth.
 
 ---
 
 ## Overview
 
-**KlasMwen** (from Haitian Creole “_klas mwen_”, meaning “_my class_”) is an educational social platform designed to connect students, foster knowledge sharing, and encourage collective growth.
-
-The platform creates a dedicated digital space for **middle and high school students** to:
+**KlasMwen** (from Haitian Creole “_klas mwen_”, meaning “_my class_”) provides a dedicated digital space for **middle and high school students** to:
 
 - Ask questions and get help from peers
 - Share study notes, tips, and learning resources
 - Upload and access educational materials such as PDFs, Excel sheets, and eBooks
 
-KlasMwen aims to make education more accessible especially for students with limited access to resources by empowering them to learn, share, and grow together in a community built **by students, for students**.
+It empowers students to learn, share, and grow together in a community **built by students, for students**.
 
 ---
 
 ## Tech Stack
 
-### 1. Frontend
+### Frontend
 
 - **React 19** – UI library for building dynamic interfaces
-- **Vite** – Fast and modern build tool for React
-- **TypeScript** – Type-safe JavaScript for better scalability
-- **TailwindCSS** – Utility-first CSS framework for modern styling
-- **shadcn/ui** – Component library built on **Radix UI** and **TailwindCSS** for accessible, reusable UI components
-- **TanStack Query (React Query)** – Efficient server-state management and caching
+- **Vite** – Modern build tool
+- **TypeScript** – Type-safe JavaScript
+- **TailwindCSS** – Utility-first styling
+- **shadcn/ui** – Accessible, reusable UI components
+- **TanStack Query (React Query)** – Server-state management and caching
 - **React Hook Form** + **Zod** – Form handling and schema validation
-- **Axios** – Promise-based HTTP client
-- **Zustand** – Lightweight global state management
-- **Markdown Editor (MDEditor / Markdown Preview)** – For content creation and formatting
+- **Axios** – HTTP client
+- **Zustand** – Global state management
+- **Markdown Editor (MDEditor / Markdown Preview)** – Content creation
 
-### 2. Backend
+### Backend
 
 - **Node.js** + **Express 5** – RESTful API framework
-- **Prisma ORM** – Type-safe database client and schema modeling
+- **Prisma ORM** – Type-safe database access
 - **Passport.js (JWT & Local)** – Authentication and authorization
 - **Multer** – File upload handling
-- **Cloudinary** – Cloud-based file storage and delivery
+- **Cloudinary** – Cloud-based media storage
 - **Pino** – Structured logging
 - **Swagger** – API documentation
 - **Zod** – Request/response validation
-- **Express Rate Limit** – Request throttling for security
+- **Express Rate Limit** – Request throttling
 
-### 3. Database
+### Database
 
 - **PostgreSQL** – Relational database managed via Prisma ORM
 
-### 4. Development & Tooling
+### Development & Tooling
 
 - **Vitest** + **Testing Library** – Unit and integration testing
-- **ESLint** + **Prettier** – Code linting and formatting
+- **ESLint** + **Prettier** – Linting and formatting
 
 ---
 
 ## Getting Started
 
-### 1. Prerequisites
+### Prerequisites
 
-Before you begin, ensure you have the following installed on your system:
+Ensure you have the following installed:
 
 - Node.js ≥ 18.x.x
 - npm or yarn (latest recommended)
-- PostgreSQL ≥ 14.x (running locally or remotely)
-- Cloudinary account (for media storage, if uploading files)
-- Docker (optional, for containerized setup)
+- PostgreSQL ≥ 14.x
+- Cloudinary account (for media uploads)
+- Docker (optional)
 
-> 💡 Tip: Use tools like nvm to manage Node.js versions easily.
+> 💡 Tip: Use **nvm** to manage Node.js versions easily.
 
-### 2. Clone the Repository
+### Clone the Repository
 
 ```bash
 git clone https://github.com/Pdave-dcn/KlasMwen
 cd KlasMwen
 ```
 
-### 3. Environment Variables
-
-You’ll need to configure environment variables for both the **backend** and **frontend** before running the project.
+### Environment Variables
 
 #### Backend (`/backend/.env`)
-
-Create a `.env` file in the backend directory (you can start from `.env.example` if provided):
 
 ```bash
 cp backend/.env.example backend/.env
 ```
 
-Then, fill in the following variables:
+Example variables:
 
 ```env
 DATABASE_URL="postgresql://user:password@localhost:5432/klasmwen"
@@ -102,31 +99,19 @@ CLOUDINARY_API_KEY="your_api_key"
 CLOUDINARY_API_SECRET="your_api_secret"
 ```
 
-> 💡 **Note:**
->
-> - `DATABASE_URL` should point to your PostgreSQL instance.
-> - `ALLOWED_ORIGIN` must match your frontend’s base URL.
-> - Cloudinary keys are only required if you plan to upload or serve media files.
-
 #### Frontend (`/frontend/.env`)
-
-In the frontend directory, create your `.env` file:
 
 ```bash
 cp frontend/.env.example frontend/.env
 ```
 
-Then, add your API base URL:
+Example:
 
 ```env
 VITE_API_BASE_URL="http://localhost:3000/api"
 ```
 
-> ⚙️ Adjust this value to match your backend’s host and port.
-
-### 4. Installation
-
-Install dependencies:
+### Installation
 
 ```bash
 npm install
@@ -134,98 +119,78 @@ npm install
 yarn install
 ```
 
-### 5. Run the Project
+### Seed the Database
 
-KlasMwen uses a monorepo structure with separate frontend and backend workspaces. You can run them individually or together.
+```bash
+npm run db:seed
+```
 
-#### 1. Run Frontend Only
+### Run the Project
+
+#### Frontend Only
 
 ```bash
 npm run start:frontend
 ```
 
-Starts the frontend development server (REACT + Vite) at `http://localhost:5173` by default.
-
-#### 2. Run Backend Only
+#### Backend Only
 
 ```bash
 npm run start:backend
 ```
 
-Starts the backend development server (Node.js + Express) at `http://localhost:3000` by default.
-
-#### 3. Run Both Frontend and Backend Together
+#### Run Both
 
 ```bash
 npm start
 ```
 
-This command uses `concurrently` to run **both servers at the same time**. You should see logs for both the frontend and backend in your terminal.
+> Make sure `.env` files are properly configured.
 
-> 💡 Tip: Make sure your `.env` files are properly configured for both frontend and backend before starting the servers.
+### Running Tests
 
-### 6. Running Tests
-
-KlasMwen uses **Vitest** for unit and integration testing. You can run tests for the frontend, backend, or both.
-
-#### 1. Run Frontend Tests
+#### Frontend Tests
 
 ```bash
 npm run test --workspace frontend
 ```
 
-Run the frontend test suite using Vitest.
-
-#### 2. Run Backend Tests
+#### Backend Tests
 
 ```bash
 npm run test --workspace backend
 ```
 
-Run the backend test suite using Vitest.
-
-#### 3. Run All Tests (Optional)
-
-You can run both frontend and backend tests in parallel using a monorepo-aware script or run them separately as above.
-
-#### 4. UI Test Runner (Optional)
+#### Interactive UI
 
 ```bash
 npm run test:ui --workspace frontend
 npm run test:ui --workspace backend
 ```
 
-Launches Vitest's interactive UI for exploring and running tests in a browser.
-
-> 💡 Tip: Make sure your development servers are not running on the same ports when running tests that depend on the API.
-
 ---
 
 ## Architecture Overview
 
-KlasMwen is structured as a monorepo with distinct **frontend** and **backend** workspaces, a **PostgreSQL database**, and integration with external services such as **Cloudinary** for media storage. The architecture is designed to support collaborative learning, resource sharing, and a responsive user experience.
+KlasMwen is a monorepo with **frontend**, **backend**, and **PostgreSQL** database, integrated with **Cloudinary**.
 
 ### Main Components
 
 1. **Frontend**: React + shadcn UI + TailwindCSS
 
-   - Handles the user interface, routing, forms, markdown editor, and state management (Zustand)
-   - Communicates with the backend API for CRUD operations, authentication, and resource fetching
+   - UI, routing, forms, markdown editor, state management (Zustand)
+   - API communication for CRUD, auth, and resources
 
 2. **Backend API**: Node.js + Express + Prisma ORM
 
-   - Implements business logic, REST endpoints, authentication (Passport.js with JWT), and file uploads
-   - Validates incoming requests and interacts with the database and Cloudinary
+   - Business logic, REST endpoints, authentication, file uploads
+   - Validates requests and interacts with database and Cloudinary
 
 3. **Database**: PostgreSQL
 
-   - Stores users, posts, notes, shared resources, and metadata
-   - Accessed via Prisma ORM for type-safe queries
+   - Stores users, posts, notes, resources, and metadata
 
-4. **External Services**:
-
-   - **Cloudinary**: Hosts media files (PDFs, images, Excel sheets) uploaded by students
-   - **Authentication**: Managed by Passport.js JWT strategy
+4. **External Services**: Cloudinary for media, Passport.js for authentication
 
 ### Data Flow
 
@@ -234,7 +199,7 @@ KlasMwen is structured as a monorepo with distinct **frontend** and **backend** 
         │
         ▼
 [Frontend (React + shadcn)]
-        │  API Calls (HTTP/HTTPS)
+        │  API Calls
         ▼
 [Backend (Node.js + Express + Prisma)]
    ┌─────┴─────┐
@@ -242,114 +207,78 @@ KlasMwen is structured as a monorepo with distinct **frontend** and **backend** 
 [Database]   [Cloudinary]
 ```
 
-- **Posting a Note or Resource**: User submits → Frontend sends POST request → Backend validates → Uploads media to Cloudinary if applicable → Stores in Database → Returns success → Frontend updates UI
-- **Fetching Resources**: Frontend requests data → Backend queries Database → Returns list → Frontend renders content
-- **Authentication Flow**: User logs in → Frontend sends credentials → Backend validates and issues JWT → Frontend stores token for subsequent requests
+- **Posting a Note/Resource**: Submit → Frontend → Backend validates → Upload to Cloudinary → Store in DB → Response → Frontend updates UI
+- **Fetching Resources**: Frontend → Backend → Database → Frontend renders
+- **Authentication**: Login → Frontend sends credentials → Backend validates → JWT issued → Frontend stores token
 
-This architecture ensures modularity, scalability, and ease of maintenance, while providing students with a reliable and interactive educational platform.
-
-> For detailed architecture, refer to [Architecture Docs](./docs/architecture.md).
+> Refer to [Architecture Docs](./docs/architecture.md) for more details.
 
 ---
 
 ## API Documentation
 
-KlasMwen exposes a powerful, organized **RESTful API** documented using **OpenAPI/Swagger**.
+- **Base URL**: `http://localhost:3000/api`
+- **Swagger UI**: `http://localhost:3000/docs`
+- **OpenAPI Spec**: `http://localhost:3000/swagger.json`
 
-While the Swagger UI in this setup is **read-only** (you cannot execute requests from the interface), it provides detailed specifications for all available endpoints, request parameters, schemas, and response formats.
+> Authentication: Protected endpoints require an `httpOnly` JWT cookie.
 
----
+### Key Endpoints
 
-### API Base URL
-
-```bash
-http://localhost:3000/api
-```
-
-### Swagger UI
-
-You can view the full API documentation at:
-
-```bash
-http://localhost:3000/docs
-```
-
-### OpenAPI Spec
-
-A machine-readable OpenAPI spec is also available:
-
-```bash
-http://localhost:3000/swagger.json
-```
-
-### 🌐 API Access
-
-| Detail                              | URL                                  |
-| :---------------------------------- | :----------------------------------- |
-| **API Base URL**                    | `http://localhost:3000/api`          |
-| **Swagger UI** (Documentation)      | `http://localhost:3000/docs`         |
-| **OpenAPI Spec** (Machine-readable) | `http://localhost:3000/swagger.json` |
-
-> ⚠️ **Authentication Note:** For protected endpoints, authentication is handled via an **`httpOnly` cookie** containing a JWT. Ensure your client correctly handles and sends this cookie for endpoints requiring authorization.
-
----
-
-### 🔑 Core API Functionality (Tags & Key Endpoints)
-
-The API is structured into the following modules, covering all major functionalities:
-
-| Module        | Core Functionality                                                                        | Key Endpoint Examples                                   |
-| :------------ | :---------------------------------------------------------------------------------------- | :------------------------------------------------------ |
-| **Auth**      | User **registration**, **login**, session verification (`/me`), and **logout**.           | `POST /auth/register` `GET /auth/me`                    |
-| **Posts**     | **CRUD** (Create, Read, Update, Delete) operations for posts.                             | `GET /posts` `POST /posts`                              |
-| **Comments**  | **CRUD** for comments, including fetching **parent comments** for a post and **replies**. | `POST /comments/{postId}` `GET /posts/{id}/comments`    |
-| **Users**     | Retrieve and **update user profiles**.                                                    | `GET /users/{id}` `PUT /users/{id}`                     |
-| **Bookmarks** | Allow authenticated users to **bookmark** and **unbookmark** posts.                       | `GET /users/bookmarks` `POST /bookmarks/{postId}`       |
-| **Reactions** | **Like** and **unlike** posts.                                                            | `POST /reactions/{postId}`                              |
-| **Tags**      | Retrieve all tags, popular tags. **Admin** endpoints for tag management.                  | `GET /tags/popular` `POST /tags` (Admin)                |
-| **Avatars**   | Retrieve available avatars, and **Admin** endpoints to **add** or **delete** avatars.     | `GET /avatars/available` `DELETE /avatars/{id}` (Admin) |
-| **Search**    | **Search posts** by various criteria (term, type, tags).                                  | `GET /search/posts`                                     |
+| Module    | Core Functionality                        | Example Endpoints                                        |
+| --------- | ----------------------------------------- | -------------------------------------------------------- |
+| Auth      | Register, login, verify session, logout   | `POST /auth/register`, `GET /auth/me`                    |
+| Posts     | CRUD for posts                            | `GET /posts`, `POST /posts`                              |
+| Comments  | CRUD for comments, fetch parent & replies | `POST /comments/{postId}`, `GET /posts/{id}/comments`    |
+| Users     | Get & update profiles                     | `GET /users/{id}`, `PUT /users/{id}`                     |
+| Bookmarks | Bookmark/unbookmark posts                 | `GET /users/bookmarks`, `POST /bookmarks/{postId}`       |
+| Reactions | Like/unlike posts                         | `POST /reactions/{postId}`                               |
+| Tags      | Fetch tags, admin management              | `GET /tags/popular`, `POST /tags (Admin)`                |
+| Avatars   | Retrieve & manage avatars                 | `GET /avatars/available`, `DELETE /avatars/{id} (Admin)` |
+| Search    | Search posts                              | `GET /search/posts`                                      |
 
 ---
 
 ## Troubleshooting
 
-List of common problems and suggested solutions when setting up or running KlasMwen:
-
-| Issue                              | Possible Cause                            | Solution                                                                          |
-| ---------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------- |
-| `npm run dev` fails                | Missing or misconfigured `.env` variables | Verify `.env` files in both `frontend` and `backend`, update values as needed     |
-| Database not seeding               | Database not running or unreachable       | Ensure PostgreSQL is running locally or via Docker; then run `npx prisma db seed` |
-| Frontend cannot connect to backend | Incorrect API base URL                    | Check `VITE_API_BASE_URL` in frontend `.env` matches backend URL                  |
-| File uploads fail                  | Cloudinary keys missing or invalid        | Verify Cloudinary credentials in backend `.env`                                   |
-| Linting errors prevent commits     | ESLint/Husky misconfigured                | Run `npm run lint:fix` or check `lint-staged` configuration                       |
+| Issue                   | Possible Cause                  | Solution                                       |
+| ----------------------- | ------------------------------- | ---------------------------------------------- |
+| `npm run dev` fails     | Missing `.env` variables        | Check `.env` in frontend & backend             |
+| Database not seeding    | DB not running or unreachable   | Start PostgreSQL and run `npx prisma db seed`  |
+| Frontend cannot connect | API base URL mismatch           | Verify `VITE_API_BASE_URL` matches backend     |
+| File uploads fail       | Cloudinary keys missing/invalid | Check Cloudinary credentials in backend `.env` |
+| Linting errors          | ESLint/Husky misconfigured      | Run `npm run lint:fix` or check `lint-staged`  |
 
 ---
 
-## 🧾 License
+## Scripts
 
-This project is licensed under the terms in the [LICENSE](./LICENSE.md) file.
-
----
-
-## 🙌 Acknowledgements
-
-KlasMwen was built entirely using **free and open-source technologies**, and we are deeply grateful to the communities that maintain and develop these tools.
-
-Special thanks to libraries, frameworks, and services that made this project possible:
-
-- **Frontend & UI:** React, Next.js, TailwindCSS, shadcn
-- **Backend & APIs:** Node.js, Express, Prisma
-- **Database & Storage:** PostgreSQL, Cloudinary (free plan)
-- **Testing & Tooling:** Vitest, ESLint, Husky, Lint-Staged
-
-> This project demonstrates how a fully functional educational platform can be built using entirely free and open-source tools.
+| Script                   | Purpose                         |
+| ------------------------ | ------------------------------- |
+| `npm run start:frontend` | Start frontend dev server       |
+| `npm run start:backend`  | Start backend dev server        |
+| `npm start`              | Start both servers concurrently |
+| `npm run test`           | Run tests (workspace-specific)  |
+| `npm run test:ui`        | Run interactive test UI         |
+| `npm run lint`           | Run linter                      |
+| `npm run db:seed`        | Seed the database               |
 
 ---
 
-## 📚 Additional Resources
+## License
+
+This project is licensed under the [MIT License](./LICENSE.md).
+
+---
+
+## Acknowledgements
+
+Thanks to the communities behind **React, Next.js, TailwindCSS, shadcn, Node.js, Express, Prisma, PostgreSQL, Cloudinary, Vitest, ESLint**, and other free and open-source tools.
+
+---
+
+## Additional Resources
 
 - [Architecture Docs](./docs/architecture.md)
-- [Setup Guide](./docs/setup.md)
-
----
+- [Backend Handbook](./docs/backend-developer-guide.md)
+- [Frontend Handbook](./docs/frontend-developer-guide.md)

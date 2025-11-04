@@ -126,7 +126,7 @@ backend/
 
 ---
 
-### 🧩 Example Flow — Creating a Post
+### Example Flow — Creating a Post
 
 ```bash
 Request (POST /api/posts)
@@ -137,8 +137,6 @@ Response (Created Post JSON)
 ```
 
 This design pattern ensures that logic is centralized, errors are predictable, and new features can be added with minimal friction.
-
-> For an in-depth overview of the backend, refer to [Backend Architecture Docs](./backend-architecture.md)
 
 ---
 
@@ -258,8 +256,6 @@ This approach ensures a clear separation between **presentation**, **data fetchi
 - **File Uploads**: Files are first processed by Multer and then uploaded to Cloudinary.
 - **Error Handling**: Consistent structure ensures the frontend can properly handle and display validation or server errors.
 
-> For an in-depth overview of the frontend, refer to [Frontend Architecture Docs](./frontend-architecture.md)
-
 ---
 
 ## 6. Security Considerations
@@ -279,9 +275,3 @@ This approach ensures a clear separation between **presentation**, **data fetchi
 - **Caching Layer**: Redis could be introduced for session caching or feed performance.
 
 ---
-
-## 8. References
-
-- [backend-architecture.md](./backend-architecture.md)
-- [frontend-architecture.md](./frontend-architecture.md)
-- [README.md](../README.md)

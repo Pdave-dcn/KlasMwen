@@ -267,7 +267,7 @@ KlasMwen is a monorepo with **frontend**, **backend**, and **PostgreSQL** databa
 
 ## License
 
-This project is licensed under the [MIT License](./LICENSE.md).
+This project is licensed under the terms in the [LICENSE](./LICENSE.md) file.
 
 ---
 

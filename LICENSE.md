@@ -1,6 +1,6 @@
 # 📜 License — Creative Commons Attribution-NonCommercial (CC BY-NC 4.0)
 
-> © [2025] [David Providence]
+> © 2025 David Providence
 
 This project is licensed under the **Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)**.
 
@@ -27,8 +27,8 @@ No additional restrictions — You may not apply legal terms or technological me
 - Commercial use (e.g., selling the app, using it in a paid service, or distributing modified versions for profit) **requires explicit written permission** from the copyright holder.
 - You are welcome to **study, modify, or locally run** the code for personal or educational purposes.
 - Attribution should include:
-  - Project name: _[Your Project Name]_
-  - Original author: _[Your Name or Organization]_
+  - Project name: KlasMwen
+  - Original author: David Providence
   - License link: [https://creativecommons.org/licenses/by-nc/4.0/](https://creativecommons.org/licenses/by-nc/4.0/)
 
 ---
@@ -50,9 +50,7 @@ Or send a letter to:
 ### 💡 Recommended Attribution Example
 
 > This project, KlasMwen, by David Providence is licensed under CC BY-NC 4.0.  
-> Source: [GitHub Repository URL]  
+> Source: [https://github.com/Pdave-dcn/KlasMwen](https://github.com/Pdave-dcn/KlasMwen)  
 > License: [https://creativecommons.org/licenses/by-nc/4.0/](https://creativecommons.org/licenses/by-nc/4.0/)
 
 ---
-
-_This license allows learning, sharing, and creativity while protecting your work from commercial misuse._

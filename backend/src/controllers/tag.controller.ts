@@ -1,17 +1,13 @@
-import prisma from "../core/config/db";
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index";
-import validateTagOperation from "../features/tag/tagValidationOperation.js";
+import TagService from "../features/tag/service/TagService.js";
+import { checkAdminAuth } from "../utils/auth.util.js";
 import createActionLogger from "../utils/logger.util.js";
-import { CreateTagSchema } from "../zodSchemas/tag.zod.js";
+import { CreateTagSchema, TagIdParamSchema } from "../zodSchemas/tag.zod.js";
 
 import type { Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "TagController" });
-
-const normalizeTagName = (name: string): string => {
-  return name.toLowerCase().replace(/\s+/g, " ");
-};
 
 const createTag = async (req: Request, res: Response) => {
   const actionLogger = createActionLogger(controllerLogger, "createTag", req);
@@ -20,46 +16,21 @@ const createTag = async (req: Request, res: Response) => {
     actionLogger.info("Tag creation attempt started");
     const startTime = Date.now();
 
-    actionLogger.debug("Validating tag operation and authorization");
-    const validationStartTime = Date.now();
-    const validation = await validateTagOperation(req, res, false);
-    if (validation === null) {
-      actionLogger.warn("Tag operation validation failed - stopping execution");
-      return;
-    }
-    const validationDuration = Date.now() - validationStartTime;
-
-    actionLogger.debug(
-      { validationDuration },
-      "Tag operation validation completed"
-    );
-
+    checkAdminAuth(req.user);
     const { name } = CreateTagSchema.parse(req.body);
-    const normalizedName = normalizeTagName(name);
+    actionLogger.info("User authorized and tag data validated");
 
-    actionLogger.info(
-      {
-        originalName: name,
-        normalizedName,
-        nameLength: name.length,
-      },
-      "Tag data validated and normalized"
-    );
-
-    actionLogger.debug("Creating tag in database");
-    const dbStartTime = Date.now();
-    const newTag = await prisma.tag.create({
-      data: { name: normalizedName },
-    });
-    const dbDuration = Date.now() - dbStartTime;
+    actionLogger.debug("Creating tag via service");
+    const serviceStartTime = Date.now();
+    const newTag = await TagService.createTag({ name });
+    const serviceDuration = Date.now() - serviceStartTime;
 
     const totalDuration = Date.now() - startTime;
     actionLogger.info(
       {
         tagId: newTag.id,
         tagName: newTag.name,
-        validationDuration,
-        dbDuration,
+        serviceDuration,
         totalDuration,
       },
       "Tag created successfully"
@@ -85,43 +56,22 @@ const getTagForEdit = async (req: Request, res: Response) => {
     actionLogger.info("Fetching tag for edit");
     const startTime = Date.now();
 
-    actionLogger.debug("Validating tag operation and authorization");
-    const validationStartTime = Date.now();
-    const validation = await validateTagOperation(req, res);
-    if (validation === null) {
-      actionLogger.warn("Tag operation validation failed - stopping execution");
-      return;
-    }
-    const validationDuration = Date.now() - validationStartTime;
+    checkAdminAuth(req.user);
+    const { id: tagId } = TagIdParamSchema.parse(req.params);
+    actionLogger.info("User authorized and tag ID validated");
 
-    const { tagId } = validation as { tagId: number };
-    actionLogger.info(
-      { tagId, validationDuration },
-      "Tag operation validation completed"
-    );
-
-    actionLogger.debug("Fetching tag from database");
-    const dbStartTime = Date.now();
-    const tag = await prisma.tag.findUnique({
-      where: { id: tagId },
-    });
-    const dbDuration = Date.now() - dbStartTime;
-
-    if (!tag) {
-      actionLogger.warn(
-        { tagId, dbDuration },
-        "Tag not found for edit operation"
-      );
-      return res.status(404).json({ message: "Tag not found" });
-    }
+    actionLogger.debug("Fetching tag from service");
+    const serviceStartTime = Date.now();
+    const tag = await TagService.getTagForEdit(tagId);
+    if (!tag) return;
+    const serviceDuration = Date.now() - serviceStartTime;
 
     const totalDuration = Date.now() - startTime;
     actionLogger.info(
       {
         tagId: tag.id,
         tagName: tag.name,
-        validationDuration,
-        dbDuration,
+        serviceDuration,
         totalDuration,
       },
       "Tag for edit retrieved successfully"
@@ -140,24 +90,22 @@ const getAllTags = async (req: Request, res: Response) => {
     actionLogger.info("Fetching all tags");
     const startTime = Date.now();
 
-    actionLogger.debug("Executing database query for tags");
-    const dbStartTime = Date.now();
-    const tags = await prisma.tag.findMany();
-    const dbDuration = Date.now() - dbStartTime;
+    actionLogger.debug("Executing service query for tags");
+    const serviceStartTime = Date.now();
+    const tags = await TagService.getAllTags();
+    const serviceDuration = Date.now() - serviceStartTime;
 
     const totalDuration = Date.now() - startTime;
     actionLogger.info(
       {
         totalTags: tags.length,
-        dbDuration,
+        serviceDuration,
         totalDuration,
       },
       "All tags fetched successfully"
     );
 
-    return res.status(200).json({
-      data: tags,
-    });
+    return res.status(200).json({ data: tags });
   } catch (error: unknown) {
     return handleError(error, res);
   }
@@ -175,19 +123,7 @@ const getPopularTags = async (req: Request, res: Response) => {
     const startTime = Date.now();
 
     const dbStartTime = Date.now();
-    const tags = await prisma.tag.findMany({
-      include: {
-        _count: {
-          select: { postTags: true },
-        },
-      },
-      orderBy: {
-        postTags: {
-          _count: "desc",
-        },
-      },
-      take: 10,
-    });
+    const tags = await TagService.getPopularTags(10);
     const dbDuration = Date.now() - dbStartTime;
 
     const totalDuration = Date.now() - startTime;
@@ -200,13 +136,7 @@ const getPopularTags = async (req: Request, res: Response) => {
       "Popular tags fetched successfully"
     );
 
-    const formatted = tags.map((tag) => ({
-      id: tag.id,
-      name: tag.name,
-      usageCount: tag._count.postTags,
-    }));
-
-    return res.status(200).json({ data: formatted });
+    return res.status(200).json({ data: tags });
   } catch (error: unknown) {
     return handleError(error, res);
   }
@@ -219,37 +149,23 @@ const updateTag = async (req: Request, res: Response) => {
     actionLogger.info("Tag update attempt started");
     const startTime = Date.now();
 
-    actionLogger.debug("Validating tag operation and authorization");
-    const validationStartTime = Date.now();
-    const validation = await validateTagOperation(req, res);
-    if (validation === null) {
-      actionLogger.warn("Tag operation validation failed - stopping execution");
-      return;
-    }
-    const validationDuration = Date.now() - validationStartTime;
-
-    const { tagId } = validation as { tagId: number };
+    checkAdminAuth(req.user);
+    const { id: tagId } = TagIdParamSchema.parse(req.params);
     const { name } = CreateTagSchema.parse(req.body);
-    const normalizedName = normalizeTagName(name);
+    actionLogger.info("User authorized and tag data validated");
 
-    actionLogger.info("Tag update data validated and normalized");
-
-    actionLogger.debug("Updating tag in database");
-    const dbStartTime = Date.now();
-    const updatedTag = await prisma.tag.update({
-      where: { id: tagId },
-      data: { name: normalizedName },
-    });
-    const dbDuration = Date.now() - dbStartTime;
+    actionLogger.debug("Updating tag via service");
+    const serviceStartTime = Date.now();
+    const updatedTag = await TagService.updateTag(tagId, { name });
+    if (!updatedTag) return;
+    const serviceDuration = Date.now() - serviceStartTime;
 
     const totalDuration = Date.now() - startTime;
     actionLogger.info(
       {
         tagId: updatedTag.id,
-        oldName: name !== normalizedName ? name : undefined,
         newName: updatedTag.name,
-        validationDuration,
-        dbDuration,
+        serviceDuration,
         totalDuration,
       },
       "Tag updated successfully"
@@ -271,34 +187,21 @@ const deleteTag = async (req: Request, res: Response) => {
     actionLogger.info("Tag deletion attempt started");
     const startTime = Date.now();
 
-    actionLogger.debug("Validating tag operation and authorization");
-    const validationStartTime = Date.now();
-    const validation = await validateTagOperation(req, res);
-    if (validation === null) {
-      actionLogger.warn("Tag operation validation failed - stopping execution");
-      return;
-    }
-    const validationDuration = Date.now() - validationStartTime;
+    checkAdminAuth(req.user);
+    const { id: tagId } = TagIdParamSchema.parse(req.params);
+    actionLogger.info("User authorized and tag ID validated");
 
-    const { tagId } = validation as { tagId: number };
-    actionLogger.info(
-      { tagId, validationDuration },
-      "Tag operation validation completed"
-    );
-
-    actionLogger.debug("Deleting tag from database");
-    const dbStartTime = Date.now();
-    await prisma.tag.delete({
-      where: { id: tagId },
-    });
-    const dbDuration = Date.now() - dbStartTime;
+    actionLogger.debug("Deleting tag via service");
+    const serviceStartTime = Date.now();
+    const result = await TagService.deleteTag(tagId);
+    if (!result) return;
+    const serviceDuration = Date.now() - serviceStartTime;
 
     const totalDuration = Date.now() - startTime;
     actionLogger.info(
       {
         tagId,
-        validationDuration,
-        dbDuration,
+        serviceDuration,
         totalDuration,
       },
       "Tag deleted successfully"

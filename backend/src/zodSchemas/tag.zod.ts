@@ -18,4 +18,22 @@ const CreateTagSchema = z
   })
   .strict();
 
-export { CreateTagSchema };
+const TagIdParamSchema = z.object({
+  id: z
+    .string("Tag ID must be a string")
+    .trim()
+    .min(1, "Tag ID cannot be empty")
+    .regex(/^[0-9]+$/, "Tag ID must contain only digits")
+    .transform((val) => parseInt(val, 10))
+    .refine((val) => !isNaN(val), {
+      message: "Tag ID must be a valid number",
+    })
+    .refine((val) => val > 0, {
+      message: "Tag ID must be a positive number",
+    })
+    .refine((val) => Number.isSafeInteger(val), {
+      message: "Tag ID exceeds maximum safe integer",
+    }),
+});
+
+export { CreateTagSchema, TagIdParamSchema };

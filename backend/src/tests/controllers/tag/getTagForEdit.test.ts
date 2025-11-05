@@ -1,8 +1,10 @@
 import { Request, Response } from "express";
+import { ZodError } from "zod";
 
 import { getTagForEdit } from "../../../controllers/tag.controller";
 import prisma from "../../../core/config/db";
 import { handleError } from "../../../core/error";
+import { AuthorizationError } from "../../../core/error/custom/auth.error";
 
 import { createAuthenticatedUser } from "./shared/helpers";
 import { createMockRequest, createMockResponse } from "./shared/mocks";
@@ -63,7 +65,7 @@ describe("getTagForEdit controller", () => {
   });
 
   describe("Authorization Tests", () => {
-    it("should return 401 for non-admin user", async () => {
+    it("should call handleError for non-admin user", async () => {
       mockRequest.params = { id: "1" };
       mockRequest.user = createAuthenticatedUser({
         id: mockUserId,
@@ -73,26 +75,26 @@ describe("getTagForEdit controller", () => {
       await getTagForEdit(mockRequest, mockResponse);
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Unauthorized",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthorizationError),
+        mockResponse
+      );
     });
 
-    it("should return 401 for unauthenticated user", async () => {
+    it("should call handleError for unauthenticated user", async () => {
       mockRequest.params = { id: "1" };
       mockRequest.user = undefined;
 
       await getTagForEdit(mockRequest, mockResponse);
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Unauthorized",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthorizationError),
+        mockResponse
+      );
     });
 
-    it("should return 401 for user with TEACHER role", async () => {
+    it("should call handleError for user with TEACHER role", async () => {
       mockRequest.params = { id: "1" };
       mockRequest.user = createAuthenticatedUser({
         id: mockUserId,
@@ -102,10 +104,10 @@ describe("getTagForEdit controller", () => {
       await getTagForEdit(mockRequest, mockResponse);
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Unauthorized",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthorizationError),
+        mockResponse
+      );
     });
 
     it("should allow ADMIN role to fetch tag", async () => {
@@ -134,88 +136,88 @@ describe("getTagForEdit controller", () => {
       });
     });
 
-    it("should return 400 when tag ID is missing", async () => {
+    it("should call handleError when tag ID is missing", async () => {
       mockRequest.params = {};
 
       await getTagForEdit(mockRequest, mockResponse);
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Tag ID is required",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(ZodError),
+        mockResponse
+      );
     });
 
-    it("should return 400 for invalid tag ID (non-numeric)", async () => {
+    it("should call handleError for invalid tag ID (non-numeric)", async () => {
       mockRequest.params = { id: "abc" };
 
       await getTagForEdit(mockRequest, mockResponse);
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Tag ID must be a valid positive integer",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(ZodError),
+        mockResponse
+      );
     });
 
-    it("should return 400 for invalid tag ID (decimal)", async () => {
+    it("should call handleError for invalid tag ID (decimal)", async () => {
       mockRequest.params = { id: "1.5" };
 
       await getTagForEdit(mockRequest, mockResponse);
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Tag ID must be a valid positive integer",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(ZodError),
+        mockResponse
+      );
     });
 
-    it("should return 400 for negative tag ID", async () => {
+    it("should call handleError for negative tag ID", async () => {
       mockRequest.params = { id: "-5" };
 
       await getTagForEdit(mockRequest, mockResponse);
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Tag ID must be a valid positive integer",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(ZodError),
+        mockResponse
+      );
     });
 
-    it("should return 400 for zero tag ID", async () => {
+    it("should call handleError for zero tag ID", async () => {
       mockRequest.params = { id: "0" };
 
       await getTagForEdit(mockRequest, mockResponse);
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Tag ID must be a valid positive integer",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(ZodError),
+        mockResponse
+      );
     });
 
-    it("should return 400 for tag ID with special characters", async () => {
+    it("should call handleError for tag ID with special characters", async () => {
       mockRequest.params = { id: "123abc" };
 
       await getTagForEdit(mockRequest, mockResponse);
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Tag ID must be a valid positive integer",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(ZodError),
+        mockResponse
+      );
     });
 
-    it("should return 400 for tag ID with spaces", async () => {
+    it("should call handleError for tag ID with spaces", async () => {
       mockRequest.params = { id: "1 2 3" };
 
       await getTagForEdit(mockRequest, mockResponse);
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Tag ID must be a valid positive integer",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(ZodError),
+        mockResponse
+      );
     });
 
     it("should handle tag ID with leading zeros", async () => {
@@ -228,9 +230,11 @@ describe("getTagForEdit controller", () => {
 
       await getTagForEdit(mockRequest, mockResponse);
 
-      expect(prisma.tag.findUnique).toHaveBeenCalledWith({
-        where: { id: 1 },
-      });
+      expect(prisma.tag.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 1 },
+        })
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
 
@@ -244,100 +248,48 @@ describe("getTagForEdit controller", () => {
 
       await getTagForEdit(mockRequest, mockResponse);
 
-      expect(prisma.tag.findUnique).toHaveBeenCalledWith({
-        where: { id: 42 },
-      });
+      expect(prisma.tag.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 42 },
+        })
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
 
-    it("should return 400 for empty string tag ID", async () => {
+    it("should call handleError for empty string tag ID", async () => {
       mockRequest.params = { id: "" };
 
       await getTagForEdit(mockRequest, mockResponse);
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(ZodError),
+        mockResponse
+      );
     });
 
-    it("should return 400 for whitespace-only tag ID", async () => {
+    it("should call handleError for whitespace-only tag ID", async () => {
       mockRequest.params = { id: "   " };
 
       await getTagForEdit(mockRequest, mockResponse);
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(ZodError),
+        mockResponse
+      );
     });
 
-    it("should return 400 for tag ID exceeding safe integer", async () => {
+    it("should call handleError for tag ID exceeding safe integer", async () => {
       mockRequest.params = { id: "9007199254740992" }; // Number.MAX_SAFE_INTEGER + 1
 
       await getTagForEdit(mockRequest, mockResponse);
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-    });
-  });
-
-  describe("Tag Existence Validation Tests", () => {
-    beforeEach(() => {
-      mockRequest.user = createAuthenticatedUser({
-        id: mockUserId,
-        role: "ADMIN",
-      });
-    });
-
-    it("should return 404 if tag is not found", async () => {
-      mockRequest.params = { id: "999" };
-
-      vi.mocked(prisma.tag.findUnique).mockResolvedValue(null);
-
-      await getTagForEdit(mockRequest, mockResponse);
-
-      expect(prisma.tag.findUnique).toHaveBeenCalledWith({
-        where: { id: 999 },
-      });
-      expect(mockResponse.status).toHaveBeenCalledWith(404);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Tag not found",
-      });
-    });
-
-    it("should handle tag not found after validation passes", async () => {
-      mockRequest.params = { id: "1" };
-
-      // First call during validation returns tag, second call returns null
-      vi.mocked(prisma.tag.findUnique)
-        .mockResolvedValueOnce({
-          id: 1,
-          name: "javascript",
-        })
-        .mockResolvedValueOnce(null);
-
-      await getTagForEdit(mockRequest, mockResponse);
-
-      expect(prisma.tag.findUnique).toHaveBeenCalledTimes(2);
-      expect(mockResponse.status).toHaveBeenCalledWith(404);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Tag not found",
-      });
-    });
-
-    it("should fetch tag if it exists", async () => {
-      mockRequest.params = { id: "1" };
-
-      const mockTag = {
-        id: 1,
-        name: "javascript",
-      };
-
-      vi.mocked(prisma.tag.findUnique).mockResolvedValue(mockTag);
-
-      await getTagForEdit(mockRequest, mockResponse);
-
-      expect(prisma.tag.findUnique).toHaveBeenCalledWith({
-        where: { id: 1 },
-      });
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(ZodError),
+        mockResponse
+      );
     });
   });
 
@@ -361,9 +313,11 @@ describe("getTagForEdit controller", () => {
 
       await getTagForEdit(mockRequest, mockResponse);
 
-      expect(prisma.tag.findUnique).toHaveBeenCalledWith({
-        where: { id: 1 },
-      });
+      expect(prisma.tag.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 1 },
+        })
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
         data: mockTag,
@@ -399,9 +353,11 @@ describe("getTagForEdit controller", () => {
 
       await getTagForEdit(mockRequest, mockResponse);
 
-      expect(prisma.tag.findUnique).toHaveBeenCalledWith({
-        where: { id: 10 },
-      });
+      expect(prisma.tag.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 10 },
+        })
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
         data: mockTag,
@@ -460,23 +416,7 @@ describe("getTagForEdit controller", () => {
 
       await getTagForEdit(mockRequest, mockResponse);
 
-      expect(handleError).toHaveBeenCalledWith(mockError, mockResponse);
-    });
-
-    it("should handle database error during tag fetch", async () => {
-      const mockError = new Error("Query timeout");
-
-      // First call succeeds (validation), second fails (actual fetch)
-      vi.mocked(prisma.tag.findUnique)
-        .mockResolvedValueOnce({
-          id: 1,
-          name: "javascript",
-        })
-        .mockRejectedValueOnce(mockError);
-
-      await getTagForEdit(mockRequest, mockResponse);
-
-      expect(handleError).toHaveBeenCalledWith(mockError, mockResponse);
+      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
     });
 
     it("should handle network timeout error", async () => {
@@ -485,7 +425,7 @@ describe("getTagForEdit controller", () => {
 
       await getTagForEdit(mockRequest, mockResponse);
 
-      expect(handleError).toHaveBeenCalledWith(mockError, mockResponse);
+      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
     });
 
     it("should handle database constraint error", async () => {
@@ -528,9 +468,11 @@ describe("getTagForEdit controller", () => {
 
       await getTagForEdit(mockRequest, mockResponse);
 
-      expect(prisma.tag.findUnique).toHaveBeenCalledWith({
-        where: { id: 999999 },
-      });
+      expect(prisma.tag.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 999999 },
+        })
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
 
@@ -624,23 +566,11 @@ describe("getTagForEdit controller", () => {
 
       await getTagForEdit(mockRequest, mockResponse);
 
-      expect(prisma.tag.findUnique).toHaveBeenCalledWith({
-        where: { id: 123 },
-      });
-    });
-
-    it("should make two database calls (validation + fetch)", async () => {
-      mockRequest.params = { id: "1" };
-
-      vi.mocked(prisma.tag.findUnique).mockResolvedValue({
-        id: 1,
-        name: "javascript",
-      });
-
-      await getTagForEdit(mockRequest, mockResponse);
-
-      // One call during validateTagOperation, one during actual fetch
-      expect(prisma.tag.findUnique).toHaveBeenCalledTimes(2);
+      expect(prisma.tag.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 123 },
+        })
+      );
     });
 
     it("should not call findUnique if authorization fails", async () => {

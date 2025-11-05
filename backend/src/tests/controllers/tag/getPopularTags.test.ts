@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import { vi } from "vitest";
 
 import { getPopularTags } from "../../../controllers/tag.controller";
 import prisma from "../../../core/config/db";
@@ -91,18 +90,21 @@ describe("getPopularTags controller", () => {
     await getPopularTags(mockRequest, mockResponse);
 
     expect(prisma.tag.findMany).toHaveBeenCalledWith({
-      include: {
-        _count: {
-          select: { postTags: true },
-        },
-      },
       orderBy: {
         postTags: {
           _count: "desc",
         },
       },
       take: 10,
+      select: {
+        id: true,
+        name: true,
+        _count: {
+          select: { postTags: true },
+        },
+      },
     });
+
     expect(mockResponse.status).toHaveBeenCalledWith(200);
   });
 

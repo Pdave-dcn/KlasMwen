@@ -1,8 +1,11 @@
 import { Request, Response } from "express";
+import { ZodError } from "zod";
 
 import { deleteTag } from "../../../controllers/tag.controller";
 import prisma from "../../../core/config/db";
 import { handleError } from "../../../core/error";
+import { AuthorizationError } from "../../../core/error/custom/auth.error";
+import { TagNotFoundError } from "../../../core/error/custom/tag.error";
 
 import { createAuthenticatedUser } from "./shared/helpers";
 import { createMockRequest, createMockResponse } from "./shared/mocks";
@@ -83,9 +86,12 @@ describe("deleteTag controller", () => {
 
       await deleteTag(mockRequest, mockResponse);
 
-      expect(prisma.tag.findUnique).toHaveBeenCalledWith({
-        where: { id: 1 },
-      });
+      expect(prisma.tag.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 1 },
+        })
+      );
+
       expect(prisma.tag.delete).toHaveBeenCalledWith({
         where: { id: 1 },
       });
@@ -114,9 +120,11 @@ describe("deleteTag controller", () => {
 
       await deleteTag(mockRequest, mockResponse);
 
-      expect(prisma.tag.findUnique).toHaveBeenCalledWith({
-        where: { id: 123 },
-      });
+      expect(prisma.tag.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 123 },
+        })
+      );
       expect(prisma.tag.delete).toHaveBeenCalledWith({
         where: { id: 123 },
       });
@@ -125,7 +133,7 @@ describe("deleteTag controller", () => {
   });
 
   describe("Authentication & Authorization Error Cases", () => {
-    it("should return 401 for unauthenticated user (no user object)", async () => {
+    it("should call handleError for unauthenticated user (no user object)", async () => {
       mockRequest.user = undefined;
       mockRequest.params = { id: "1" };
 
@@ -133,10 +141,13 @@ describe("deleteTag controller", () => {
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
       expect(prisma.tag.delete).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthorizationError),
+        mockResponse
+      );
     });
 
-    it("should return 401 for STUDENT role", async () => {
+    it("should call handleError for STUDENT role", async () => {
       mockRequest.user = createAuthenticatedUser({
         id: mockUserId,
         role: "STUDENT",
@@ -147,13 +158,13 @@ describe("deleteTag controller", () => {
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
       expect(prisma.tag.delete).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Unauthorized",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthorizationError),
+        mockResponse
+      );
     });
 
-    it("should return 401 for TEACHER role", async () => {
+    it("should call handleError for TEACHER role", async () => {
       mockRequest.user = createAuthenticatedUser({
         id: mockUserId,
         role: "TEACHER",
@@ -164,10 +175,13 @@ describe("deleteTag controller", () => {
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
       expect(prisma.tag.delete).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthorizationError),
+        mockResponse
+      );
     });
 
-    it("should return 401 for user with invalid/unknown role", async () => {
+    it("should call handleError for user with invalid/unknown role", async () => {
       mockRequest.user = createAuthenticatedUser({
         id: mockUserId,
         role: "INVALID_ROLE" as any,
@@ -178,12 +192,15 @@ describe("deleteTag controller", () => {
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
       expect(prisma.tag.delete).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthorizationError),
+        mockResponse
+      );
     });
   });
 
   describe("Validation Error Cases", () => {
-    it("should return 404 if tag is not found", async () => {
+    it("should call handleError if tag is not found", async () => {
       mockRequest.user = createAuthenticatedUser({
         id: mockUserId,
         role: "ADMIN",
@@ -194,17 +211,19 @@ describe("deleteTag controller", () => {
 
       await deleteTag(mockRequest, mockResponse);
 
-      expect(prisma.tag.findUnique).toHaveBeenCalledWith({
-        where: { id: 999 },
-      });
+      expect(prisma.tag.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 999 },
+        })
+      );
       expect(prisma.tag.delete).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(404);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Tag not found",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(TagNotFoundError),
+        mockResponse
+      );
     });
 
-    it("should return 400 for invalid tag ID format (non-numeric)", async () => {
+    it("should call handleError for invalid tag ID format (non-numeric)", async () => {
       mockRequest.user = createAuthenticatedUser({
         id: mockUserId,
         role: "ADMIN",
@@ -215,13 +234,13 @@ describe("deleteTag controller", () => {
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
       expect(prisma.tag.delete).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Tag ID must be a valid positive integer",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(ZodError),
+        mockResponse
+      );
     });
 
-    it("should return 400 for missing tag ID parameter", async () => {
+    it("should call handleError for missing tag ID parameter", async () => {
       mockRequest.user = createAuthenticatedUser({
         id: mockUserId,
         role: "ADMIN",
@@ -230,13 +249,15 @@ describe("deleteTag controller", () => {
 
       await deleteTag(mockRequest, mockResponse);
 
-      // When params.id is undefined, parseTagId returns null
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
       expect(prisma.tag.delete).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(ZodError),
+        mockResponse
+      );
     });
 
-    it("should return 404 for negative tag ID", async () => {
+    it("should call handleError for negative tag ID", async () => {
       mockRequest.user = createAuthenticatedUser({
         id: mockUserId,
         role: "ADMIN",
@@ -246,10 +267,13 @@ describe("deleteTag controller", () => {
       await deleteTag(mockRequest, mockResponse);
 
       expect(prisma.tag.delete).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(ZodError),
+        mockResponse
+      );
     });
 
-    it("should return 404 for zero tag ID", async () => {
+    it("should call handleError for zero tag ID", async () => {
       mockRequest.user = createAuthenticatedUser({
         id: mockUserId,
         role: "ADMIN",
@@ -259,10 +283,13 @@ describe("deleteTag controller", () => {
       await deleteTag(mockRequest, mockResponse);
 
       expect(prisma.tag.delete).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(ZodError),
+        mockResponse
+      );
     });
 
-    it("should return 400 for floating point tag ID", async () => {
+    it("should call handleError for floating point tag ID", async () => {
       mockRequest.user = createAuthenticatedUser({
         id: mockUserId,
         role: "ADMIN",
@@ -273,7 +300,10 @@ describe("deleteTag controller", () => {
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
       expect(prisma.tag.delete).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(ZodError),
+        mockResponse
+      );
     });
   });
 
@@ -376,11 +406,14 @@ describe("deleteTag controller", () => {
   });
 
   describe("Edge Cases", () => {
-    it("should handle very large tag ID", async () => {
+    beforeEach(() => {
       mockRequest.user = createAuthenticatedUser({
         id: mockUserId,
         role: "ADMIN",
       });
+    });
+
+    it("should handle very large tag ID", async () => {
       mockRequest.params = { id: "999999999" };
 
       vi.mocked(prisma.tag.findUnique).mockResolvedValue({
@@ -402,10 +435,6 @@ describe("deleteTag controller", () => {
     });
 
     it("should handle tag ID with leading zeros", async () => {
-      mockRequest.user = createAuthenticatedUser({
-        id: mockUserId,
-        role: "ADMIN",
-      });
       mockRequest.params = { id: "0001" };
 
       vi.mocked(prisma.tag.findUnique).mockResolvedValue({
@@ -427,10 +456,6 @@ describe("deleteTag controller", () => {
     });
 
     it("should handle tag ID with whitespace", async () => {
-      mockRequest.user = createAuthenticatedUser({
-        id: mockUserId,
-        role: "ADMIN",
-      });
       mockRequest.params = { id: " 1 " };
 
       await deleteTag(mockRequest, mockResponse);
@@ -439,29 +464,27 @@ describe("deleteTag controller", () => {
     });
 
     it("should handle empty string tag ID", async () => {
-      mockRequest.user = createAuthenticatedUser({
-        id: mockUserId,
-        role: "ADMIN",
-      });
       mockRequest.params = { id: "" };
 
       await deleteTag(mockRequest, mockResponse);
 
       expect(prisma.tag.delete).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(ZodError),
+        mockResponse
+      );
     });
 
     it("should handle special characters in tag ID", async () => {
-      mockRequest.user = createAuthenticatedUser({
-        id: mockUserId,
-        role: "ADMIN",
-      });
       mockRequest.params = { id: "1@#$" };
 
       await deleteTag(mockRequest, mockResponse);
 
       expect(prisma.tag.delete).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(ZodError),
+        mockResponse
+      );
     });
   });
 });

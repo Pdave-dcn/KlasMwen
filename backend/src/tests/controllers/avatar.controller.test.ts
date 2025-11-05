@@ -1,6 +1,5 @@
 import { Avatar } from "@prisma/client";
 import { Request, Response } from "express";
-import { it, expect, describe, beforeEach, vi } from "vitest";
 
 import {
   addAvatar,
@@ -9,7 +8,7 @@ import {
   getAvatars,
 } from "../../controllers/avatar.controller.js";
 import prisma from "../../core/config/db.js";
-import { createLogger } from "../../core/config/logger.js";
+import { AuthorizationError } from "../../core/error/custom/auth.error.js";
 import { handleError } from "../../core/error/index.js";
 
 vi.mock("../../core/config/db.js", () => ({
@@ -222,7 +221,7 @@ describe("Avatar Controllers", () => {
       });
     });
 
-    it("should return 401 when user is not admin", async () => {
+    it("should call handleError when user is not admin", async () => {
       mockRequest = {
         body: { url: "https://cdn.example.com/avatars/avatar1.png" },
         user: {
@@ -238,13 +237,13 @@ describe("Avatar Controllers", () => {
 
       expect(prisma.avatar.create).not.toHaveBeenCalled();
       expect(prisma.avatar.createMany).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Unauthorized",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthorizationError),
+        mockResponse
+      );
     });
 
-    it("should return 401 when user is not provided", async () => {
+    it("should call handleError when user is not provided", async () => {
       mockRequest = {
         body: { url: "https://cdn.example.com/avatars/avatar1.png" },
         user: undefined,
@@ -255,10 +254,10 @@ describe("Avatar Controllers", () => {
 
       expect(prisma.avatar.create).not.toHaveBeenCalled();
       expect(prisma.avatar.createMany).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Unauthorized",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthorizationError),
+        mockResponse
+      );
     });
 
     it("should handle validation errors for invalid URL", async () => {
@@ -596,7 +595,7 @@ describe("Avatar Controllers", () => {
       );
     });
 
-    it("should return 401 for non-admin user", async () => {
+    it("should call handleError for non-admin user", async () => {
       mockRequest = {
         query: {},
         params: {},
@@ -611,13 +610,13 @@ describe("Avatar Controllers", () => {
       await getAvatars(mockRequest as Request, mockResponse as Response);
 
       expect(prisma.avatar.findMany).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Unauthorized",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthorizationError),
+        mockResponse
+      );
     });
 
-    it("should return 401 when user is not provided", async () => {
+    it("should call handleError when user is not provided", async () => {
       mockRequest = {
         query: {},
         params: {},
@@ -627,10 +626,10 @@ describe("Avatar Controllers", () => {
       await getAvatars(mockRequest as Request, mockResponse as Response);
 
       expect(prisma.avatar.findMany).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Unauthorized",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthorizationError),
+        mockResponse
+      );
     });
 
     it("should handle database errors", async () => {
@@ -689,7 +688,7 @@ describe("Avatar Controllers", () => {
       });
     });
 
-    it("should return 401 for non-admin user", async () => {
+    it("should call handleError for non-admin user", async () => {
       mockRequest = {
         params: { id: "1" },
         user: {
@@ -704,13 +703,13 @@ describe("Avatar Controllers", () => {
 
       expect(prisma.avatar.findUnique).not.toHaveBeenCalled();
       expect(prisma.avatar.delete).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Unauthorized",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthorizationError),
+        mockResponse
+      );
     });
 
-    it("should return 401 when user is not provided", async () => {
+    it("should call handleError when user is not provided", async () => {
       mockRequest = {
         params: { id: "1" },
         user: undefined,
@@ -720,10 +719,10 @@ describe("Avatar Controllers", () => {
 
       expect(prisma.avatar.findUnique).not.toHaveBeenCalled();
       expect(prisma.avatar.delete).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Unauthorized",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthorizationError),
+        mockResponse
+      );
     });
 
     it("should call handleError for invalid avatar ID", async () => {

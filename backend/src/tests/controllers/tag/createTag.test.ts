@@ -4,6 +4,7 @@ import { ZodError } from "zod";
 import { createTag } from "../../../controllers/tag.controller";
 import prisma from "../../../core/config/db";
 import { handleError } from "../../../core/error";
+import { AuthorizationError } from "../../../core/error/custom/auth.error";
 
 import { createAuthenticatedUser } from "./shared/helpers";
 import { createMockRequest, createMockResponse } from "./shared/mocks";
@@ -64,7 +65,7 @@ describe("createTag controller", () => {
   });
 
   describe("Authorization Tests", () => {
-    it("should return 401 for non-admin user", async () => {
+    it("should call handleError for non-admin user", async () => {
       mockRequest.body = { name: "JavaScript" };
       mockRequest.user = createAuthenticatedUser({
         id: mockUserId,
@@ -74,26 +75,26 @@ describe("createTag controller", () => {
       await createTag(mockRequest, mockResponse);
 
       expect(prisma.tag.create).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Unauthorized",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthorizationError),
+        mockResponse
+      );
     });
 
-    it("should return 401 for unauthenticated user", async () => {
+    it("should call handleError for unauthenticated user", async () => {
       mockRequest.body = { name: "JavaScript" };
       mockRequest.user = undefined;
 
       await createTag(mockRequest, mockResponse);
 
       expect(prisma.tag.create).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Unauthorized",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthorizationError),
+        mockResponse
+      );
     });
 
-    it("should return 401 for TEACHER role", async () => {
+    it("should call handleError for TEACHER role", async () => {
       mockRequest.body = { name: "JavaScript" };
       mockRequest.user = createAuthenticatedUser({
         id: mockUserId,
@@ -103,10 +104,10 @@ describe("createTag controller", () => {
       await createTag(mockRequest, mockResponse);
 
       expect(prisma.tag.create).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Unauthorized",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(AuthorizationError),
+        mockResponse
+      );
     });
 
     it("should allow ADMIN role to create tags", async () => {
@@ -253,9 +254,11 @@ describe("createTag controller", () => {
 
       await createTag(mockRequest, mockResponse);
 
-      expect(prisma.tag.create).toHaveBeenCalledWith({
-        data: { name: "javascript" },
-      });
+      expect(prisma.tag.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { name: "javascript" },
+        })
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(201);
     });
 
@@ -269,9 +272,11 @@ describe("createTag controller", () => {
 
       await createTag(mockRequest, mockResponse);
 
-      expect(prisma.tag.create).toHaveBeenCalledWith({
-        data: { name: "javascript" },
-      });
+      expect(prisma.tag.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { name: "javascript" },
+        })
+      );
     });
 
     it("should trim trailing whitespace from tag name", async () => {
@@ -284,9 +289,11 @@ describe("createTag controller", () => {
 
       await createTag(mockRequest, mockResponse);
 
-      expect(prisma.tag.create).toHaveBeenCalledWith({
-        data: { name: "javascript" },
-      });
+      expect(prisma.tag.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { name: "javascript" },
+        })
+      );
     });
 
     it("should trim both leading and trailing whitespace", async () => {
@@ -299,9 +306,11 @@ describe("createTag controller", () => {
 
       await createTag(mockRequest, mockResponse);
 
-      expect(prisma.tag.create).toHaveBeenCalledWith({
-        data: { name: "javascript" },
-      });
+      expect(prisma.tag.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { name: "javascript" },
+        })
+      );
     });
 
     it("should normalize mixed case tag name", async () => {
@@ -314,9 +323,11 @@ describe("createTag controller", () => {
 
       await createTag(mockRequest, mockResponse);
 
-      expect(prisma.tag.create).toHaveBeenCalledWith({
-        data: { name: "javascript" },
-      });
+      expect(prisma.tag.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { name: "javascript" },
+        })
+      );
     });
 
     it("should handle tag name with internal spaces", async () => {
@@ -329,9 +340,11 @@ describe("createTag controller", () => {
 
       await createTag(mockRequest, mockResponse);
 
-      expect(prisma.tag.create).toHaveBeenCalledWith({
-        data: { name: "react native" },
-      });
+      expect(prisma.tag.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { name: "react native" },
+        })
+      );
     });
 
     it("should normalize multiple internal spaces to single space", async () => {
@@ -344,9 +357,11 @@ describe("createTag controller", () => {
 
       await createTag(mockRequest, mockResponse);
 
-      expect(prisma.tag.create).toHaveBeenCalledWith({
-        data: { name: "javascript react" },
-      });
+      expect(prisma.tag.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { name: "javascript react" },
+        })
+      );
     });
 
     it("should handle mixed case with multiple spaces and trim", async () => {
@@ -359,9 +374,11 @@ describe("createTag controller", () => {
 
       await createTag(mockRequest, mockResponse);
 
-      expect(prisma.tag.create).toHaveBeenCalledWith({
-        data: { name: "javascript react" },
-      });
+      expect(prisma.tag.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { name: "javascript react" },
+        })
+      );
     });
 
     it("should handle numbers in tag name", async () => {
@@ -390,9 +407,11 @@ describe("createTag controller", () => {
 
       await createTag(mockRequest, mockResponse);
 
-      expect(prisma.tag.create).toHaveBeenCalledWith({
-        data: { name: "日本語" },
-      });
+      expect(prisma.tag.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { name: "日本語" },
+        })
+      );
     });
 
     it("should handle emojis in tag name", async () => {
@@ -432,9 +451,11 @@ describe("createTag controller", () => {
 
       await createTag(mockRequest, mockResponse);
 
-      expect(prisma.tag.create).toHaveBeenCalledWith({
-        data: { name: "javascript" },
-      });
+      expect(prisma.tag.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { name: "javascript" },
+        })
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(201);
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "New tag created successfully",

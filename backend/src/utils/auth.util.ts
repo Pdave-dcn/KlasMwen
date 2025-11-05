@@ -15,10 +15,14 @@ type Resource = {
  * This is a simple guard to ensure only administrators can perform certain actions.
  *
  * @param {(Express.User | undefined)} user - The Express user object to check.
- * @returns {boolean} True if the user is an "ADMIN", otherwise false.
+ * @returns {boolean} True if the user is an "ADMIN".
+ * @throws {AuthorizationError} If the user is not an admin.
  */
 const checkAdminAuth = (user: Express.User | undefined): boolean => {
-  return user?.role === "ADMIN";
+  if (user?.role !== "ADMIN") {
+    throw new AuthorizationError();
+  }
+  return true;
 };
 
 /**

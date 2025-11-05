@@ -83,24 +83,10 @@ const getAvatars = async (req: Request, res: Response) => {
     actionLogger.info("Fetching avatars");
     const startTime = Date.now();
 
-    actionLogger.debug("Validating authorization");
-    if (!checkAdminAuth(req.user)) {
-      actionLogger.warn("Operation unauthorized - stopping execution");
-      res.status(401).json({ message: "Unauthorized" });
-      return;
-    }
-
+    checkAdminAuth(req.user);
     const customTagsSchema = createPaginationSchema(20, 60, "number");
     const { limit, cursor } = customTagsSchema.parse(req.query);
-
-    actionLogger.debug(
-      {
-        limit,
-        cursor,
-        hasCursor: !!cursor,
-      },
-      "Pagination parameters parsed"
-    );
+    actionLogger.info("User authorized and pagination parameters parsed");
 
     const paginatedQuery = buildPaginatedQuery<"avatar">(
       {},
@@ -148,13 +134,9 @@ const addAvatar = async (req: Request, res: Response) => {
     actionLogger.info("Avatar addition attempt started");
     const startTime = Date.now();
 
-    actionLogger.debug("Validating authorization");
-    if (!checkAdminAuth(req.user)) {
-      actionLogger.warn("Operation unauthorized - stopping execution");
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
+    checkAdminAuth(req.user);
     const parsedData = AddAvatarsSchema.parse(req.body);
+    actionLogger.info("User authorized and avatar data validated");
 
     let createdAvatars;
     const dbStartTime = Date.now();
@@ -209,14 +191,9 @@ const deleteAvatar = async (req: Request, res: Response) => {
     actionLogger.info("Avatar deletion attempt started");
     const startTime = Date.now();
 
-    actionLogger.debug("Validating authorization");
-    if (!checkAdminAuth(req.user)) {
-      actionLogger.warn("Operation unauthorized - stopping execution");
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
+    checkAdminAuth(req.user);
     const { id } = AvatarIdParamSchema.parse(req.params);
-    actionLogger.info({ id }, "Avatar ID validation completed");
+    actionLogger.info("User authorized and avatar ID validated");
 
     actionLogger.debug({ id }, "Checking if avatar exists");
     const avatar = await prisma.avatar.findUnique({

@@ -15,19 +15,17 @@ const CommentIdParamSchema = z.object({
     .string("Comment ID must be a string")
     .trim()
     .min(1, "Comment ID cannot be empty")
-    .refine((val) => /^\d+$/.test(val), {
-      message: "Comment ID must contain only digits",
-    })
-    .refine((val) => !isNaN(parseInt(val, 10)), {
+    .regex(/^[0-9]+$/, "Comment ID must contain only digits")
+    .transform((val) => parseInt(val, 10))
+    .refine((val) => !isNaN(val), {
       message: "Comment ID must be a valid number",
     })
-    .refine((val) => parseInt(val, 10) > 0, {
+    .refine((val) => val > 0, {
       message: "Comment ID must be a positive number",
     })
-    .refine((val) => Number.isSafeInteger(parseInt(val, 10)), {
+    .refine((val) => Number.isSafeInteger(val), {
       message: "Comment ID exceeds maximum safe integer",
-    })
-    .transform((val) => parseInt(val, 10)),
+    }),
 });
 
 export { CreateCommentSchema, CommentIdParamSchema };

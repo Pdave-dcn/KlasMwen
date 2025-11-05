@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { getParentComments } from "../../../controllers/comment.controller";
 import prisma from "../../../core/config/db";
 import { handleError } from "../../../core/error";
+import { PostNotFoundError } from "../../../core/error/custom/post.error";
 
 import {
   createMockPost,
@@ -206,7 +207,7 @@ describe("getParentComments controller", () => {
   });
 
   describe("Error Cases", () => {
-    it("should return 404 when post does not exist", async () => {
+    it("should call handleError when post does not exist", async () => {
       const nonExistentPostId = "550e8400-e29b-41d4-a716-446655440000";
       mockRequest.params = { id: nonExistentPostId };
       mockRequest.query = { limit: "10" };
@@ -221,10 +222,10 @@ describe("getParentComments controller", () => {
       });
       expect(prisma.comment.findMany).not.toHaveBeenCalled();
       expect(prisma.comment.count).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(404);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Post not found",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(PostNotFoundError),
+        mockResponse
+      );
     });
 
     it("should handle invalid post ID parameter", async () => {

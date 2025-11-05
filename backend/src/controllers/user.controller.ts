@@ -1,6 +1,6 @@
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index";
-import CommentService from "../features/comments/commentService.js";
+import CommentService from "../features/comments/service/CommentService.js";
 import PostService from "../features/posts/service/PostService.js";
 import { UserService as UserControllerService } from "../features/user/service/UserService.js";
 import { ensureAuthenticated } from "../utils/auth.util.js";

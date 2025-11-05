@@ -1,12 +1,13 @@
-/* eslint-disable max-lines-per-function*/
-import prisma from "../core/config/db";
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index";
-import CommentService from "../features/comments/commentService";
-import { checkPermission, ensureAuthenticated } from "../utils/auth.util";
+import CommentService from "../features/comments/service/CommentService";
+import { ensureAuthenticated } from "../utils/auth.util";
 import createActionLogger from "../utils/logger.util.js";
 import { createPaginationSchema } from "../utils/pagination.util";
-import { CreateCommentSchema } from "../zodSchemas/comment.zod";
+import {
+  CommentIdParamSchema,
+  CreateCommentSchema,
+} from "../zodSchemas/comment.zod";
 import { PostIdParamSchema } from "../zodSchemas/post.zod";
 
 import type { Request, Response } from "express";
@@ -24,10 +25,8 @@ const createComment = async (req: Request, res: Response) => {
     actionLogger.info("Comment creation attempt started");
     const startTime = Date.now();
 
-    actionLogger.debug("Authenticating user");
     const user = ensureAuthenticated(req);
 
-    actionLogger.debug("Validating request parameters and body");
     const { id: postId } = PostIdParamSchema.parse(req.params);
     const { content, parentId } = CreateCommentSchema.parse(req.body);
 
@@ -43,20 +42,13 @@ const createComment = async (req: Request, res: Response) => {
 
     actionLogger.debug("Processing comment creation");
     const serviceStartTime = Date.now();
-    const newComment = await CommentService.createComment(
-      { content, authorId: user.id, postId, parentId },
-      res
-    );
-    if (!newComment) {
-      const serviceDuration = Date.now() - serviceStartTime;
-      const totalDuration = Date.now() - startTime;
-
-      actionLogger.warn(
-        { serviceDuration, totalDuration },
-        "Comment creation failed"
-      );
-      return;
-    }
+    const newComment = await CommentService.createComment({
+      content,
+      authorId: user.id,
+      postId,
+      parentId,
+    });
+    if (!newComment) return;
 
     const serviceDuration = Date.now() - serviceStartTime;
     const totalDuration = Date.now() - startTime;
@@ -94,24 +86,19 @@ const getParentComments = async (req: Request, res: Response) => {
     actionLogger.info("Fetching parent comments for post");
     const startTime = Date.now();
 
-    actionLogger.debug("Validating post ID");
     const { id: postId } = PostIdParamSchema.parse(req.params);
 
-    actionLogger.debug("Checking if post exists");
-    const post = await prisma.post.findUnique({
-      where: { id: postId },
-      select: { id: true },
-    });
-
-    if (!post) {
-      const totalDuration = Date.now() - startTime;
-      actionLogger.warn({ postId, totalDuration }, "Post not found");
-      return res.status(404).json({ message: "Post not found" });
-    }
-
-    actionLogger.debug("Parsing pagination parameters");
     const customRepliesSchema = createPaginationSchema(10, 40, "number");
     const { limit, cursor } = customRepliesSchema.parse(req.query);
+
+    actionLogger.info(
+      {
+        postId,
+        limit,
+        cursor,
+      },
+      "Parsed pagination parameters"
+    );
 
     actionLogger.debug("Processing post parent comments fetch request");
     const serviceStartTime = Date.now();
@@ -151,18 +138,19 @@ const getReplies = async (req: Request, res: Response) => {
     actionLogger.info("Fetching replies for comment");
     const startTime = Date.now();
 
-    actionLogger.debug("Validating parent comment ID");
-    const { id } = req.params;
-    if (isNaN(parseInt(id, 10))) {
-      actionLogger.warn({ parentId: id }, "Invalid parent comment ID provided");
-      return res.status(400).json({ message: "Invalid parent ID!" });
-    }
+    const { id: parentId } = CommentIdParamSchema.parse(req.params);
 
-    const parentId = parseInt(id, 10);
-
-    actionLogger.debug("Parsing pagination parameters");
     const customRepliesSchema = createPaginationSchema(10, 40, "number");
     const { limit, cursor } = customRepliesSchema.parse(req.query);
+
+    actionLogger.info(
+      {
+        parentId,
+        limit,
+        cursor,
+      },
+      "Parsed pagination parameters"
+    );
 
     actionLogger.debug("Processing replies fetch request");
     const serviceStartTime = Date.now();
@@ -206,69 +194,20 @@ const deleteComment = async (req: Request, res: Response) => {
     actionLogger.info("Comment deletion attempt started");
     const startTime = Date.now();
 
-    actionLogger.debug("Authenticating user");
     const user = ensureAuthenticated(req);
+    const { id: commentId } = CommentIdParamSchema.parse(req.params);
+    actionLogger.debug("User authenticated and comment ID validated");
 
-    actionLogger.debug("Validating comment ID");
-    const { id: commentIdParam } = req.params;
-    const commentId = parseInt(commentIdParam, 10);
-
-    if (isNaN(commentId)) {
-      actionLogger.warn(
-        { commentId: commentIdParam },
-        "Comment deletion failed - invalid comment ID"
-      );
-      return res.status(400).json({ message: "Invalid comment ID" });
-    }
-
-    actionLogger.info(
-      {
-        userId: user.id,
-        commentId,
-      },
-      "User authenticated and comment ID validated"
-    );
-
-    actionLogger.debug("Fetching comment for permission check");
-    const comment = await prisma.comment.findUnique({
-      where: { id: commentId },
-      select: {
-        id: true,
-        authorId: true,
-      },
-    });
-
-    if (!comment) {
-      actionLogger.warn(
-        { commentId },
-        "Comment deletion failed - comment not found"
-      );
-      return res.status(404).json({ message: "Comment not found" });
-    }
-
-    actionLogger.debug("Checking user permissions");
-    checkPermission(user, comment);
-
-    actionLogger.info(
-      {
-        commentId,
-        authorId: comment.authorId,
-        requestingUserId: user.id,
-      },
-      "Comment found and permission check passed"
-    );
-
-    actionLogger.debug("Deleting comment from database");
-    await prisma.comment.delete({
-      where: { id: commentId },
-    });
+    actionLogger.debug("Processing comment deletion");
+    const serviceStartTime = Date.now();
+    await CommentService.deleteComment(commentId, user);
+    const serviceDuration = Date.now() - serviceStartTime;
 
     const totalDuration = Date.now() - startTime;
     actionLogger.info(
       {
         commentId,
-        authorId: comment.authorId,
-        deletedByUserId: user.id,
+        serviceDuration,
         totalDuration,
       },
       "Comment deleted successfully"

@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { ZodError } from "zod";
 
 import { getReplies } from "../../../controllers/comment.controller";
 import prisma from "../../../core/config/db";
@@ -184,16 +185,16 @@ describe("getReplies controller", () => {
   });
 
   describe("Error Cases", () => {
-    it("should return 400 if the parent ID is not a number", async () => {
+    it("should call handleError if the parent ID is not a number", async () => {
       mockRequest.params = { id: "abc" };
       mockRequest.query = {};
 
       await getReplies(mockRequest, mockResponse);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Invalid parent ID!",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(ZodError),
+        mockResponse
+      );
       expect(prisma.comment.findMany).not.toHaveBeenCalled();
     });
   });

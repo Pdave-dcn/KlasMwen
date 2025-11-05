@@ -4,6 +4,11 @@ import { createComment } from "../../../controllers/comment.controller";
 import prisma from "../../../core/config/db";
 import { handleError } from "../../../core/error";
 import { AuthenticationError } from "../../../core/error/custom/auth.error";
+import {
+  CommentNotFoundError,
+  CommentPostMismatchError,
+} from "../../../core/error/custom/comment.error";
+import { PostNotFoundError } from "../../../core/error/custom/post.error";
 
 import { createAuthenticatedUser } from "./shared/helpers";
 import {
@@ -174,7 +179,7 @@ describe("createComment controller", () => {
       expect(prisma.comment.create).not.toHaveBeenCalled();
     });
 
-    it("should return 404 if the post does not exist", async () => {
+    it("should call handleError if the post does not exist", async () => {
       mockRequest.user = createAuthenticatedUser({ id: mockUserId1 });
       mockRequest.params = { id: mockPostId };
       mockRequest.body = { content: "Non-existent post comment." };
@@ -183,14 +188,14 @@ describe("createComment controller", () => {
 
       await createComment(mockRequest, mockResponse);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(404);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Post not found!",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(PostNotFoundError),
+        mockResponse
+      );
       expect(prisma.comment.create).not.toHaveBeenCalled();
     });
 
-    it("should return 404 if parent comment does not exist when parentId is provided", async () => {
+    it("should call handleError if parent comment does not exist when parentId is provided", async () => {
       mockRequest.user = createAuthenticatedUser({ id: mockUserId1 });
       mockRequest.params = { id: mockPostId };
       mockRequest.body = {
@@ -206,14 +211,14 @@ describe("createComment controller", () => {
 
       await createComment(mockRequest, mockResponse);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(404);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Parent comment not found",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(CommentNotFoundError),
+        mockResponse
+      );
       expect(prisma.comment.create).not.toHaveBeenCalled();
     });
 
-    it("should return 400 if parent comment belongs to a different post", async () => {
+    it("should call handleError if parent comment belongs to a different post", async () => {
       mockRequest.user = createAuthenticatedUser({ id: mockUserId1 });
       mockRequest.params = { id: mockPostId };
       mockRequest.body = { content: "Reply to wrong post.", parentId: 2 };
@@ -234,11 +239,10 @@ describe("createComment controller", () => {
 
       await createComment(mockRequest, mockResponse);
 
-      expect(handleError).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Parent comment does not belong to this post",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(CommentPostMismatchError),
+        mockResponse
+      );
       expect(prisma.comment.create).not.toHaveBeenCalled();
     });
 
@@ -383,9 +387,8 @@ describe("createComment controller", () => {
       expect(prisma.comment.create).toHaveBeenCalledWith({
         data: {
           content: specialContent,
-          authorId: mockUserId1,
-          postId: mockPostId,
-          parentId: null,
+          author: { connect: { id: mockUserId1 } },
+          post: { connect: { id: mockPostId } },
         },
       });
 
@@ -459,27 +462,6 @@ describe("createComment controller", () => {
         message: "Comment created successfully",
         data: mockCreatedComment,
       });
-    });
-
-    it("should verify all error responses have consistent format", async () => {
-      mockRequest.user = createAuthenticatedUser({ id: mockUserId1 });
-      mockRequest.params = { id: mockPostId };
-      mockRequest.body = { content: "Test comment" };
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(null);
-
-      await createComment(mockRequest, mockResponse);
-
-      expect(mockResponse.status).toHaveBeenCalledWith(404);
-      expect(mockResponse.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: expect.any(String),
-        })
-      );
-
-      // Ensure no "data" field is present in error responses
-      const callArgs = vi.mocked(mockResponse.json).mock.calls[0][0];
-      expect(callArgs).not.toHaveProperty("data");
     });
   });
 });

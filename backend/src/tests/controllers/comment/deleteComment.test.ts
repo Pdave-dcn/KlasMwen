@@ -8,6 +8,7 @@ import {
   AuthenticationError,
   AuthorizationError,
 } from "../../../core/error/custom/auth.error";
+import { CommentNotFoundError } from "../../../core/error/custom/comment.error";
 
 import { createAuthenticatedUser } from "./shared/helpers";
 import { createMockRequest, createMockResponse } from "./shared/mocks";
@@ -88,6 +89,7 @@ describe("deleteComment controller", () => {
         content: "Test comment",
         parentId: null,
         createdAt: new Date(),
+        mentionedUserId: null,
       });
       vi.mocked(prisma.comment.delete).mockResolvedValue({} as any);
 
@@ -116,6 +118,7 @@ describe("deleteComment controller", () => {
         content: "Admin test comment",
         parentId: null,
         createdAt: new Date(),
+        mentionedUserId: null,
       });
       vi.mocked(prisma.comment.delete).mockResolvedValue({} as any);
 
@@ -145,7 +148,7 @@ describe("deleteComment controller", () => {
       expect(prisma.comment.delete).not.toHaveBeenCalled();
     });
 
-    it("should return 404 if the comment does not exist", async () => {
+    it("should call handleError if the comment does not exist", async () => {
       mockRequest.user = createAuthenticatedUser({ id: mockUserId1 });
       mockRequest.params = { id: "999" };
 
@@ -153,10 +156,10 @@ describe("deleteComment controller", () => {
 
       await deleteComment(mockRequest, mockResponse);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(404);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Comment not found",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(CommentNotFoundError),
+        mockResponse
+      );
       expect(prisma.comment.delete).not.toHaveBeenCalled();
     });
 
@@ -171,6 +174,7 @@ describe("deleteComment controller", () => {
         content: "Test comment",
         parentId: null,
         createdAt: new Date(),
+        mentionedUserId: null,
       });
 
       await deleteComment(mockRequest, mockResponse);

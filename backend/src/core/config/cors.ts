@@ -1,14 +1,10 @@
-import dotenv from "dotenv";
+import env from "./env.js";
 
 import type cors from "cors";
 
-dotenv.config();
-
-const allowedOrigin = process.env.ALLOWED_ORIGIN;
-
 export const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
-    if (!origin || origin === allowedOrigin) {
+    if (!origin || origin === env.ALLOWED_ORIGIN) {
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"));

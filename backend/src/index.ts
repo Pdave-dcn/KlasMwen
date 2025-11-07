@@ -1,3 +1,4 @@
+//import "./core/config/env.js";
 import app from "./app.js";
 import { verifyCloudinaryConnection } from "./core/config/cloudinary.js";
 import prisma from "./core/config/db.js";

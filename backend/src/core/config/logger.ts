@@ -1,5 +1,7 @@
 import pino from "pino";
 
+import env from "./env.js";
+
 const baseLogger = pino({
   transport:
     process.env.NODE_ENV === "development"
@@ -11,11 +13,10 @@ const baseLogger = pino({
           },
         }
       : undefined,
-  level: process.env.LOG_LEVEL ?? "info",
-  ...(process.env.NODE_ENV !== "development" && {
+  level: env.LOG_LEVEL ?? "info",
+  ...(env.NODE_ENV !== "development" && {
     base: {
-      env: process.env.NODE_ENV,
-      version: process.env.npm_package_version,
+      env: env.NODE_ENV,
     },
   }),
 });

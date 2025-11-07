@@ -1,6 +1,7 @@
 import { Strategy as JwtStrategy } from "passport-jwt";
 
 import prisma from "../db.js";
+import env from "../env.js";
 
 import type { Request } from "express";
 
@@ -24,11 +25,6 @@ type DoneCallback = (
   info?: unknown
 ) => void;
 
-const jwtSecret = process.env.JWT_SECRET;
-if (!jwtSecret) {
-  throw new Error("JWT_SECRET not defined in environment variables");
-}
-
 const cookieExtractor = (req: Request) => {
   if (req?.cookies) {
     return req.cookies["token"];
@@ -39,7 +35,7 @@ const cookieExtractor = (req: Request) => {
 
 const jwtOptions = {
   jwtFromRequest: cookieExtractor,
-  secretOrKey: jwtSecret,
+  secretOrKey: env.JWT_SECRET,
 };
 
 const jwtStrategy = new JwtStrategy(

@@ -24,4 +24,12 @@ class PostUpdateFailedError extends BaseCustomError {
   }
 }
 
-export { PostNotFoundError, PostUpdateFailedError };
+class PostCreationFailedError extends BaseCustomError {
+  statusCode = 500;
+
+  constructor() {
+    super("Failed to create post in database");
+  }
+}
+
+export { PostNotFoundError, PostUpdateFailedError, PostCreationFailedError };

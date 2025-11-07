@@ -108,12 +108,15 @@ const deleteFromCloudinary = async (
     });
 
     if (result.result === "ok") {
-      console.log("✅ File deleted from Cloudinary:", publicId);
+      logger.info({ publicId }, "File deleted from Cloudinary");
     } else {
-      console.warn("⚠️ File deletion result:", result);
+      logger.warn({ result }, "File deletion result");
     }
   } catch (error) {
-    console.error("❌ Cloudinary deletion failed:", error);
+    logger.error(
+      { error, publicId, resourceType },
+      "Cloudinary deletion failed"
+    );
     throw error;
   }
 };

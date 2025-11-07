@@ -1,6 +1,10 @@
 import { Prisma } from "@prisma/client";
 
-import type { RawPost, TransformedPost } from "../../../../types/postTypes";
+import type {
+  RawPost,
+  TransformedPost,
+  CreatePostInput,
+} from "../../../../types/postTypes";
 import type { PostPreview } from "../../postContentValueFormatter";
 
 const PostFragments = {
@@ -123,6 +127,11 @@ interface PaginatedPostsResponse {
   };
 }
 
+interface UploadedFileInfo {
+  publicId: string;
+  secureUrl: string;
+}
+
 export type {
   LikeWithPost,
   BookmarkWithPost,
@@ -133,5 +142,7 @@ export type {
   PostPreview,
   RawPost,
   TransformedPost,
+  CreatePostInput,
+  UploadedFileInfo,
 };
 export { likeWithPost, bookmarkWithPost, BaseSelectors };

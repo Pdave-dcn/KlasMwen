@@ -9,6 +9,7 @@ import {
   bookmarkWithPost,
   type LikeWithPost,
   type BookmarkWithPost,
+  type CreatePostInput,
 } from "../types/postTypes";
 
 import type { Prisma } from "@prisma/client";
@@ -22,13 +23,89 @@ class PostRepository {
    * Check if a post exists by ID
    */
   static async exists(postId: string): Promise<Prisma.PostGetPayload<{
-    select: { id: true; authorId: true; createdAt: true };
+    select: {
+      id: true;
+      authorId: true;
+      type: true;
+      fileUrl: true;
+      createdAt: true;
+    };
   }> | null> {
     const post = await prisma.post.findUnique({
       where: { id: postId },
-      select: { id: true, authorId: true, createdAt: true },
+      select: {
+        id: true,
+        authorId: true,
+        type: true,
+        fileUrl: true,
+        createdAt: true,
+      },
     });
     return post;
+  }
+
+  /**
+   * Create a new post record within a single transactional operation
+   */
+  static async createPost(
+    completeValidatedData: CreatePostInput,
+    userId: string
+  ) {
+    return await prisma.$transaction(async (tx) => {
+      // Build post data based on type
+      const baseData = {
+        title: completeValidatedData.title,
+        type: completeValidatedData.type,
+        authorId: userId,
+      };
+
+      const postData =
+        completeValidatedData.type === "RESOURCE"
+          ? {
+              ...baseData,
+              fileUrl: completeValidatedData.fileUrl,
+              fileName: completeValidatedData.fileName,
+              fileSize: completeValidatedData.fileSize,
+              mimeType: completeValidatedData.mimeType,
+              content: null,
+            }
+          : {
+              ...baseData,
+              content: completeValidatedData.content,
+              fileUrl: null,
+              fileName: null,
+              fileSize: null,
+              mimeType: null,
+            };
+
+      // Create the post
+      const post = await tx.post.create({ data: postData });
+
+      // Create PostTag relationships if tags are provided
+      if (completeValidatedData.tagIds?.length > 0) {
+        await tx.postTag.createMany({
+          data: completeValidatedData.tagIds.map((tagId) => ({
+            postId: post.id,
+            tagId,
+          })),
+        });
+      }
+
+      // Fetch and return the complete post with all relations
+      return await tx.post.findUnique({
+        where: { id: post.id },
+        select: BaseSelectors.extendedPost,
+      });
+    });
+  }
+
+  /**
+   * Delete a post by ID
+   */
+  static async delete(postId: string) {
+    return await prisma.post.delete({
+      where: { id: postId },
+    });
   }
 
   /**

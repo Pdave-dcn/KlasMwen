@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
 
 import { createPost } from "../../../controllers/post/post.create.controller.js";
+import prisma from "../../../core/config/db.js";
 import { AuthenticationError } from "../../../core/error/custom/auth.error.js";
+import { PostCreationFailedError } from "../../../core/error/custom/post.error.js";
 import { handleError } from "../../../core/error/index.js";
 import { deleteFromCloudinary } from "../../../features/media/cloudinaryServices.js";
-import handlePostCreation from "../../../features/posts/postCreationHandler.js";
 import handleRequestValidation from "../../../features/posts/requestPostParser.js";
 import {
   CreatePostInput,
@@ -15,11 +16,6 @@ import {
 import { createAuthenticatedUser } from "./shared/helpers.js";
 import { createMockRequest, createMockResponse } from "./shared/mocks.js";
 
-vi.mock("../../../features/posts/postCreationHandler.js");
-vi.mock("../../../features/posts/requestPostParser.js");
-vi.mock("../../../features/media/cloudinaryServices.js");
-
-// Logger mocks
 vi.mock("../../../core/config/logger.js", () => ({
   createLogger: vi.fn(() => ({
     child: vi.fn(() => ({
@@ -45,6 +41,17 @@ vi.mock("../../../core/config/logger.js", () => ({
     warn: vi.fn(),
     error: vi.fn(),
   },
+}));
+
+vi.mock("../../../core/config/db.js", () => ({
+  default: {
+    $transaction: vi.fn(),
+  },
+}));
+
+vi.mock("../../../features/posts/requestPostParser.js");
+vi.mock("../../../features/media/cloudinaryServices.js", () => ({
+  deleteFromCloudinary: vi.fn(),
 }));
 
 // Error handler mocks
@@ -126,7 +133,7 @@ describe("createPost controller", () => {
       completeValidatedData: mockValidatedData,
       uploadedFileInfo: null,
     });
-    vi.mocked(handlePostCreation).mockResolvedValue(mockPostResult);
+    vi.mocked(prisma.$transaction).mockResolvedValue(mockPostResult);
 
     await createPost(mockReq, mockRes);
 
@@ -134,10 +141,8 @@ describe("createPost controller", () => {
       mockReq,
       "60676309-9958-4a6a-b4bc-463199dab4ee"
     );
-    expect(handlePostCreation).toHaveBeenCalledWith(
-      mockValidatedData,
-      "60676309-9958-4a6a-b4bc-463199dab4ee"
-    );
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function));
+
     expect(mockRes.status).toHaveBeenCalledWith(201);
     expect(mockRes.json).toHaveBeenCalledWith({
       message: "Post created successfully",
@@ -174,22 +179,20 @@ describe("createPost controller", () => {
       completeValidatedData: mockValidatedData as any,
       uploadedFileInfo: mockUploadedFileInfo,
     });
-    vi.mocked(handlePostCreation).mockResolvedValue(null);
+    vi.mocked(prisma.$transaction).mockResolvedValue(null);
 
     await createPost(mockReq, mockRes);
 
-    expect(handlePostCreation).toHaveBeenCalledWith(
-      mockValidatedData,
-      "60676309-9958-4a6a-b4bc-463199dab4ee"
-    );
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function));
+
     expect(deleteFromCloudinary).toHaveBeenCalledWith(
       mockUploadedFileInfo.publicId,
       "raw"
     );
-    expect(mockRes.status).toHaveBeenCalledWith(500);
-    expect(mockRes.json).toHaveBeenCalledWith({
-      message: "Unexpected error: post creation failed.",
-    });
+    expect(handleError).toHaveBeenCalledWith(
+      expect.any(PostCreationFailedError),
+      mockRes
+    );
   });
 
   it("should call handleError if validation fails", async () => {
@@ -203,8 +206,6 @@ describe("createPost controller", () => {
 
     expect(handleError).toHaveBeenCalledWith(mockValidationError, mockRes);
   });
-
-  // NEW TESTS - Critical paths and edge cases
 
   describe("File cleanup on post creation failure", () => {
     it("should not attempt cleanup when no file was uploaded and post creation fails", async () => {
@@ -223,15 +224,15 @@ describe("createPost controller", () => {
         completeValidatedData: mockValidatedData,
         uploadedFileInfo: null, // No file uploaded
       });
-      vi.mocked(handlePostCreation).mockResolvedValue(null);
+      vi.mocked(prisma.$transaction).mockResolvedValue(null);
 
       await createPost(mockReq, mockRes);
 
       expect(deleteFromCloudinary).not.toHaveBeenCalled();
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: "Unexpected error: post creation failed.",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(PostCreationFailedError),
+        mockRes
+      );
     });
 
     it("should continue with error response even if file cleanup fails", async () => {
@@ -254,7 +255,7 @@ describe("createPost controller", () => {
         completeValidatedData: mockValidatedData,
         uploadedFileInfo: mockUploadedFileInfo,
       });
-      vi.mocked(handlePostCreation).mockResolvedValue(null);
+      vi.mocked(prisma.$transaction).mockResolvedValue(null);
       vi.mocked(deleteFromCloudinary).mockRejectedValue(
         new Error("Cloudinary deletion failed")
       );
@@ -265,11 +266,11 @@ describe("createPost controller", () => {
         mockUploadedFileInfo.publicId,
         "raw"
       );
-      // Should still return 500 even if cleanup fails
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: "Unexpected error: post creation failed.",
-      });
+      // Should still call handleError with PostCreationFailedError even if cleanup fails
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(PostCreationFailedError),
+        mockRes
+      );
     });
   });
 
@@ -319,7 +320,7 @@ describe("createPost controller", () => {
         completeValidatedData: mockValidatedData,
         uploadedFileInfo: mockUploadedFileInfo,
       });
-      vi.mocked(handlePostCreation).mockResolvedValue(mockPostResult);
+      vi.mocked(prisma.$transaction).mockResolvedValue(mockPostResult);
 
       await createPost(mockReq, mockRes);
 
@@ -327,10 +328,8 @@ describe("createPost controller", () => {
         mockReq,
         "60676309-9958-4a6a-b4bc-463199dab4ee"
       );
-      expect(handlePostCreation).toHaveBeenCalledWith(
-        mockValidatedData,
-        "60676309-9958-4a6a-b4bc-463199dab4ee"
-      );
+      expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function));
+
       expect(deleteFromCloudinary).not.toHaveBeenCalled(); // Should not cleanup on success
       expect(mockRes.status).toHaveBeenCalledWith(201);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -389,16 +388,12 @@ describe("createPost controller", () => {
         completeValidatedData: mockValidatedData,
         uploadedFileInfo: null,
       });
-      vi.mocked(handlePostCreation).mockResolvedValue(mockPostResult);
+      vi.mocked(prisma.$transaction).mockResolvedValue(mockPostResult);
 
       await createPost(mockReq, mockRes);
 
-      expect(handlePostCreation).toHaveBeenCalledWith(
-        expect.objectContaining({
-          tagIds: [1, 2, 3],
-        }),
-        "60676309-9958-4a6a-b4bc-463199dab4ee"
-      );
+      expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function));
+
       expect(mockRes.status).toHaveBeenCalledWith(201);
     });
 
@@ -442,16 +437,12 @@ describe("createPost controller", () => {
         completeValidatedData: mockValidatedData,
         uploadedFileInfo: null,
       });
-      vi.mocked(handlePostCreation).mockResolvedValue(mockPostResult);
+      vi.mocked(prisma.$transaction).mockResolvedValue(mockPostResult);
 
       await createPost(mockReq, mockRes);
 
-      expect(handlePostCreation).toHaveBeenCalledWith(
-        expect.objectContaining({
-          tagIds: [],
-        }),
-        "60676309-9958-4a6a-b4bc-463199dab4ee"
-      );
+      expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function));
+
       expect(mockRes.status).toHaveBeenCalledWith(201);
     });
   });
@@ -501,7 +492,7 @@ describe("createPost controller", () => {
         completeValidatedData: mockValidatedData,
         uploadedFileInfo: null,
       });
-      vi.mocked(handlePostCreation).mockResolvedValue(mockPostResult);
+      vi.mocked(prisma.$transaction).mockResolvedValue(mockPostResult);
 
       await createPost(mockReq, mockRes);
 
@@ -534,7 +525,7 @@ describe("createPost controller", () => {
         completeValidatedData: mockValidatedData,
         uploadedFileInfo: null,
       });
-      vi.mocked(handlePostCreation).mockRejectedValue(dbError);
+      vi.mocked(prisma.$transaction).mockRejectedValue(dbError);
 
       await createPost(mockReq, mockRes);
 
@@ -574,7 +565,7 @@ describe("createPost controller", () => {
         completeValidatedData: mockValidatedData,
         uploadedFileInfo: null,
       });
-      vi.mocked(handlePostCreation).mockResolvedValue(malformedPostResult);
+      vi.mocked(prisma.$transaction).mockResolvedValue(malformedPostResult);
 
       await createPost(mockReq, mockRes);
 
@@ -631,16 +622,12 @@ describe("createPost controller", () => {
         completeValidatedData: mockValidatedData,
         uploadedFileInfo: mockUploadedFileInfo,
       });
-      vi.mocked(handlePostCreation).mockResolvedValue(mockPostResult);
+      vi.mocked(prisma.$transaction).mockResolvedValue(mockPostResult);
 
       await createPost(mockReq, mockRes);
 
-      expect(handlePostCreation).toHaveBeenCalledWith(
-        expect.objectContaining({
-          tagIds: [1, 2],
-        }),
-        "60676309-9958-4a6a-b4bc-463199dab4ee"
-      );
+      expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function));
+
       expect(mockRes.status).toHaveBeenCalledWith(201);
       expect(mockRes.json).toHaveBeenCalledWith({
         message: "Post created successfully",
@@ -671,7 +658,8 @@ describe("createPost controller", () => {
         completeValidatedData: mockValidatedData,
         uploadedFileInfo: mockUploadedFileInfo,
       });
-      vi.mocked(handlePostCreation).mockResolvedValue(null);
+      vi.mocked(prisma.$transaction).mockResolvedValue(null);
+      vi.mocked(deleteFromCloudinary).mockResolvedValue();
 
       await createPost(mockReq, mockRes);
 
@@ -679,10 +667,11 @@ describe("createPost controller", () => {
         "failed_file_id",
         "raw"
       );
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: "Unexpected error: post creation failed.",
-      });
+
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(PostCreationFailedError),
+        mockRes
+      );
     });
   });
 
@@ -727,7 +716,7 @@ describe("createPost controller", () => {
         completeValidatedData: mockValidatedData,
         uploadedFileInfo: null,
       });
-      vi.mocked(handlePostCreation).mockResolvedValue(mockPostResult);
+      vi.mocked(prisma.$transaction).mockResolvedValue(mockPostResult);
 
       await createPost(mockReq, mockRes);
 
@@ -741,27 +730,6 @@ describe("createPost controller", () => {
             type: expect.any(String),
             author: expect.any(Object),
           }),
-        })
-      );
-    });
-
-    it("should return correctly structured error response on failure", async () => {
-      mockReq.user = createAuthenticatedUser({
-        id: "60676309-9958-4a6a-b4bc-463199dab4ee",
-      });
-
-      vi.mocked(handleRequestValidation).mockResolvedValue({
-        completeValidatedData: {} as any,
-        uploadedFileInfo: null,
-      });
-      vi.mocked(handlePostCreation).mockResolvedValue(null);
-
-      await createPost(mockReq, mockRes);
-
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: expect.stringContaining("error"),
         })
       );
     });

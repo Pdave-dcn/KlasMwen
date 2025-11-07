@@ -1,15 +1,27 @@
+import { logger } from "../../../core/config/logger";
 import {
+  PostCreationFailedError,
   PostNotFoundError,
   PostUpdateFailedError,
 } from "../../../core/error/custom/post.error";
 import { checkPermission } from "../../../utils/auth.util";
 import { processPaginatedResults } from "../../../utils/pagination.util";
+import {
+  deleteFromCloudinary,
+  extractPublicIdFromUrl,
+} from "../../media/cloudinaryServices";
+import transformPostTagsToFlat from "../postTagFlattener";
 
 import PostEnricher from "./enrichers/postEnrichers";
 import PostRepository from "./repositories/postRepository";
 import PostTransformer from "./transformers/postTransformers";
 
-import type { PaginatedPostsResponse, RawPost } from "./types/postTypes";
+import type {
+  CreatePostInput,
+  PaginatedPostsResponse,
+  RawPost,
+  UploadedFileInfo,
+} from "./types/postTypes";
 import type { ValidatedPostUpdateData } from "../../../zodSchemas/post.zod";
 import type { Prisma } from "@prisma/client";
 
@@ -65,7 +77,13 @@ class PostService {
    * @throws PostNotFoundError if post does not exist
    */
   static async postExists(postId: string): Promise<Prisma.PostGetPayload<{
-    select: { id: true; authorId: true; createdAt: true };
+    select: {
+      id: true;
+      authorId: true;
+      type: true;
+      fileUrl: true;
+      createdAt: true;
+    };
   }> | null> {
     const post = await PostRepository.exists(postId);
 
@@ -74,6 +92,78 @@ class PostService {
     }
 
     return post;
+  }
+
+  /**
+   * Creates a new post for a given user
+   */
+  static async createPost(
+    completeValidatedData: CreatePostInput,
+    userId: string,
+    uploadedFileInfo: UploadedFileInfo | null
+  ): Promise<Partial<RawPost>> {
+    const newPost = await PostRepository.createPost(
+      completeValidatedData,
+      userId
+    );
+
+    if (!newPost) {
+      if (uploadedFileInfo) {
+        try {
+          await deleteFromCloudinary(uploadedFileInfo.publicId, "raw");
+        } catch (cleanupError) {
+          logger.error(
+            {
+              err: cleanupError,
+              publicId: uploadedFileInfo.publicId,
+              context: "PostService.createPost",
+            },
+            "Failed to cleanup uploaded file after post creation failure"
+          );
+        }
+      }
+
+      throw new PostCreationFailedError();
+    }
+
+    const transformedPost = transformPostTagsToFlat(newPost as RawPost);
+
+    return transformedPost;
+  }
+
+  /**
+   * Delete a post
+   */
+  static async deletePost(postId: string, user: Express.User) {
+    const post = await this.postExists(postId);
+    if (!post) return;
+
+    checkPermission(user, post);
+
+    if (post.type === "RESOURCE" && post.fileUrl) {
+      try {
+        const publicId = extractPublicIdFromUrl(post.fileUrl);
+        if (publicId) {
+          await deleteFromCloudinary(publicId, "raw");
+        } else {
+          logger.warn(
+            { fileUrl: post.fileUrl, context: "PostService.deletePost" },
+            "Could not extract public ID from file URL"
+          );
+        }
+      } catch (cleanupError) {
+        logger.error(
+          {
+            err: cleanupError,
+            fileUrl: post.fileUrl,
+            context: "PostService.deletePost",
+          },
+          "Failed to cleanup uploaded file from Cloudinary"
+        );
+      }
+    }
+
+    return await PostRepository.delete(postId);
   }
 
   /**

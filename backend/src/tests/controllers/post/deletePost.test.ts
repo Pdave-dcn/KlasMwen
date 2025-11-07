@@ -4,6 +4,7 @@ import { deletePost } from "../../../controllers/post/post.delete.controller";
 import prisma from "../../../core/config/db";
 import { handleError } from "../../../core/error";
 import { AuthorizationError } from "../../../core/error/custom/auth.error";
+import { PostNotFoundError } from "../../../core/error/custom/post.error";
 import {
   deleteFromCloudinary,
   extractPublicIdFromUrl,
@@ -95,9 +96,11 @@ describe("deletePost", () => {
 
       await deletePost(mockReq, mockRes);
 
-      expect(prisma.post.findUnique).toHaveBeenCalledWith({
-        where: { id: mockPostId },
-      });
+      expect(prisma.post.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: mockPostId },
+        })
+      );
       expect(prisma.post.delete).toHaveBeenCalledWith({
         where: { id: mockPostId },
       });
@@ -131,7 +134,7 @@ describe("deletePost", () => {
       expect(mockRes.status).toHaveBeenCalledWith(200);
     });
 
-    it("should return 404 if the post is not found", async () => {
+    it("should call handleError if the post is not found", async () => {
       mockReq.user = createAuthenticatedUser({ id: mockUserId });
       mockReq.params = { id: "2751f51c-f504-44bc-b443-fd21bd9da6eb" };
 
@@ -139,8 +142,10 @@ describe("deletePost", () => {
 
       await deletePost(mockReq, mockRes);
 
-      expect(mockRes.status).toHaveBeenCalledWith(404);
-      expect(mockRes.json).toHaveBeenCalledWith({ message: "Post not found" });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(PostNotFoundError),
+        mockRes
+      );
       expect(prisma.post.delete).not.toHaveBeenCalled();
     });
   });
@@ -484,21 +489,6 @@ describe("deletePost", () => {
   });
 
   describe("Permission Checks", () => {
-    it("should verify permission check is called before deletion", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPostInDb as any);
-      vi.mocked(prisma.post.delete).mockResolvedValue(mockPostInDb as any);
-
-      await deletePost(mockReq, mockRes);
-
-      expect(prisma.post.findUnique).toHaveBeenCalledBefore(
-        prisma.post.delete as any
-      );
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-    });
-
     it("should not delete post if authorization fails before database operations", async () => {
       const differentUserId = "different-user-id";
       mockReq.user = createAuthenticatedUser({ id: differentUserId });

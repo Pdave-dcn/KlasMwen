@@ -68,7 +68,7 @@ const App = () => {
 
   return (
     <>
-      <Toaster position="top-center" richColors />
+      <Toaster position="top-center" />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/register" element={<AuthForm defaultMode="signup" />} />

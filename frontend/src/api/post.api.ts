@@ -24,7 +24,7 @@ const createNewPost = async (data: PostFormValues | FormData) => {
     }
 
     const validatedData = CreatedPostResponseSchema.parse(res.data);
-    return validatedData;
+    return validatedData.data;
   } catch (error) {
     handleZodValidationError(error, "createNewPost");
     throw error;

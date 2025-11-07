@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { Link } from "react-router-dom";
+
 import {
   useInfiniteQuery,
   useMutation,
@@ -34,10 +36,24 @@ const usePostCreationMutation = () => {
   return useMutation({
     mutationFn: createNewPost,
     onMutate: () => {
-      toast("Creating post...");
+      const toastId = toast.loading("Creating post...");
+      return { toastId };
     },
-    onSuccess: async () => {
-      toast("Your post has been published successfully");
+    onSuccess: async (data, _variables, context) => {
+      const { toastId } = context ?? {};
+
+      toast.success(
+        <div className="flex flex-col gap-1">
+          <span>Your post has been published successfully!</span>
+          <Link
+            to={`/@${data.author.username}/post/${data.id}`}
+            className="underline hover:primary"
+          >
+            View post
+          </Link>
+        </div>,
+        { id: toastId }
+      );
 
       await queryClient.invalidateQueries({ queryKey: ["posts"] });
     },

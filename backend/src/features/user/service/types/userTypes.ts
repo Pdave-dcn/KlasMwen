@@ -30,5 +30,29 @@ const BaseSelectors = {
   } satisfies Prisma.UserSelect,
 };
 
-export type { UpdateUserProfileData };
+interface RegisterUserData {
+  username: string;
+  email: string;
+  password: string;
+}
+
+interface CreateUserData {
+  username: string;
+  email: string;
+  password: string;
+  avatarId: number;
+}
+interface AuthTokenPayload {
+  id: string;
+  username: string;
+  email: string;
+  role: string;
+}
+
+export type {
+  UpdateUserProfileData,
+  RegisterUserData,
+  CreateUserData,
+  AuthTokenPayload,
+};
 export { BaseSelectors };

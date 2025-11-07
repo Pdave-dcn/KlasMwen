@@ -4,9 +4,8 @@ import passport from "passport";
 
 import { createLogger } from "../../core/config/logger.js";
 import { handleError } from "../../core/error/index.js";
+import UserService from "../../features/user/service/UserService.js";
 import createActionLogger from "../../utils/logger.util.js";
-
-import { UserService } from "./register.controller.js";
 
 import type { Request, Response, NextFunction } from "express";
 
@@ -24,7 +23,9 @@ interface User {
   } | null;
 }
 
-// Authentication callback
+/**
+ * Handle authentication result from passport
+ */
 const handleAuthenticationResult = (
   req: Request,
   res: Response,
@@ -40,6 +41,7 @@ const handleAuthenticationResult = (
   });
 
   try {
+    // Handle authentication error
     if (error) {
       actionLogger.error(
         {
@@ -51,6 +53,7 @@ const handleAuthenticationResult = (
       return next(error);
     }
 
+    // Handle failed authentication
     if (!user) {
       const totalDuration = Date.now() - startTime;
       actionLogger.warn(
@@ -66,31 +69,31 @@ const handleAuthenticationResult = (
       });
     }
 
+    // Process successful login through service layer
     actionLogger.info(
       {
         userId: user.id,
         username: user.username,
         role: user.role,
       },
-      "User authentication successful, generating token"
+      "User authentication successful, processing login"
     );
 
-    const token = UserService.generateToken(user);
+    const { user: userData, token } = UserService.processLogin(user);
 
     const totalDuration = Date.now() - startTime;
-
     actionLogger.info(
       {
-        userId: user.id,
-        username: user.username,
-        role: user.role,
+        userId: userData.id,
+        username: userData.username,
+        role: userData.role,
         totalDuration,
       },
       "Login completed successfully"
     );
 
+    // Set cookie
     const isProduction = process.env.NODE_ENV === "production";
-
     res.cookie("token", token, {
       httpOnly: true,
       secure: isProduction,
@@ -99,21 +102,20 @@ const handleAuthenticationResult = (
       path: "/",
     });
 
+    // Send response
     return res.status(200).json({
       message: "Login successful",
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        avatar: user.Avatar,
-      },
+      user: userData,
     });
   } catch (error) {
     return handleError(error, res);
   }
 };
 
+/**
+ * Controller for user login
+ * Handles passport authentication and delegates business logic to service
+ */
 export const loginUser = (
   req: Request,
   res: Response,
@@ -143,6 +145,7 @@ export const loginUser = (
 
     actionLogger.debug("Initiating passport authentication");
 
+    // Passport authentication
     passport.authenticate(
       "local",
       { session: false },

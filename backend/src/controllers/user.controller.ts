@@ -2,7 +2,7 @@ import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index";
 import CommentService from "../features/comments/service/CommentService.js";
 import PostService from "../features/posts/service/PostService.js";
-import { UserService as UserControllerService } from "../features/user/service/UserService.js";
+import UserService from "../features/user/service/UserService.js";
 import { ensureAuthenticated } from "../utils/auth.util.js";
 import createActionLogger from "../utils/logger.util.js";
 import {
@@ -35,7 +35,7 @@ const getUserById = async (req: Request, res: Response) => {
 
     actionLogger.debug("Fetching user from database");
     const serviceStartTime = Date.now();
-    const user = await UserControllerService.findUserById(userId);
+    const user = await UserService.findUserById(userId);
     const serviceDuration = Date.now() - serviceStartTime;
 
     const totalDuration = Date.now() - startTime;
@@ -79,7 +79,7 @@ const getActiveUser = async (req: Request, res: Response) => {
 
     actionLogger.debug("Fetching active user from database ");
     const serviceStartTime = Date.now();
-    const user = await UserControllerService.getActiveUser(validUser.id);
+    const user = await UserService.getActiveUser(validUser.id);
     const serviceDuration = Date.now() - serviceStartTime;
 
     const totalDuration = Date.now() - startTime;
@@ -133,7 +133,7 @@ const updateUserProfile = async (req: Request, res: Response) => {
 
     actionLogger.debug("Processing user profile update");
     const serviceStartTime = Date.now();
-    const updatedUser = await UserControllerService.updateUserProfile(user.id, {
+    const updatedUser = await UserService.updateUserProfile(user.id, {
       bio,
       avatarId,
     });
@@ -303,7 +303,7 @@ const getUserPosts = async (req: Request, res: Response) => {
     );
 
     actionLogger.debug("Verifying user exists");
-    await UserControllerService.userExists(userId);
+    await UserService.userExists(userId);
 
     actionLogger.debug("Processing user posts request");
     const serviceStartTime = Date.now();
@@ -367,7 +367,7 @@ const getUserComments = async (req: Request, res: Response) => {
     );
 
     actionLogger.debug("Verifying user exists");
-    await UserControllerService.userExists(userId);
+    await UserService.userExists(userId);
 
     actionLogger.debug("Processing user comments and replies fetching request");
     const serviceStartTime = Date.now();
@@ -430,7 +430,7 @@ const getUserMediaPosts = async (req: Request, res: Response) => {
     );
 
     actionLogger.debug("Verifying user exists");
-    await UserControllerService.userExists(userId);
+    await UserService.userExists(userId);
 
     actionLogger.debug("Processing user posts request");
     const serviceStartTime = Date.now();

@@ -1,17 +1,18 @@
+import jwt from "jsonwebtoken";
 import passport from "passport";
-import { it, expect, describe, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 import { loginUser } from "../../../controllers/auth/login.controller.js";
-import { UserService } from "../../../controllers/auth/register.controller.js";
-import { createLogger } from "../../../core/config/logger.js";
+import { handleError } from "../../../core/error/index.js";
 
 import type { NextFunction, Request, Response } from "express";
 
 vi.mock("passport");
-vi.mock("../../../controllers/auth/register.controller.js", () => ({
-  UserService: {
-    generateToken: vi.fn(),
-  },
+
+vi.mock("jsonwebtoken");
+
+vi.mock("../../../core/error/index.js", () => ({
+  handleError: vi.fn(),
 }));
 
 vi.mock("../../../core/config/logger.js", () => ({
@@ -27,102 +28,252 @@ vi.mock("../../../core/config/logger.js", () => ({
     warn: vi.fn(),
     error: vi.fn(),
   })),
-  logger: {
-    child: vi.fn(() => ({
-      debug: vi.fn(),
-      info: vi.fn(),
-      warn: vi.fn(),
-      error: vi.fn(),
-    })),
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
 }));
 
 const mockedPassport = vi.mocked(passport);
-const mockedUserService = vi.mocked(UserService);
+const mockedJwt = vi.mocked(jwt);
+const mockedHandleError = vi.mocked(handleError);
 
-describe("Login controller", () => {
-  let mockRequest: Request;
+describe("Login Controller", () => {
+  let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
   let mockNext: NextFunction;
+  let jsonSpy: ReturnType<typeof vi.fn>;
+  let statusSpy: ReturnType<typeof vi.fn>;
+  let cookieSpy: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, "error").mockImplementation(() => {});
 
+    // Setup response spies
+    jsonSpy = vi.fn();
+    statusSpy = vi.fn().mockReturnThis();
+    cookieSpy = vi.fn().mockReturnThis();
+
     mockRequest = {
       body: {
-        email: "john@test.com",
-        password: "Password123",
+        email: "john@example.com",
+        password: "Password123!",
       },
-    } as Request;
+    };
 
     mockResponse = {
-      status: vi.fn().mockReturnThis(),
-      json: vi.fn(),
-      cookie: vi.fn(),
+      status: statusSpy,
+      json: jsonSpy,
+      cookie: cookieSpy,
     };
 
     mockNext = vi.fn();
+
+    // Default environment setup
+    process.env.JWT_SECRET = "test-secret-key";
+    process.env.NODE_ENV = "test";
   });
 
-  it("should login user successfully and return token", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe("Successful Login Flow", () => {
     const mockUser = {
-      id: "1",
-      username: "john",
-      email: "john@test.com",
+      id: "user-uuid-123",
+      username: "johndoe",
+      email: "john@example.com",
+      password: "$2a$12$hashedPasswordExample",
       role: "STUDENT",
+      Avatar: {
+        id: 1,
+        url: "https://cdn.example.com/avatar1.png",
+      },
     };
 
-    const mockToken = "fake_jwt_token";
-    mockedUserService.generateToken.mockReturnValue(mockToken);
+    const generatedToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test";
 
-    const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
-      callback(null, mockUser, undefined);
-      return vi.fn();
+    beforeEach(() => {
+      mockedJwt.sign.mockReturnValue(generatedToken as never);
     });
 
-    mockedPassport.authenticate.mockImplementation(mockAuthenticate);
+    it("should login user successfully with complete flow", () => {
+      const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
+        // Simulate successful passport authentication
+        callback(null, mockUser, undefined);
+        return vi.fn();
+      });
 
-    loginUser(mockRequest, mockResponse as Response, mockNext);
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
 
-    expect(mockedPassport.authenticate).toHaveBeenCalledWith(
-      "local",
-      { session: false },
-      expect.any(Function)
-    );
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
 
-    expect(mockResponse.cookie).toHaveBeenCalled();
-    expect(mockResponse.status).toHaveBeenCalledWith(200);
-    expect(mockResponse.json).toHaveBeenCalledWith({
-      message: "Login successful",
-      user: {
-        id: mockUser.id,
-        username: mockUser.username,
-        email: mockUser.email,
-        role: mockUser.role,
-      },
+      // Verify passport was called correctly
+      expect(mockedPassport.authenticate).toHaveBeenCalledWith(
+        "local",
+        { session: false },
+        expect.any(Function)
+      );
+
+      // Verify token was generated
+      expect(mockedJwt.sign).toHaveBeenCalledWith(
+        {
+          id: mockUser.id,
+          username: mockUser.username,
+          email: mockUser.email,
+          role: mockUser.role,
+        },
+        "test-secret-key",
+        { expiresIn: "3d" }
+      );
+
+      // Verify cookie was set
+      expect(cookieSpy).toHaveBeenCalledWith("token", generatedToken, {
+        httpOnly: true,
+        secure: false, // test environment
+        sameSite: "lax",
+        maxAge: 3 * 24 * 60 * 60 * 1000,
+        path: "/",
+      });
+
+      // Verify response
+      expect(statusSpy).toHaveBeenCalledWith(200);
+      expect(jsonSpy).toHaveBeenCalledWith({
+        message: "Login successful",
+        user: {
+          id: mockUser.id,
+          username: mockUser.username,
+          email: mockUser.email,
+          role: mockUser.role,
+          avatar: mockUser.Avatar,
+        },
+      });
+
+      // Verify no errors
+      expect(mockNext).not.toHaveBeenCalled();
+      expect(mockedHandleError).not.toHaveBeenCalled();
+    });
+
+    it("should set secure cookie in production environment", () => {
+      process.env.NODE_ENV = "production";
+
+      const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
+        callback(null, mockUser, undefined);
+        return vi.fn();
+      });
+
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
+
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(cookieSpy).toHaveBeenCalledWith("token", generatedToken, {
+        httpOnly: true,
+        secure: true, // production environment
+        sameSite: "none",
+        maxAge: 3 * 24 * 60 * 60 * 1000,
+        path: "/",
+      });
+    });
+
+    it("should return user with avatar when avatar exists", () => {
+      const userWithAvatar = {
+        ...mockUser,
+        Avatar: {
+          id: 5,
+          url: "https://cdn.example.com/custom-avatar.png",
+        },
+      };
+
+      const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
+        callback(null, userWithAvatar, undefined);
+        return vi.fn();
+      });
+
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
+
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(jsonSpy).toHaveBeenCalledWith({
+        message: "Login successful",
+        user: expect.objectContaining({
+          avatar: {
+            id: 5,
+            url: "https://cdn.example.com/custom-avatar.png",
+          },
+        }),
+      });
+    });
+
+    it("should handle user with null avatar", () => {
+      const userWithoutAvatar = {
+        ...mockUser,
+        Avatar: null,
+      };
+
+      const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
+        callback(null, userWithoutAvatar, undefined);
+        return vi.fn();
+      });
+
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
+
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(jsonSpy).toHaveBeenCalledWith({
+        message: "Login successful",
+        user: expect.objectContaining({
+          avatar: null,
+        }),
+      });
+    });
+
+    it("should handle different user roles correctly", () => {
+      const adminUser = {
+        ...mockUser,
+        role: "ADMIN",
+      };
+
+      const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
+        callback(null, adminUser, undefined);
+        return vi.fn();
+      });
+
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
+
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockedJwt.sign).toHaveBeenCalledWith(
+        expect.objectContaining({
+          role: "ADMIN",
+        }),
+        "test-secret-key",
+        { expiresIn: "3d" }
+      );
+
+      expect(jsonSpy).toHaveBeenCalledWith({
+        message: "Login successful",
+        user: expect.objectContaining({
+          role: "ADMIN",
+        }),
+      });
     });
   });
 
-  describe("authentication failures", () => {
-    it("should return 401 when user is false", () => {
+  describe("Authentication Failures", () => {
+    it("should return 401 when credentials are invalid", () => {
       const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
         callback(null, false, { message: "Invalid password" });
         return vi.fn();
       });
 
-      mockedPassport.authenticate.mockImplementation(mockAuthenticate);
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
 
-      loginUser(mockRequest, mockResponse as Response, mockNext);
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({
+      expect(statusSpy).toHaveBeenCalledWith(401);
+      expect(jsonSpy).toHaveBeenCalledWith({
         message: "Invalid password",
       });
+
+      expect(cookieSpy).not.toHaveBeenCalled();
+      expect(mockedJwt.sign).not.toHaveBeenCalled();
     });
 
     it("should return default message when info is undefined", () => {
@@ -130,41 +281,192 @@ describe("Login controller", () => {
         callback(null, false, undefined);
         return vi.fn();
       });
-      mockedPassport.authenticate.mockImplementation(mockAuthenticate);
 
-      loginUser(mockRequest, mockResponse as Response, mockNext);
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(statusSpy).toHaveBeenCalledWith(401);
+      expect(jsonSpy).toHaveBeenCalledWith({
         message: "Invalid credentials",
       });
     });
-  });
 
-  describe("authentication errors", () => {
-    it("should call next with error when authentication error occurs", () => {
-      const authError = new Error("Database connection failed");
+    it("should handle user not found", () => {
       const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
-        callback(authError, false, undefined);
+        callback(null, false, { message: "User not found" });
         return vi.fn();
       });
 
-      mockedPassport.authenticate.mockImplementation(mockAuthenticate);
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
 
-      loginUser(mockRequest, mockResponse as Response, mockNext);
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(mockNext).toHaveBeenCalledWith(authError);
-      expect(mockResponse.status).not.toHaveBeenCalled();
-      expect(mockResponse.json).not.toHaveBeenCalled();
+      expect(statusSpy).toHaveBeenCalledWith(401);
+      expect(jsonSpy).toHaveBeenCalledWith({
+        message: "User not found",
+      });
+
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it("should handle incorrect email", () => {
+      const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
+        callback(null, false, { message: "Invalid email" });
+        return vi.fn();
+      });
+
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
+
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(statusSpy).toHaveBeenCalledWith(401);
+      expect(jsonSpy).toHaveBeenCalledWith({
+        message: "Invalid email",
+      });
+    });
+
+    it("should not generate token on failed authentication", () => {
+      const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
+        callback(null, false, { message: "Invalid credentials" });
+        return vi.fn();
+      });
+
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
+
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockedJwt.sign).not.toHaveBeenCalled();
+      expect(cookieSpy).not.toHaveBeenCalled();
     });
   });
 
-  describe("passport integration", () => {
-    it("should call passport.authenticate with correct parameters", () => {
-      const mockAuthenticate = vi.fn(() => vi.fn());
-      mockedPassport.authenticate.mockImplementation(mockAuthenticate);
+  describe("Authentication Errors", () => {
+    it("should call next with error when authentication error occurs", () => {
+      const authError = new Error("Database connection failed");
+      const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
+        callback(authError, null, undefined);
+        return vi.fn();
+      });
 
-      loginUser(mockRequest, mockResponse as Response, mockNext);
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
+
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalledWith(authError);
+      expect(statusSpy).not.toHaveBeenCalled();
+      expect(jsonSpy).not.toHaveBeenCalled();
+      expect(cookieSpy).not.toHaveBeenCalled();
+    });
+
+    it("should handle passport strategy errors", () => {
+      const strategyError = new Error("Passport strategy not configured");
+      const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
+        callback(strategyError, null, undefined);
+        return vi.fn();
+      });
+
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
+
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalledWith(strategyError);
+    });
+
+    it("should handle database query errors", () => {
+      const dbError = new Error("User query failed");
+      const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
+        callback(dbError, null, undefined);
+        return vi.fn();
+      });
+
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
+
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalledWith(dbError);
+      expect(mockedJwt.sign).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Token Generation Errors", () => {
+    const mockUser = {
+      id: "user-123",
+      username: "johndoe",
+      email: "john@example.com",
+      password: "hashed",
+      role: "STUDENT",
+      Avatar: {
+        id: 1,
+        url: "https://cdn.example.com/avatar1.png",
+      },
+    };
+
+    it("should handle missing JWT_SECRET", () => {
+      delete process.env.JWT_SECRET;
+
+      const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
+        callback(null, mockUser, undefined);
+        return vi.fn();
+      });
+
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
+
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockedHandleError).toHaveBeenCalled();
+      const errorCall = mockedHandleError.mock.calls[0][0];
+      expect(errorCall).toBeInstanceOf(Error);
+      expect((errorCall as Error).message).toContain("JWT_SECRET");
+
+      expect(cookieSpy).not.toHaveBeenCalled();
+      expect(statusSpy).not.toHaveBeenCalledWith(200);
+    });
+
+    it("should handle JWT signing errors", () => {
+      const jwtError = new Error("Invalid JWT configuration");
+      mockedJwt.sign.mockImplementation(() => {
+        throw jwtError;
+      });
+
+      const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
+        callback(null, mockUser, undefined);
+        return vi.fn();
+      });
+
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
+
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockedHandleError).toHaveBeenCalledWith(jwtError, mockResponse);
+      expect(cookieSpy).not.toHaveBeenCalled();
+    });
+
+    it("should not set cookie if token generation fails", () => {
+      mockedJwt.sign.mockImplementation(() => {
+        throw new Error("Token generation failed");
+      });
+
+      const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
+        callback(null, mockUser, undefined);
+        return vi.fn();
+      });
+
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
+
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(cookieSpy).not.toHaveBeenCalled();
+      expect(statusSpy).not.toHaveBeenCalledWith(200);
+    });
+  });
+
+  describe("Passport Integration", () => {
+    it("should call passport.authenticate with correct strategy", () => {
+      const mockAuthenticate = vi.fn(() => vi.fn());
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
+
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockedPassport.authenticate).toHaveBeenCalledWith(
         "local",
@@ -173,12 +475,12 @@ describe("Login controller", () => {
       );
     });
 
-    it("should return function that calls req, res, next", () => {
+    it("should return function that gets called with req, res, next", () => {
       const mockPassportFunction = vi.fn();
       const mockAuthenticate = vi.fn(() => mockPassportFunction);
-      mockedPassport.authenticate.mockImplementation(mockAuthenticate);
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
 
-      loginUser(mockRequest, mockResponse as Response, mockNext);
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockPassportFunction).toHaveBeenCalledWith(
         mockRequest,
@@ -186,41 +488,316 @@ describe("Login controller", () => {
         mockNext
       );
     });
+
+    it("should pass session: false to passport", () => {
+      const mockAuthenticate = vi.fn(() => vi.fn());
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
+
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+
+      const callArgs = mockedPassport.authenticate.mock.calls[0];
+      expect(callArgs[1]).toEqual({ session: false });
+    });
   });
 
-  describe("user data handling", () => {
-    it("should only return safe user data (no password)", () => {
+  describe("User Data Handling", () => {
+    it("should not expose password in response", () => {
       const mockUser = {
-        id: "1",
-        username: "john",
-        email: "john@test.com",
+        id: "user-123",
+        username: "johndoe",
+        email: "john@example.com",
+        password: "$2a$12$hashedPasswordShouldNotBeExposed",
         role: "STUDENT",
-        password: "hashed_password",
-        bio: "Some bio",
-        avatarUrl: "https://some-url.app",
-      } as any;
+        Avatar: {
+          id: 1,
+          url: "https://cdn.example.com/avatar1.png",
+        },
+      };
 
-      const mockToken = "fake_jwt_token";
-      mockedUserService.generateToken.mockReturnValue(mockToken);
+      mockedJwt.sign.mockReturnValue("token" as never);
 
       const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
         callback(null, mockUser, undefined);
         return vi.fn();
       });
-      mockedPassport.authenticate.mockImplementation(mockAuthenticate);
 
-      loginUser(mockRequest, mockResponse as Response, mockNext);
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
 
-      expect(mockResponse.cookie).toHaveBeenCalled();
-      expect(mockResponse.json).toHaveBeenCalledWith({
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(jsonSpy).toHaveBeenCalledWith({
         message: "Login successful",
         user: {
-          id: "1",
-          username: "john",
-          email: "john@test.com",
-          role: "STUDENT",
+          id: mockUser.id,
+          username: mockUser.username,
+          email: mockUser.email,
+          role: mockUser.role,
+          avatar: mockUser.Avatar,
         },
       });
+
+      // Ensure password is not in response
+      const responseUser = jsonSpy.mock.calls[0][0].user;
+      expect(responseUser).not.toHaveProperty("password");
+    });
+
+    it("should only return safe user fields", () => {
+      const mockUser = {
+        id: "user-123",
+        username: "johndoe",
+        email: "john@example.com",
+        password: "hashed_password",
+        role: "STUDENT",
+        bio: "Some bio that should not be exposed",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        Avatar: {
+          id: 1,
+          url: "https://cdn.example.com/avatar1.png",
+        },
+      } as any;
+
+      mockedJwt.sign.mockReturnValue("token" as never);
+
+      const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
+        callback(null, mockUser, undefined);
+        return vi.fn();
+      });
+
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
+
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+
+      const responseUser = jsonSpy.mock.calls[0][0].user;
+      expect(Object.keys(responseUser)).toEqual([
+        "id",
+        "username",
+        "email",
+        "role",
+        "avatar",
+      ]);
+    });
+
+    it("should handle user with additional properties correctly", () => {
+      const mockUser = {
+        id: "user-123",
+        username: "johndoe",
+        email: "john@example.com",
+        password: "hashed",
+        role: "TEACHER",
+        someOtherField: "should not appear",
+        Avatar: {
+          id: 2,
+          url: "https://cdn.example.com/avatar2.png",
+        },
+      } as any;
+
+      mockedJwt.sign.mockReturnValue("token" as never);
+
+      const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
+        callback(null, mockUser, undefined);
+        return vi.fn();
+      });
+
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
+
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(jsonSpy).toHaveBeenCalledWith({
+        message: "Login successful",
+        user: {
+          id: "user-123",
+          username: "johndoe",
+          email: "john@example.com",
+          role: "TEACHER",
+          avatar: mockUser.Avatar,
+        },
+      });
+    });
+  });
+
+  describe("Request Body Validation", () => {
+    it("should handle request with email and password", () => {
+      const mockUser = {
+        id: "user-123",
+        username: "johndoe",
+        email: "john@example.com",
+        password: "hashed",
+        role: "STUDENT",
+        Avatar: null,
+      };
+
+      mockedJwt.sign.mockReturnValue("token" as never);
+
+      const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
+        callback(null, mockUser, undefined);
+        return vi.fn();
+      });
+
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
+
+      mockRequest.body = {
+        email: "john@example.com",
+        password: "Password123!",
+      };
+
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockedPassport.authenticate).toHaveBeenCalled();
+      expect(statusSpy).toHaveBeenCalledWith(200);
+    });
+
+    it("should handle request with username instead of email", () => {
+      const mockUser = {
+        id: "user-123",
+        username: "johndoe",
+        email: "john@example.com",
+        password: "hashed",
+        role: "STUDENT",
+        Avatar: null,
+      };
+
+      mockedJwt.sign.mockReturnValue("token" as never);
+
+      const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
+        callback(null, mockUser, undefined);
+        return vi.fn();
+      });
+
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
+
+      mockRequest.body = {
+        username: "johndoe",
+        password: "Password123!",
+      };
+
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockedPassport.authenticate).toHaveBeenCalled();
+    });
+  });
+
+  describe("Edge Cases", () => {
+    it("should handle missing request body gracefully", () => {
+      mockRequest.body = undefined;
+
+      const mockAuthenticate = vi.fn(() => vi.fn());
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
+
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockedPassport.authenticate).toHaveBeenCalled();
+    });
+
+    it("should handle empty request body", () => {
+      mockRequest.body = {};
+
+      const mockAuthenticate = vi.fn(() => vi.fn());
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
+
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockedPassport.authenticate).toHaveBeenCalled();
+    });
+
+    it("should handle missing logContext", () => {
+      delete mockRequest.logContext;
+
+      const mockUser = {
+        id: "user-123",
+        username: "johndoe",
+        email: "john@example.com",
+        password: "hashed",
+        role: "STUDENT",
+        Avatar: null,
+      };
+
+      mockedJwt.sign.mockReturnValue("token" as never);
+
+      const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
+        callback(null, mockUser, undefined);
+        return vi.fn();
+      });
+
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
+
+      expect(() => {
+        loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+      }).not.toThrow();
+
+      expect(statusSpy).toHaveBeenCalledWith(200);
+    });
+  });
+
+  describe("Integration Flow Order", () => {
+    it("should execute steps in correct order on success", () => {
+      const executionOrder: string[] = [];
+
+      const mockUser = {
+        id: "user-123",
+        username: "johndoe",
+        email: "john@example.com",
+        password: "hashed",
+        role: "STUDENT",
+        Avatar: {
+          id: 1,
+          url: "https://cdn.example.com/avatar1.png",
+        },
+      };
+
+      const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
+        executionOrder.push("authenticate");
+        callback(null, mockUser, undefined);
+        return vi.fn();
+      });
+
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
+
+      mockedJwt.sign.mockImplementation(() => {
+        executionOrder.push("token");
+        return "token" as never;
+      });
+
+      cookieSpy.mockImplementation(() => {
+        executionOrder.push("cookie");
+        return mockResponse as Response;
+      });
+
+      statusSpy.mockImplementation(() => {
+        executionOrder.push("status");
+        return mockResponse as Response;
+      });
+
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(executionOrder).toEqual([
+        "authenticate",
+        "token",
+        "cookie",
+        "status",
+      ]);
+    });
+
+    it("should stop flow after authentication failure", () => {
+      const executionOrder: string[] = [];
+
+      const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
+        executionOrder.push("authenticate");
+        callback(null, false, { message: "Invalid credentials" });
+        return vi.fn();
+      });
+
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
+
+      mockedJwt.sign.mockImplementation(() => {
+        executionOrder.push("token");
+        return "token" as never;
+      });
+
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(executionOrder).toEqual(["authenticate"]);
+      expect(executionOrder).not.toContain("token");
     });
   });
 });

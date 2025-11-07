@@ -1,5 +1,9 @@
 import prisma from "../../../../core/config/db";
-import { BaseSelectors, type UpdateUserProfileData } from "../types/userTypes";
+import {
+  BaseSelectors,
+  type UpdateUserProfileData,
+  type CreateUserData,
+} from "../types/userTypes";
 
 export class UserRepository {
   /**
@@ -31,6 +35,29 @@ export class UserRepository {
       select: { id: true },
     });
     return !!user;
+  }
+
+  /**
+   * Create a new user
+   */
+  static async createUser(userData: CreateUserData) {
+    return await prisma.user.create({
+      data: {
+        username: userData.username,
+        email: userData.email,
+        password: userData.password,
+        avatarId: userData.avatarId,
+      },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        Avatar: {
+          select: { id: true, url: true },
+        },
+      },
+    });
   }
 
   /**

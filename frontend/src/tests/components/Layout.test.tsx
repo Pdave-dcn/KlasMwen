@@ -14,7 +14,7 @@ vi.mock("@/components/layout/Sidebar", () => ({
   ),
 }));
 
-vi.mock("@/components/layout/MobileSidebar", () => ({
+vi.mock("@/components/layout/MobileTabBar", () => ({
   default: ({ onCreateClick }: { onCreateClick: () => void }) => (
     <div data-testid="mobile-tab-bar">
       <button onClick={onCreateClick}>Mobile Create</button>

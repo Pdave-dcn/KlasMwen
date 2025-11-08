@@ -6,7 +6,7 @@ import PostEditForm from "@/features/postEdit/components/PostEditForm";
 import { usePostEditStore } from "@/stores/postEdit.store";
 import type { PostType } from "@/zodSchemas/post.zod";
 
-import MobileTabBar from "./MobileSidebar";
+import MobileTabBar from "./MobileTabBar";
 import Sidebar from "./Sidebar";
 
 interface LayoutProps {

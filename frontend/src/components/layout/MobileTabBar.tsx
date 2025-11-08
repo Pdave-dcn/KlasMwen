@@ -13,6 +13,7 @@ import {
   Monitor,
   LogOut,
   Bookmark,
+  Bell,
 } from "lucide-react";
 
 import { logOut as apiLogOut } from "@/api/auth.api";
@@ -30,7 +31,7 @@ const navItems = [
   { title: "Home", url: "/home", icon: Home },
   { title: "Search", url: "/search", icon: Search },
   { title: "Create", action: true, icon: Plus },
-  { title: "Profile", url: "/profile/me", icon: User },
+  { title: "Notifications", url: "/notifications", icon: Bell },
 ];
 
 const MobileTabBar = ({ onCreateClick }: { onCreateClick: () => void }) => {
@@ -133,6 +134,14 @@ const MobileTabBar = ({ onCreateClick }: { onCreateClick: () => void }) => {
               <Menu className="h-6 w-6 mb-0.5" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" side="top" className="w-56 mb-2">
+              {/* Profile */}
+              <DropdownMenuItem onClick={() => navigate("/profile/me")}>
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
               {/* Settings */}
               <DropdownMenuItem onClick={() => navigate("/settings")}>
                 <Settings className="mr-2 h-4 w-4" />

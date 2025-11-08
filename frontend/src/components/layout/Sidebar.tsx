@@ -15,6 +15,7 @@ import {
   LogOut,
   Bookmark,
   Check,
+  Bell,
 } from "lucide-react";
 
 import { logOut as apiLogOut } from "@/api/auth.api";
@@ -35,8 +36,8 @@ const items = [
   { title: "Home", url: "/home", icon: Home },
   { title: "Search", url: "/search", icon: Search },
   { title: "Create", action: true, icon: Plus },
+  { title: "Notifications", url: "/notifications", icon: Bell },
   { title: "Profile", url: "/profile/me", icon: User },
-  { title: "Settings", url: "/settings", icon: Settings },
 ];
 
 interface SidebarProps {
@@ -58,6 +59,10 @@ const Sidebar = ({ onCreateClick }: SidebarProps) => {
     await navigate("/profile/me", {
       state: { activeTab: "saved" },
     });
+  };
+
+  const handleSettings = async () => {
+    await navigate("/settings");
   };
 
   const getThemeIcon = (themeOption: "light" | "dark" | "system") => {
@@ -175,6 +180,11 @@ const Sidebar = ({ onCreateClick }: SidebarProps) => {
           <DropdownMenuItem onClick={handleSaved}>
             <Bookmark className="mr-2 h-4 w-4" />
             <span>Saved</span>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem onClick={handleSettings}>
+            <Settings className="mr-2 h-4 w-4" />
+            <span>Settings</span>
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />

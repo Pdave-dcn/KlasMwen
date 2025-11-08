@@ -11,10 +11,12 @@ import AuthForm from "./pages/AuthForm";
 import HomePage from "./pages/HomePage";
 import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
+import NotificationsPage from "./pages/NotificationsPage";
 import PostView from "./pages/PostView";
 import Profile from "./pages/Profile";
 import ProfileEdit from "./pages/ProfileEdit";
 import Search from "./pages/Search";
+import SettingsPage from "./pages/SettingsPage";
 import { useAuthStore } from "./stores/auth.store";
 import { AuthVerificationResponseSchema } from "./zodSchemas/auth.zod";
 
@@ -122,6 +124,23 @@ const App = () => {
           element={
             <ProtectedRoute>
               <Search />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <SettingsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <NotificationsPage />
             </ProtectedRoute>
           }
         />

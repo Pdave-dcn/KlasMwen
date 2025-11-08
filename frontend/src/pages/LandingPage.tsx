@@ -1,22 +1,10 @@
-import { useEffect } from "react";
-
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import { ArrowRight, BookOpen, CheckCircle, Shield, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { useAuthStore } from "@/stores/auth.store";
 
 const LandingPage = () => {
-  const { isAuthenticated } = useAuthStore();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      void navigate("/home", { replace: true });
-    }
-  }, [isAuthenticated, navigate]);
-
   const currentYear = new Date().getFullYear();
   return (
     <main className="min-h-screen bg-background">
@@ -28,7 +16,7 @@ const LandingPage = () => {
             className="flex items-center gap-2 text-lg md:text-2xl font-bold text-white z-10"
           >
             <BookOpen className="w-6 h-6 md:w-8 md:h-8" />
-            Klasmwen
+            KlasMwen
           </Link>
 
           <div className="flex items-center gap-6">

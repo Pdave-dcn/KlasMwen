@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useNavigate } from "react-router-dom";
 
 import { Toaster } from "sonner";
 
 import api from "./api/api";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { Spinner } from "./components/ui/spinner";
+import SplashScreen from "./components/SplashScreen";
 import AuthForm from "./pages/AuthForm";
 import DiscoverPage from "./pages/DiscoverPage";
 import HomePage from "./pages/HomePage";
@@ -23,8 +23,11 @@ import { AuthVerificationResponseSchema } from "./zodSchemas/auth.zod";
 
 const App = () => {
   const [isHydrated, setIsHydrated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   const login = useAuthStore((state) => state.login);
   const logout = useAuthStore((state) => state.logout);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const hasPersistedState = useAuthStore.persist.hasHydrated();
@@ -53,20 +56,22 @@ const App = () => {
         const res = await api.get("/auth/me");
         const validatedData = AuthVerificationResponseSchema.parse(res.data);
         login(validatedData.user);
+        await navigate("/home", { replace: true });
       } catch {
         logout();
+        await navigate("/", { replace: true });
+      } finally {
+        setIsAuthenticated(true);
       }
     };
 
     void verifyAuth();
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHydrated, login, logout]);
 
-  if (!isHydrated) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Spinner />
-      </div>
-    );
+  if (!isHydrated || !isAuthenticated) {
+    return <SplashScreen />;
   }
 
   return (

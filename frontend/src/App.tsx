@@ -8,6 +8,7 @@ import api from "./api/api";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { Spinner } from "./components/ui/spinner";
 import AuthForm from "./pages/AuthForm";
+import DiscoverPage from "./pages/DiscoverPage";
 import HomePage from "./pages/HomePage";
 import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
@@ -75,6 +76,7 @@ const App = () => {
         <Route path="/" element={<LandingPage />} />
         <Route path="/register" element={<AuthForm defaultMode="signup" />} />
         <Route path="/sign-in" element={<AuthForm />} />
+        <Route path="/discover" element={<DiscoverPage />} />
 
         <Route
           path="/home"

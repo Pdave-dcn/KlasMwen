@@ -21,7 +21,7 @@ const LandingPage = () => {
   return (
     <main className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary to-accent py-10 text-center relative overflow-hidden">
+      <section className="bg-linear-to-br from-primary to-accent py-10 text-center relative overflow-hidden">
         <nav className="flex justify-between items-center px-6 md:px-8 mb-16">
           <Link
             to="/"
@@ -55,7 +55,7 @@ const LandingPage = () => {
             <div className="max-w-4xl mx-auto">
               <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
                 Your Study Journey
-                <span className="block bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+                <span className="block bg-linear-to-r from-white to-white/80 bg-clip-text text-transparent">
                   Starts Here
                 </span>
               </h1>
@@ -73,7 +73,7 @@ const LandingPage = () => {
                     <ArrowRight className="ml-2 w-5 h-5" />
                   </Button>
                 </Link>
-                <Link to="#">
+                <Link to="/discover">
                   <Button
                     size="lg"
                     variant="secondary"
@@ -111,7 +111,7 @@ const LandingPage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="border-t bg-gradient-to-r from-muted/20 to-muted/40 py-16">
+      <footer className="border-t bg-linear-to-r from-muted/20 to-muted/40 py-16">
         <div className="container mx-auto px-4">
           <div className="text-center">
             <div className="flex justify-center items-center gap-3 mb-6">
@@ -119,8 +119,8 @@ const LandingPage = () => {
               <h3 className="text-3xl font-bold text-primary">KlasMwen</h3>
             </div>
             <p className="text-muted-foreground mb-8 max-w-lg mx-auto text-lg leading-relaxed">
-              Empowering students worldwide with collaborative learning
-              experiences and meaningful connections.
+              Empowering students with collaborative learning experiences and
+              meaningful connections.
             </p>
             <div className="flex flex-wrap justify-center gap-8 mb-8">
               <Link

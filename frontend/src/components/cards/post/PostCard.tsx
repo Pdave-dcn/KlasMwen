@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
 
+import { toast } from "sonner";
+
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useToggleBookmarkMutation } from "@/queries/useBookmarkMutation";
 import { useToggleLikeMutation } from "@/queries/useLikeMutation";
@@ -47,6 +49,7 @@ const PostCard = ({ post, onComment }: PostCardProps) => {
     toggleBookmarkMutation.mutate();
   };
 
+  // ! Not in use
   const handleComment = (e: React.MouseEvent) => {
     e.stopPropagation();
     onComment?.(post.id);
@@ -54,7 +57,8 @@ const PostCard = ({ post, onComment }: PostCardProps) => {
 
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // share logic here
+    // * share logic here
+    toast.info("Share feature coming soon!");
   };
 
   return (

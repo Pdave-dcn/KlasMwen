@@ -44,7 +44,7 @@ const PostCardActions = ({
           variant="ghost"
           size="sm"
           onClick={onComment}
-          className="gap-2 text-muted-foreground hover:text-primary"
+          className="gap-2 text-muted-foreground hover:text-primary pointer-events-none"
         >
           <MessageCircle className="w-4 h-4" />
           <span className="text-sm">{post._count.comments}</span>

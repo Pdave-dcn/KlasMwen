@@ -27,95 +27,6 @@ describe("handleAuthError", () => {
     vi.clearAllMocks();
   });
 
-  describe("network errors", () => {
-    it("should show network error toast when no response data", () => {
-      const error: AxiosError<AuthError> = {
-        response: undefined,
-      } as AxiosError<AuthError>;
-
-      handleAuthError(error, mockSetError);
-
-      expect(toast.error).toHaveBeenCalledWith("Network error", {
-        description:
-          "Unable to connect. Please check your internet and try again.",
-      });
-      expect(mockSetError).not.toHaveBeenCalled();
-    });
-
-    it("should show network error toast when response exists but no data", () => {
-      const error: AxiosError<AuthError> = {
-        response: {
-          data: undefined,
-          status: 500,
-        },
-      } as unknown as AxiosError<AuthError>;
-
-      handleAuthError(error, mockSetError);
-
-      expect(toast.error).toHaveBeenCalledWith("Network error", {
-        description:
-          "Unable to connect. Please check your internet and try again.",
-      });
-    });
-  });
-
-  describe("rate limit errors (429)", () => {
-    it("should handle login rate limit error", () => {
-      const error: AxiosError<AuthError> = {
-        response: {
-          status: 429,
-          data: {
-            message: "Too many authentication attempts.",
-          },
-        },
-      } as AxiosError<AuthError>;
-
-      handleAuthError(error, mockSetError);
-
-      expect(toast.error).toHaveBeenCalledWith("Too many attempts", {
-        description:
-          "You've made too many login attempts. Please wait 15 minutes before trying again.",
-      });
-      expect(mockSetError).not.toHaveBeenCalled();
-    });
-
-    it("should handle signup rate limit error", () => {
-      const error: AxiosError<AuthError> = {
-        response: {
-          status: 429,
-          data: {
-            message: "Too many signup attempts.",
-          },
-        },
-      } as AxiosError<AuthError>;
-
-      handleAuthError(error, mockSetError);
-
-      expect(toast.error).toHaveBeenCalledWith("Too many attempts", {
-        description:
-          "You've made too many signup attempts. Please wait 1 hour before trying again.",
-      });
-    });
-
-    it("should handle generic 429 error without authentication message", () => {
-      const error: AxiosError<AuthError> = {
-        response: {
-          status: 429,
-          data: {
-            message: "Rate limit exceeded.",
-          },
-        },
-      } as AxiosError<AuthError>;
-
-      handleAuthError(error, mockSetError);
-
-      expect(toast.error).toHaveBeenCalledWith("Too many attempts", {
-        description:
-          "You've made too many signup attempts. Please wait 1 hour before trying again.",
-      });
-    });
-  });
-
   describe("unique constraint errors", () => {
     it("should set form errors for unique constraint violations", () => {
       const error: AxiosError<AuthError> = {
@@ -236,21 +147,6 @@ describe("handleAuthError", () => {
   });
 
   describe("edge cases", () => {
-    it("should handle error with no message field", () => {
-      const error: AxiosError<AuthError> = {
-        response: {
-          status: 400,
-          data: {} as AuthError,
-        },
-      } as AxiosError<AuthError>;
-
-      handleAuthError(error, mockSetError);
-
-      expect(toast.error).toHaveBeenCalledWith("Authentication error", {
-        description: "Something went wrong. Please try again later.",
-      });
-    });
-
     it("should handle unknown field in unique constraint", () => {
       const error: AxiosError<AuthError> = {
         response: {

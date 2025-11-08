@@ -1,14 +1,8 @@
 import { useNavigate } from "react-router-dom";
 
-import { Edit2 } from "lucide-react";
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { userStats } from "@/pages/profilePageMockData";
+import { Badge } from "@/components/ui/badge";
 import type { User } from "@/types/auth.type";
-
-import ProfileBio from "./ProfileBio";
-import ProfileStats from "./ProfileStats";
 
 interface ProfileHeaderProps {
   user: User;
@@ -20,72 +14,84 @@ const ProfileHeader = ({ user, isSelf }: ProfileHeaderProps) => {
   const handleNavigate = async () => {
     await navigate("/profile/edit");
   };
+
+  if (!user) return null;
   return (
     <>
       {/* Mobile layout */}
-      <div className="md:hidden mb-10 w-full">
+      <div className="md:hidden mb-10 w-full flex flex-col items-center justify-center">
         <div className="flex items-center justify-center gap-4 py-5">
           <Avatar className="w-20 h-20 border-2 border-background">
-            <AvatarImage src={user?.avatar?.url} alt={user?.username} />
+            <AvatarImage src={user.avatar?.url} alt={user.username} />
             <AvatarFallback className="text-lg font-semibold bg-primary text-primary-foreground">
-              {user?.username.charAt(0).toUpperCase()}
+              {user.username.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
 
-          <div>
+          <div className="flex flex-col items-start">
             <h1 className="text-xl font-bold text-foreground mb-2">
-              {user?.username}
+              {user.username}
             </h1>
+
+            <Badge variant="secondary" className="mb-3 capitalize">
+              {user.role}
+            </Badge>
+
             {isSelf && (
-              <Button
+              <button
                 onClick={handleNavigate}
-                variant="outline"
-                size="sm"
-                className="flex-1"
+                className="underline active:text-primary"
               >
                 Edit Profile
-              </Button>
+              </button>
             )}
           </div>
         </div>
 
-        <ProfileStats stats={userStats} />
-
-        <ProfileBio user={user} />
+        <div className="mt-4">
+          {user.bio && <p className="text-sm text-foreground">{user.bio}</p>}
+        </div>
       </div>
 
       {/* Desktop layout */}
       <div className="hidden md:flex w-full max-w-2xl">
         <div className="items-center gap-10 mt-5 p-10 flex">
           <Avatar className="w-32 h-32 border-4 border-background shadow-lg">
-            <AvatarImage src={user?.avatar?.url} alt={user?.username} />
+            <AvatarImage src={user.avatar?.url} alt={user.username} />
             <AvatarFallback className="text-2xl font-semibold bg-primary text-primary-foreground">
               {user?.username.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-6">
+            <div className="flex items-center mb-4">
+              <div className="flex flex-col gap-6">
                 <h1 className="text-3xl font-light text-foreground">
-                  {user?.username}
+                  {user.username}
                 </h1>
-                {isSelf && (
-                  <Button
-                    onClick={handleNavigate}
-                    variant="outline"
-                    size="sm"
-                    className="gap-2 cursor-pointer"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                    Edit Profile
-                  </Button>
-                )}
+
+                <div className="flex items-baseline justify-between">
+                  <Badge variant="secondary" className="mb-3 capitalize">
+                    {user.role}
+                  </Badge>
+
+                  {isSelf && (
+                    <button
+                      onClick={handleNavigate}
+                      className="cursor-pointer border rounded-md px-2 py-1 text-sm hover:bg-accent hover:text-primary"
+                    >
+                      Edit Profile
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
-            <ProfileStats stats={userStats} />
-            <ProfileBio user={user} />
+            <div className="mt-4">
+              {user.bio && (
+                <p className="text-sm text-foreground">{user.bio}</p>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -43,7 +43,7 @@ function useProfileUser(
 
 function useProfileUser(userId?: string) {
   return useQuery({
-    queryKey: userId ? ["profile", userId] : ["me"],
+    queryKey: userId ? ["profile", userId] : ["profile", "me"],
     queryFn: userId
       ? () => getUserProfile(userId)
       : () => getActiveUserProfile(),

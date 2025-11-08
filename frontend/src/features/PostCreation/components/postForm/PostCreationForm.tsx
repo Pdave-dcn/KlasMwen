@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { usePostCreationMutation } from "@/queries/usePosts";
+import { usePostCreationMutation } from "@/queries/usePosts.tsx";
 import { useTagQuery } from "@/queries/useTag";
 import {
   ResourcePostCreationSchema,

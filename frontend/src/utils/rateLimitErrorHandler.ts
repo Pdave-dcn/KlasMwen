@@ -36,6 +36,8 @@ export const handleRateLimitError = (
       "You're commenting too fast. Please slow down before commenting again.",
     "comment.delete":
       "You've reached the hourly delete limit. You can only delete up to 10 comments per hour.",
+    "profile.update":
+      "You've reached the hourly update limit. You can update your profile up to 10 times per hour",
 
     default: "Too Many Requests. Please slow down.",
   };

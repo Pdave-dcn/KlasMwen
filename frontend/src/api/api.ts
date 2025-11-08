@@ -51,6 +51,7 @@ function getRequestContext(error: AxiosError): string {
   if (url.includes("/comments") && method === "delete") return "comment.delete";
   if (url.includes("/posts") && method === "put") return "post.update";
   if (url.includes("/posts") && method === "delete") return "post.delete";
+  if (url.includes("/users") && method === "put") return "profile.update";
   return "default";
 }
 

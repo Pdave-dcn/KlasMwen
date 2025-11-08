@@ -2,7 +2,7 @@ import { BookOpen } from "lucide-react";
 
 import type { Post } from "@/zodSchemas/post.zod";
 
-import ProfilePostsList from "./ProfilePostsList";
+import ProfilePostsList from "../ProfilePostsList";
 
 import type {
   InfiniteData,

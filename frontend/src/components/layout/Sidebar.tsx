@@ -55,7 +55,9 @@ const Sidebar = ({ onCreateClick }: SidebarProps) => {
   };
 
   const handleSaved = async () => {
-    await navigate("#");
+    await navigate("/profile/me", {
+      state: { activeTab: "saved" },
+    });
   };
 
   const getThemeIcon = (themeOption: "light" | "dark" | "system") => {

@@ -2,7 +2,7 @@ import { MessageSquare } from "lucide-react";
 
 import { useProfileBookmarks } from "@/queries/useProfile";
 
-import ProfilePostsList from "./ProfilePostsList";
+import ProfilePostsList from "../ProfilePostsList";
 
 const ProfileBookmarks = () => {
   const {

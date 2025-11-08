@@ -4,7 +4,7 @@ import { Image } from "lucide-react";
 
 import { useProfileMedia } from "@/queries/useProfile";
 
-import ProfilePostsList from "./ProfilePostsList";
+import ProfilePostsList from "../ProfilePostsList";
 
 const ProfileMediaPosts = () => {
   const { id: userId } = useParams();

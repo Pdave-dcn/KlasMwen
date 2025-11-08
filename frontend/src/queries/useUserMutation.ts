@@ -1,13 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 
 import { updateUserInfo } from "@/api/user.api";
-import {
-  handleProfileUpdateError,
-  type ApiErrorData,
-} from "@/features/profile/error/updateProfileErrorHandler";
 import { useAuthStore } from "@/stores/auth.store";
-
-import type { AxiosError } from "axios";
 
 /**
  * A custom React Hook for updating the authenticated user's profile.
@@ -24,9 +18,6 @@ const useUpdateUserInfo = () => {
     onSuccess: (data) => {
       const updatedUser = { ...data.user };
       login(updatedUser);
-    },
-    onError: (error: AxiosError<ApiErrorData>) => {
-      handleProfileUpdateError(error);
     },
   });
 };

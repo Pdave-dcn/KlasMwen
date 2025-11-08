@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { useProfileComments } from "@/queries/useProfile";
 
-import ProfileCommentCard from "./ProfileCommentCard";
+import ProfileCommentCard from "../ProfileCommentCard";
 
 const ProfileReplies = () => {
   const { id: userId } = useParams();

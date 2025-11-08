@@ -2,7 +2,7 @@ import { Heart } from "lucide-react";
 
 import { useProfileLikedPosts } from "@/queries/useProfile";
 
-import ProfilePostsList from "./ProfilePostsList";
+import ProfilePostsList from "../ProfilePostsList";
 
 const ProfileLikedPosts = () => {
   const {

@@ -38,6 +38,10 @@ export const handleRateLimitError = (
       "You've reached the hourly delete limit. You can only delete up to 10 comments per hour.",
     "profile.update":
       "You've reached the hourly update limit. You can update your profile up to 10 times per hour",
+    "auth.login":
+      "You've made too many login attempts. Please wait 15 minutes before trying again.",
+    "auth.register":
+      "You've made too many signup attempts. Please wait 1 hour before trying again.",
 
     default: "Too Many Requests. Please slow down.",
   };

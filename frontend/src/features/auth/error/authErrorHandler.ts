@@ -41,33 +41,11 @@ const handleAuthError = (
   const errorData = error.response?.data;
   const status = error.response?.status;
 
-  if (!errorData) {
-    console.error("Network or unknown error:", error);
-    toast.error("Network error", {
-      description:
-        "Unable to connect. Please check your internet and try again.",
-    });
-    return;
-  }
+  // Already handled in the Axios config file
+  if (!errorData) return;
 
-  // Handle rate limit errors
-  if (status === 429) {
-    if (
-      "message" in errorData &&
-      errorData.message.includes("Too many authentication attempts.")
-    ) {
-      toast.error("Too many attempts", {
-        description:
-          "You've made too many login attempts. Please wait 15 minutes before trying again.",
-      });
-    } else {
-      toast.error("Too many attempts", {
-        description:
-          "You've made too many signup attempts. Please wait 1 hour before trying again.",
-      });
-    }
-    return;
-  }
+  // Already handled in the Axios config file
+  if (status === 429) return;
 
   // Handle unique constraint errors
   if ("fields" in errorData && "message" in errorData) {
@@ -77,19 +55,6 @@ const handleAuthError = (
         field as keyof FormData,
         {
           message: errorMessage,
-        } as FieldError
-      );
-    });
-    return;
-  }
-
-  // Handle validation errors object
-  if ("errors" in errorData) {
-    Object.entries(errorData.errors).forEach(([field, message]) => {
-      setError(
-        field as keyof FormData,
-        {
-          message,
         } as FieldError
       );
     });
@@ -111,19 +76,12 @@ const handleAuthError = (
           "No account found with this email. Please check and try again.",
       } as FieldError);
     } else {
-      console.error("Authentication error:", errorData.message);
       toast.error("Authentication error", {
         description: "Something went wrong. Please try again later.",
       });
     }
     return;
   }
-
-  // Fallback for unhandled error structures
-  console.error("Unhandled authentication error:", errorData);
-  toast.error("Authentication error", {
-    description: "Something went wrong. Please try again later.",
-  });
 };
 
 const getUniqueConstraintMessage = (

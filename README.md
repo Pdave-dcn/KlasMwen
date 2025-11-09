@@ -19,6 +19,24 @@ It empowers students to learn, share, and grow together in a community **built b
 
 ---
 
+## Screenshots
+
+![Landing Page](./docs/screenshots/desktop-landingpage.png)
+
+![Feed Page](./docs/screenshots/feed.png)
+
+![Profile Page](./docs/screenshots/profile.png)
+
+![Avatar Selection modal](./docs/screenshots/avatar-selection-dark.png)
+
+![Tablet Version](./docs/screenshots/tablet-feed-dark.png)
+
+![Mobile version](./docs/screenshots/mobile-search-dark.png)
+
+## Live Demo
+
+> Coming Soon ⏰
+
 ## Tech Stack
 
 ### Frontend

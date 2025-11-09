@@ -3,7 +3,7 @@ import express from "express";
 import { loginUser } from "../controllers/auth/login.controller.js";
 import { registerUser } from "../controllers/auth/register.controller.js";
 import { verifyAuth } from "../controllers/auth/verification.controller.js";
-import env from "../core/config/env.js";
+import { getClearCookieConfig } from "../core/config/cookie.js";
 import {
   authLimiter,
   generalApiLimiter,
@@ -222,15 +222,7 @@ router.get("/auth/me", generalApiLimiter, verifyAuth);
  *                   example: "Logout successful"
  */
 router.post("/auth/logout", (_req, res) => {
-  const isProduction = env.NODE_ENV === "production";
-
-  res.clearCookie("token", {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? "none" : "lax",
-    path: "/",
-  });
-
+  res.clearCookie("token", getClearCookieConfig());
   return res.status(200).json({ message: "Logout successful" });
 });
 

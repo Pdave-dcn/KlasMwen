@@ -2,7 +2,7 @@
 /* eslint-disable max-params */
 import passport from "passport";
 
-import env from "../../core/config/env.js";
+import { getCookieConfig } from "../../core/config/cookie.js";
 import { createLogger } from "../../core/config/logger.js";
 import { handleError } from "../../core/error/index.js";
 import UserService from "../../features/user/service/UserService.js";
@@ -94,14 +94,7 @@ const handleAuthenticationResult = (
     );
 
     // Set cookie
-    const isProduction = env.NODE_ENV === "production";
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
-      maxAge: 3 * 24 * 60 * 60 * 1000,
-      path: "/",
-    });
+    res.cookie("token", token, getCookieConfig());
 
     // Send response
     return res.status(200).json({

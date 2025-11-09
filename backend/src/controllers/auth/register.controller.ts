@@ -1,3 +1,4 @@
+import { getCookieConfig } from "../../core/config/cookie.js";
 import { createLogger } from "../../core/config/logger.js";
 import { handleError } from "../../core/error/index.js";
 import UserService from "../../features/user/service/UserService.js";
@@ -47,13 +48,7 @@ const registerUser = async (req: Request, res: Response) => {
     );
 
     // Set cookie
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
-      maxAge: 3 * 24 * 60 * 60 * 1000,
-      path: "/",
-    });
+    res.cookie("token", token, getCookieConfig());
 
     // Send response
     return res.status(201).json({

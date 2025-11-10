@@ -6,6 +6,7 @@ import {
   getAllReports,
   getReportById,
   getReportReasons,
+  toggleVisibility,
   updateReportStatus,
 } from "../controllers/report.controller.js";
 import {
@@ -18,6 +19,8 @@ import { requireAuth } from "../middleware/requireAuth.middleware.js";
 const router = express.Router();
 
 router.use(attachLogContext("ReportController"));
+
+// todo: add OpenApi specs for each route
 
 router.get("/report-reasons", generalApiLimiter, getReportReasons);
 
@@ -36,6 +39,13 @@ router.delete(
   writeOperationsLimiter,
   requireAuth,
   deleteReport
+);
+
+router.patch(
+  "/reports/toggle-visibility",
+  writeOperationsLimiter,
+  requireAuth,
+  toggleVisibility
 );
 
 export default router;

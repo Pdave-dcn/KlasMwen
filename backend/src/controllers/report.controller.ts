@@ -1,3 +1,4 @@
+import prisma from "../core/config/db.js";
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index.js";
 import ReportService from "../features/report/service/ReportService.js";
@@ -7,12 +8,15 @@ import {
   ReportCreationDataSchema,
   ReportIdParamSchema,
   ReportStatusUpdateSchema,
+  ToggleVisibilitySchema,
 } from "../zodSchemas/report.zod.js";
 
 import type { ReportStatus } from "@prisma/client";
 import type { Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "ReportController" });
+
+// todo: add test coverage for each controller
 
 const createReport = async (req: Request, res: Response) => {
   const actionLogger = createActionLogger(
@@ -183,14 +187,14 @@ const updateReportStatus = async (req: Request, res: Response) => {
 
     checkAdminAuth(req.user);
     const { id: reportId } = ReportIdParamSchema.parse(req.params);
-    const { status } = ReportStatusUpdateSchema.parse(req.body);
+    const validatedData = ReportStatusUpdateSchema.parse(req.body);
     actionLogger.info("User authorized, report ID and data validated");
 
     actionLogger.debug("Processing report status update");
     const serviceStarttime = Date.now();
     const updatedReport = await ReportService.updateReportStatus(
       reportId,
-      status as ReportStatus
+      validatedData
     );
     const serviceDuration = Date.now() - serviceStarttime;
 
@@ -255,6 +259,51 @@ const deleteReport = async (req: Request, res: Response) => {
   }
 };
 
+const toggleVisibility = async (req: Request, res: Response) => {
+  const actionLogger = createActionLogger(
+    controllerLogger,
+    "toggleVisibility",
+    req
+  );
+
+  try {
+    actionLogger.info("Moderator requested visibility toggle");
+    const startTime = Date.now();
+
+    checkAdminAuth(req.user);
+    const { resourceType, resourceId, hidden } = ToggleVisibilitySchema.parse(
+      req.body
+    );
+    actionLogger.info("User authorized and data validated");
+
+    actionLogger.debug("Starting database operation");
+    if (resourceType === "post") {
+      await prisma.post.update({
+        where: { id: resourceId as string },
+        data: { hidden },
+      });
+    } else {
+      await prisma.comment.update({
+        where: { id: resourceId as number },
+        data: { hidden },
+      });
+    }
+
+    const totalDuration = Date.now() - startTime;
+
+    actionLogger.info(
+      { totalDuration },
+      `Resource (${resourceType}) ${resourceId} hidden=${hidden}`
+    );
+
+    return res.status(200).json({
+      message: `Successfully ${hidden ? "hid" : "unhid"} ${resourceType}`,
+    });
+  } catch (error) {
+    return handleError(error, res);
+  }
+};
+
 export {
   createReport,
   getReportReasons,
@@ -262,4 +311,5 @@ export {
   getReportById,
   updateReportStatus,
   deleteReport,
+  toggleVisibility,
 };

@@ -15,7 +15,8 @@ const ReportCreationDataSchema = z
   });
 
 const ReportStatusUpdateSchema = z.object({
-  status: z.enum(Object.values(ReportStatus) as [string, ...string[]]),
+  status: z.enum(Object.values(ReportStatus)),
+  moderatorNotes: z.string().optional(),
 });
 
 const ReportIdParamSchema = z.object({
@@ -36,8 +37,18 @@ const ReportIdParamSchema = z.object({
     }),
 });
 
+const ToggleVisibilitySchema = z.object({
+  resourceType: z.enum(["post", "comment"]),
+  resourceId: z.union([z.string(), z.number()]),
+  hidden: z.boolean(),
+});
+
+type UpdateStatusData = z.infer<typeof ReportStatusUpdateSchema>;
+
 export {
   ReportCreationDataSchema,
   ReportStatusUpdateSchema,
   ReportIdParamSchema,
+  ToggleVisibilitySchema,
+  type UpdateStatusData,
 };

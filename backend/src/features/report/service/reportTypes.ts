@@ -1,3 +1,4 @@
+import type { UpdateStatusData } from "../../../zodSchemas/report.zod.js";
 import type { Prisma } from "@prisma/client";
 
 const ReportFragments = {
@@ -87,4 +88,4 @@ interface CreateReportData {
   commentId?: number;
 }
 
-export { BaseSelectors, type CreateReportData };
+export { BaseSelectors, type CreateReportData, type UpdateStatusData };

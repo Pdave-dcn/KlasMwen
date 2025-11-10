@@ -1,6 +1,10 @@
 import prisma from "../../../core/config/db";
 
-import { BaseSelectors, type CreateReportData } from "./reportTypes";
+import {
+  BaseSelectors,
+  type CreateReportData,
+  type UpdateStatusData,
+} from "./reportTypes";
 
 import type { Prisma, ReportStatus } from "@prisma/client";
 
@@ -45,10 +49,13 @@ class ReportRepository {
   }
 
   /** Update a report's status (admin/moderator action) */
-  static async updateStatus(reportId: number, status: ReportStatus) {
+  static async updateStatus(reportId: number, data: UpdateStatusData) {
     return await prisma.report.update({
       where: { id: reportId },
-      data: { status },
+      data: {
+        status: data.status,
+        moderatorNotes: data.moderatorNotes ?? null,
+      },
       select: BaseSelectors.report,
     });
   }

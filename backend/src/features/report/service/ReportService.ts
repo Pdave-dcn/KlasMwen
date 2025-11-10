@@ -1,8 +1,9 @@
-import { ReportNotFoundError } from "../../../core/error/custom/report.error";
+import { ReportNotFoundError } from "../../../core/error/custom/report.error.js";
+import { autoHideContent } from "../helpers/autoHideContent.js";
 
-import ReportRepository from "./reportRepository";
+import ReportRepository from "./reportRepository.js";
 
-import type { CreateReportData } from "./reportTypes";
+import type { CreateReportData, UpdateStatusData } from "./reportTypes.js";
 import type { ReportStatus } from "@prisma/client";
 
 class ReportService {
@@ -15,7 +16,20 @@ class ReportService {
   }
 
   static async createReport(data: CreateReportData) {
-    return await ReportRepository.create(data);
+    const newReport = await ReportRepository.create(data);
+
+    const resourceType = data.postId ? "post" : "comment";
+
+    let resourceId: number | string;
+    if (data.postId) {
+      resourceId = data.postId;
+    } else {
+      resourceId = data.commentId as number;
+    }
+
+    void autoHideContent({ resourceType, resourceId });
+
+    return newReport;
   }
 
   static async getReportReasons() {
@@ -37,9 +51,9 @@ class ReportService {
     return report;
   }
 
-  static async updateReportStatus(reportId: number, status: ReportStatus) {
+  static async updateReportStatus(reportId: number, data: UpdateStatusData) {
     await this.reportExists(reportId);
-    return await ReportRepository.updateStatus(reportId, status);
+    return await ReportRepository.updateStatus(reportId, data);
   }
 
   static async deleteReport(reportId: number) {

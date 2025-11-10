@@ -13,30 +13,38 @@ enum Role {
   ADMIN
 }
 
-// Types of posts that can be created
+// Statuses that represent the state of a report during moderation
 enum PostType {
   QUESTION
   NOTE
   RESOURCE
 }
 
+// Reports statuses
+enum ReportStatus {
+  PENDING
+  REVIEWED
+}
+
 // Represents a user account with authentication and profile information
 model User {
-  id        String     @id @default(uuid())
-  username  String     @unique
-  email     String     @unique
+  id        String   @id @default(uuid())
+  username  String   @unique
+  email     String   @unique
   password  String
   bio       String?
-  Avatar    Avatar?    @relation(fields: [avatarId], references: [id])
-  avatarId  Int?       @map("avatar_id")
-  role      Role       @default(STUDENT)
-  posts     Post[]
-  comments  Comment[]
-  likes     Like[]
-  bookmarks Bookmark[]
-  createdAt DateTime   @default(now()) @map("created_at")
+  role      Role     @default(STUDENT)
+  createdAt DateTime @default(now()) @map("created_at")
 
-  mentionedInComments Comment[] @relation("mentionedUser")
+  Avatar   Avatar? @relation(fields: [avatarId], references: [id])
+  avatarId Int?    @map("avatar_id")
+
+  posts               Post[]
+  comments            Comment[]
+  likes               Like[]
+  bookmarks           Bookmark[]
+  mentionedInComments Comment[]  @relation("mentionedUser")
+  reports             Report[]
 
   @@map("users")
 }
@@ -58,20 +66,23 @@ model Post {
   content String?
   type    PostType
 
+  author   User   @relation(fields: [authorId], references: [id])
+  authorId String @map("author_id")
+
   // Resource-specific fields
   fileUrl  String? @map("file_url")
   fileName String? @map("file_name")
   fileSize Int?    @map("file_size")
   mimeType String? @map("mime_type")
 
-  createdAt DateTime   @default(now()) @map("created_at")
-  updatedAt DateTime   @updatedAt @map("updated_at")
-  author    User       @relation(fields: [authorId], references: [id])
-  authorId  String     @map("author_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
   comments  Comment[]
   likes     Like[]
   postTags  PostTag[]
   bookmarks Bookmark[]
+  reports   Report[]
 
   @@map("posts")
 }
@@ -89,8 +100,9 @@ model Comment {
   authorId  String    @map("author_id")
   Comment   Comment[] @relation("commentReplies")
 
-  mentionedUser   User?   @relation("mentionedUser", fields: [mentionedUserId], references: [id])
-  mentionedUserId String? @map("mentioned_user_id")
+  mentionedUser   User?    @relation("mentionedUser", fields: [mentionedUserId], references: [id])
+  mentionedUserId String?  @map("mentioned_user_id")
+  reports         Report[]
 
   @@map("comments")
 }
@@ -136,4 +148,34 @@ model Bookmark {
 
   @@id([userId, postId])
   @@map("bookmarks")
+}
+
+// Predefined reasons that users can select when submitting a report
+model ReportReason {
+  id          Int      @id @default(autoincrement())
+  label       String   @unique
+  description String?
+  active      Boolean  @default(true)
+  reports     Report[]
+
+  @@map("report_reasons")
+}
+
+// Represents a user-submitted report on a post or comment
+model Report {
+  id        Int          @id @default(autoincrement())
+  status    ReportStatus @default(PENDING)
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  reporter   User   @relation(fields: [reporterId], references: [id])
+  reporterId String @map("reporter_id")
+
+  post   Post?   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String? @map("post_id")
+
+  comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  commentId Int?     @map("comment_id")
+
+  reason   ReportReason @relation(fields: [reasonId], references: [id])
+  reasonId Int          @map("reason_id")
 }

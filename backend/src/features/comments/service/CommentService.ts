@@ -21,6 +21,18 @@ import type { Prisma } from "@prisma/client";
  */
 class CommentService {
   /**
+   * Checks if a comment exists by ID.
+   * Throws CommentNotFoundError if the comment is not found.
+   */
+  static async commentExists(commentId: number) {
+    const comment = await CommentRepository.findById(commentId);
+    if (!comment) {
+      throw new CommentNotFoundError(commentId);
+    }
+    return comment;
+  }
+
+  /**
    * Get user's comments with all related data
    */
   static async getUserCommentsWithRelations(
@@ -122,11 +134,7 @@ class CommentService {
 
     // Handle parent comment logic
     if (data.parentId) {
-      const parentComment = await CommentRepository.findById(data.parentId);
-
-      if (!parentComment) {
-        throw new CommentNotFoundError(data.parentId);
-      }
+      const parentComment = await this.commentExists(data.parentId);
 
       // Validate parent comment belongs to same post
       if (parentComment.postId !== data.postId) {
@@ -159,10 +167,7 @@ class CommentService {
   }
 
   static async deleteComment(commentId: number, user: Express.User) {
-    const comment = await CommentRepository.findById(commentId);
-    if (!comment) {
-      throw new CommentNotFoundError(commentId);
-    }
+    const comment = await this.commentExists(commentId);
 
     checkPermission(user, comment);
 

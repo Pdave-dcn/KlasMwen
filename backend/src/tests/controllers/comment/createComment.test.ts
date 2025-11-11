@@ -100,6 +100,7 @@ describe("createComment controller", () => {
         parentId: null,
         createdAt: new Date(),
         mentionedUserId: null,
+        hidden: false,
       });
 
       await createComment(mockRequest, mockResponse);
@@ -137,6 +138,7 @@ describe("createComment controller", () => {
         parentId: null,
         createdAt: new Date(),
         mentionedUserId: null,
+        hidden: false,
       });
 
       vi.mocked(prisma.comment.create).mockResolvedValue({
@@ -147,6 +149,7 @@ describe("createComment controller", () => {
         parentId: 2,
         createdAt: new Date(),
         mentionedUserId: null,
+        hidden: false,
       });
 
       await createComment(mockRequest, mockResponse);
@@ -235,6 +238,7 @@ describe("createComment controller", () => {
         parentId: null,
         createdAt: new Date(),
         mentionedUserId: null,
+        hidden: false,
       });
 
       await createComment(mockRequest, mockResponse);
@@ -380,6 +384,7 @@ describe("createComment controller", () => {
         parentId: null,
         createdAt: new Date(),
         mentionedUserId: null,
+        hidden: false,
       });
 
       await createComment(mockRequest, mockResponse);
@@ -447,6 +452,7 @@ describe("createComment controller", () => {
         parentId: null,
         createdAt: new Date("2023-01-01T00:00:00Z"),
         mentionedUserId: null,
+        hidden: false,
       };
 
       vi.mocked(prisma.post.findUnique).mockResolvedValue(

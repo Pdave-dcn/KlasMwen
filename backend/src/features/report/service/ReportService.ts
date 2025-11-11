@@ -1,4 +1,6 @@
 import { ReportNotFoundError } from "../../../core/error/custom/report.error.js";
+import CommentService from "../../comments/service/CommentService.js";
+import PostService from "../../posts/service/PostService.js";
 import { autoHideContent } from "../helpers/autoHideContent.js";
 
 import ReportRepository from "./reportRepository.js";
@@ -15,9 +17,20 @@ class ReportService {
     return !!report;
   }
 
-  static async createReport(data: CreateReportData) {
-    const newReport = await ReportRepository.create(data);
+  private static async contentExists(
+    contentType: string,
+    contentId: string | number
+  ) {
+    if (contentType === "post") {
+      return await PostService.postExists(contentId as string);
+    } else if (contentType === "comment") {
+      return await CommentService.commentExists(contentId as number);
+    }
 
+    throw new Error("Unsupported content");
+  }
+
+  static async createReport(data: CreateReportData) {
     const resourceType = data.postId ? "post" : "comment";
 
     let resourceId: number | string;
@@ -27,6 +40,9 @@ class ReportService {
       resourceId = data.commentId as number;
     }
 
+    await this.contentExists(resourceType, resourceId);
+
+    const newReport = await ReportRepository.create(data);
     void autoHideContent({ resourceType, resourceId });
 
     return newReport;

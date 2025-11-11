@@ -6,13 +6,21 @@ const ReportCreationDataSchema = z
     reasonId: z.number().int().positive({
       message: "Reason ID must be a positive integer",
     }),
-    postId: z.string().optional(),
+    postId: z.uuid().optional(),
     commentId: z.number().int().positive().optional(),
   })
-  .refine((data) => Boolean(data.postId ?? data.commentId), {
-    message: "Either postId or commentId must be provided",
-    path: ["postId"],
-  });
+  .refine(
+    (data) => {
+      const hasPostId = !!data.postId;
+      const hasCommentId = !!data.commentId;
+
+      return hasPostId !== hasCommentId;
+    },
+    {
+      message: "Exactly one of postId or commentId must be provided",
+      path: ["postId", "commentId"],
+    }
+  );
 
 const ReportStatusUpdateSchema = z.object({
   status: z.enum(Object.values(ReportStatus)),

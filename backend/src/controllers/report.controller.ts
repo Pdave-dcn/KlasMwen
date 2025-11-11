@@ -1,6 +1,8 @@
 import prisma from "../core/config/db.js";
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index.js";
+import CommentService from "../features/comments/service/CommentService.js";
+import PostService from "../features/posts/service/PostService.js";
 import ReportService from "../features/report/service/ReportService.js";
 import { checkAdminAuth, ensureAuthenticated } from "../utils/auth.util.js";
 import createActionLogger from "../utils/logger.util.js";
@@ -15,8 +17,6 @@ import type { ReportStatus } from "@prisma/client";
 import type { Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "ReportController" });
-
-// todo: add test coverage for each controller
 
 const createReport = async (req: Request, res: Response) => {
   const actionLogger = createActionLogger(
@@ -278,11 +278,13 @@ const toggleVisibility = async (req: Request, res: Response) => {
 
     actionLogger.debug("Starting database operation");
     if (resourceType === "post") {
+      await PostService.postExists(resourceId as string);
       await prisma.post.update({
         where: { id: resourceId as string },
         data: { hidden },
       });
     } else {
+      await CommentService.commentExists(resourceId as number);
       await prisma.comment.update({
         where: { id: resourceId as number },
         data: { hidden },

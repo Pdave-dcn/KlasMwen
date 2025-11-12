@@ -55,7 +55,7 @@ const seedPosts = async (users: User[], tags: Tag[], postsPerUser = 5) => {
               ? null
               : randomType === "QUESTION"
               ? faker.lorem.paragraphs()
-              : faker.lorem.paragraphs({ min: 5, max: 7 }),
+              : faker.lorem.paragraphs({ min: 7, max: 10 }),
           authorId: user.id,
           type: randomType,
         };

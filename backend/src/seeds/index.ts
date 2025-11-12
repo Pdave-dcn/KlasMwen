@@ -9,6 +9,8 @@ import cleanupDatabase from "./seeders/cleanup.seeder.js";
 import seedComments from "./seeders/comment.seeder.js";
 import seedLikes from "./seeders/like.seeder.js";
 import seedPosts from "./seeders/post.seeder.js";
+import seedReports from "./seeders/report.seeder.js";
+import seedReportReasons from "./seeders/reportReason.seeder.js";
 import seedTags from "./seeders/tag.seeder.js";
 import seedUsers from "./seeders/user.seeder.js";
 
@@ -30,7 +32,7 @@ const main = async () => {
 
     // Phase 4: Create users
     if (!avatars) return;
-    const { users, userStats } = await seedUsers(10, avatars);
+    const { users, userStats } = await seedUsers(20, avatars);
 
     // Phase 5: Create posts
     if (!users || !tags) return;
@@ -45,6 +47,14 @@ const main = async () => {
 
     // phase 8: Create bookmarks
     const bookmarksStats = await seedBookmarks(users, posts);
+
+    // Phase 9: Create report reasons
+    const { reasons, reasonStats } = await seedReportReasons();
+    if (!reasons) return;
+
+    // Phase 10: Create reports
+    const allComments = await prisma.comment.findMany();
+    const reportStats = await seedReports(users, posts, allComments, reasons);
 
     const totalSeedingDuration = Date.now() - seedingStartTime;
 
@@ -62,6 +72,12 @@ const main = async () => {
           totalAvatars: avatarStats.totalAvatarsCreated,
           avatarsDistribution: avatarStats.avatarDistribution,
           bookmarksDistribution: bookmarksStats.distribution,
+          totalReportReasons: reasonStats.totalReasonsCreated,
+          totalReports: reportStats.totalReports,
+          reportsDistribution: {
+            postReports: reportStats.postReportsCount,
+            commentReports: reportStats.commentReportsCount,
+          },
         },
         phases: {
           cleanupDuration: cleanupStats.cleanupDuration,
@@ -72,6 +88,8 @@ const main = async () => {
           commentCreationDuration: commentStats.commentCreationDuration,
           likeCreationDuration: likeStats.likeSeedingDuration,
           bookmarkCreationDuration: bookmarksStats.bookmarkSeedingDuration,
+          reportReasonCreationDuration: reasonStats.reasonCreationDuration,
+          reportCreationDuration: reportStats.reportCreationDuration,
         },
         totalSeedingDuration,
       },

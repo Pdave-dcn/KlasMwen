@@ -117,7 +117,7 @@ class PostRepository {
     cursor?: string
   ) {
     const baseQuery: Prisma.PostFindManyArgs = {
-      where,
+      where: { ...where, hidden: false },
       select: BaseSelectors.post,
       orderBy: { createdAt: "desc" },
     };
@@ -208,7 +208,12 @@ class PostRepository {
     cursor?: string
   ): Promise<LikeWithPost[]> {
     const baseQuery: Prisma.LikeFindManyArgs = {
-      where: { userId },
+      where: {
+        userId,
+        post: {
+          hidden: false,
+        },
+      },
       ...likeWithPost,
     };
 
@@ -231,7 +236,12 @@ class PostRepository {
     cursor?: string
   ): Promise<BookmarkWithPost[]> {
     const baseQuery: Prisma.BookmarkFindManyArgs = {
-      where: { userId },
+      where: {
+        userId,
+        post: {
+          hidden: false,
+        },
+      },
       orderBy: { createdAt: "desc" },
       ...bookmarkWithPost,
     };

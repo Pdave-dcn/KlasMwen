@@ -55,6 +55,17 @@ vi.mock("../../../core/config/db.js", () => ({
   },
 }));
 
+const mockParentComment = {
+  id: 1,
+  content: "test content",
+  parentId: null,
+  postId: "abc",
+  authorId: "def",
+  createdAt: new Date(),
+  mentionedUserId: null,
+  hidden: false,
+};
+
 describe("getReplies controller", () => {
   let mockRequest: Request;
   let mockResponse: Response;
@@ -63,6 +74,8 @@ describe("getReplies controller", () => {
     mockRequest = createMockRequest();
     mockResponse = createMockResponse();
     vi.clearAllMocks();
+
+    vi.mocked(prisma.comment.findUnique).mockResolvedValue(mockParentComment);
   });
 
   afterEach(() => {
@@ -73,16 +86,6 @@ describe("getReplies controller", () => {
     it("should return a list of replies with pagination data", async () => {
       mockRequest.params = { id: "1" };
       mockRequest.query = { limit: "2" };
-
-      vi.mocked(prisma.comment.findUnique).mockResolvedValue({
-        id: 1,
-        content: "test content",
-        parentId: null,
-        postId: "abc",
-        authorId: "def",
-        createdAt: new Date(),
-        mentionedUserId: null,
-      });
 
       vi.mocked(prisma.comment.findMany).mockResolvedValue(mockReplies);
 
@@ -114,6 +117,7 @@ describe("getReplies controller", () => {
           postId: "post123",
           authorId: "authorD",
           mentionedUserId: null,
+          hidden: false,
         },
         {
           id: 8,
@@ -124,18 +128,9 @@ describe("getReplies controller", () => {
           postId: "post123",
           authorId: "authorE",
           mentionedUserId: null,
+          hidden: false,
         },
       ];
-
-      vi.mocked(prisma.comment.findUnique).mockResolvedValue({
-        id: 1,
-        content: "test content",
-        parentId: null,
-        postId: "abc",
-        authorId: "def",
-        createdAt: new Date(),
-        mentionedUserId: null,
-      });
 
       vi.mocked(prisma.comment.findMany).mockResolvedValue(mockReplies2);
 
@@ -158,16 +153,6 @@ describe("getReplies controller", () => {
     it("should use default pagination values if none are provided", async () => {
       mockRequest.params = { id: "1" };
       mockRequest.query = {};
-
-      vi.mocked(prisma.comment.findUnique).mockResolvedValue({
-        id: 1,
-        content: "test content",
-        parentId: null,
-        postId: "abc",
-        authorId: "def",
-        createdAt: new Date(),
-        mentionedUserId: null,
-      });
 
       vi.mocked(prisma.comment.findMany).mockResolvedValue([]);
 
@@ -204,16 +189,6 @@ describe("getReplies controller", () => {
       mockRequest.params = { id: "1" };
       mockRequest.query = { limit: "1" };
 
-      vi.mocked(prisma.comment.findUnique).mockResolvedValue({
-        id: 1,
-        content: "test content",
-        parentId: null,
-        postId: "abc",
-        authorId: "def",
-        createdAt: new Date(),
-        mentionedUserId: null,
-      });
-
       vi.mocked(prisma.comment.findMany).mockResolvedValue([mockReplies[0]]);
 
       await getReplies(mockRequest, mockResponse);
@@ -230,16 +205,6 @@ describe("getReplies controller", () => {
       mockRequest.params = { id: "1" };
       mockRequest.query = { limit: "40" };
 
-      vi.mocked(prisma.comment.findUnique).mockResolvedValue({
-        id: 1,
-        content: "test content",
-        parentId: null,
-        postId: "abc",
-        authorId: "def",
-        createdAt: new Date(),
-        mentionedUserId: null,
-      });
-
       vi.mocked(prisma.comment.findMany).mockResolvedValue([]);
       vi.mocked(prisma.comment.count).mockResolvedValue(0);
 
@@ -255,16 +220,6 @@ describe("getReplies controller", () => {
     it("should handle cursor pointing to non-existent comment", async () => {
       mockRequest.params = { id: "1" };
       mockRequest.query = { limit: "5", cursor: "999" };
-
-      vi.mocked(prisma.comment.findUnique).mockResolvedValue({
-        id: 1,
-        content: "test content",
-        parentId: null,
-        postId: "abc",
-        authorId: "def",
-        createdAt: new Date(),
-        mentionedUserId: null,
-      });
 
       vi.mocked(prisma.comment.findMany).mockResolvedValue([]);
 
@@ -284,16 +239,6 @@ describe("getReplies controller", () => {
       mockRequest.params = { id: "1" };
       mockRequest.query = { limit: "5", cursor: "0" };
 
-      vi.mocked(prisma.comment.findUnique).mockResolvedValue({
-        id: 1,
-        content: "test content",
-        parentId: null,
-        postId: "abc",
-        authorId: "def",
-        createdAt: new Date(),
-        mentionedUserId: null,
-      });
-
       vi.mocked(prisma.comment.findMany).mockResolvedValue([]);
       vi.mocked(prisma.comment.count).mockResolvedValue(5);
 
@@ -301,7 +246,7 @@ describe("getReplies controller", () => {
 
       expect(prisma.comment.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { parentId: 1 },
+          where: { parentId: 1, hidden: false },
           take: 6,
           orderBy: { createdAt: "asc" },
         })
@@ -318,11 +263,12 @@ describe("getReplies controller", () => {
       vi.mocked(prisma.comment.findUnique).mockResolvedValue({
         id: 1,
         content: "test content",
-        parentId: 5,
+        parentId: 5, // Custom parentId for this edge case
         postId: "abc",
         authorId: "def",
         createdAt: new Date(),
         mentionedUserId: null,
+        hidden: false,
       });
 
       vi.mocked(prisma.comment.findMany).mockResolvedValue([]);
@@ -389,16 +335,6 @@ describe("getReplies controller", () => {
         createdAt: new Date(),
       }));
 
-      vi.mocked(prisma.comment.findUnique).mockResolvedValue({
-        id: 1,
-        content: "test content",
-        parentId: null,
-        postId: "abc",
-        authorId: "def",
-        createdAt: new Date(),
-        mentionedUserId: null,
-      });
-
       vi.mocked(prisma.comment.findMany).mockResolvedValue(
         largeResultSet as any
       );
@@ -431,16 +367,6 @@ describe("getReplies controller", () => {
     it("should handle empty result sets", async () => {
       mockRequest.params = { id: "1" };
       mockRequest.query = {};
-
-      vi.mocked(prisma.comment.findUnique).mockResolvedValue({
-        id: 1,
-        content: "test content",
-        parentId: null,
-        postId: "abc",
-        authorId: "def",
-        createdAt: new Date(),
-        mentionedUserId: null,
-      });
 
       vi.mocked(prisma.comment.findMany).mockResolvedValue([]);
 

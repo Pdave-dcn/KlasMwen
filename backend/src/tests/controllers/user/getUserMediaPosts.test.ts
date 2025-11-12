@@ -161,7 +161,7 @@ describe("getUserMediaPosts controller", () => {
 
       expect(prisma.post.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { authorId: mockUser.id, content: null },
+          where: { authorId: mockUser.id, content: null, hidden: false },
         })
       );
       expect(mockRes.status).toHaveBeenCalledWith(200);

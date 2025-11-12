@@ -44,6 +44,7 @@ const mockReplies = [
     postId: "post123",
     authorId: "authorC",
     mentionedUserId: null,
+    hidden: false,
   },
   {
     id: 6,
@@ -54,6 +55,7 @@ const mockReplies = [
     postId: "post123",
     authorId: "authorB",
     mentionedUserId: null,
+    hidden: false,
   },
   {
     id: 5,
@@ -64,6 +66,7 @@ const mockReplies = [
     postId: "post123",
     authorId: "authorA",
     mentionedUserId: null,
+    hidden: false,
   },
 ];
 

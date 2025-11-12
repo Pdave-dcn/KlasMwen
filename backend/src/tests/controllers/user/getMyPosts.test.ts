@@ -118,7 +118,9 @@ describe("getMyPosts controller", () => {
       expect(prisma.post.count).toHaveBeenCalledTimes(1);
 
       expect(prisma.post.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { authorId: mockUser.id } })
+        expect.objectContaining({
+          where: { authorId: mockUser.id, hidden: false },
+        })
       );
       expect(prisma.post.count).toHaveBeenCalledWith({
         where: { authorId: mockUser.id },

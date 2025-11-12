@@ -18,7 +18,7 @@ class CommentRepository {
   ) {
     return prisma.comment.findMany({
       ...query,
-      where: { ...query.where, authorId: userId },
+      where: { ...query.where, authorId: userId, hidden: false },
       include: BaseSelectors.commentRelations,
     });
   }
@@ -32,7 +32,7 @@ class CommentRepository {
   ) {
     return prisma.comment.findMany({
       ...query,
-      where: { ...query.where, postId, parentId: null },
+      where: { ...query.where, postId, parentId: null, hidden: false },
       select: BaseSelectors.comment,
     });
   }
@@ -53,7 +53,7 @@ class CommentRepository {
   ) {
     return prisma.comment.findMany({
       ...query,
-      where: { ...query.where, parentId },
+      where: { ...query.where, parentId, hidden: false },
       orderBy: { createdAt: "asc" },
       select: BaseSelectors.reply,
     });

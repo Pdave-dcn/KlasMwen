@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 
 import { registerUser } from "../../../controllers/auth/register.controller.js";
 import prisma from "../../../core/config/db.js";
+import env from "../../../core/config/env.js";
 import { AvatarServiceError } from "../../../core/error/custom/avatar.error.js";
 import { handleError } from "../../../core/error/index.js";
 
@@ -169,7 +170,7 @@ describe("Register User Controller", () => {
       expect(cookieSpy).toHaveBeenCalledWith("token", generatedToken, {
         httpOnly: true,
         secure: false, // test environment
-        sameSite: "none",
+        sameSite: "lax",
         maxAge: 3 * 24 * 60 * 60 * 1000,
         path: "/",
       });
@@ -192,7 +193,7 @@ describe("Register User Controller", () => {
     });
 
     it("should set secure cookie in production environment", async () => {
-      process.env.NODE_ENV = "production";
+      vi.spyOn(env, "NODE_ENV", "get").mockReturnValue("production");
 
       await registerUser(mockRequest as Request, mockResponse as Response);
 

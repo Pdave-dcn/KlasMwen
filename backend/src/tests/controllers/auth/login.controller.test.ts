@@ -3,6 +3,7 @@ import passport from "passport";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 import { loginUser } from "../../../controllers/auth/login.controller.js";
+import env from "../../../core/config/env.js";
 import { handleError } from "../../../core/error/index.js";
 
 import type { NextFunction, Request, Response } from "express";
@@ -152,7 +153,7 @@ describe("Login Controller", () => {
     });
 
     it("should set secure cookie in production environment", () => {
-      process.env.NODE_ENV = "production";
+      vi.spyOn(env, "NODE_ENV", "get").mockReturnValue("production");
 
       const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
         callback(null, mockUser, undefined);

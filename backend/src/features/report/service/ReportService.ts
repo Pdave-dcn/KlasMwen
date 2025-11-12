@@ -52,12 +52,37 @@ class ReportService {
     return await ReportRepository.getActiveReasons();
   }
 
-  static async getAllReports(filters?: {
-    status?: ReportStatus;
-    postId?: string;
-    commentId?: number;
-  }) {
-    return await ReportRepository.findAll(filters);
+  static async getAllReports(
+    filters?: {
+      status?: ReportStatus;
+      postId?: string;
+      commentId?: number;
+    },
+    pagination?: {
+      page: number;
+      limit: number;
+    }
+  ) {
+    const [reports, total] = await Promise.all([
+      ReportRepository.findAll(filters, pagination),
+      ReportRepository.count(filters),
+    ]);
+
+    const page = pagination?.page ?? 1;
+    const limit = pagination?.limit ?? 10;
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: reports,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrevious: page > 1,
+      },
+    };
   }
 
   static async getReportById(reportId: number) {

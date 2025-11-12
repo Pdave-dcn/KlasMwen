@@ -23,7 +23,7 @@ const ReportCreationDataSchema = z
   );
 
 const ReportStatusUpdateSchema = z.object({
-  status: z.enum(Object.values(ReportStatus)),
+  status: z.enum(ReportStatus),
   moderatorNotes: z.string().optional(),
 });
 
@@ -51,12 +51,39 @@ const ToggleVisibilitySchema = z.object({
   hidden: z.boolean(),
 });
 
+const ReportQuerySchema = z.object({
+  status: z.enum(ReportStatus).optional(),
+  postId: z.uuid().optional(),
+  commentId: z
+    .string()
+    .regex(/^[0-9]+$/, "Comment ID must contain only digits")
+    .transform((val) => parseInt(val, 10))
+    .optional(),
+  page: z
+    .string()
+    .regex(/^[0-9]+$/, "Page must be a positive integer")
+    .transform((val) => parseInt(val, 10))
+    .refine((val) => val > 0, { message: "Page must be greater than 0" })
+    .default(1),
+  limit: z
+    .string()
+    .regex(/^[0-9]+$/, "Limit must be a positive integer")
+    .transform((val) => parseInt(val, 10))
+    .refine((val) => val > 0 && val <= 100, {
+      message: "Limit must be between 1 and 50",
+    })
+    .default(10),
+});
+
 type UpdateStatusData = z.infer<typeof ReportStatusUpdateSchema>;
+type ReportQueryParams = z.infer<typeof ReportQuerySchema>;
 
 export {
   ReportCreationDataSchema,
   ReportStatusUpdateSchema,
   ReportIdParamSchema,
   ToggleVisibilitySchema,
+  ReportQuerySchema,
   type UpdateStatusData,
+  type ReportQueryParams,
 };

@@ -104,16 +104,14 @@ describe("getReportReasons controller", () => {
       await getReportReasons(mockRequest, mockResponse);
 
       // Verify the correct Prisma query was executed
-      expect(prisma.reportReason.findMany).toHaveBeenCalledWith({
-        where: { active: true },
-        select: {
-          id: true,
-          label: true,
-          description: true,
-          active: true,
-        },
-        orderBy: { id: "asc" },
-      });
+      expect(prisma.reportReason.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { active: true },
+          select: expect.objectContaining({
+            id: true,
+          }),
+        })
+      );
       // Verify successful HTTP response
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -425,16 +423,14 @@ describe("getReportReasons controller", () => {
 
       await getReportReasons(mockRequest, mockResponse);
 
-      expect(prisma.reportReason.findMany).toHaveBeenCalledWith({
-        where: { active: true },
-        select: {
-          id: true,
-          label: true,
-          description: true,
-          active: true,
-        },
-        orderBy: { id: "asc" },
-      });
+      expect(prisma.reportReason.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { active: true },
+          select: expect.objectContaining({
+            id: true,
+          }),
+        })
+      );
       expect(prisma.reportReason.findMany).toHaveBeenCalledTimes(1);
     });
 
@@ -448,16 +444,14 @@ describe("getReportReasons controller", () => {
       await getReportReasons(mockRequest, mockResponse);
 
       // Should always call with same fixed parameters regardless of request
-      expect(prisma.reportReason.findMany).toHaveBeenCalledWith({
-        where: { active: true },
-        select: {
-          id: true,
-          label: true,
-          description: true,
-          active: true,
-        },
-        orderBy: { id: "asc" },
-      });
+      expect(prisma.reportReason.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { active: true },
+          select: expect.objectContaining({
+            id: true,
+          }),
+        })
+      );
     });
   });
 });

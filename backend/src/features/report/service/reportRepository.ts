@@ -18,20 +18,32 @@ class ReportRepository {
   }
 
   /** Find all reports, optionally filtered by status, postId, or commentId */
-  static async findAll(filters?: {
-    status?: ReportStatus;
-    postId?: string;
-    commentId?: number;
-  }) {
+  static async findAll(
+    filters?: {
+      status?: ReportStatus;
+      postId?: string;
+      commentId?: number;
+    },
+    pagination?: {
+      page: number;
+      limit: number;
+    }
+  ) {
     const where: Prisma.ReportWhereInput = {};
     if (filters?.status) where.status = filters.status;
     if (filters?.postId) where.postId = filters.postId;
     if (filters?.commentId) where.commentId = filters.commentId;
 
+    const page = pagination?.page ?? 1;
+    const limit = pagination?.limit ?? 10;
+    const skip = (page - 1) * limit;
+
     return await prisma.report.findMany({
       where,
       select: BaseSelectors.report,
       orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
     });
   }
 

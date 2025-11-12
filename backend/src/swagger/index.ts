@@ -47,6 +47,7 @@ const options: swaggerJSDoc.Options = {
       { name: "Search", description: "Operations related to searching" },
       { name: "Tags", description: "Operations related to tags" },
       { name: "Users", description: "Operations related to users" },
+      { name: "Reports", description: "Operations related to reports" },
     ],
   },
   apis: [

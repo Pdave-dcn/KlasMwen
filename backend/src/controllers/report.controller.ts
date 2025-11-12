@@ -9,11 +9,11 @@ import createActionLogger from "../utils/logger.util.js";
 import {
   ReportCreationDataSchema,
   ReportIdParamSchema,
+  ReportQuerySchema,
   ReportStatusUpdateSchema,
   ToggleVisibilitySchema,
 } from "../zodSchemas/report.zod.js";
 
-import type { ReportStatus } from "@prisma/client";
 import type { Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "ReportController" });
@@ -106,24 +106,33 @@ const getAllReports = async (req: Request, res: Response) => {
 
     checkAdminAuth(req.user);
 
-    const { status, postId, commentId } = req.query;
+    const validatedQuery = ReportQuerySchema.parse(req.query);
+
     const filters = {
-      status: status as ReportStatus,
-      postId: postId as string | undefined,
-      commentId: commentId ? Number(commentId) : undefined,
+      status: validatedQuery.status,
+      postId: validatedQuery.postId,
+      commentId: validatedQuery.commentId,
     };
+
+    const pagination = {
+      page: validatedQuery.page,
+      limit: validatedQuery.limit,
+    };
+
     actionLogger.info("User authorized and filters extracted");
 
     actionLogger.debug("Processing reports fetching with filters");
     const serviceStarttime = Date.now();
-    const reports = await ReportService.getAllReports(filters);
+    const result = await ReportService.getAllReports(filters, pagination);
     const serviceDuration = Date.now() - serviceStarttime;
 
     const totalDuration = Date.now() - startTime;
 
     actionLogger.info(
       {
-        count: reports.length,
+        count: result.data.length,
+        total: result.pagination.total,
+        page: result.pagination.page,
         filters,
         serviceDuration,
         totalDuration,
@@ -131,7 +140,7 @@ const getAllReports = async (req: Request, res: Response) => {
       "Reports fetched successfully"
     );
 
-    return res.status(200).json({ data: reports });
+    return res.status(200).json(result);
   } catch (error: unknown) {
     return handleError(error, res);
   }

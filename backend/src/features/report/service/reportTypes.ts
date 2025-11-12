@@ -39,7 +39,6 @@ const ReportFragments = {
     id: true,
     label: true,
     description: true,
-    active: true,
   } satisfies Prisma.ReportReasonSelect,
 } as const;
 
@@ -56,7 +55,9 @@ const BaseSelectors = {
   report: {
     id: true,
     status: true,
+    moderatorNotes: true,
     createdAt: true,
+
     reporter: {
       select: ReportFragments.userBase,
     },

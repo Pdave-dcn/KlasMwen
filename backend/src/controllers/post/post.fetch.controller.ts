@@ -2,14 +2,8 @@ import axios from "axios";
 
 import { createLogger } from "../../core/config/logger";
 import { handleError } from "../../core/error";
-import createEditResponse from "../../features/posts/createEditResponse";
-import transformPostTagsToFlat from "../../features/posts/postTagFlattener";
 import PostService from "../../features/posts/service/PostService";
-import {
-  checkAdminAuth,
-  checkPermission,
-  ensureAuthenticated,
-} from "../../utils/auth.util";
+import { checkAdminAuth, ensureAuthenticated } from "../../utils/auth.util";
 import createActionLogger from "../../utils/logger.util";
 import { uuidPaginationSchema } from "../../utils/pagination.util";
 import { PostIdParamSchema } from "../../zodSchemas/post.zod";
@@ -137,38 +131,21 @@ const getPostForEdit = async (req: Request, res: Response) => {
 
     actionLogger.debug("Processing user post fetch request");
     const serviceStartTime = Date.now();
-    const post = await PostService.getPostForEdit(postId);
+    const post = await PostService.getPostForEdit(user, postId);
     const serviceDuration = Date.now() - serviceStartTime;
-
-    actionLogger.info(
-      {
-        postId: post.id,
-        postAuthorId: post.author.id,
-        requestUserId: user.id,
-        postType: post.type,
-        serviceDuration,
-      },
-      "Post found, checking permissions"
-    );
-
-    checkPermission(user, post, false);
-
-    const transformedPost = transformPostTagsToFlat(post);
-    const editData = createEditResponse(transformedPost);
 
     const totalDuration = Date.now() - startTime;
     actionLogger.info(
       {
         postId: post.id,
         userId: user.id,
-        postType: post.type,
         serviceDuration,
         totalDuration,
       },
       "Post for edit retrieved successfully"
     );
 
-    return res.status(200).json({ data: editData });
+    return res.status(200).json({ data: post });
   } catch (error: unknown) {
     return handleError(error, res);
   }

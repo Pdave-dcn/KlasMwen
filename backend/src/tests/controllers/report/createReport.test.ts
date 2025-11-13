@@ -6,6 +6,7 @@ import { handleError } from "../../../core/error";
 import { AuthenticationError } from "../../../core/error/custom/auth.error";
 import { CommentNotFoundError } from "../../../core/error/custom/comment.error";
 import { PostNotFoundError } from "../../../core/error/custom/post.error";
+import { assertPermission } from "../../../core/security/rbac";
 import CommentService from "../../../features/comments/service/CommentService";
 import PostService from "../../../features/posts/service/PostService";
 import { autoHideContent } from "../../../features/report/helpers/autoHideContent";
@@ -45,6 +46,10 @@ vi.mock("../../../core/config/logger.js", () => ({
 
 vi.mock("../../../core/error/index", () => ({
   handleError: vi.fn(),
+}));
+
+vi.mock("../../../core/security/rbac", () => ({
+  assertPermission: vi.fn(),
 }));
 
 vi.mock("../../../core/config/db.js", () => ({
@@ -110,6 +115,8 @@ describe("createReport controller", () => {
     mockRequest = createMockRequest();
     mockResponse = createMockResponse();
     vi.clearAllMocks();
+
+    vi.mocked(assertPermission).mockReturnValue();
   });
 
   afterEach(() => {
@@ -811,6 +818,7 @@ describe("createReport controller", () => {
 
       await createReport(mockRequest, mockResponse);
 
+      expect(handleError).not.toHaveBeenCalled();
       expect(autoHideContent).toHaveBeenCalledWith({
         resourceType: "comment",
         resourceId: mockCommentId,

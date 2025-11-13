@@ -1,4 +1,5 @@
 import { ReportNotFoundError } from "../../../core/error/custom/report.error.js";
+import { assertPermission } from "../../../core/security/rbac.js";
 import CommentService from "../../comments/service/CommentService.js";
 import PostService from "../../posts/service/PostService.js";
 import { autoHideContent } from "../helpers/autoHideContent.js";
@@ -51,7 +52,7 @@ class ReportService {
    * @throws {PostNotFoundError} If the reported post does not exist
    * @throws {CommentNotFoundError} If the reported comment does not exist
    */
-  static async createReport(data: CreateReportData) {
+  static async createReport(user: Express.User, data: CreateReportData) {
     const resourceType = data.postId ? "post" : "comment";
 
     let resourceId: number | string;
@@ -61,7 +62,15 @@ class ReportService {
       resourceId = data.commentId as number;
     }
 
-    await this.contentExists(resourceType, resourceId);
+    const resource = await this.contentExists(resourceType, resourceId);
+    if (!resource) return;
+
+    assertPermission(
+      user,
+      data.postId ? "posts" : "comments",
+      "report",
+      resource
+    );
 
     const newReport = await ReportRepository.create(data);
     void autoHideContent({ resourceType, resourceId });

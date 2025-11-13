@@ -4,12 +4,13 @@ import {
   PostNotFoundError,
   PostUpdateFailedError,
 } from "../../../core/error/custom/post.error";
-import { checkPermission } from "../../../utils/auth.util";
+import { assertPermission } from "../../../core/security/rbac";
 import { processPaginatedResults } from "../../../utils/pagination.util";
 import {
   deleteFromCloudinary,
   extractPublicIdFromUrl,
 } from "../../media/cloudinaryServices";
+import createEditResponse from "../createEditResponse";
 import transformPostTagsToFlat from "../postTagFlattener";
 
 import PostEnricher from "./enrichers/postEnrichers";
@@ -138,7 +139,7 @@ class PostService {
     const post = await this.postExists(postId);
     if (!post) return;
 
-    checkPermission(user, post);
+    assertPermission(user, "posts", "delete", post);
 
     if (post.type === "RESOURCE" && post.fileUrl) {
       try {
@@ -391,14 +392,19 @@ class PostService {
    * Get post for editing
    * @throws {PostNotFoundError} if post not found
    */
-  static async getPostForEdit(postId: string) {
+  static async getPostForEdit(user: Express.User, postId: string) {
     const post = await PostRepository.findPostForEdit(postId);
 
     if (!post) {
       throw new PostNotFoundError(postId);
     }
 
-    return post;
+    assertPermission(user, "posts", "update", post);
+
+    const transformedPost = transformPostTagsToFlat(post);
+    const editData = createEditResponse(transformedPost);
+
+    return editData;
   }
 
   /**
@@ -413,7 +419,7 @@ class PostService {
     const post = await this.postExists(postId);
     if (!post) return;
 
-    checkPermission(user, post, false);
+    assertPermission(user, "posts", "update", post);
 
     const timeSinceCreation = Date.now() - new Date(post.createdAt).getTime();
     const ALLOWED_EDIT_TIME_MS = 5 * 60 * 1000;

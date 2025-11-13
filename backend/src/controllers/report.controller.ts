@@ -35,7 +35,7 @@ const createReport = async (req: Request, res: Response) => {
 
     actionLogger.debug("Processing report creation");
     const serviceStarttime = Date.now();
-    const newReport = await ReportService.createReport({
+    const newReport = await ReportService.createReport(user, {
       ...validatedData,
       reporterId: user.id,
     });

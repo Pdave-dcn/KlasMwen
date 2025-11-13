@@ -3,7 +3,7 @@ import {
   CommentPostMismatchError,
 } from "../../../core/error/custom/comment.error";
 import { PostNotFoundError } from "../../../core/error/custom/post.error";
-import { checkPermission } from "../../../utils/auth.util";
+import { assertPermission } from "../../../core/security/rbac";
 import {
   buildPaginatedQuery,
   processPaginatedResults,
@@ -169,7 +169,7 @@ class CommentService {
   static async deleteComment(commentId: number, user: Express.User) {
     const comment = await this.commentExists(commentId);
 
-    checkPermission(user, comment);
+    assertPermission(user, "comments", "delete", comment);
 
     await CommentRepository.delete(commentId);
   }

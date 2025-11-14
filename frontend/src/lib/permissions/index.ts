@@ -38,18 +38,36 @@ export const POLICY: PolicyMap = {
     posts: {
       create: true,
       read: true,
+      update: true,
+      delete: true,
+      report: (u, p) => u.id !== p.author.id,
+    },
+    comments: {
+      create: true,
+      read: true,
+      update: true,
+      delete: true,
+      report: (u, c) => u.id !== c.author.id,
+    },
+  },
+
+  MODERATOR: {
+    posts: {
+      create: true,
+      read: true,
       update: (u, p) => u.id === p.author.id,
       delete: true,
-      report: true,
+      report: (u, p) => u.id !== p.author.id,
     },
     comments: {
       create: true,
       read: true,
       update: (u, c) => u.id === c.author.id,
       delete: true,
-      report: true,
+      report: (u, c) => u.id !== c.author.id,
     },
   },
+
   STUDENT: {
     posts: {
       create: true,

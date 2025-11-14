@@ -11,6 +11,7 @@ import AuthForm from "./pages/AuthForm";
 import DiscoverPage from "./pages/DiscoverPage";
 import HomePage from "./pages/HomePage";
 import LandingPage from "./pages/LandingPage";
+import ModDashboard from "./pages/ModDashboard";
 import NotFound from "./pages/NotFound";
 import NotificationsPage from "./pages/NotificationsPage";
 import PostView from "./pages/PostView";
@@ -148,6 +149,15 @@ const App = () => {
           element={
             <ProtectedRoute>
               <NotificationsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/mod/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={["ADMIN", "MODERATOR"]}>
+              <ModDashboard />
             </ProtectedRoute>
           }
         />

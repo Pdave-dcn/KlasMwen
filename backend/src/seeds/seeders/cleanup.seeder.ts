@@ -16,9 +16,6 @@ const cleanupDatabase = async () => {
     logger.debug("Deleting existing post tags");
     const postTagDeleteCount = await prisma.postTag.deleteMany();
 
-    logger.debug("Deleting existing report reasons");
-    const reportReasonsDeleteCount = await prisma.reportReason.deleteMany();
-
     logger.debug("Deleting existing avatars");
     const avatarDeleteCount = await prisma.avatar.deleteMany();
 
@@ -39,6 +36,9 @@ const cleanupDatabase = async () => {
 
     logger.debug("Deleting existing bookmarks");
     const bookmarkDeleteCount = await prisma.bookmark.deleteMany();
+
+    logger.debug("Deleting existing report reasons");
+    const reportReasonsDeleteCount = await prisma.reportReason.deleteMany();
 
     logger.debug("Deleting existing reports");
     const reportsDeleteCount = await prisma.report.deleteMany();

@@ -71,12 +71,14 @@ const BaseSelectors = {
       select: {
         id: true,
         title: true,
+        hidden: true,
       },
     },
     comment: {
       select: {
         id: true,
         content: true,
+        hidden: true,
       },
     },
   } satisfies Prisma.ReportSelect,
@@ -89,4 +91,31 @@ interface CreateReportData {
   commentId?: number;
 }
 
-export { BaseSelectors, type CreateReportData, type UpdateStatusData };
+type Report = Prisma.ReportGetPayload<{
+  select: typeof BaseSelectors.report;
+}>;
+
+type ReportContentType = "post" | "comment";
+
+type EnrichedReportWithHiddenState = Report & {
+  isContentHidden: boolean;
+};
+
+type EnrichedReportWithContentTypeField = Report & {
+  contentType: ReportContentType;
+};
+
+type EnrichedReport = Report &
+  EnrichedReportWithHiddenState &
+  EnrichedReportWithContentTypeField;
+
+export {
+  BaseSelectors,
+  type CreateReportData,
+  type UpdateStatusData,
+  type Report,
+  type ReportContentType,
+  type EnrichedReportWithHiddenState,
+  type EnrichedReportWithContentTypeField,
+  type EnrichedReport,
+};

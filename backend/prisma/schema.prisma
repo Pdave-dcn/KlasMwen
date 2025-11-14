@@ -185,7 +185,7 @@ model Report {
   comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
   commentId Int?     @map("comment_id")
 
-  reason   ReportReason @relation(fields: [reasonId], references: [id])
+  reason   ReportReason @relation(fields: [reasonId], references: [id], onDelete: Cascade)
   reasonId Int          @map("reason_id")
 
   @@map("reports")

@@ -75,6 +75,8 @@ describe("getAllReports controller", () => {
       reason: { id: 1, label: "Spam" },
       post: { id: "post-1", title: "Post 1" },
       comment: null,
+      contentType: "post",
+      isContentHidden: false,
     },
     {
       id: 2,
@@ -94,6 +96,8 @@ describe("getAllReports controller", () => {
       reason: { id: 2, label: "Hate Speech" },
       post: null,
       comment: { id: 101, content: "Comment 1" },
+      contentType: "comment",
+      isContentHidden: false,
     },
   ];
 

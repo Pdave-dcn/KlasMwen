@@ -4,6 +4,7 @@ import CommentService from "../../comments/service/CommentService.js";
 import PostService from "../../posts/service/PostService.js";
 import { autoHideContent } from "../helpers/autoHideContent.js";
 
+import ReportEnricher from "./reportEnricher.js";
 import ReportRepository from "./reportRepository.js";
 
 import type { CreateReportData, UpdateStatusData } from "./reportTypes.js";
@@ -109,12 +110,14 @@ class ReportService {
       ReportRepository.count(filters),
     ]);
 
+    const enrichedReports = ReportEnricher.enrichReports(reports);
+
     const page = pagination?.page ?? 1;
     const limit = pagination?.limit ?? 10;
     const totalPages = Math.ceil(total / limit);
 
     return {
-      data: reports,
+      data: enrichedReports,
       pagination: {
         total,
         page,

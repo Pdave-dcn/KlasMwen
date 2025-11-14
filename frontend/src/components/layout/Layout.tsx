@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { useLocation } from "react-router-dom";
+
 import PostCreationForm from "@/features/PostCreation/components/postForm/PostCreationForm";
 import PostTypeSelector from "@/features/PostCreation/components/PostTypeSelector";
 import PostEditForm from "@/features/postEdit/components/PostEditForm";
@@ -19,6 +21,10 @@ const Layout = ({ children }: LayoutProps) => {
   const [showPostCreationForm, setShowPostCreationForm] = useState(false);
 
   const { isOpen, closeEditForm } = usePostEditStore();
+  const location = useLocation();
+
+  // Check if current route is moderation dashboard
+  const isModDashboard = location.pathname.startsWith("/mod/dashboard");
 
   const handleTypeSelect = (type: PostType) => {
     setSelectedType(type);
@@ -33,7 +39,12 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <div className="flex h-screen w-full">
-      <aside className="hidden md:block w-auto lg:w-60 lg:border-r shrink-0">
+      <aside
+        className={`
+          hidden md:block shrink-0 border-r
+          ${isModDashboard ? "md:w-auto lg:w-auto" : "md:w-auto lg:w-60"}
+        `}
+      >
         <Sidebar
           onCreateClick={() => {
             setShowTypeSelector(true);

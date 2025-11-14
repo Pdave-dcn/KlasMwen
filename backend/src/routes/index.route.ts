@@ -47,7 +47,7 @@ router.use("/api", bookmarkRoutes);
 router.use("/api", commentRoutes);
 router.use("/api", postRoutes);
 router.use("/api", reactionRoutes);
-router.use("api/", reportRoutes);
+router.use("/api", reportRoutes);
 router.use("/api", searchRoutes);
 router.use("/api", tagRoutes);
 router.use("/api", userRoutes);

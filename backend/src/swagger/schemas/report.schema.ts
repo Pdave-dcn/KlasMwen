@@ -32,7 +32,7 @@ export const reportSchemas = {
         type: "integer",
         example: 24,
       },
-      label: { type: "string", example: "Hate Speech" },
+      content: { type: "string" },
     },
   },
 
@@ -43,7 +43,7 @@ export const reportSchemas = {
         type: "integer",
         example: 3,
       },
-      title: { type: "string" },
+      label: { type: "string", example: "Harassment" },
     },
   },
 
@@ -58,6 +58,13 @@ export const reportSchemas = {
         type: "string",
         enum: ["PENDING", "REVIEWED", "DISMISSED"],
         example: "REVIEWED",
+      },
+      isContentHidden: {
+        type: "boolean",
+      },
+      contentType: {
+        type: "string",
+        enum: ["post", "comment"],
       },
       moderatorNotes: {
         type: "string",

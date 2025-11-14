@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 
 import clsx from "clsx";
 import {
@@ -16,6 +16,7 @@ import {
   Bookmark,
   Check,
   Bell,
+  Shield,
 } from "lucide-react";
 
 import { logOut as apiLogOut } from "@/api/auth.api";
@@ -32,6 +33,8 @@ import {
 import { useTheme } from "@/hooks/use-theme";
 import { useAuthStore } from "@/stores/auth.store";
 
+import RequireRole from "../RequireRole";
+
 const items = [
   { title: "Home", url: "/home", icon: Home },
   { title: "Search", url: "/search", icon: Search },
@@ -47,7 +50,10 @@ interface SidebarProps {
 const Sidebar = ({ onCreateClick }: SidebarProps) => {
   const { logout } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const { theme, setTheme } = useTheme();
+
+  const isModDashboard = location.pathname.startsWith("/mod/dashboard");
 
   const handleLogOut = async () => {
     await apiLogOut();
@@ -83,8 +89,13 @@ const Sidebar = ({ onCreateClick }: SidebarProps) => {
       {/* Logo */}
       <div className="flex items-center gap-2 ">
         <div className="">
-          <BookOpen className="hidden w-7 h-7 md:block lg:hidden" />
-          <div className="hidden lg:block">
+          <BookOpen
+            className={clsx(
+              "w-7 h-7",
+              isModDashboard ? "hidden md:block" : "hidden md:block lg:hidden"
+            )}
+          />
+          <div className={clsx(isModDashboard ? "hidden" : "hidden lg:block")}>
             <h1 className="text-xl font-bold bg-gradient-primary">KlasMwen</h1>
             <p className="text-xs text-muted-foreground">Learn. Share. Grow.</p>
           </div>
@@ -103,7 +114,11 @@ const Sidebar = ({ onCreateClick }: SidebarProps) => {
               )}
             >
               <item.icon className="h-7 w-7" />
-              <span className="hidden lg:block">{item.title}</span>
+              <span
+                className={clsx(isModDashboard ? "hidden" : "hidden lg:block")}
+              >
+                {item.title}
+              </span>
             </button>
           ) : (
             <NavLink
@@ -119,17 +134,45 @@ const Sidebar = ({ onCreateClick }: SidebarProps) => {
               }
             >
               <item.icon className="h-7 w-7" />
-              <span className="hidden lg:block">{item.title}</span>
+              <span
+                className={clsx(isModDashboard ? "hidden" : "hidden lg:block")}
+              >
+                {item.title}
+              </span>
             </NavLink>
           )
         )}
+
+        {/* Moderator Dashboard Button */}
+        <RequireRole allowed={["ADMIN", "MODERATOR"]}>
+          <NavLink
+            to="/mod/dashboard"
+            className={({ isActive }) =>
+              clsx(
+                `flex gap-1.5 items-center transition-colors`,
+                isActive
+                  ? "text-primary font-medium"
+                  : "text-muted-foreground hover:text-foreground"
+              )
+            }
+          >
+            <Shield className="h-7 w-7" />
+            <span
+              className={clsx(isModDashboard ? "hidden" : "hidden lg:block")}
+            >
+              Moderation
+            </span>
+          </NavLink>
+        </RequireRole>
       </div>
 
       {/* More Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger className="flex gap-1.5 items-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
           <Menu className="h-7 w-7" />
-          <span className="hidden lg:block">More</span>
+          <span className={clsx(isModDashboard ? "hidden" : "hidden lg:block")}>
+            More
+          </span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-56">
           {/* Theme Submenu */}

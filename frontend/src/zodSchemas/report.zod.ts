@@ -65,6 +65,19 @@ const UpdatedReportResponseSchema = z.object({
   data: ReportSchema,
 });
 
+// Report Statistics Schema
+const ReportStatsSchema = z.object({
+  totalReports: z.number().int().nonnegative(),
+  pending: z.number().int().nonnegative(),
+  reviewed: z.number().int().nonnegative(),
+  dismissed: z.number().int().nonnegative(),
+  hiddenContent: z.number().int().nonnegative(),
+});
+
+const ReportStatsResponseSchema = z.object({
+  data: ReportStatsSchema,
+});
+
 // Request Schemas
 const CreateReportRequestSchema = z.object({
   reporterId: z.uuid(),
@@ -92,6 +105,8 @@ export type Reason = z.infer<typeof ReasonSchema>;
 export type Report = z.infer<typeof ReportSchema>;
 export type ReportsResponse = z.infer<typeof ReportsResponseSchema>;
 export type ActiveReasonsResponse = z.infer<typeof ActiveReasonsResponseSchema>;
+export type ReportStats = z.infer<typeof ReportStatsSchema>;
+export type ReportStatsResponse = z.infer<typeof ReportStatsResponseSchema>;
 
 export type CreateReportRequest = z.infer<typeof CreateReportRequestSchema>;
 export type UpdateReportStatusRequest = z.infer<
@@ -108,6 +123,8 @@ export {
   ReportsResponseSchema,
   UpdatedReportResponseSchema,
   ActiveReasonsResponseSchema,
+  ReportStatsSchema,
+  ReportStatsResponseSchema,
   CreateReportRequestSchema,
   UpdateReportStatusRequestSchema,
   ToggleVisibilityRequestSchema,

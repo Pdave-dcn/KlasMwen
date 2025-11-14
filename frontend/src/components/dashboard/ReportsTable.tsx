@@ -12,6 +12,16 @@ interface ReportsTableProps {
   onDismiss: (reportId: number) => void;
 }
 
+const TABLE_COLUMNS = [
+  { key: "id", label: "ID" },
+  { key: "content", label: "Content" },
+  { key: "reporter", label: "Reporter" },
+  { key: "reason", label: "Reason" },
+  { key: "status", label: "Status" },
+  { key: "date", label: "Date" },
+  { key: "actions", label: "Actions" },
+] as const;
+
 const getStatusBadge = (status: Report["status"]) => {
   const variants = {
     PENDING: "bg-pending text-pending-foreground",
@@ -21,7 +31,7 @@ const getStatusBadge = (status: Report["status"]) => {
 
   return (
     <Badge className={variants[status]}>
-      {status.charAt(0).toUpperCase() + status.slice(1)}
+      {status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()}
     </Badge>
   );
 };
@@ -50,27 +60,14 @@ export const ReportsTable = ({
         <table className="w-full">
           <thead className="bg-muted">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                ID
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Content
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Reporter
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Reason
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Date
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Actions
-              </th>
+              {TABLE_COLUMNS.map((column) => (
+                <th
+                  key={column.key}
+                  className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
+                >
+                  {column.label}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -135,10 +132,10 @@ export const ReportsTable = ({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => {
-                        onToggleHidden(report.id);
-                        console.log(`Toggle hidden for report ${report.id}`);
-                      }}
+                      onClick={() => onToggleHidden(report.id)}
+                      title={
+                        report.isContentHidden ? "Show content" : "Hide content"
+                      }
                     >
                       {report.isContentHidden ? (
                         <Eye className="h-4 w-4" />
@@ -151,22 +148,16 @@ export const ReportsTable = ({
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => {
-                            onMarkReviewed(report.id);
-                            console.log(
-                              `Mark reviewed for report ${report.id}`
-                            );
-                          }}
+                          onClick={() => onMarkReviewed(report.id)}
+                          title="Mark as reviewed"
                         >
                           <CheckCircle className="h-4 w-4" />
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => {
-                            onDismiss(report.id);
-                            console.log(`Dismiss report ${report.id}`);
-                          }}
+                          onClick={() => onDismiss(report.id)}
+                          title="Dismiss report"
                         >
                           <XCircle className="h-4 w-4" />
                         </Button>

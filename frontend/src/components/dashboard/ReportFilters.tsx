@@ -5,37 +5,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { UseReportsQueryParams } from "@/queries/report.query";
-import type { ReportStatusEnum } from "@/zodSchemas/report.zod";
+import { type UseReportsQueryParams } from "@/queries/report.query";
+import type { Reason, ReportStatusEnum } from "@/zodSchemas/report.zod";
 
 interface ReportFiltersProps {
   filters: UseReportsQueryParams;
+  reportReasons: Reason[];
   onFiltersChange: (filters: UseReportsQueryParams) => void;
 }
 
-const statusOptions: { value: any; label: string }[] = [
+const statusOptions: { value: string; label: string }[] = [
   { value: "all", label: "All Status" },
-  { value: "pending", label: "Pending" },
-  { value: "reviewed", label: "Reviewed" },
-  { value: "dismissed", label: "Dismissed" },
-];
-
-const reasonOptions: { value: any; label: string }[] = [
-  { value: "all", label: "All Reasons" },
-  { value: "spam", label: "Spam" },
-  { value: "harassment", label: "Harassment" },
-  { value: "inappropriate_content", label: "Inappropriate Content" },
-  { value: "misinformation", label: "Misinformation" },
-  { value: "hate_speech", label: "Hate Speech" },
-  { value: "violence", label: "Violence" },
-  { value: "copyright", label: "Copyright" },
-  { value: "other", label: "Other" },
+  { value: "PENDING", label: "Pending" },
+  { value: "REVIEWED", label: "Reviewed" },
+  { value: "DISMISSED", label: "Dismissed" },
 ];
 
 export const ReportFilters = ({
   filters,
+  reportReasons,
   onFiltersChange,
 }: ReportFiltersProps) => {
+  const reasonOptions = [{ id: "all", label: "All Reasons" }, ...reportReasons];
+
   return (
     <div className="bg-card border border-border rounded-lg p-6">
       <h2 className="text-lg font-semibold mb-4">Filters</h2>
@@ -73,11 +65,11 @@ export const ReportFilters = ({
             Reason
           </label>
           <Select
-            value={filters.reason ?? "all"}
+            value={filters.reasonId ? String(filters.reasonId) : "all"}
             onValueChange={(value) =>
               onFiltersChange({
                 ...filters,
-                reason: value === "all" ? undefined : (value as any),
+                reasonId: value === "all" ? undefined : Number(value),
               })
             }
           >
@@ -85,16 +77,17 @@ export const ReportFilters = ({
               <SelectValue placeholder="Select reason" />
             </SelectTrigger>
             <SelectContent>
-              {reasonOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+              {reasonOptions.map((reason) => (
+                <SelectItem key={reason.id} value={String(reason.id)}>
+                  {reason.label}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
-        {/* <div>
+        {/* Uncomment when date filters are needed
+        <div>
           <label className="text-sm font-medium mb-2 block">Date From</label>
           <Input
             type="date"

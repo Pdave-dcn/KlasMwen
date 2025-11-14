@@ -21,6 +21,7 @@ class ReportRepository {
   static async findAll(
     filters?: {
       status?: ReportStatus;
+      reasonId?: number;
       postId?: string;
       commentId?: number;
     },
@@ -31,6 +32,7 @@ class ReportRepository {
   ) {
     const where: Prisma.ReportWhereInput = {};
     if (filters?.status) where.status = filters.status;
+    if (filters?.reasonId) where.reasonId = filters.reasonId;
     if (filters?.postId) where.postId = filters.postId;
     if (filters?.commentId) where.commentId = filters.commentId;
 
@@ -101,15 +103,65 @@ class ReportRepository {
   /** Count total reports, optionally filtered by status or post/comment */
   static count(filters?: {
     status?: ReportStatus;
+    reasonId?: number;
     postId?: string;
     commentId?: number;
   }) {
     const where: Prisma.ReportWhereInput = {};
     if (filters?.status) where.status = filters.status;
+    if (filters?.reasonId) where.reasonId = filters.reasonId;
     if (filters?.postId) where.postId = filters.postId;
     if (filters?.commentId) where.commentId = filters.commentId;
 
     return prisma.report.count({ where });
+  }
+
+  /** Get statistics about reports and hidden content */
+  static async getStats() {
+    const [
+      totalReports,
+      pendingCount,
+      reviewedCount,
+      dismissedCount,
+      hiddenPostsCount,
+      hiddenCommentsCount,
+    ] = await Promise.all([
+      // Total reports
+      prisma.report.count(),
+
+      // Pending reports
+      prisma.report.count({
+        where: { status: "PENDING" },
+      }),
+
+      // Reviewed reports
+      prisma.report.count({
+        where: { status: "REVIEWED" },
+      }),
+
+      // Dismissed reports
+      prisma.report.count({
+        where: { status: "DISMISSED" },
+      }),
+
+      // Hidden posts
+      prisma.post.count({
+        where: { hidden: true },
+      }),
+
+      // Hidden comments
+      prisma.comment.count({
+        where: { hidden: true },
+      }),
+    ]);
+
+    return {
+      totalReports,
+      pending: pendingCount,
+      reviewed: reviewedCount,
+      dismissed: dismissedCount,
+      hiddenContent: hiddenPostsCount + hiddenCommentsCount,
+    };
   }
 }
 

@@ -11,6 +11,7 @@ import {
   type UpdateReportStatusRequest,
   type ToggleVisibilityRequest,
   UpdatedReportResponseSchema,
+  ReportStatsResponseSchema,
 } from "@/zodSchemas/report.zod";
 
 import api from "./api";
@@ -24,9 +25,20 @@ const getReportReasons = async () => {
 
     const validatedData = ActiveReasonsResponseSchema.parse(res.data);
 
-    return validatedData;
+    return validatedData.data;
   } catch (error) {
     handleZodValidationError(error, "getReportReasons");
+    throw error;
+  }
+};
+
+const getReportStats = async () => {
+  try {
+    const res = await api.get("/reports/stats");
+    const validatedData = ReportStatsResponseSchema.parse(res.data);
+    return validatedData.data;
+  } catch (error) {
+    handleZodValidationError(error, "getReportStats");
     throw error;
   }
 };
@@ -140,6 +152,7 @@ const toggleVisibility = async (data: ToggleVisibilityRequest) => {
 
 export {
   getReportReasons,
+  getReportStats,
   getAllReports,
   createReport,
   getReportById,

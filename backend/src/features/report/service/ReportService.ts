@@ -97,6 +97,7 @@ class ReportService {
   static async getAllReports(
     filters?: {
       status?: ReportStatus;
+      reasonId?: number;
       postId?: string;
       commentId?: number;
     },
@@ -138,6 +139,15 @@ class ReportService {
     if (!report) throw new ReportNotFoundError(reportId);
 
     return report;
+  }
+
+  /**
+   * Retrieves statistics about reports including counts by status
+   * and total hidden content (posts + comments).
+   * @returns Object containing report statistics
+   */
+  static async getReportStats() {
+    return await ReportRepository.getStats();
   }
 
   /**

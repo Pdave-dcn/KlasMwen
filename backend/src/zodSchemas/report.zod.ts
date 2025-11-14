@@ -53,6 +53,11 @@ const ToggleVisibilitySchema = z.object({
 
 const ReportQuerySchema = z.object({
   status: z.enum(ReportStatus).optional(),
+  reasonId: z
+    .string()
+    .regex(/^[0-9]+$/, "Reason ID must contain only digits")
+    .transform((val) => parseInt(val, 10))
+    .optional(),
   postId: z.uuid().optional(),
   commentId: z
     .string()

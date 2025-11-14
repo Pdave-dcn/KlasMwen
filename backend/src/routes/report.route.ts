@@ -6,6 +6,7 @@ import {
   getAllReports,
   getReportById,
   getReportReasons,
+  getReportStats,
   toggleVisibility,
   updateReportStatus,
 } from "../controllers/report.controller.js";
@@ -45,6 +46,9 @@ router.use(attachLogContext("ReportController"));
  *         description: Internal server error
  */
 router.get("/reports/reasons", generalApiLimiter, getReportReasons);
+
+// todo: write OpenApi specs
+router.get("/reports/stats", generalApiLimiter, requireAuth, getReportStats);
 
 /**
  * @openapi

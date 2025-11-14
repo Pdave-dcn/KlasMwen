@@ -1,20 +1,13 @@
 import { useState } from "react";
 
-import {
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
-  FileText,
-  EyeOff,
-} from "lucide-react";
-
 import { Pagination } from "@/components/dashboard/Pagination";
 import { ReportFilters as ReportFiltersComponent } from "@/components/dashboard/ReportFilters";
 import { ReportModal } from "@/components/dashboard/ReportModal";
 import { ReportsTable } from "@/components/dashboard/ReportsTable";
-import { StatCard } from "@/components/dashboard/StatCard";
+import { ReportStatsCards } from "@/components/dashboard/ReportStatsCards";
 import { Spinner } from "@/components/ui/spinner";
 import {
+  useReportReasonsQuery,
   useReportsQuery,
   type UseReportsQueryParams,
 } from "@/queries/report.query";
@@ -28,17 +21,27 @@ const ModDashboard = () => {
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { data, isLoading, error } = useReportsQuery({
+  const {
+    data: reportData,
+    isLoading: reportLoading,
+    error: reportError,
+  } = useReportsQuery({
     ...filters,
     page: currentPage,
     limit: ITEMS_PER_PAGE,
   });
 
-  if (isLoading) {
+  const {
+    data: reportReasons,
+    isLoading: reasonLoading,
+    error: reasonError,
+  } = useReportReasonsQuery();
+
+  if (reportLoading || reasonLoading) {
     return <Spinner />;
   }
 
-  if (error) {
+  if (reportError || reasonError) {
     return (
       <div className="w-full h-full flex items-center justify-center text-red-500 font-bold text-2xl">
         <h1>Something went wrong</h1>
@@ -46,8 +49,8 @@ const ModDashboard = () => {
     );
   }
 
-  const reports = data?.data ?? [];
-  const pagination = data?.pagination;
+  const reports = reportData?.data ?? [];
+  const pagination = reportData?.pagination;
 
   // Handlers
   const handleViewDetails = (report: Report) => {
@@ -77,7 +80,6 @@ const ModDashboard = () => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleNextPage = () => {
@@ -107,46 +109,16 @@ const ModDashboard = () => {
       {/* Main Content */}
       <div className="container mx-auto px-6 py-8">
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
-          <StatCard
-            title="Total Reports"
-            value={100}
-            icon={FileText}
-            variant="default"
-          />
-          <StatCard
-            title="Pending"
-            value={20}
-            icon={AlertTriangle}
-            variant="pending"
-          />
-          <StatCard
-            title="Reviewed"
-            value={40}
-            icon={CheckCircle}
-            variant="reviewed"
-          />
-          <StatCard
-            title="Dismissed"
-            value={25}
-            icon={XCircle}
-            variant="dismissed"
-          />
-          <StatCard
-            title="Hidden Content"
-            value={15}
-            icon={EyeOff}
-            variant="default"
-          />
-        </div>
+        <ReportStatsCards />
 
         {/* Filters */}
         <div className="mb-6">
           <ReportFiltersComponent
             filters={filters}
+            reportReasons={reportReasons ?? []}
             onFiltersChange={(newFilters) => {
               setFilters(newFilters);
-              setCurrentPage(1); // Reset to page 1 when filters change
+              setCurrentPage(1);
             }}
           />
         </div>

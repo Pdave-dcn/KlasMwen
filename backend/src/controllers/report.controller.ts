@@ -110,6 +110,7 @@ const getAllReports = async (req: Request, res: Response) => {
 
     const filters = {
       status: validatedQuery.status,
+      reasonId: validatedQuery.reasonId,
       postId: validatedQuery.postId,
       commentId: validatedQuery.commentId,
     };
@@ -315,6 +316,42 @@ const toggleVisibility = async (req: Request, res: Response) => {
   }
 };
 
+const getReportStats = async (req: Request, res: Response) => {
+  const actionLogger = createActionLogger(
+    controllerLogger,
+    "getReportStats",
+    req
+  );
+
+  try {
+    actionLogger.info("Fetching report statistics");
+    const startTime = Date.now();
+
+    checkAdminAuth(req.user);
+    actionLogger.info("User authorized");
+
+    actionLogger.debug("Processing report stats fetching");
+    const serviceStarttime = Date.now();
+    const stats = await ReportService.getReportStats();
+    const serviceDuration = Date.now() - serviceStarttime;
+
+    const totalDuration = Date.now() - startTime;
+
+    actionLogger.info(
+      {
+        stats,
+        serviceDuration,
+        totalDuration,
+      },
+      "Report statistics fetched successfully"
+    );
+
+    return res.status(200).json({ data: stats });
+  } catch (error: unknown) {
+    return handleError(error, res);
+  }
+};
+
 export {
   createReport,
   getReportReasons,
@@ -323,4 +360,5 @@ export {
   updateReportStatus,
   deleteReport,
   toggleVisibility,
+  getReportStats,
 };

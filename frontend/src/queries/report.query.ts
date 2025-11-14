@@ -1,6 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { getAllReports } from "@/api/report.api";
+import {
+  getAllReports,
+  getReportReasons,
+  getReportStats,
+} from "@/api/report.api";
 import type { ReportStatusEnum } from "@/zodSchemas/report.zod";
 
 export interface UseReportsQueryParams {
@@ -9,7 +13,7 @@ export interface UseReportsQueryParams {
   commentId?: number;
   page?: number;
   limit?: number;
-  reason?: any;
+  reasonId?: number;
 }
 
 const useReportsQuery = (filters?: UseReportsQueryParams) => {
@@ -25,4 +29,18 @@ const useReportsQuery = (filters?: UseReportsQueryParams) => {
   });
 };
 
-export { useReportsQuery };
+const useReportReasonsQuery = () => {
+  return useQuery({
+    queryKey: ["reports", "reasons"],
+    queryFn: getReportReasons,
+  });
+};
+
+const useReportStatsQuery = () => {
+  return useQuery({
+    queryKey: ["reports", "stats"],
+    queryFn: getReportStats,
+  });
+};
+
+export { useReportsQuery, useReportReasonsQuery, useReportStatsQuery };

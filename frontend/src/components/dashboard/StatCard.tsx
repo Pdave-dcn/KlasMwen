@@ -19,7 +19,7 @@ export const StatCard = ({
     default: "bg-card border-border",
     pending: "bg-pending/10 border-pending/20",
     reviewed: "bg-reviewed/10 border-reviewed/20",
-    dismissed: "bg-muted border-border",
+    dismissed: "bg-muted dark:bg-muted/20 border-border",
   };
 
   const iconStyles = {

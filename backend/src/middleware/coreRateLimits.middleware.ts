@@ -61,9 +61,7 @@ const downloadLimiter = rateLimit({
 
     return "download:unknown";
   },
-  // Skip failed requests (don't count towards limit if download fails)
   skipFailedRequests: true,
-  // Skip successful requests that were aborted by the client
   skip: (_req: Request) => {
     return false;
   },
@@ -84,6 +82,52 @@ const reactionLimiter = rateLimit({
   },
 });
 
+/**
+ * Rate limiter for creating reports
+ * Prevents abuse by limiting report submissions to 5 per hour per user
+ */
+const reportCreationLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5,
+  handler: () => {
+    throw new RateLimitError(
+      "Too many reports submitted. You can report up to 5 items per hour. Please try again later."
+    );
+  },
+  keyGenerator: (req: Request, _res: Response) => {
+    if (req.user) return `report:create:${req.user.id}`;
+
+    if (req.ip) return `report:create:${ipKeyGenerator(req.ip)}`;
+
+    return "report:create:unknown";
+  },
+  skipSuccessfulRequests: false,
+  skipFailedRequests: true, // Don't count failed attempts
+});
+
+/**
+ * Rate limiter for moderator report actions
+ * Limits status updates, visibility toggles, and deletions to 50 per hour
+ */
+const reportModerationLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 50,
+  handler: () => {
+    throw new RateLimitError(
+      "Moderation action limit reached. You can perform up to 50 moderation actions per hour. Please try again later."
+    );
+  },
+  keyGenerator: (req: Request, _res: Response) => {
+    if (req.user) return `report:moderate:${req.user.id}`;
+
+    if (req.ip) return `report:moderate:${ipKeyGenerator(req.ip)}`;
+
+    return "report:moderate:unknown";
+  },
+  skipSuccessfulRequests: false,
+  skipFailedRequests: true,
+});
+
 const generalApiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 1000,
@@ -99,4 +143,6 @@ export {
   reactionLimiter,
   generalApiLimiter,
   downloadLimiter,
+  reportCreationLimiter,
+  reportModerationLimiter,
 };

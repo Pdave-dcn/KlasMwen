@@ -1,14 +1,18 @@
 import { useState } from "react";
 
+import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { Pagination } from "@/components/dashboard/Pagination";
 import { ReportFilters as ReportFiltersComponent } from "@/components/dashboard/ReportFilters";
 import { ReportModal } from "@/components/dashboard/ReportModal";
 import { ReportsTable } from "@/components/dashboard/ReportsTable";
 import { ReportStatsCards } from "@/components/dashboard/ReportStatsCards";
-import { Spinner } from "@/components/ui/spinner";
 import {
   useReportReasonsQuery,
   useReportsQuery,
+  useToggleVisibilityMutation,
+  useMarkReviewedMutation,
+  useDismissReportMutation,
+  useUpdateReportStatusMutation,
   type UseReportsQueryParams,
 } from "@/queries/report.query";
 import type { Report, ReportStatusEnum } from "@/zodSchemas/report.zod";
@@ -37,8 +41,14 @@ const ModDashboard = () => {
     error: reasonError,
   } = useReportReasonsQuery();
 
+  // Mutations
+  const toggleVisibilityMutation = useToggleVisibilityMutation();
+  const markReviewedMutation = useMarkReviewedMutation();
+  const dismissReportMutation = useDismissReportMutation();
+  const updateStatusMutation = useUpdateReportStatusMutation();
+
   if (reportLoading || reasonLoading) {
-    return <Spinner />;
+    return <DashboardSkeleton />;
   }
 
   if (reportError || reasonError) {
@@ -59,23 +69,58 @@ const ModDashboard = () => {
   };
 
   const handleToggleHidden = (reportId: number) => {
-    console.log(reportId);
+    const report = reports.find((r) => r.id === reportId);
+    if (!report) return;
+
+    const resourceType = report.contentType;
+    const resourceId =
+      resourceType === "post" ? report.post?.id : report.comment?.id;
+
+    if (!resourceId) {
+      console.error("Resource ID not found");
+      return;
+    }
+
+    toggleVisibilityMutation.mutate({
+      resourceType,
+      resourceId,
+      hidden: !report.isContentHidden,
+    });
   };
 
   const handleMarkReviewed = (reportId: number) => {
-    console.log(reportId);
+    markReviewedMutation.mutate(reportId);
   };
 
   const handleDismiss = (reportId: number) => {
-    console.log(reportId);
+    dismissReportMutation.mutate(reportId);
   };
 
-  const handleUpdateStatus = (reportId: number, status: ReportStatusEnum) => {
-    console.log(reportId, status);
+  const handleUpdateStatus = (
+    reportId: number,
+    status: ReportStatusEnum,
+    notes?: string
+  ) => {
+    updateStatusMutation.mutate({
+      id: reportId,
+      data: {
+        status,
+        moderatorNotes: notes,
+      },
+    });
   };
 
   const handleUpdateNotes = (reportId: number, notes: string) => {
-    console.log(reportId, notes);
+    const report = reports.find((r) => r.id === reportId);
+    if (!report) return;
+
+    updateStatusMutation.mutate({
+      id: reportId,
+      data: {
+        status: report.status,
+        moderatorNotes: notes,
+      },
+    });
   };
 
   const handlePageChange = (page: number) => {
@@ -101,7 +146,7 @@ const ModDashboard = () => {
         <div className="container mx-auto px-6 py-8">
           <h1 className="text-3xl font-bold">Reports Dashboard</h1>
           <p className="text-muted-foreground mt-2">
-            Manage and review user reports for your educational platform
+            Manage and review user reports for KlasMwen
           </p>
         </div>
       </div>
@@ -131,6 +176,12 @@ const ModDashboard = () => {
             onToggleHidden={handleToggleHidden}
             onMarkReviewed={handleMarkReviewed}
             onDismiss={handleDismiss}
+            isTogglingVisibility={toggleVisibilityMutation.isPending}
+            isUpdatingStatus={
+              markReviewedMutation.isPending ||
+              dismissReportMutation.isPending ||
+              updateStatusMutation.isPending
+            }
           />
         </div>
 

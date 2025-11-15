@@ -72,18 +72,15 @@ export const ReportModal = ({
 
   const handleSaveNotes = () => {
     onUpdateNotes(report.id, localNotes);
-    console.log(`Updated notes for report ${report.id}:`, localNotes);
   };
 
   const handleStatusChange = (status: ReportStatusEnum) => {
     setLocalStatus(status);
     onUpdateStatus(report.id, status);
-    console.log(`Updated status for report ${report.id}:`, status);
   };
 
   const handleToggleHidden = () => {
     onToggleHidden(report.id);
-    console.log(`Toggled hidden for report ${report.id}`);
   };
 
   return (
@@ -91,7 +88,7 @@ export const ReportModal = ({
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
-            Report Details - {report.id}
+            Report Details - {`RPT-${report.id}`}
             {getStatusBadge(localStatus)}
           </DialogTitle>
           <DialogDescription>

@@ -65,6 +65,7 @@ const BaseSelectors = {
       select: {
         id: true,
         label: true,
+        description: true,
       },
     },
     post: {

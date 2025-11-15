@@ -10,8 +10,11 @@ interface ReportsTableProps {
   onToggleHidden: (reportId: number) => void;
   onMarkReviewed: (reportId: number) => void;
   onDismiss: (reportId: number) => void;
+  isTogglingVisibility?: boolean;
+  isUpdatingStatus?: boolean;
 }
 
+// Column definitions
 const TABLE_COLUMNS = [
   { key: "id", label: "ID" },
   { key: "content", label: "Content" },
@@ -53,6 +56,8 @@ export const ReportsTable = ({
   onToggleHidden,
   onMarkReviewed,
   onDismiss,
+  isTogglingVisibility = false,
+  isUpdatingStatus = false,
 }: ReportsTableProps) => {
   return (
     <div className="bg-card border border-border rounded-lg overflow-hidden">
@@ -136,6 +141,7 @@ export const ReportsTable = ({
                       title={
                         report.isContentHidden ? "Show content" : "Hide content"
                       }
+                      disabled={isTogglingVisibility}
                     >
                       {report.isContentHidden ? (
                         <Eye className="h-4 w-4" />
@@ -150,6 +156,7 @@ export const ReportsTable = ({
                           variant="outline"
                           onClick={() => onMarkReviewed(report.id)}
                           title="Mark as reviewed"
+                          disabled={isUpdatingStatus}
                         >
                           <CheckCircle className="h-4 w-4" />
                         </Button>
@@ -158,6 +165,7 @@ export const ReportsTable = ({
                           variant="outline"
                           onClick={() => onDismiss(report.id)}
                           title="Dismiss report"
+                          disabled={isUpdatingStatus}
                         >
                           <XCircle className="h-4 w-4" />
                         </Button>

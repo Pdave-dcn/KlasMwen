@@ -156,7 +156,10 @@ class ReportService {
    */
   static async updateReportStatus(reportId: number, data: UpdateStatusData) {
     await this.reportExists(reportId);
-    return await ReportRepository.updateStatus(reportId, data);
+    const report = await ReportRepository.updateStatus(reportId, data);
+    const enrichedReport = ReportEnricher.enrichReport(report);
+
+    return enrichedReport;
   }
 
   /**

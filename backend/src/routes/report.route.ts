@@ -12,7 +12,8 @@ import {
 } from "../controllers/report.controller.js";
 import {
   generalApiLimiter,
-  writeOperationsLimiter,
+  reportCreationLimiter,
+  reportModerationLimiter,
 } from "../middleware/coreRateLimits.middleware.js";
 import attachLogContext from "../middleware/logContext.middleware.js";
 import { requireAuth } from "../middleware/requireAuth.middleware.js";
@@ -150,7 +151,7 @@ router.get("/reports/stats", generalApiLimiter, requireAuth, getReportStats);
  *         description: Internal server error
  */
 router.get("/reports", generalApiLimiter, requireAuth, getAllReports);
-router.post("/reports", writeOperationsLimiter, requireAuth, createReport);
+router.post("/reports", reportCreationLimiter, requireAuth, createReport);
 
 /**
  * @openapi
@@ -282,13 +283,13 @@ router.post("/reports", writeOperationsLimiter, requireAuth, createReport);
 router.get("/reports/:id", generalApiLimiter, requireAuth, getReportById);
 router.put(
   "/reports/:id",
-  writeOperationsLimiter,
+  reportModerationLimiter,
   requireAuth,
   updateReportStatus
 );
 router.delete(
   "/reports/:id",
-  writeOperationsLimiter,
+  reportModerationLimiter,
   requireAuth,
   deleteReport
 );
@@ -379,7 +380,7 @@ router.delete(
  */
 router.patch(
   "/reports/toggle-visibility",
-  writeOperationsLimiter,
+  reportModerationLimiter,
   requireAuth,
   toggleVisibility
 );

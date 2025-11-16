@@ -7,7 +7,7 @@ import type { Report } from "@/zodSchemas/report.zod";
 interface ReportsTableProps {
   reports: Report[];
   onViewDetails: (report: Report) => void;
-  onToggleHidden: (reportId: number) => void;
+  onToggleHidden: (report: Report) => void;
   onMarkReviewed: (reportId: number) => void;
   onDismiss: (reportId: number) => void;
   isTogglingVisibility?: boolean;
@@ -137,7 +137,7 @@ export const ReportsTable = ({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => onToggleHidden(report.id)}
+                      onClick={() => onToggleHidden(report)}
                       title={
                         report.isContentHidden ? "Show content" : "Hide content"
                       }

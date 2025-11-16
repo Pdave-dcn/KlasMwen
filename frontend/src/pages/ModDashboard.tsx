@@ -1,37 +1,43 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
-import { Pagination } from "@/components/dashboard/Pagination";
-import { ReportFilters as ReportFiltersComponent } from "@/components/dashboard/ReportFilters";
-import { ReportModal } from "@/components/dashboard/ReportModal";
-import { ReportsTable } from "@/components/dashboard/ReportsTable";
-import { ReportStatsCards } from "@/components/dashboard/ReportStatsCards";
+import { DashboardSkeleton } from "@/features/dashboards/modDashboard/components/DashboardSkeleton";
+import { EmptyReportsState } from "@/features/dashboards/modDashboard/components/EmptyReportState";
+import { Pagination } from "@/features/dashboards/modDashboard/components/Pagination";
+import { ReportErrorState } from "@/features/dashboards/modDashboard/components/ReportErrorState";
+import { ReportFilters as ReportFiltersComponent } from "@/features/dashboards/modDashboard/components/ReportFilters";
+import { ReportModal } from "@/features/dashboards/modDashboard/components/ReportModal";
+import { ReportsTable } from "@/features/dashboards/modDashboard/components/ReportsTable";
+import { ReportStatsCards } from "@/features/dashboards/modDashboard/components/ReportStatsCards";
+import { useModalState } from "@/features/dashboards/modDashboard/hooks/useModalState";
+import { usePagination } from "@/features/dashboards/modDashboard/hooks/usePagination";
+import { useReportManagement } from "@/features/dashboards/modDashboard/hooks/useReportManagement";
 import {
   useReportReasonsQuery,
   useReportsQuery,
-  useToggleVisibilityMutation,
-  useMarkReviewedMutation,
-  useDismissReportMutation,
-  useUpdateReportStatusMutation,
   type UseReportsQueryParams,
 } from "@/queries/report.query";
-import type { Report, ReportStatusEnum } from "@/zodSchemas/report.zod";
+import type { Report } from "@/zodSchemas/report.zod";
 
 const ITEMS_PER_PAGE = 10;
 
 const ModDashboard = () => {
   const [filters, setFilters] = useState<UseReportsQueryParams>({});
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Modal state management
+  const reportModal = useModalState<Report>();
+
+  // Pagination state management
+  const pagination = usePagination();
+
+  // Data queries
   const {
     data: reportData,
     isLoading: reportLoading,
     error: reportError,
+    refetch: refetchReports,
   } = useReportsQuery({
     ...filters,
-    page: currentPage,
+    page: pagination.currentPage,
     limit: ITEMS_PER_PAGE,
   });
 
@@ -39,104 +45,41 @@ const ModDashboard = () => {
     data: reportReasons,
     isLoading: reasonLoading,
     error: reasonError,
+    refetch: refetchReasons,
   } = useReportReasonsQuery();
 
-  // Mutations
-  const toggleVisibilityMutation = useToggleVisibilityMutation();
-  const markReviewedMutation = useMarkReviewedMutation();
-  const dismissReportMutation = useDismissReportMutation();
-  const updateStatusMutation = useUpdateReportStatusMutation();
+  // Report management logic
+  const { handlers, isMutating } = useReportManagement();
 
+  // Update pagination metadata when data loads
+  useEffect(() => {
+    if (reportData?.pagination) {
+      pagination.setMeta(reportData.pagination);
+    }
+  }, [reportData?.pagination]);
+
+  const handleRetry = async () => {
+    await refetchReports();
+    await refetchReasons();
+  };
+
+  // Loading state
   if (reportLoading || reasonLoading) {
     return <DashboardSkeleton />;
   }
 
+  // Error state
   if (reportError || reasonError) {
-    return (
-      <div className="w-full h-full flex items-center justify-center text-red-500 font-bold text-2xl">
-        <h1>Something went wrong</h1>
-      </div>
-    );
+    return <ReportErrorState onRetry={handleRetry} />;
   }
 
   const reports = reportData?.data ?? [];
-  const pagination = reportData?.pagination;
+  const paginationProps = pagination.getProps();
 
-  // Handlers
-  const handleViewDetails = (report: Report) => {
-    setSelectedReport(report);
-    setIsModalOpen(true);
-  };
-
-  const handleToggleHidden = (reportId: number) => {
-    const report = reports.find((r) => r.id === reportId);
-    if (!report) return;
-
-    const resourceType = report.contentType;
-    const resourceId =
-      resourceType === "post" ? report.post?.id : report.comment?.id;
-
-    if (!resourceId) {
-      console.error("Resource ID not found");
-      return;
-    }
-
-    toggleVisibilityMutation.mutate({
-      resourceType,
-      resourceId,
-      hidden: !report.isContentHidden,
-    });
-  };
-
-  const handleMarkReviewed = (reportId: number) => {
-    markReviewedMutation.mutate(reportId);
-  };
-
-  const handleDismiss = (reportId: number) => {
-    dismissReportMutation.mutate(reportId);
-  };
-
-  const handleUpdateStatus = (
-    reportId: number,
-    status: ReportStatusEnum,
-    notes?: string
-  ) => {
-    updateStatusMutation.mutate({
-      id: reportId,
-      data: {
-        status,
-        moderatorNotes: notes,
-      },
-    });
-  };
-
-  const handleUpdateNotes = (reportId: number, notes: string) => {
-    const report = reports.find((r) => r.id === reportId);
-    if (!report) return;
-
-    updateStatusMutation.mutate({
-      id: reportId,
-      data: {
-        status: report.status,
-        moderatorNotes: notes,
-      },
-    });
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const handleNextPage = () => {
-    if (pagination?.hasNext) {
-      setCurrentPage((prev) => prev + 1);
-    }
-  };
-
-  const handlePreviousPage = () => {
-    if (pagination?.hasPrevious) {
-      setCurrentPage((prev) => prev - 1);
-    }
+  // Handle filter changes - reset to first page
+  const handleFiltersChange = (newFilters: UseReportsQueryParams) => {
+    setFilters(newFilters);
+    pagination.reset();
   };
 
   return (
@@ -161,52 +104,41 @@ const ModDashboard = () => {
           <ReportFiltersComponent
             filters={filters}
             reportReasons={reportReasons ?? []}
-            onFiltersChange={(newFilters) => {
-              setFilters(newFilters);
-              setCurrentPage(1);
-            }}
+            onFiltersChange={handleFiltersChange}
           />
         </div>
 
         {/* Reports Table */}
         <div className="mb-6">
-          <ReportsTable
-            reports={reports}
-            onViewDetails={handleViewDetails}
-            onToggleHidden={handleToggleHidden}
-            onMarkReviewed={handleMarkReviewed}
-            onDismiss={handleDismiss}
-            isTogglingVisibility={toggleVisibilityMutation.isPending}
-            isUpdatingStatus={
-              markReviewedMutation.isPending ||
-              dismissReportMutation.isPending ||
-              updateStatusMutation.isPending
-            }
-          />
+          {reports.length === 0 ? (
+            <EmptyReportsState />
+          ) : (
+            <ReportsTable
+              reports={reports}
+              onViewDetails={reportModal.open}
+              onToggleHidden={handlers.handleToggleHidden}
+              onMarkReviewed={handlers.handleMarkReviewed}
+              onDismiss={handlers.handleDismiss}
+              isTogglingVisibility={isMutating}
+              isUpdatingStatus={isMutating}
+            />
+          )}
         </div>
 
         {/* Pagination */}
-        {pagination && pagination.totalPages > 1 && (
-          <Pagination
-            currentPage={pagination.page}
-            totalPages={pagination.totalPages}
-            onPageChange={handlePageChange}
-            onNextPage={handleNextPage}
-            onPreviousPage={handlePreviousPage}
-            itemsPerPage={ITEMS_PER_PAGE}
-            totalItems={pagination.total}
-          />
+        {paginationProps && (
+          <Pagination {...paginationProps} itemsPerPage={ITEMS_PER_PAGE} />
         )}
       </div>
 
       {/* Report Detail Modal */}
       <ReportModal
-        report={selectedReport}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onUpdateStatus={handleUpdateStatus}
-        onToggleHidden={handleToggleHidden}
-        onUpdateNotes={handleUpdateNotes}
+        report={reportModal.data}
+        isOpen={reportModal.isOpen}
+        onClose={reportModal.close}
+        onUpdateStatus={handlers.handleUpdateStatus}
+        onToggleHidden={handlers.handleToggleHidden}
+        onUpdateNotes={handlers.handleUpdateNotes}
       />
     </div>
   );

@@ -6,8 +6,8 @@ import {
   EyeOff,
 } from "lucide-react";
 
-import { StatCard } from "@/components/dashboard/StatCard";
 import { Spinner } from "@/components/ui/spinner";
+import { StatCard } from "@/features/dashboards/modDashboard/components/StatCard";
 import { useReportStatsQuery } from "@/queries/report.query";
 
 export const ReportStatsCards = () => {

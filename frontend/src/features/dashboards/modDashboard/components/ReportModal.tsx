@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { CheckCircle, XCircle, Eye, EyeOff } from "lucide-react";
 
@@ -28,8 +28,8 @@ interface ReportModalProps {
   isOpen: boolean;
   onClose: () => void;
   onUpdateStatus: (reportId: number, status: ReportStatusEnum) => void;
-  onToggleHidden: (reportId: number) => void;
-  onUpdateNotes: (reportId: number, notes: string) => void;
+  onToggleHidden: (report: Report) => void;
+  onUpdateNotes: (report: Report, notes: string) => void;
 }
 
 const getStatusBadge = (status: Report["status"]) => {
@@ -65,13 +65,32 @@ export const ReportModal = ({
   onToggleHidden,
   onUpdateNotes,
 }: ReportModalProps) => {
-  const [localNotes, setLocalNotes] = useState(report?.moderatorNotes ?? "");
-  const [localStatus, setLocalStatus] = useState(report?.status ?? "PENDING");
+  const [localNotes, setLocalNotes] = useState("");
+  const [localStatus, setLocalStatus] = useState<ReportStatusEnum>("PENDING");
 
-  if (!report) return null;
+  // Sync local state when report changes or modal opens
+  useEffect(() => {
+    if (report && isOpen) {
+      setLocalNotes(report.moderatorNotes ?? "");
+      setLocalStatus(report.status);
+    }
+  }, [report, isOpen]);
+
+  // Don't render dialog content if no report
+  if (!report) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>No Report Selected</DialogTitle>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   const handleSaveNotes = () => {
-    onUpdateNotes(report.id, localNotes);
+    onUpdateNotes(report, localNotes);
   };
 
   const handleStatusChange = (status: ReportStatusEnum) => {
@@ -80,7 +99,7 @@ export const ReportModal = ({
   };
 
   const handleToggleHidden = () => {
-    onToggleHidden(report.id);
+    onToggleHidden(report);
   };
 
   return (
@@ -160,9 +179,9 @@ export const ReportModal = ({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="reviewed">Reviewed</SelectItem>
-                    <SelectItem value="dismissed">Dismissed</SelectItem>
+                    <SelectItem value="PENDING">Pending</SelectItem>
+                    <SelectItem value="REVIEWED">Reviewed</SelectItem>
+                    <SelectItem value="DISMISSED">Dismissed</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

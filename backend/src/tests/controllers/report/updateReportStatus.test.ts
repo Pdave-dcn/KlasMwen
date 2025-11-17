@@ -80,6 +80,8 @@ describe("updateReportStatus controller", () => {
     reason: { id: 1, label: "Spam" },
     post: { id: "post-xyz", title: "Test Post" },
     comment: null,
+    contentType: "post",
+    isContentHidden: false,
   };
 
   beforeEach(() => {

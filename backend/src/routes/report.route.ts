@@ -48,7 +48,62 @@ router.use(attachLogContext("ReportController"));
  */
 router.get("/reports/reasons", generalApiLimiter, getReportReasons);
 
-// todo: write OpenApi specs
+/**
+ * @openapi
+ * /reports/stats:
+ *   get:
+ *     tags: [Reports]
+ *     summary: Get report statistics
+ *     description: |
+ *       Retrieves comprehensive statistics about reports including counts by status
+ *       (pending, reviewed, dismissed) and total hidden content.
+ *
+ *       **Access:** Admin only
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       '200':
+ *         description: Successfully retrieved report statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 totalReports:
+ *                   type: integer
+ *                   description: Total number of reports in the system
+ *                   example: 134
+ *                 pending:
+ *                   type: integer
+ *                   description: Number of reports with PENDING status
+ *                   example: 82
+ *                 reviewed:
+ *                   type: integer
+ *                   description: Number of reports with REVIEWED status
+ *                   example: 42
+ *                 dismissed:
+ *                   type: integer
+ *                   description: Number of reports with DISMISSED status
+ *                   example: 10
+ *                 hiddenContent:
+ *                   type: integer
+ *                   description: Total number of hidden posts and comments
+ *                   example: 2
+ *             example:
+ *               totalReports: 134
+ *               pending: 82
+ *               reviewed: 42
+ *               dismissed: 10
+ *               hiddenContent: 2
+ *       '401':
+ *         description: Unauthorized - Authentication required
+ *       '403':
+ *         description: Forbidden - Admin access required
+ *       '429':
+ *         description: Too many requests (rate limit exceeded)
+ *       '500':
+ *         description: Internal server error
+ */
 router.get("/reports/stats", generalApiLimiter, requireAuth, getReportStats);
 
 /**

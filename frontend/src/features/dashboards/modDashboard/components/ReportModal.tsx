@@ -126,7 +126,7 @@ export const ReportModal = ({
   const handleDelete = () => {
     onDelete(report.id);
     setShowDeleteDialog(false);
-    onClose(); // Close modal after delete
+    onClose();
   };
 
   return (

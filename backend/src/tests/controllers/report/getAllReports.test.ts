@@ -123,7 +123,7 @@ describe("getAllReports controller", () => {
       expect(prisma.report.findMany).toHaveBeenCalledWith({
         where: {},
         select: expect.any(Object),
-        orderBy: { createdAt: "desc" },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         skip: 0, // page 1, default
         take: 10, // default limit
       });
@@ -154,7 +154,7 @@ describe("getAllReports controller", () => {
       expect(prisma.report.findMany).toHaveBeenCalledWith({
         where: { status: "PENDING" },
         select: expect.any(Object),
-        orderBy: { createdAt: "desc" },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         skip: 0,
         take: 10,
       });
@@ -187,7 +187,7 @@ describe("getAllReports controller", () => {
       expect(prisma.report.findMany).toHaveBeenCalledWith({
         where: { postId },
         select: expect.any(Object),
-        orderBy: { createdAt: "desc" },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         skip: 0,
         take: 10,
       });
@@ -206,7 +206,7 @@ describe("getAllReports controller", () => {
       expect(prisma.report.findMany).toHaveBeenCalledWith({
         where: { commentId },
         select: expect.any(Object),
-        orderBy: { createdAt: "desc" },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         skip: 0,
         take: 10,
       });
@@ -236,7 +236,7 @@ describe("getAllReports controller", () => {
           postId: "a1b2c3d4-e5f6-4789-90ab-cdef01234567",
         },
         select: expect.any(Object),
-        orderBy: { createdAt: "desc" },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         skip: 0,
         take: 10,
       });
@@ -463,7 +463,7 @@ describe("getAllReports controller", () => {
       expect(prisma.report.findMany).toHaveBeenCalledWith({
         where: { status: "PENDING" },
         select: expect.any(Object),
-        orderBy: { createdAt: "desc" },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         skip: 5,
         take: 5,
       });

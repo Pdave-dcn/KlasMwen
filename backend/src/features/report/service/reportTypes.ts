@@ -117,6 +117,7 @@ interface ReportFilters {
   commentId?: number;
   dateFrom?: string;
   dateTo?: string;
+  resourceType?: "post" | "comment";
 }
 
 export {

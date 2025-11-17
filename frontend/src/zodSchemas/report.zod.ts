@@ -103,6 +103,7 @@ const ReportsQueryParamsSchema = z
     postId: z.string().optional(),
     commentId: z.number().int().optional(),
     reasonId: z.number().int().optional(),
+    resourceType: ResourceTypeEnum.optional(),
     page: z.number().int().optional(),
     limit: z.number().int().optional(),
     dateFrom: z.string().optional(),

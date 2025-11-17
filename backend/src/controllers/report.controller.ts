@@ -115,6 +115,7 @@ const getAllReports = async (req: Request, res: Response) => {
       commentId: validatedQuery.commentId,
       dateFrom: validatedQuery.dateFrom,
       dateTo: validatedQuery.dateTo,
+      resourceType: validatedQuery.resourceType,
     };
 
     const pagination = {

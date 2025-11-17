@@ -1,6 +1,8 @@
 import { ReportStatus } from "@prisma/client";
 import { z } from "zod";
 
+const ResourceTypeEnum = z.enum(["post", "comment"]);
+
 const ReportCreationDataSchema = z
   .object({
     reasonId: z.number().int().positive({
@@ -80,6 +82,7 @@ const ReportQuerySchema = z.object({
     .default(10),
   dateFrom: z.string().optional(),
   dateTo: z.string().optional(),
+  resourceType: ResourceTypeEnum.optional(),
 });
 
 type UpdateStatusData = z.infer<typeof ReportStatusUpdateSchema>;

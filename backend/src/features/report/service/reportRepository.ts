@@ -20,7 +20,6 @@ class ReportRepository {
   }
 
   /** Find all reports, optionally filtered by status, postId, or commentId */
-  /* eslint-disable-next-line complexity */
   static async findAll(
     filters?: ReportFilters,
     pagination?: {
@@ -34,6 +33,16 @@ class ReportRepository {
     if (filters?.reasonId) where.reasonId = filters.reasonId;
     if (filters?.postId) where.postId = filters.postId;
     if (filters?.commentId) where.commentId = filters.commentId;
+
+    if (filters?.resourceType) {
+      if (filters.resourceType === "post") {
+        where.commentId = null;
+      }
+
+      if (filters.resourceType === "comment") {
+        where.postId = null;
+      }
+    }
 
     // Date filtering
     if (filters?.dateFrom || filters?.dateTo) {
@@ -125,6 +134,16 @@ class ReportRepository {
     if (filters?.reasonId) where.reasonId = filters.reasonId;
     if (filters?.postId) where.postId = filters.postId;
     if (filters?.commentId) where.commentId = filters.commentId;
+
+    if (filters?.resourceType) {
+      if (filters.resourceType === "post") {
+        where.commentId = null;
+      }
+
+      if (filters.resourceType === "comment") {
+        where.postId = null;
+      }
+    }
 
     // Date filtering
     if (filters?.dateFrom || filters?.dateTo) {

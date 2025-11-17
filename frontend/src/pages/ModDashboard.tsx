@@ -127,7 +127,11 @@ const ModDashboard = () => {
 
         {/* Pagination */}
         {paginationProps && (
-          <Pagination {...paginationProps} itemsPerPage={ITEMS_PER_PAGE} />
+          <Pagination
+            {...paginationProps}
+            itemsPerPage={ITEMS_PER_PAGE}
+            showResultsText={false}
+          />
         )}
       </div>
 

@@ -67,16 +67,23 @@ export const ReportModal = ({
 }: ReportModalProps) => {
   const [localNotes, setLocalNotes] = useState("");
   const [localStatus, setLocalStatus] = useState<ReportStatusEnum>("PENDING");
+  const [localIsHidden, setLocalIsHidden] = useState(false);
 
-  // Sync local state when report changes or modal opens
+  // Sync local state when report changes
   useEffect(() => {
-    if (report && isOpen) {
+    if (report) {
       setLocalNotes(report.moderatorNotes ?? "");
       setLocalStatus(report.status);
+      setLocalIsHidden(report.isContentHidden);
     }
-  }, [report, isOpen]);
+  }, [
+    report?.id,
+    report?.moderatorNotes,
+    report?.status,
+    report?.isContentHidden,
+    report,
+  ]);
 
-  // Don't render dialog content if no report
   if (!report) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -99,6 +106,8 @@ export const ReportModal = ({
   };
 
   const handleToggleHidden = () => {
+    // Optimistically update local state
+    setLocalIsHidden(!localIsHidden);
     onToggleHidden(report);
   };
 
@@ -140,7 +149,7 @@ export const ReportModal = ({
                 <Badge variant="outline">
                   ID: {report.comment?.id ?? report.post?.id}
                 </Badge>
-                {report.isContentHidden && (
+                {localIsHidden && (
                   <Badge className="bg-destructive text-destructive-foreground">
                     Content Hidden
                   </Badge>
@@ -190,7 +199,7 @@ export const ReportModal = ({
                 <Label htmlFor="hidden">Content Hidden</Label>
                 <Switch
                   id="hidden"
-                  checked={report.isContentHidden}
+                  checked={localIsHidden}
                   onCheckedChange={handleToggleHidden}
                 />
               </div>
@@ -237,7 +246,7 @@ export const ReportModal = ({
               Dismiss
             </Button>
             <Button onClick={handleToggleHidden} variant="outline">
-              {report.isContentHidden ? (
+              {localIsHidden ? (
                 <>
                   <Eye className="mr-2 h-4 w-4" />
                   Unhide

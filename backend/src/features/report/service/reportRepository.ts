@@ -43,7 +43,7 @@ class ReportRepository {
     return await prisma.report.findMany({
       where,
       select: BaseSelectors.report,
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       skip,
       take: limit,
     });

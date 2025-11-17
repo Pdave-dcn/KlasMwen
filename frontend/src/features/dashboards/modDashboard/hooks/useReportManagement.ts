@@ -1,10 +1,11 @@
 import { useCallback } from "react";
 
 import {
-  useDismissReportMutation,
-  useMarkReviewedMutation,
   useToggleVisibilityMutation,
+  useMarkReviewedMutation,
+  useDismissReportMutation,
   useUpdateReportStatusMutation,
+  useDeleteReportMutation,
 } from "@/queries/report.query";
 import type { Report, ReportStatusEnum } from "@/zodSchemas/report.zod";
 
@@ -18,6 +19,7 @@ export const useReportManagement = () => {
   const markReviewedMutation = useMarkReviewedMutation();
   const dismissReportMutation = useDismissReportMutation();
   const updateStatusMutation = useUpdateReportStatusMutation();
+  const deleteReportMutation = useDeleteReportMutation();
 
   /**
    * Helper function to extract resource ID from report
@@ -110,12 +112,25 @@ export const useReportManagement = () => {
     [updateStatusMutation]
   );
 
+  /**
+   * Permanently delete a report
+   * This action cannot be undone
+   * @param reportId - ID of the report to delete
+   */
+  const handleDelete = useCallback(
+    (reportId: number) => {
+      deleteReportMutation.mutate(reportId);
+    },
+    [deleteReportMutation]
+  );
+
   // Check if any mutation is currently in progress
   const isMutating =
     toggleVisibilityMutation.isPending ||
     markReviewedMutation.isPending ||
     dismissReportMutation.isPending ||
-    updateStatusMutation.isPending;
+    updateStatusMutation.isPending ||
+    deleteReportMutation.isPending;
 
   return {
     // Handler functions
@@ -125,6 +140,7 @@ export const useReportManagement = () => {
       handleDismiss,
       handleUpdateStatus,
       handleUpdateNotes,
+      handleDelete,
     },
     // Mutation states for granular control if needed
     mutations: {
@@ -132,6 +148,7 @@ export const useReportManagement = () => {
       markReviewed: markReviewedMutation,
       dismissReport: dismissReportMutation,
       updateStatus: updateStatusMutation,
+      deleteReport: deleteReportMutation,
     },
     // Aggregated loading state
     isMutating,

@@ -7,6 +7,7 @@ import { ReportErrorState } from "@/features/dashboards/modDashboard/components/
 import { ReportFilters as ReportFiltersComponent } from "@/features/dashboards/modDashboard/components/ReportFilters";
 import { ReportModal } from "@/features/dashboards/modDashboard/components/ReportModal";
 import { ReportsTable } from "@/features/dashboards/modDashboard/components/ReportsTable";
+import { ReportsTableSkeleton } from "@/features/dashboards/modDashboard/components/ReportsTableSkeleton";
 import { ReportStatsCards } from "@/features/dashboards/modDashboard/components/ReportStatsCards";
 import { useModalState } from "@/features/dashboards/modDashboard/hooks/useModalState";
 import { usePagination } from "@/features/dashboards/modDashboard/hooks/usePagination";
@@ -63,8 +64,12 @@ const ModDashboard = () => {
     await refetchReasons();
   };
 
-  // Loading state
-  if (reportLoading || reasonLoading) {
+  // Initial loading state (first load only)
+  const isInitialLoading =
+    (reportLoading || reasonLoading) && !reportData && !reportReasons;
+
+  // Show full page skeleton only on initial load
+  if (isInitialLoading) {
     return <DashboardSkeleton />;
   }
 
@@ -110,7 +115,9 @@ const ModDashboard = () => {
 
         {/* Reports Table */}
         <div className="mb-6">
-          {reports.length === 0 ? (
+          {reportLoading ? (
+            <ReportsTableSkeleton />
+          ) : reports.length === 0 ? (
             <EmptyReportsState />
           ) : (
             <ReportsTable
@@ -143,6 +150,7 @@ const ModDashboard = () => {
         onUpdateStatus={handlers.handleUpdateStatus}
         onToggleHidden={handlers.handleToggleHidden}
         onUpdateNotes={handlers.handleUpdateNotes}
+        onDelete={handlers.handleDelete}
       />
     </div>
   );

@@ -85,9 +85,9 @@ const createReport = async (data: CreateReportRequest) => {
 /**
  * Get a report by ID
  */
-const getReportById = async (id: number) => {
+const getReportById = async (reportId: number) => {
   try {
-    const res = await api.get(`/reports/${id}`);
+    const res = await api.get(`/reports/${reportId}`);
 
     const validatedData = ReportSchema.parse(res.data.data);
 
@@ -102,13 +102,13 @@ const getReportById = async (id: number) => {
  * Update report status
  */
 const updateReportStatus = async (
-  id: number,
+  reportId: number,
   data: UpdateReportStatusRequest
 ) => {
   try {
     UpdateReportStatusRequestSchema.parse(data);
 
-    const res = await api.put(`/reports/${id}`, data);
+    const res = await api.put(`/reports/${reportId}`, data);
 
     const validatedData = UpdatedReportResponseSchema.parse(res.data);
 
@@ -122,9 +122,9 @@ const updateReportStatus = async (
 /**
  * Delete a report
  */
-const deleteReport = async (id: number) => {
+const deleteReport = async (reportId: number) => {
   try {
-    const res = await api.delete(`/reports/${id}`);
+    const res = await api.delete(`/reports/${reportId}`);
 
     return res.data;
   } catch (error) {

@@ -78,6 +78,8 @@ const ReportQuerySchema = z.object({
       message: "Limit must be between 1 and 50",
     })
     .default(10),
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
 });
 
 type UpdateStatusData = z.infer<typeof ReportStatusUpdateSchema>;

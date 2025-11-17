@@ -6,12 +6,13 @@ import {
   ReportsResponseSchema,
   ToggleVisibilityRequestSchema,
   UpdateReportStatusRequestSchema,
-  type ReportStatusEnum,
   type CreateReportRequest,
   type UpdateReportStatusRequest,
   type ToggleVisibilityRequest,
   UpdatedReportResponseSchema,
   ReportStatsResponseSchema,
+  type ReportsQueryParams,
+  ReportsQueryParamsSchema,
 } from "@/zodSchemas/report.zod";
 
 import api from "./api";
@@ -46,14 +47,10 @@ const getReportStats = async () => {
 /**
  * Get all reports with optional filters and pagination
  */
-const getAllReports = async (params?: {
-  status?: ReportStatusEnum;
-  postId?: string;
-  commentId?: number;
-  page?: number;
-  limit?: number;
-}) => {
+const getAllReports = async (params?: ReportsQueryParams) => {
   try {
+    ReportsQueryParamsSchema.parse(params);
+
     const res = await api.get("/reports", { params });
 
     const validatedData = ReportsResponseSchema.parse(res.data);

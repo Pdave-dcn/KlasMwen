@@ -12,17 +12,13 @@ import { ReportStatsCards } from "@/features/dashboards/modDashboard/components/
 import { useModalState } from "@/features/dashboards/modDashboard/hooks/useModalState";
 import { usePagination } from "@/features/dashboards/modDashboard/hooks/usePagination";
 import { useReportManagement } from "@/features/dashboards/modDashboard/hooks/useReportManagement";
-import {
-  useReportReasonsQuery,
-  useReportsQuery,
-  type UseReportsQueryParams,
-} from "@/queries/report.query";
-import type { Report } from "@/zodSchemas/report.zod";
+import { useReportReasonsQuery, useReportsQuery } from "@/queries/report.query";
+import type { Report, ReportsQueryParams } from "@/zodSchemas/report.zod";
 
 const ITEMS_PER_PAGE = 10;
 
 const ModDashboard = () => {
-  const [filters, setFilters] = useState<UseReportsQueryParams>({});
+  const [filters, setFilters] = useState<ReportsQueryParams>({});
 
   // Modal state management
   const reportModal = useModalState<Report>();
@@ -82,7 +78,7 @@ const ModDashboard = () => {
   const paginationProps = pagination.getProps();
 
   // Handle filter changes - reset to first page
-  const handleFiltersChange = (newFilters: UseReportsQueryParams) => {
+  const handleFiltersChange = (newFilters: ReportsQueryParams) => {
     setFilters(newFilters);
     pagination.reset();
   };
@@ -137,7 +133,7 @@ const ModDashboard = () => {
           <Pagination
             {...paginationProps}
             itemsPerPage={ITEMS_PER_PAGE}
-            showResultsText={false}
+            showResultsText
           />
         )}
       </div>

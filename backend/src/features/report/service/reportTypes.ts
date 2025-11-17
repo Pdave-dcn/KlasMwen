@@ -1,5 +1,5 @@
 import type { UpdateStatusData } from "../../../zodSchemas/report.zod.js";
-import type { Prisma } from "@prisma/client";
+import type { Prisma, ReportStatus } from "@prisma/client";
 
 const ReportFragments = {
   userBase: {
@@ -110,6 +110,15 @@ type EnrichedReport = Report &
   EnrichedReportWithHiddenState &
   EnrichedReportWithContentTypeField;
 
+interface ReportFilters {
+  status?: ReportStatus;
+  reasonId?: number;
+  postId?: string;
+  commentId?: number;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
 export {
   BaseSelectors,
   type CreateReportData,
@@ -119,4 +128,5 @@ export {
   type EnrichedReportWithHiddenState,
   type EnrichedReportWithContentTypeField,
   type EnrichedReport,
+  type ReportFilters,
 };

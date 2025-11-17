@@ -1,12 +1,14 @@
 import prisma from "../../../core/config/db";
 
+import ReportTransFormer from "./reportTransformer";
 import {
   BaseSelectors,
   type CreateReportData,
   type UpdateStatusData,
+  type ReportFilters,
 } from "./reportTypes";
 
-import type { Prisma, ReportStatus } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 
 class ReportRepository {
   /** Find a single report by ID (admin or internal use) */
@@ -18,23 +20,39 @@ class ReportRepository {
   }
 
   /** Find all reports, optionally filtered by status, postId, or commentId */
+  /* eslint-disable-next-line complexity */
   static async findAll(
-    filters?: {
-      status?: ReportStatus;
-      reasonId?: number;
-      postId?: string;
-      commentId?: number;
-    },
+    filters?: ReportFilters,
     pagination?: {
       page: number;
       limit: number;
     }
   ) {
     const where: Prisma.ReportWhereInput = {};
+
     if (filters?.status) where.status = filters.status;
     if (filters?.reasonId) where.reasonId = filters.reasonId;
     if (filters?.postId) where.postId = filters.postId;
     if (filters?.commentId) where.commentId = filters.commentId;
+
+    // Date filtering
+    if (filters?.dateFrom || filters?.dateTo) {
+      where.createdAt = {};
+
+      if (filters.dateFrom) {
+        // Start of day local time
+        where.createdAt.gte = ReportTransFormer.parseLocalDate(
+          filters.dateFrom
+        );
+      }
+
+      if (filters.dateTo) {
+        // End of day local time
+        const endDate = ReportTransFormer.parseLocalDate(filters.dateTo);
+        endDate.setHours(23, 59, 59, 999);
+        where.createdAt.lte = endDate;
+      }
+    }
 
     const page = pagination?.page ?? 1;
     const limit = pagination?.limit ?? 10;
@@ -101,17 +119,31 @@ class ReportRepository {
   }
 
   /** Count total reports, optionally filtered by status or post/comment */
-  static count(filters?: {
-    status?: ReportStatus;
-    reasonId?: number;
-    postId?: string;
-    commentId?: number;
-  }) {
+  static count(filters?: ReportFilters) {
     const where: Prisma.ReportWhereInput = {};
     if (filters?.status) where.status = filters.status;
     if (filters?.reasonId) where.reasonId = filters.reasonId;
     if (filters?.postId) where.postId = filters.postId;
     if (filters?.commentId) where.commentId = filters.commentId;
+
+    // Date filtering
+    if (filters?.dateFrom || filters?.dateTo) {
+      where.createdAt = {};
+
+      if (filters.dateFrom) {
+        // Start of day local time
+        where.createdAt.gte = ReportTransFormer.parseLocalDate(
+          filters.dateFrom
+        );
+      }
+
+      if (filters.dateTo) {
+        // End of day local time
+        const endDate = ReportTransFormer.parseLocalDate(filters.dateTo);
+        endDate.setHours(23, 59, 59, 999);
+        where.createdAt.lte = endDate;
+      }
+    }
 
     return prisma.report.count({ where });
   }

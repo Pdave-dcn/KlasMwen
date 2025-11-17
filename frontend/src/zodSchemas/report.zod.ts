@@ -97,6 +97,31 @@ const ToggleVisibilityRequestSchema = z.object({
   hidden: z.boolean(),
 });
 
+const ReportsQueryParamsSchema = z
+  .object({
+    status: ReportStatusEnum.optional(),
+    postId: z.string().optional(),
+    commentId: z.number().int().optional(),
+    reasonId: z.number().int().optional(),
+    page: z.number().int().optional(),
+    limit: z.number().int().optional(),
+    dateFrom: z.string().optional(),
+    dateTo: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      // If both dates are provided, dateFrom should be before or equal to dateTo
+      if (data.dateFrom && data.dateTo) {
+        return new Date(data.dateFrom) <= new Date(data.dateTo);
+      }
+      return true;
+    },
+    {
+      message: "dateFrom must be before or equal to dateTo",
+      path: ["dateFrom"],
+    }
+  );
+
 // Type exports
 export type ReportStatusEnum = z.infer<typeof ReportStatusEnum>;
 export type ReportContentTypeEnum = z.infer<typeof ReportContentTypeEnum>;
@@ -115,6 +140,7 @@ export type UpdateReportStatusRequest = z.infer<
 export type ToggleVisibilityRequest = z.infer<
   typeof ToggleVisibilityRequestSchema
 >;
+export type ReportsQueryParams = z.infer<typeof ReportsQueryParamsSchema>;
 
 // Schema exports
 export {
@@ -128,4 +154,5 @@ export {
   CreateReportRequestSchema,
   UpdateReportStatusRequestSchema,
   ToggleVisibilityRequestSchema,
+  ReportsQueryParamsSchema,
 };

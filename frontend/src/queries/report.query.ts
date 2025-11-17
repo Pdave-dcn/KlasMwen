@@ -12,23 +12,23 @@ import {
 } from "@/api/report.api";
 import type {
   Report,
-  ReportStatusEnum,
+  ReportsQueryParams,
   ToggleVisibilityRequest,
   UpdateReportStatusRequest,
 } from "@/zodSchemas/report.zod";
 
-export interface UseReportsQueryParams {
-  status?: ReportStatusEnum;
-  postId?: string;
-  commentId?: number;
-  page?: number;
-  limit?: number;
-  reasonId?: number;
-}
+// export interface UseReportsQueryParams {
+//   status?: ReportStatusEnum;
+//   postId?: string;
+//   commentId?: number;
+//   page?: number;
+//   limit?: number;
+//   reasonId?: number;
+// }
 
 // Query Hooks
 
-const useReportsQuery = (filters?: UseReportsQueryParams) => {
+const useReportsQuery = (filters?: ReportsQueryParams) => {
   const page = filters?.page ?? 1;
 
   return useQuery({

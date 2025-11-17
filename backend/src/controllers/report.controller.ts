@@ -113,6 +113,8 @@ const getAllReports = async (req: Request, res: Response) => {
       reasonId: validatedQuery.reasonId,
       postId: validatedQuery.postId,
       commentId: validatedQuery.commentId,
+      dateFrom: validatedQuery.dateFrom,
+      dateTo: validatedQuery.dateTo,
     };
 
     const pagination = {
@@ -316,7 +318,6 @@ const toggleVisibility = async (req: Request, res: Response) => {
   }
 };
 
-// todo: write tests for this function
 const getReportStats = async (req: Request, res: Response) => {
   const actionLogger = createActionLogger(
     controllerLogger,

@@ -7,8 +7,11 @@ import { autoHideContent } from "../helpers/autoHideContent.js";
 import ReportEnricher from "./reportEnricher.js";
 import ReportRepository from "./reportRepository.js";
 
-import type { CreateReportData, UpdateStatusData } from "./reportTypes.js";
-import type { ReportStatus } from "@prisma/client";
+import type {
+  CreateReportData,
+  ReportFilters,
+  UpdateStatusData,
+} from "./reportTypes.js";
 
 /**
  * Service layer for managing content reports and moderation actions.
@@ -95,12 +98,7 @@ class ReportService {
    * @returns Object containing report data array and pagination metadata
    */
   static async getAllReports(
-    filters?: {
-      status?: ReportStatus;
-      reasonId?: number;
-      postId?: string;
-      commentId?: number;
-    },
+    filters?: ReportFilters,
     pagination?: {
       page: number;
       limit: number;

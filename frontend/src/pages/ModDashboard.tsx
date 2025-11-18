@@ -130,13 +130,24 @@ const ModDashboard = () => {
         </div>
 
         {/* Pagination */}
-        {paginationProps && (
-          <Pagination
-            {...paginationProps}
-            itemsPerPage={ITEMS_PER_PAGE}
-            showResultsText
-          />
-        )}
+        <div className="hidden md:block">
+          {paginationProps && (
+            <Pagination
+              {...paginationProps}
+              itemsPerPage={ITEMS_PER_PAGE}
+              showResultsText
+            />
+          )}
+        </div>
+        <div className="md:hidden">
+          {paginationProps && (
+            <Pagination
+              {...paginationProps}
+              itemsPerPage={ITEMS_PER_PAGE}
+              showResultsText={false}
+            />
+          )}
+        </div>
       </div>
 
       {/* Report Detail Modal */}

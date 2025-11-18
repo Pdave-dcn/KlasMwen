@@ -14,6 +14,7 @@ import {
   LogOut,
   Bookmark,
   Bell,
+  Shield,
 } from "lucide-react";
 
 import { logOut as apiLogOut } from "@/api/auth.api";
@@ -26,6 +27,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/hooks/use-theme";
 import { useAuthStore } from "@/stores/auth.store";
+
+import RequireRole from "../RequireRole";
 
 const navItems = [
   { title: "Home", url: "/home", icon: Home },
@@ -56,7 +59,9 @@ const MobileTabBar = ({ onCreateClick }: { onCreateClick: () => void }) => {
   };
 
   const handleSaved = async () => {
-    await navigate("#");
+    await navigate("/profile/me", {
+      state: { activeTab: "saved" },
+    });
   };
 
   const getThemeIcon = () => {
@@ -134,6 +139,13 @@ const MobileTabBar = ({ onCreateClick }: { onCreateClick: () => void }) => {
               <Menu className="h-6 w-6 mb-0.5" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" side="top" className="w-56 mb-2">
+              <RequireRole allowed={["ADMIN", "MODERATOR"]}>
+                <DropdownMenuItem onClick={() => navigate("/mod/dashboard")}>
+                  <Shield className="mr-2 h-4 w-4" />
+                  <span>Moderation</span>
+                </DropdownMenuItem>
+              </RequireRole>
+
               {/* Profile */}
               <DropdownMenuItem onClick={() => navigate("/profile/me")}>
                 <User className="mr-2 h-4 w-4" />

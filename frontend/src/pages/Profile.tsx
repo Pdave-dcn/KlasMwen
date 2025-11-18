@@ -18,16 +18,21 @@ const Profile = ({ isSelf = false }: { isSelf?: boolean }) => {
 
   const [activeTab, setActiveTab] = useState("posts");
 
+  // useEffect(() => {
+  //   if (location.state?.activeTab) {
+  //     setActiveTab(location.state.activeTab);
+  //     window.history.replaceState({}, document.title);
+  //   }
+  // }, [location.state]);
+
   useEffect(() => {
+    setActiveTab("posts");
+
     if (location.state?.activeTab) {
       setActiveTab(location.state.activeTab);
       window.history.replaceState({}, document.title);
     }
-  }, [location.state]);
-
-  useEffect(() => {
-    setActiveTab("posts");
-  }, [userId, actualSelf]);
+  }, [userId, actualSelf, location.state]);
 
   const { data: user, isLoading, error } = useProfileUser(userId as string);
 

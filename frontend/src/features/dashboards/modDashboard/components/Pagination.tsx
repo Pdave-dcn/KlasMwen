@@ -85,7 +85,11 @@ export const Pagination = ({
         </Button>
 
         {/* Page numbers */}
-        <div className="flex gap-1" role="navigation" aria-label="Pagination">
+        <div
+          className="hidden md:flex gap-1"
+          role="navigation"
+          aria-label="Pagination"
+        >
           {pageNumbers.map((page, index) => {
             if (page === "ellipsis") {
               return (

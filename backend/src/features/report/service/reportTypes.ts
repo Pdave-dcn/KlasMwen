@@ -73,6 +73,12 @@ const BaseSelectors = {
         id: true,
         title: true,
         hidden: true,
+        author: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
       },
     },
     comment: {
@@ -80,6 +86,12 @@ const BaseSelectors = {
         id: true,
         content: true,
         hidden: true,
+        author: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
       },
     },
   } satisfies Prisma.ReportSelect,

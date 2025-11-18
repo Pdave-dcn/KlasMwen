@@ -5,7 +5,7 @@ import { EmptyReportsState } from "@/features/dashboards/modDashboard/components
 import { Pagination } from "@/features/dashboards/modDashboard/components/Pagination";
 import { ReportErrorState } from "@/features/dashboards/modDashboard/components/ReportErrorState";
 import { ReportFilters as ReportFiltersComponent } from "@/features/dashboards/modDashboard/components/ReportFilters/ReportFilters";
-import { ReportModal } from "@/features/dashboards/modDashboard/components/ReportModal";
+import { ReportModal } from "@/features/dashboards/modDashboard/components/ReportModal/ReportModal";
 import { ReportsTable } from "@/features/dashboards/modDashboard/components/ReportsTable";
 import { ReportsTableSkeleton } from "@/features/dashboards/modDashboard/components/ReportsTableSkeleton";
 import { ReportStatsCards } from "@/features/dashboards/modDashboard/components/ReportStatsCards";

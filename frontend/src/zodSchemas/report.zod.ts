@@ -13,14 +13,21 @@ const ReporterSchema = z.object({
   role: RoleSchema,
 });
 
+const ReportedResourceAuthorSchema = z.object({
+  id: z.uuid(),
+  username: z.string(),
+});
+
 const ReportedPostSchema = z.object({
   id: z.uuid(),
   title: z.string(),
+  author: ReportedResourceAuthorSchema,
 });
 
 const ReportedCommentSchema = z.object({
   id: z.number().int(),
   content: z.string(),
+  author: ReportedResourceAuthorSchema,
 });
 
 const ReasonSchema = z.object({

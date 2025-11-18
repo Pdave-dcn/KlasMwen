@@ -60,7 +60,7 @@ const ReportQuerySchema = z.object({
     .regex(/^[0-9]+$/, "Reason ID must contain only digits")
     .transform((val) => parseInt(val, 10))
     .optional(),
-  postId: z.uuid().optional(),
+  postId: z.uuid("Invalid uuid format").optional(),
   commentId: z
     .string()
     .regex(/^[0-9]+$/, "Comment ID must contain only digits")

@@ -123,6 +123,40 @@ const ReportsQueryParamsSchema = z
     }
   );
 
+const ResourceIdSchema = z
+  .object({
+    resourceType: z.enum(["post", "comment", "all"]).optional(),
+    resourceId: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.resourceType || data.resourceType === "all" || !data.resourceId) {
+      return;
+    }
+
+    if (data.resourceType === "post") {
+      // Validate UUID format for posts
+      const uuidRegex =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(data.resourceId)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Post ID must be a valid UUID format",
+          path: ["resourceId"],
+        });
+      }
+    } else if (data.resourceType === "comment") {
+      // Validate number format for comments
+      const commentId = Number(data.resourceId);
+      if (isNaN(commentId) || !Number.isInteger(commentId) || commentId <= 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Comment ID must be a positive integer",
+          path: ["resourceId"],
+        });
+      }
+    }
+  });
+
 // Type exports
 export type ReportStatusEnum = z.infer<typeof ReportStatusEnum>;
 export type ReportContentTypeEnum = z.infer<typeof ReportContentTypeEnum>;
@@ -143,6 +177,8 @@ export type ToggleVisibilityRequest = z.infer<
 >;
 export type ReportsQueryParams = z.infer<typeof ReportsQueryParamsSchema>;
 
+export type ResourceIdFormData = z.infer<typeof ResourceIdSchema>;
+
 // Schema exports
 export {
   ReasonSchema,
@@ -156,4 +192,5 @@ export {
   UpdateReportStatusRequestSchema,
   ToggleVisibilityRequestSchema,
   ReportsQueryParamsSchema,
+  ResourceIdSchema,
 };

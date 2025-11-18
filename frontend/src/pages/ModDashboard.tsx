@@ -53,6 +53,7 @@ const ModDashboard = () => {
     if (reportData?.pagination) {
       pagination.setMeta(reportData.pagination);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reportData?.pagination]);
 
   const handleRetry = async () => {

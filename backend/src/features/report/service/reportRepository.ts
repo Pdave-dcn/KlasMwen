@@ -1,11 +1,9 @@
 import prisma from "../../../core/config/db";
 
-import ReportTransFormer from "./reportTransformer";
 import {
   BaseSelectors,
   type CreateReportData,
   type UpdateStatusData,
-  type ReportFilters,
 } from "./reportTypes";
 
 import type { Prisma } from "@prisma/client";
@@ -21,48 +19,9 @@ class ReportRepository {
 
   /** Find all reports, optionally filtered by status, postId, or commentId */
   static async findAll(
-    filters?: ReportFilters,
-    pagination?: {
-      page: number;
-      limit: number;
-    }
+    where: Prisma.ReportWhereInput,
+    pagination?: { page: number; limit: number }
   ) {
-    const where: Prisma.ReportWhereInput = {};
-
-    if (filters?.status) where.status = filters.status;
-    if (filters?.reasonId) where.reasonId = filters.reasonId;
-    if (filters?.postId) where.postId = filters.postId;
-    if (filters?.commentId) where.commentId = filters.commentId;
-
-    if (filters?.resourceType) {
-      if (filters.resourceType === "post") {
-        where.commentId = null;
-      }
-
-      if (filters.resourceType === "comment") {
-        where.postId = null;
-      }
-    }
-
-    // Date filtering
-    if (filters?.dateFrom || filters?.dateTo) {
-      where.createdAt = {};
-
-      if (filters.dateFrom) {
-        // Start of day local time
-        where.createdAt.gte = ReportTransFormer.parseLocalDate(
-          filters.dateFrom
-        );
-      }
-
-      if (filters.dateTo) {
-        // End of day local time
-        const endDate = ReportTransFormer.parseLocalDate(filters.dateTo);
-        endDate.setHours(23, 59, 59, 999);
-        where.createdAt.lte = endDate;
-      }
-    }
-
     const page = pagination?.page ?? 1;
     const limit = pagination?.limit ?? 10;
     const skip = (page - 1) * limit;
@@ -128,42 +87,7 @@ class ReportRepository {
   }
 
   /** Count total reports, optionally filtered by status or post/comment */
-  static count(filters?: ReportFilters) {
-    const where: Prisma.ReportWhereInput = {};
-    if (filters?.status) where.status = filters.status;
-    if (filters?.reasonId) where.reasonId = filters.reasonId;
-    if (filters?.postId) where.postId = filters.postId;
-    if (filters?.commentId) where.commentId = filters.commentId;
-
-    if (filters?.resourceType) {
-      if (filters.resourceType === "post") {
-        where.commentId = null;
-      }
-
-      if (filters.resourceType === "comment") {
-        where.postId = null;
-      }
-    }
-
-    // Date filtering
-    if (filters?.dateFrom || filters?.dateTo) {
-      where.createdAt = {};
-
-      if (filters.dateFrom) {
-        // Start of day local time
-        where.createdAt.gte = ReportTransFormer.parseLocalDate(
-          filters.dateFrom
-        );
-      }
-
-      if (filters.dateTo) {
-        // End of day local time
-        const endDate = ReportTransFormer.parseLocalDate(filters.dateTo);
-        endDate.setHours(23, 59, 59, 999);
-        where.createdAt.lte = endDate;
-      }
-    }
-
+  static count(where: Prisma.ReportWhereInput) {
     return prisma.report.count({ where });
   }
 

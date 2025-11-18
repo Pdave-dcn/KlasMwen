@@ -6,12 +6,14 @@ import { autoHideContent } from "../helpers/autoHideContent.js";
 
 import ReportEnricher from "./reportEnricher.js";
 import ReportRepository from "./reportRepository.js";
+import ReportTransFormer from "./reportTransformer.js";
 
 import type {
   CreateReportData,
   ReportFilters,
   UpdateStatusData,
 } from "./reportTypes.js";
+import type { Prisma } from "@prisma/client";
 
 /**
  * Service layer for managing content reports and moderation actions.
@@ -47,6 +49,86 @@ class ReportService {
     }
 
     throw new Error("Unsupported content");
+  }
+
+  /**
+   * Builds the Prisma where clause from report filters.
+   */
+  private static buildWhere(filters?: ReportFilters): Prisma.ReportWhereInput {
+    const where: Prisma.ReportWhereInput = {};
+
+    if (!filters) return where;
+
+    // Basic filters
+    if (filters.status) where.status = filters.status;
+    if (filters.reasonId) where.reasonId = filters.reasonId;
+
+    // Resource filters
+    if (filters.resourceType === "post") {
+      where.postId = filters.postId ?? undefined;
+      where.commentId = null;
+    }
+
+    if (filters.resourceType === "comment") {
+      where.commentId = filters.commentId ?? undefined;
+      where.postId = null;
+    }
+
+    // Date filtering
+    if (filters.dateFrom || filters.dateTo) {
+      where.createdAt = {};
+
+      if (filters.dateFrom) {
+        where.createdAt.gte = ReportTransFormer.parseLocalDate(
+          filters.dateFrom
+        );
+      }
+
+      if (filters.dateTo) {
+        const endDate = ReportTransFormer.parseLocalDate(filters.dateTo);
+        endDate.setHours(23, 59, 59, 999);
+        where.createdAt.lte = endDate;
+      }
+    }
+
+    return where;
+  }
+
+  /**
+   * Retrieves all reports with optional filtering and pagination.
+   * Returns paginated results with metadata including total count and page information.
+   * @param filters - Optional filters to narrow down results (status, postId, commentId)
+   * @param pagination - Optional pagination parameters (page number and limit per page)
+   * @returns Object containing report data array and pagination metadata
+   */
+  static async getAllReports(
+    filters?: ReportFilters,
+    pagination?: { page: number; limit: number }
+  ) {
+    const where = this.buildWhere(filters);
+
+    const [reports, total] = await Promise.all([
+      ReportRepository.findAll(where, pagination),
+      ReportRepository.count(where),
+    ]);
+
+    const enrichedReports = ReportEnricher.enrichReports(reports);
+
+    const page = pagination?.page ?? 1;
+    const limit = pagination?.limit ?? 10;
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: enrichedReports,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrevious: page > 1,
+      },
+    };
   }
 
   /**
@@ -88,44 +170,6 @@ class ReportService {
    */
   static async getReportReasons() {
     return await ReportRepository.getActiveReasons();
-  }
-
-  /**
-   * Retrieves all reports with optional filtering and pagination.
-   * Returns paginated results with metadata including total count and page information.
-   * @param filters - Optional filters to narrow down results (status, postId, commentId)
-   * @param pagination - Optional pagination parameters (page number and limit per page)
-   * @returns Object containing report data array and pagination metadata
-   */
-  static async getAllReports(
-    filters?: ReportFilters,
-    pagination?: {
-      page: number;
-      limit: number;
-    }
-  ) {
-    const [reports, total] = await Promise.all([
-      ReportRepository.findAll(filters, pagination),
-      ReportRepository.count(filters),
-    ]);
-
-    const enrichedReports = ReportEnricher.enrichReports(reports);
-
-    const page = pagination?.page ?? 1;
-    const limit = pagination?.limit ?? 10;
-    const totalPages = Math.ceil(total / limit);
-
-    return {
-      data: enrichedReports,
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages,
-        hasNext: page < totalPages,
-        hasPrevious: page > 1,
-      },
-    };
   }
 
   /**

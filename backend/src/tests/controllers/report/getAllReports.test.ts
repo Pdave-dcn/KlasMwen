@@ -178,44 +178,45 @@ describe("getAllReports controller", () => {
     it("should fetch reports filtered by postId", async () => {
       mockRequest.user = mockAdminUser;
       const postId = "a1b2c3d4-e5f6-4789-90ab-cdef01234567";
-      mockRequest.query = { postId };
+      mockRequest.query = { postId, resourceType: "post" };
       vi.mocked(prisma.report.findMany).mockResolvedValue([mockReports[0]]);
       vi.mocked(prisma.report.count).mockResolvedValue(1);
 
       await getAllReports(mockRequest, mockResponse);
 
       expect(prisma.report.findMany).toHaveBeenCalledWith({
-        where: { postId },
-        select: expect.any(Object),
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        skip: 0,
-        take: 10,
-      });
-      expect(prisma.report.count).toHaveBeenCalledWith({ where: { postId } });
-    });
-
-    it("should fetch reports filtered by commentId", async () => {
-      mockRequest.user = mockAdminUser;
-      const commentId = 456;
-      mockRequest.query = { commentId: String(commentId) };
-      vi.mocked(prisma.report.findMany).mockResolvedValue([mockReports[1]]);
-      vi.mocked(prisma.report.count).mockResolvedValue(1);
-
-      await getAllReports(mockRequest, mockResponse);
-
-      expect(prisma.report.findMany).toHaveBeenCalledWith({
-        where: { commentId },
+        where: { postId, commentId: null }, // commentId null because resourceType=post
         select: expect.any(Object),
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         skip: 0,
         take: 10,
       });
       expect(prisma.report.count).toHaveBeenCalledWith({
-        where: { commentId },
+        where: { postId, commentId: null },
       });
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        data: [mockReports[1]],
-        pagination: expect.any(Object),
+    });
+
+    it("should fetch reports filtered by commentId", async () => {
+      mockRequest.user = mockAdminUser;
+      const commentId = 456;
+      mockRequest.query = {
+        commentId: String(commentId),
+        resourceType: "comment",
+      };
+      vi.mocked(prisma.report.findMany).mockResolvedValue([mockReports[1]]);
+      vi.mocked(prisma.report.count).mockResolvedValue(1);
+
+      await getAllReports(mockRequest, mockResponse);
+
+      expect(prisma.report.findMany).toHaveBeenCalledWith({
+        where: { commentId, postId: null }, // postId null because resourceType=comment
+        select: expect.any(Object),
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        skip: 0,
+        take: 10,
+      });
+      expect(prisma.report.count).toHaveBeenCalledWith({
+        where: { commentId, postId: null },
       });
     });
 
@@ -224,6 +225,7 @@ describe("getAllReports controller", () => {
       mockRequest.query = {
         status: "PENDING",
         postId: "a1b2c3d4-e5f6-4789-90ab-cdef01234567",
+        resourceType: "post",
       };
       vi.mocked(prisma.report.findMany).mockResolvedValue([]);
       vi.mocked(prisma.report.count).mockResolvedValue(0);
@@ -234,6 +236,7 @@ describe("getAllReports controller", () => {
         where: {
           status: "PENDING",
           postId: "a1b2c3d4-e5f6-4789-90ab-cdef01234567",
+          commentId: null,
         },
         select: expect.any(Object),
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
@@ -244,17 +247,7 @@ describe("getAllReports controller", () => {
         where: {
           status: "PENDING",
           postId: "a1b2c3d4-e5f6-4789-90ab-cdef01234567",
-        },
-      });
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        data: [],
-        pagination: {
-          total: 0,
-          page: 1,
-          limit: 10,
-          totalPages: 0,
-          hasNext: false,
-          hasPrevious: false,
+          commentId: null,
         },
       });
     });

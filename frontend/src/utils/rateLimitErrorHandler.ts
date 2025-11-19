@@ -1,4 +1,3 @@
-// src/utils/handleRateLimitError.ts
 import { toast } from "sonner";
 
 import type { AxiosError } from "axios";
@@ -42,6 +41,10 @@ export const handleRateLimitError = (
       "You've made too many login attempts. Please wait 15 minutes before trying again.",
     "auth.register":
       "You've made too many signup attempts. Please wait 1 hour before trying again.",
+    "report.create":
+      "Too many reports submitted. You can report up to 5 items per hour. Please try again later.",
+    "report.moderation":
+      "Moderation action limit reached. You can perform up to 50 moderation actions per hour. Please try again later.",
 
     default: "Too Many Requests. Please slow down.",
   };

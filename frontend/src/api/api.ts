@@ -55,6 +55,12 @@ function getRequestContext(error: AxiosError): string {
   if (url.includes("/auth/login") && method === "post") return "auth.login";
   if (url.includes("/auth/register") && method === "post")
     return "auth.register";
+  if (url.includes("/reports") && method === "post") return "report.create";
+  if (
+    url.includes("/reports") &&
+    (method === "patch" || method === "put" || method === "delete")
+  )
+    return "report.moderation";
 
   return "default";
 }

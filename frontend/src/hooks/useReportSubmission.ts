@@ -16,7 +16,7 @@ interface UseReportSubmissionReturn {
  * Hook for handling the submission of a report (e.g., for a post or comment).
  * It manages the submission logic, authentication checks and resource ID validation.
  *
- * @return {*}  {UseReportSubmissionReturn} An object containing:
+ * @return {UseReportSubmissionReturn} An object containing:
  * - **handleSubmit**: A function to trigger the report submission. It takes the `reasonId` as an argument.
  * - **isSubmitting**: A boolean indicating if the report submission is currently in progress.
  * - **isError**: A boolean indicating if the last report submission resulted in an error.

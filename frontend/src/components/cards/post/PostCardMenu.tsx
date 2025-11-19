@@ -24,6 +24,7 @@ import type { User } from "@/lib/permissions/types";
 import { useToggleBookmarkMutation } from "@/queries/useBookmarkMutation";
 import { useDeletePostMutation } from "@/queries/usePosts";
 import { usePostEditStore } from "@/stores/postEdit.store";
+import { useReportModalStore } from "@/stores/reportModal.store";
 import { formatTimeRemaining } from "@/utils/dateFormatter.util";
 import type { Post } from "@/zodSchemas/post.zod";
 
@@ -78,6 +79,7 @@ const PostCardMenu = ({ post, user }: PostCardMenuProps) => {
   }, [post]);
 
   const { openEditForm } = usePostEditStore();
+  const { openReportModal } = useReportModalStore();
 
   const deletePostMutation = useDeletePostMutation(post.id);
   const toggleBookmarkMutation = useToggleBookmarkMutation(post.id, false);
@@ -100,6 +102,11 @@ const PostCardMenu = ({ post, user }: PostCardMenuProps) => {
   const handleBookmark = (e: React.MouseEvent) => {
     e.stopPropagation();
     toggleBookmarkMutation.mutate();
+  };
+
+  const handleReport = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    openReportModal(post.id);
   };
 
   return (
@@ -142,7 +149,7 @@ const PostCardMenu = ({ post, user }: PostCardMenuProps) => {
           </DropdownMenuItem>
         )}
         {hasPermission(user, "posts", "report", post) && (
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={(e) => handleReport(e)}>
             <TriangleAlert className="text-destructive" />
             <span className="text-destructive font-bold">Report</span>
           </DropdownMenuItem>

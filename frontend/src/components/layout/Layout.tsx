@@ -5,8 +5,12 @@ import { useLocation } from "react-router-dom";
 import PostCreationForm from "@/features/PostCreation/components/postForm/PostCreationForm";
 import PostTypeSelector from "@/features/PostCreation/components/PostTypeSelector";
 import PostEditForm from "@/features/postEdit/components/PostEditForm";
+import { useReportSubmission } from "@/hooks/useReportSubmission";
 import { usePostEditStore } from "@/stores/postEdit.store";
+import { useReportModalStore } from "@/stores/reportModal.store";
 import type { PostType } from "@/zodSchemas/post.zod";
+
+import { ReportDialog } from "../ReportDialog";
 
 import MobileTabBar from "./MobileTabBar";
 import Sidebar from "./Sidebar";
@@ -21,6 +25,13 @@ const Layout = ({ children }: LayoutProps) => {
   const [showPostCreationForm, setShowPostCreationForm] = useState(false);
 
   const { isOpen, closeEditForm } = usePostEditStore();
+  const {
+    isOpen: isReportModalOpen,
+    contentType,
+    closeReportModal,
+  } = useReportModalStore();
+  const { handleSubmit: handleReportSubmit } = useReportSubmission();
+
   const location = useLocation();
 
   // Check if current route is moderation dashboard
@@ -73,6 +84,13 @@ const Layout = ({ children }: LayoutProps) => {
       />
 
       <PostEditForm open={isOpen} onClose={closeEditForm} />
+
+      <ReportDialog
+        isOpen={isReportModalOpen}
+        onClose={closeReportModal}
+        onSubmit={handleReportSubmit}
+        contentType={contentType}
+      />
     </div>
   );
 };

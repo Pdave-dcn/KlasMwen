@@ -12,6 +12,7 @@ import {
 import { hasPermission } from "@/lib/permissions";
 import type { User } from "@/lib/permissions/types";
 import { useDeleteCommentMutation } from "@/queries/useComment";
+import { useReportModalStore } from "@/stores/reportModal.store";
 import type { Comment, Reply } from "@/zodSchemas/comment.zod";
 
 interface CommentCardMenuProps {
@@ -20,11 +21,18 @@ interface CommentCardMenuProps {
 }
 
 const CommentCardMenu = ({ comment, user }: CommentCardMenuProps) => {
+  const { openReportModal } = useReportModalStore();
+
   const deleteCommentMutation = useDeleteCommentMutation(comment.id);
 
   const handleDeleteComment = (e: React.MouseEvent) => {
     e.stopPropagation();
     deleteCommentMutation.mutate();
+  };
+
+  const handleReportComment = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    openReportModal(comment.id);
   };
 
   return (
@@ -44,7 +52,7 @@ const CommentCardMenu = ({ comment, user }: CommentCardMenuProps) => {
         )}
 
         {hasPermission(user, "comments", "report", comment) && (
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={(e) => handleReportComment(e)}>
             <TriangleAlert className="text-destructive" />
             <span className="text-destructive font-bold">Report</span>
           </DropdownMenuItem>

@@ -158,7 +158,7 @@ const CommentCard = ({ postId }: CommentCardProps) => {
                           className="text-xs text-muted-foreground flex items-center gap-4 hover:cursor-pointer"
                           onClick={() => toggleReplies(comment.id)}
                         >
-                          <span className="h-[1px] w-10 bg-muted-foreground" />
+                          <span className="h-px w-10 bg-muted-foreground" />
                           <span className="hover:underline">
                             {openReplies.has(comment.id)
                               ? "Hide replies"

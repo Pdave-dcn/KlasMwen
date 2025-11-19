@@ -17,15 +17,6 @@ import type {
   UpdateReportStatusRequest,
 } from "@/zodSchemas/report.zod";
 
-// export interface UseReportsQueryParams {
-//   status?: ReportStatusEnum;
-//   postId?: string;
-//   commentId?: number;
-//   page?: number;
-//   limit?: number;
-//   reasonId?: number;
-// }
-
 // Query Hooks
 
 const useReportsQuery = (filters?: ReportsQueryParams) => {
@@ -45,6 +36,7 @@ const useReportReasonsQuery = () => {
   return useQuery({
     queryKey: ["reports", "reasons"],
     queryFn: getReportReasons,
+    staleTime: 24 * 60 * 60 * 1000,
   });
 };
 
@@ -269,14 +261,8 @@ const useCreateReportMutation = () => {
         description: "Thank you for helping keep our community safe",
       });
 
-      // Invalidate to refetch reports and stats
       await queryClient.invalidateQueries({ queryKey: ["reports", "fetch"] });
       await queryClient.invalidateQueries({ queryKey: ["reports", "stats"] });
-    },
-    onError: (_error) => {
-      toast.error("Failed to submit report", {
-        description: "Please try again later",
-      });
     },
   });
 };

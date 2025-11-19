@@ -185,6 +185,7 @@ export type ToggleVisibilityRequest = z.infer<
 export type ReportsQueryParams = z.infer<typeof ReportsQueryParamsSchema>;
 
 export type ResourceIdFormData = z.infer<typeof ResourceIdSchema>;
+export type ResourceType = z.infer<typeof ResourceTypeEnum>;
 
 // Schema exports
 export {

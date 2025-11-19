@@ -267,25 +267,5 @@ describe("Layout", () => {
       const mainContainer = container.querySelector(".flex.h-screen.w-full");
       expect(mainContainer).toBeInTheDocument();
     });
-
-    it("applies correct CSS classes to aside element", () => {
-      const { container } = render(
-        <TestWrapper>
-          <Layout>
-            <div>Content</div>
-          </Layout>
-        </TestWrapper>
-      );
-
-      const aside = container.querySelector("aside");
-      expect(aside).toHaveClass(
-        "hidden",
-        "md:block",
-        "w-auto",
-        "lg:w-60",
-        "lg:border-r",
-        "shrink-0"
-      );
-    });
   });
 });

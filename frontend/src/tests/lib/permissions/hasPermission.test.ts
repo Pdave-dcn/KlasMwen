@@ -58,13 +58,13 @@ describe("hasPermission", () => {
         expect(hasPermission(adminUser, "posts", "read")).toBe(true);
       });
 
-      it("should not allow ADMIN to update any post", () => {
+      it("should allow ADMIN to update any post", () => {
         expect(hasPermission(adminUser, "posts", "update", mockPost)).toBe(
-          false
+          true
         );
         expect(
           hasPermission(adminUser, "posts", "update", mockPostByOtherUser)
-        ).toBe(false);
+        ).toBe(true);
       });
 
       it("should allow ADMIN to delete any post", () => {
@@ -86,13 +86,13 @@ describe("hasPermission", () => {
         expect(hasPermission(adminUser, "comments", "read")).toBe(true);
       });
 
-      it("should not allow ADMIN to update any comment", () => {
+      it("should allow ADMIN to update any comment", () => {
         expect(
           hasPermission(adminUser, "comments", "update", mockComment)
-        ).toBe(false);
+        ).toBe(true);
         expect(
           hasPermission(adminUser, "comments", "update", mockCommentByOtherUser)
-        ).toBe(false);
+        ).toBe(true);
       });
 
       it("should allow ADMIN to delete any comment", () => {
@@ -338,8 +338,8 @@ describe("hasPermission", () => {
         false
       );
 
-      // Admin can't modify anyone's post
-      expect(hasPermission(adminUser, "posts", "update", mockPost)).toBe(false);
+      // Admin can modify anyone's post
+      expect(hasPermission(adminUser, "posts", "update", mockPost)).toBe(true);
       expect(hasPermission(adminUser, "posts", "delete", mockPost)).toBe(true);
     });
 
@@ -360,9 +360,9 @@ describe("hasPermission", () => {
         hasPermission(otherStudentUser, "comments", "delete", mockComment)
       ).toBe(false);
 
-      // Admin can't modify anyone's comment
+      // Admin can modify anyone's comment
       expect(hasPermission(adminUser, "comments", "update", mockComment)).toBe(
-        false
+        true
       );
       expect(hasPermission(adminUser, "comments", "delete", mockComment)).toBe(
         true

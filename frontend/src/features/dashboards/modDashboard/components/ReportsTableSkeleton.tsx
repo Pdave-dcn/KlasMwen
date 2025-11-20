@@ -2,7 +2,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export const ReportsTableSkeleton = () => {
   return (
-    <div className="bg-card border border-border rounded-lg overflow-hidden">
+    <div
+      className="bg-card border border-border rounded-lg overflow-hidden"
+      data-testid="reports-table-skeleton"
+    >
       <div className="overflow-x-auto">
         <table className="w-full">
           {/* Table Header */}

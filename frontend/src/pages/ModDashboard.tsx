@@ -61,7 +61,7 @@ const ModDashboard = () => {
     await refetchReasons();
   };
 
-  // Initial loading state (first load only)
+  // Initial loading state
   const isInitialLoading =
     (reportLoading || reasonLoading) && !reportData && !reportReasons;
 
@@ -70,7 +70,6 @@ const ModDashboard = () => {
     return <DashboardSkeleton />;
   }
 
-  // Error state
   if (reportError || reasonError) {
     return <ReportErrorState onRetry={handleRetry} />;
   }
@@ -85,7 +84,7 @@ const ModDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border bg-card">
         <div className="container mx-auto px-6 py-8">
@@ -160,7 +159,7 @@ const ModDashboard = () => {
         onUpdateNotes={handlers.handleUpdateNotes}
         onDelete={handlers.handleDelete}
       />
-    </div>
+    </main>
   );
 };
 

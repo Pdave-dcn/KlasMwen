@@ -56,6 +56,7 @@ export const Pagination = ({
   return (
     <div
       className={`flex items-center justify-between bg-card border border-border rounded-lg px-6 py-4 ${className}`}
+      data-testid="pagination"
     >
       {/* Results text */}
       {showResultsText && (

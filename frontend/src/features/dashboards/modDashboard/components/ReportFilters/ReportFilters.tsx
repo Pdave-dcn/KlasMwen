@@ -80,7 +80,10 @@ export const ReportFilters = ({
   }, [filters.resourceType, filters.commentId, filters.postId, setValue]);
 
   return (
-    <div className="bg-card border border-border rounded-lg p-6">
+    <div
+      className="bg-card border border-border rounded-lg p-6"
+      data-testid="report-filters"
+    >
       <h2 className="text-lg font-semibold mb-4">Filters</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

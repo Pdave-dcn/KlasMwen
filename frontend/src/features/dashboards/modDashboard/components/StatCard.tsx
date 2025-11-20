@@ -30,7 +30,10 @@ export const StatCard = ({
   };
 
   return (
-    <Card className={`p-6 ${variantStyles[variant]}`}>
+    <Card
+      className={`p-6 ${variantStyles[variant]}`}
+      data-testid="report-stats-cards"
+    >
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-muted-foreground">{title}</p>

@@ -2,7 +2,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export const DashboardSkeleton = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <main
+      className="min-h-screen bg-background"
+      data-testid="dashboard-skeleton"
+    >
       {/* Header Skeleton */}
       <div className="border-b border-border bg-card">
         <div className="container mx-auto px-6 py-8">
@@ -102,6 +105,6 @@ export const DashboardSkeleton = () => {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 };

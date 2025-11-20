@@ -8,7 +8,10 @@ interface ErrorStateProps {
 
 export const ReportErrorState = ({ onRetry }: ErrorStateProps) => {
   return (
-    <div className="w-full h-full min-h-[400px] flex items-center justify-center p-6">
+    <main
+      className="w-full h-full min-h-[400px] flex items-center justify-center p-6"
+      data-testid="report-error-state"
+    >
       <div className="text-center space-y-4">
         <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
         <div className="space-y-2">
@@ -22,6 +25,6 @@ export const ReportErrorState = ({ onRetry }: ErrorStateProps) => {
           </Button>
         )}
       </div>
-    </div>
+    </main>
   );
 };

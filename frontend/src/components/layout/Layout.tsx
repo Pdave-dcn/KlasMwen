@@ -1,14 +1,12 @@
-import { useState } from "react";
-
 import { useLocation } from "react-router-dom";
 
 import PostCreationForm from "@/features/PostCreation/components/postForm/PostCreationForm";
 import PostTypeSelector from "@/features/PostCreation/components/PostTypeSelector";
 import PostEditForm from "@/features/postEdit/components/PostEditForm";
+import { usePostCreationFlow } from "@/hooks/usePostCreationFlow";
 import { useReportSubmission } from "@/hooks/useReportSubmission";
 import { usePostEditStore } from "@/stores/postEdit.store";
 import { useReportModalStore } from "@/stores/reportModal.store";
-import type { PostType } from "@/zodSchemas/post.zod";
 
 import { ReportDialog } from "../ReportDialog";
 
@@ -20,33 +18,29 @@ interface LayoutProps {
 }
 
 const Layout = ({ children }: LayoutProps) => {
-  const [showTypeSelector, setShowTypeSelector] = useState(false);
-  const [selectedType, setSelectedType] = useState<PostType | null>(null);
-  const [showPostCreationForm, setShowPostCreationForm] = useState(false);
+  const {
+    isPostTypeModalOpen,
+    isPostCreationModalOpen,
+    postType,
+    openPostTypeModal,
+    selectPostType,
+    close,
+  } = usePostCreationFlow();
 
   const { isOpen, closeEditForm } = usePostEditStore();
+
   const {
     isOpen: isReportModalOpen,
     contentType,
     closeReportModal,
   } = useReportModalStore();
+
   const { handleSubmit: handleReportSubmit } = useReportSubmission();
 
   const location = useLocation();
 
   // Check if current route is moderation dashboard
   const isModDashboard = location.pathname.startsWith("/mod/dashboard");
-
-  const handleTypeSelect = (type: PostType) => {
-    setSelectedType(type);
-    setShowTypeSelector(false);
-    setShowPostCreationForm(true);
-  };
-
-  const handlePostCreationFormClose = () => {
-    setShowPostCreationForm(false);
-    setSelectedType(null);
-  };
 
   return (
     <div className="flex h-screen w-full">
@@ -56,31 +50,23 @@ const Layout = ({ children }: LayoutProps) => {
           ${isModDashboard ? "md:w-auto lg:w-auto" : "md:w-auto lg:w-60"}
         `}
       >
-        <Sidebar
-          onCreateClick={() => {
-            setShowTypeSelector(true);
-          }}
-        />
+        <Sidebar onCreateClick={openPostTypeModal} />
       </aside>
 
       <div className="flex-1 overflow-auto pb-10 md:pb-0">{children}</div>
 
-      <MobileTabBar
-        onCreateClick={() => {
-          setShowTypeSelector(true);
-        }}
-      />
+      <MobileTabBar onCreateClick={openPostTypeModal} />
 
       <PostTypeSelector
-        open={showTypeSelector}
-        onSelect={handleTypeSelect}
-        onClose={() => setShowTypeSelector(false)}
+        open={isPostTypeModalOpen}
+        onSelect={selectPostType}
+        onClose={close}
       />
 
       <PostCreationForm
-        open={showPostCreationForm}
-        onClose={handlePostCreationFormClose}
-        postType={selectedType}
+        open={isPostCreationModalOpen}
+        onClose={close}
+        postType={postType}
       />
 
       <PostEditForm open={isOpen} onClose={closeEditForm} />

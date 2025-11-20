@@ -4,7 +4,7 @@ import { handleError } from "../core/error/index.js";
 import CommentService from "../features/comments/service/CommentService.js";
 import PostService from "../features/posts/service/PostService.js";
 import ReportService from "../features/report/service/ReportService.js";
-import { checkAdminAuth, ensureAuthenticated } from "../utils/auth.util.js";
+import { checkModeratorAuth, ensureAuthenticated } from "../utils/auth.util.js";
 import createActionLogger from "../utils/logger.util.js";
 import {
   ReportCreationDataSchema,
@@ -104,7 +104,7 @@ const getAllReports = async (req: Request, res: Response) => {
     actionLogger.info("Fetching all reports");
     const startTime = Date.now();
 
-    checkAdminAuth(req.user);
+    checkModeratorAuth(req.user);
 
     const validatedQuery = ReportQuerySchema.parse(req.query);
 
@@ -161,7 +161,7 @@ const getReportById = async (req: Request, res: Response) => {
     actionLogger.info("Fetching report by ID");
     const startTime = Date.now();
 
-    checkAdminAuth(req.user);
+    checkModeratorAuth(req.user);
     const { id: reportId } = ReportIdParamSchema.parse(req.params);
     actionLogger.info("User authorized and report ID parsed");
 
@@ -198,7 +198,7 @@ const updateReportStatus = async (req: Request, res: Response) => {
     actionLogger.info("Report status update attempt started");
     const startTime = Date.now();
 
-    checkAdminAuth(req.user);
+    checkModeratorAuth(req.user);
     const { id: reportId } = ReportIdParamSchema.parse(req.params);
     const validatedData = ReportStatusUpdateSchema.parse(req.body);
     actionLogger.info("User authorized, report ID and data validated");
@@ -243,7 +243,7 @@ const deleteReport = async (req: Request, res: Response) => {
     actionLogger.info("Report deletion attempt started");
     const startTime = Date.now();
 
-    checkAdminAuth(req.user);
+    checkModeratorAuth(req.user);
     const { id: reportId } = ReportIdParamSchema.parse(req.params);
     actionLogger.info("User authorized and report ID parsed");
 
@@ -283,7 +283,7 @@ const toggleVisibility = async (req: Request, res: Response) => {
     actionLogger.info("Moderator requested visibility toggle");
     const startTime = Date.now();
 
-    checkAdminAuth(req.user);
+    checkModeratorAuth(req.user);
     const { resourceType, resourceId, hidden } = ToggleVisibilitySchema.parse(
       req.body
     );
@@ -330,7 +330,7 @@ const getReportStats = async (req: Request, res: Response) => {
     actionLogger.info("Fetching report statistics");
     const startTime = Date.now();
 
-    checkAdminAuth(req.user);
+    checkModeratorAuth(req.user);
     actionLogger.info("User authorized");
 
     actionLogger.debug("Processing report stats fetching");

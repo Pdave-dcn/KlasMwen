@@ -21,6 +21,23 @@ const checkAdminAuth = (user: Express.User | undefined): boolean => {
 };
 
 /**
+ * Checks if the provided user object has either "ADMIN" or "MODERATOR" role.
+ * This guard ensures only users with moderation privileges can perform certain actions.
+ *
+ * @param {(Express.User | undefined)} user - The Express user object to check.
+ * @returns {boolean} True if the user is either an "ADMIN" or "MODERATOR".
+ * @throws {AuthorizationError} If the user is neither an admin nor a moderator.
+ */
+const checkModeratorAuth = (user: Express.User | undefined): boolean => {
+  if (user?.role !== "ADMIN" && user?.role !== "MODERATOR") {
+    throw new AuthorizationError(
+      "Access denied. Admin or Moderator role required."
+    );
+  }
+  return true;
+};
+
+/**
  * Ensures that the incoming request has an authenticated user with a valid ID.
  * Validates both the presence of the user object and that it contains the required ID field.
  *
@@ -45,4 +62,4 @@ const ensureAuthenticated = (req: Request) => {
   return req.user;
 };
 
-export { checkAdminAuth, ensureAuthenticated };
+export { checkAdminAuth, checkModeratorAuth, ensureAuthenticated };

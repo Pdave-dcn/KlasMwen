@@ -19,6 +19,57 @@ It empowers students to learn, share, and grow together in a community **built b
 
 ---
 
+## Key Features
+
+KlasMwen includes a rich set of features designed to create a safe, collaborative, and student-friendly learning environment.
+
+### Social & Learning Experience
+
+- Create posts, ask questions, and share study notes
+- Comment threads with nested replies
+- Markdown support for clean, rich content
+- Tag-based categorization and filtering
+- Bookmarking and reactions (likes)
+
+### Resource Sharing
+
+- Upload and download files (PDF, DOCX, XLSX, eBooks, images, etc.)
+- Cloud storage via Cloudinary
+- Automatic file metadata extraction
+
+### Authentication & Access Control
+
+- JWT-based authentication (http-only cookies)
+- Role-Based Access Control (User, Moderator, Admin)
+- Secure password handling and session validation
+- Avatar selection from a predefined set (DiceBear)
+
+### Safety & Moderation
+
+- User reporting system (posts + comments)
+- Moderation dashboard for viewing and managing reports
+- Content flagging and review flow
+- Rate limiting (Express Rate Limit) to stop spamming and abuse
+- Validation on every request using Zod
+- Structured logging and auditability using Pino
+
+### Performance & Reliability
+
+- Server-state caching with TanStack Query
+- Optimistic UI updates
+- Debounced search and API calls
+- Efficient file uploads using Multer + Cloudinary
+- Prisma ORM for reliable, type-safe database access
+
+### Developer Experience
+
+- Fully typed frontend + backend (TypeScript everywhere)
+- Swagger/OpenAPI documentation for endpoints
+- Vitest tests for frontend and backend
+- Monorepo setup with shared tooling
+
+---
+
 ## Screenshots
 
 ![Landing Page](./docs/screenshots/desktop-landingpage.png)
@@ -29,9 +80,7 @@ It empowers students to learn, share, and grow together in a community **built b
 
 ![Avatar Selection modal](./docs/screenshots/avatar-selection-dark.png)
 
-![Tablet Version](./docs/screenshots/tablet-feed-dark.png)
-
-![Mobile version](./docs/screenshots/mobile-search-dark.png)
+![Report Dashboard](./docs/screenshots/report-dashboard.png)
 
 ## Live Demo
 
@@ -254,6 +303,7 @@ KlasMwen is a monorepo with **frontend**, **backend**, and **PostgreSQL** databa
 | Tags      | Fetch tags, admin management              | `GET /tags/popular`, `POST /tags (Admin)`                |
 | Avatars   | Retrieve & manage avatars                 | `GET /avatars/available`, `DELETE /avatars/{id} (Admin)` |
 | Search    | Search posts                              | `GET /search/posts`                                      |
+| Report    | Moderation operations                     | `GET /reports`, `GET /reports/reasons`                   |
 
 ---
 

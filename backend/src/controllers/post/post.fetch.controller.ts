@@ -3,7 +3,7 @@ import axios from "axios";
 import { createLogger } from "../../core/config/logger";
 import { handleError } from "../../core/error";
 import PostService from "../../features/posts/service/PostService";
-import { checkAdminAuth, ensureAuthenticated } from "../../utils/auth.util";
+import { ensureAuthenticated } from "../../utils/auth.util";
 import createActionLogger from "../../utils/logger.util";
 import { uuidPaginationSchema } from "../../utils/pagination.util";
 import { PostIdParamSchema } from "../../zodSchemas/post.zod";
@@ -231,59 +231,4 @@ const downloadResource = async (req: Request, res: Response) => {
   }
 };
 
-const getPostMetadata = async (req: Request, res: Response) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "getPostMetadata",
-    req
-  );
-
-  try {
-    actionLogger.info("Fetching post metadata (admin only)");
-    const startTime = Date.now();
-
-    if (!checkAdminAuth(req.user)) {
-      actionLogger.warn(
-        { userId: req.user?.id, userRole: req.user?.role },
-        "Non-admin user attempted to access post metadata"
-      );
-      return res.status(403).json({ message: "Admin access required" });
-    }
-
-    actionLogger.info({ adminUserId: req.user?.id }, "Admin access verified");
-
-    const { id: postId } = PostIdParamSchema.parse(req.params);
-    actionLogger.debug({ postId }, "Post ID parameter parsed");
-
-    actionLogger.debug("Processing user post metadata request");
-    const serviceStartTime = Date.now();
-    const post = await PostService.getPostMetadata(postId);
-    const serviceDuration = Date.now() - serviceStartTime;
-
-    const totalDuration = Date.now() - startTime;
-    actionLogger.info(
-      {
-        postId: post.id,
-        postType: post.type,
-        authorId: post.authorId,
-        authorEmail: post.author.email,
-        adminUserId: req.user?.id,
-        serviceDuration,
-        totalDuration,
-      },
-      "Post metadata retrieved successfully"
-    );
-
-    return res.status(200).json({ data: post });
-  } catch (error: unknown) {
-    return handleError(error, res);
-  }
-};
-
-export {
-  getAllPosts,
-  getPostById,
-  getPostForEdit,
-  getPostMetadata,
-  downloadResource,
-};
+export { getAllPosts, getPostById, getPostForEdit, downloadResource };

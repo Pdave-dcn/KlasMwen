@@ -37,11 +37,7 @@ const updatePost = async (req: Request, res: Response) => {
 
     actionLogger.debug("Executing post update");
     const serviceStartTime = Date.now();
-    const result = await PostService.handlePostUpdate(
-      validatedData,
-      postId,
-      user
-    );
+    const result = await PostService.updatePost(validatedData, postId, user);
     if (!result) return;
     const serviceDuration = Date.now() - serviceStartTime;
 

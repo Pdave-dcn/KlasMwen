@@ -291,7 +291,7 @@ const toggleVisibility = async (req: Request, res: Response) => {
 
     actionLogger.debug("Starting database operation");
     if (resourceType === "post") {
-      await PostService.postExists(resourceId as string);
+      await PostService.verifyPostExists(resourceId as string);
       await prisma.post.update({
         where: { id: resourceId as string },
         data: { hidden },

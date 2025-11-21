@@ -1,5 +1,3 @@
-import { mock } from "node:test";
-
 import { Request, Response } from "express";
 
 import { updatePost } from "../../../controllers/post/post.update.controller";
@@ -136,6 +134,7 @@ describe("updatePost controller", () => {
 
       await updatePost(mockReq, mockRes);
 
+      expect(handleError).not.toHaveBeenCalled();
       expect(prisma.post.findUnique).toHaveBeenCalled();
 
       expect(mockRes.status).toHaveBeenCalledWith(200);

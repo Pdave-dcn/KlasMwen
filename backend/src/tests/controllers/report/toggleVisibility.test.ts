@@ -76,7 +76,7 @@ describe("toggleVisibility controller", () => {
     mockResponse = createMockResponse();
     vi.clearAllMocks();
 
-    mockPostService.postExists.mockResolvedValue({
+    mockPostService.verifyPostExists.mockResolvedValue({
       type: "NOTE" as const,
       id: mockPostId,
       createdAt: new Date(),
@@ -113,7 +113,7 @@ describe("toggleVisibility controller", () => {
 
       await toggleVisibility(mockRequest, mockResponse);
 
-      expect(mockPostService.postExists).toHaveBeenCalledWith(
+      expect(mockPostService.verifyPostExists).toHaveBeenCalledWith(
         mockPostData.resourceId
       );
       expect(mockCommentService.commentExists).not.toHaveBeenCalled();
@@ -146,7 +146,7 @@ describe("toggleVisibility controller", () => {
 
       await toggleVisibility(mockRequest, mockResponse);
 
-      expect(mockPostService.postExists).not.toHaveBeenCalled();
+      expect(mockPostService.verifyPostExists).not.toHaveBeenCalled();
       expect(mockCommentService.commentExists).toHaveBeenCalledWith(
         mockCommentData.resourceId
       );
@@ -178,7 +178,7 @@ describe("toggleVisibility controller", () => {
         expect.any(AuthorizationError),
         mockResponse
       );
-      expect(mockPostService.postExists).not.toHaveBeenCalled();
+      expect(mockPostService.verifyPostExists).not.toHaveBeenCalled();
       expect(prisma.post.update).not.toHaveBeenCalled();
     });
 
@@ -193,7 +193,7 @@ describe("toggleVisibility controller", () => {
         expect.any(ZodError),
         mockResponse
       );
-      expect(mockPostService.postExists).not.toHaveBeenCalled();
+      expect(mockPostService.verifyPostExists).not.toHaveBeenCalled();
       expect(prisma.post.update).not.toHaveBeenCalled();
     });
 
@@ -209,13 +209,13 @@ describe("toggleVisibility controller", () => {
 
       const notFoundError = new Error("Post not found");
       // Mock existence check to reject
-      mockPostService.postExists.mockRejectedValue(notFoundError);
+      mockPostService.verifyPostExists.mockRejectedValue(notFoundError);
 
       // Execute
       await toggleVisibility(mockRequest, mockResponse);
 
       // Assertions
-      expect(mockPostService.postExists).toHaveBeenCalledWith(
+      expect(mockPostService.verifyPostExists).toHaveBeenCalledWith(
         mockPostData.resourceId
       );
       expect(prisma.post.update).not.toHaveBeenCalled();
@@ -267,7 +267,7 @@ describe("toggleVisibility controller", () => {
       await toggleVisibility(mockRequest, mockResponse);
 
       // Assertions
-      expect(mockPostService.postExists).toHaveBeenCalled(); // Existence check passed
+      expect(mockPostService.verifyPostExists).toHaveBeenCalled(); // Existence check passed
       expect(prisma.post.update).toHaveBeenCalled();
       expect(handleError).toHaveBeenCalledWith(dbError, mockResponse);
       expect(mockResponse.status).not.toHaveBeenCalled();

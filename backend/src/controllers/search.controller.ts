@@ -44,7 +44,7 @@ const searchPosts = async (req: Request, res: Response) => {
 
     actionLogger.debug("Executing post search");
     const serviceStartTime = Date.now();
-    const result = await PostService.getSearchedPosts(
+    const result = await PostService.searchPosts(
       user.id,
       limit,
       sanitizedSearchTerm,

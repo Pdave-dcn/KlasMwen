@@ -16,7 +16,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "db:seed": "npx prisma db seed",
-    "db:seed:admin": "npx prisma db seed:admin"
+    "db:seed:admin": "tsx src/seeds/admin.ts"
   },
   "keywords": [],
   "author": "",
@@ -72,7 +72,6 @@
     "vitest-mock-extended": "^3.1.0"
   },
   "prisma": {
-    "seed": "tsx src/seeds/index.ts",
-    "seed:admin": "tsx src/seeds/admin.ts"
+    "seed": "tsx src/seeds/index.ts"
   }
 }

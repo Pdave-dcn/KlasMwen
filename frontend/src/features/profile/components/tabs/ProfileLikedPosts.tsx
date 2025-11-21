@@ -1,6 +1,6 @@
 import { Heart } from "lucide-react";
 
-import { useProfileLikedPosts } from "@/queries/useProfile";
+import { useProfileLikedPosts } from "@/queries/profile.query";
 
 import ProfilePostsList from "../ProfilePostsList";
 

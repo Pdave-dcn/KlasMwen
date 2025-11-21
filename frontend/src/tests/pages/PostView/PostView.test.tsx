@@ -7,7 +7,7 @@ import PostView from "@/pages/PostView";
 import {
   useSinglePostQuery,
   useDownloadResourceWithProgressMutation,
-} from "@/queries/usePosts";
+} from "@/queries/post.query";
 
 import { mockPost, mockPost2, mockPostView } from "./mocks";
 
@@ -19,7 +19,7 @@ vi.mock("react-router-dom", async () => {
   };
 });
 
-vi.mock("@/queries/usePosts", () => ({
+vi.mock("@/queries/post.query", () => ({
   useSinglePostQuery: vi.fn(),
   useDownloadResourceWithProgressMutation: vi.fn(),
 }));

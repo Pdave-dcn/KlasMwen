@@ -14,7 +14,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useAvatars } from "@/queries/useAvatar";
+import { useAvatars } from "@/queries/avatar.query";
 
 import LoadMoreButton from "./LoadMoreButton";
 

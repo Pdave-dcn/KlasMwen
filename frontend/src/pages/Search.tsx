@@ -9,8 +9,8 @@ import SearchContent from "@/features/search/components/SearchContent";
 import SelectedTagsBar from "@/features/search/components/SelectedTagsBar";
 import TrendingTagsSection from "@/features/search/components/TrendingTagsSection";
 import { useDebouncedValue } from "@/features/search/hooks/useDebouncedValue";
-import { useSearchQuery } from "@/queries/useSearchQuery";
-import { usePopularTagsQuery } from "@/queries/useTag";
+import { useSearchQuery } from "@/queries/search.query";
+import { usePopularTagsQuery } from "@/queries/tag.query";
 
 const SearchPage = () => {
   const { data: mostPopularTags } = usePopularTagsQuery();

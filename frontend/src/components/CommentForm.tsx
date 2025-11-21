@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { Send } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { useCreateCommentMutation } from "@/queries/useComment";
+import { useCreateCommentMutation } from "@/queries/comment.query";
 
 interface CommentFormProps {
   postId: string;

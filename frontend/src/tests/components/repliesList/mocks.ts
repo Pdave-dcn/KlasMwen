@@ -1,4 +1,4 @@
-import { useRepliesQuery } from "@/queries/useComment";
+import { useRepliesQuery } from "@/queries/comment.query";
 
 export const mockReplies = [
   {

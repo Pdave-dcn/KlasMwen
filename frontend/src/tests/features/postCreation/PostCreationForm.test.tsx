@@ -7,8 +7,8 @@ import {
   buildResourceFormData,
   buildTextPostData,
 } from "@/features/PostCreation/helpers";
-import { usePostCreationMutation } from "@/queries/usePosts";
-import { useTagQuery } from "@/queries/useTag";
+import { usePostCreationMutation } from "@/queries/post.query";
+import { useTagQuery } from "@/queries/tag.query";
 import type { PostType } from "@/zodSchemas/post.zod";
 
 class ResizeObserverMock {
@@ -19,11 +19,11 @@ class ResizeObserverMock {
 
 global.ResizeObserver = ResizeObserverMock as any;
 
-vi.mock("@/queries/usePosts", () => ({
+vi.mock("@/queries/post.query", () => ({
   usePostCreationMutation: vi.fn(),
 }));
 
-vi.mock("@/queries/useTag", () => ({
+vi.mock("@/queries/tag.query", () => ({
   useTagQuery: vi.fn(),
 }));
 

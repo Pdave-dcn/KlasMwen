@@ -2,7 +2,7 @@ import { FileText, Download, CheckCircle2, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useDownloadResourceWithProgressMutation } from "@/queries/usePosts";
+import { useDownloadResourceWithProgressMutation } from "@/queries/post.query";
 import type { LessExtendedPost } from "@/zodSchemas/post.zod";
 
 interface FileAttachmentProps {

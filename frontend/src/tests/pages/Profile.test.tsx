@@ -5,18 +5,18 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import Profile from "@/pages/Profile";
-import { useToggleBookmarkMutation } from "@/queries/useBookmarkMutation";
-import { useToggleLikeMutation } from "@/queries/useLikeMutation";
+import { useToggleBookmarkMutation } from "@/queries/bookmark.query";
+import { useToggleLikeMutation } from "@/queries/like.query";
 import {
   useProfilePosts,
   useProfileLikedPosts,
   useProfileBookmarks,
   useProfileUser,
   useProfileComments,
-} from "@/queries/useProfile";
+} from "@/queries/profile.query";
 import type { User } from "@/types/auth.type";
 
-vi.mock("@/queries/useProfile", () => ({
+vi.mock("@/queries/profile.query", () => ({
   useProfileUser: vi.fn(),
   useProfileComments: vi.fn(),
   useProfilePosts: vi.fn(),
@@ -24,15 +24,15 @@ vi.mock("@/queries/useProfile", () => ({
   useProfileBookmarks: vi.fn(),
 }));
 
-vi.mock("@/queries/useLikeMutation", () => ({
+vi.mock("@/queries/like.query", () => ({
   useToggleLikeMutation: vi.fn(),
 }));
-vi.mock("@/queries/useBookmarkMutation", () => ({
+vi.mock("@/queries/bookmark.query", () => ({
   useToggleBookmarkMutation: vi.fn(),
 }));
 
-vi.mock("@/queries/usePosts");
-vi.mock("@/queries/useBookmarkMutation");
+vi.mock("@/queries/post.query");
+vi.mock("@/queries/bookmark.query");
 
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom");

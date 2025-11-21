@@ -2,7 +2,10 @@ import type { UseFormReturn } from "react-hook-form";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import type { UpdatePostData, usePostUpdateMutation } from "@/queries/usePosts";
+import type {
+  UpdatePostData,
+  usePostUpdateMutation,
+} from "@/queries/post.query";
 import type { PostEdit } from "@/zodSchemas/post.zod";
 import type { Tag } from "@/zodSchemas/tag.zod";
 

@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { useForm, type FieldErrors } from "react-hook-form";
+import { Link } from "react-router-dom";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Mail, User, Lock, ArrowRight } from "lucide-react";
@@ -17,7 +18,7 @@ import {
 import AuthField from "@/features/auth/components/AuthFormField";
 import AuthFooter from "@/features/auth/components/AuthFormFooter";
 import AuthHeader from "@/features/auth/components/AuthFormHeader";
-import { useAuthMutation } from "@/queries/useAuthMutation";
+import { useAuthMutation } from "@/queries/auth.query";
 import type { FormData, FormType, RegisterData } from "@/types/form.type";
 import { RegisterSchema, SignInSchema } from "@/zodSchemas/auth.zod";
 
@@ -42,7 +43,7 @@ const AuthForm = ({ defaultMode = "signin" }: { defaultMode?: FormType }) => {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-primary/10 via-background to-accent/10">
+    <main className="min-h-screen flex items-center justify-center p-4 bg-linear-to-br from-primary/10 via-background to-accent/10">
       <div className="w-full max-w-md">
         <AuthHeader currentForm={currentForm} />
 
@@ -135,13 +136,13 @@ const AuthForm = ({ defaultMode = "signin" }: { defaultMode?: FormType }) => {
 
         <div className="text-center mt-6 text-xs text-muted-foreground">
           By continuing, you agree to our{" "}
-          <a href="#" className="text-primary hover:underline">
+          <Link to="#" className="text-primary hover:underline">
             Terms of Service
-          </a>{" "}
+          </Link>{" "}
           and{" "}
-          <a href="#" className="text-primary hover:underline">
+          <Link to="#" className="text-primary hover:underline">
             Privacy Policy
-          </a>
+          </Link>
         </div>
       </div>
     </main>

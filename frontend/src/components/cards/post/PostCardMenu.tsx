@@ -21,8 +21,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { hasPermission } from "@/lib/permissions";
 import type { User } from "@/lib/permissions/types";
-import { useToggleBookmarkMutation } from "@/queries/useBookmarkMutation";
-import { useDeletePostMutation } from "@/queries/usePosts";
+import { useToggleBookmarkMutation } from "@/queries/bookmark.query";
+import { useDeletePostMutation } from "@/queries/post.query";
 import { usePostEditStore } from "@/stores/postEdit.store";
 import { useReportModalStore } from "@/stores/reportModal.store";
 import { formatTimeRemaining } from "@/utils/dateFormatter.util";

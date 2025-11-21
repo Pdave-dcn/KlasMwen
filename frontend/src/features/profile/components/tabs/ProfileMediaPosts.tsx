@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 
 import { Image } from "lucide-react";
 
-import { useProfileMedia } from "@/queries/useProfile";
+import { useProfileMedia } from "@/queries/profile.query";
 
 import ProfilePostsList from "../ProfilePostsList";
 

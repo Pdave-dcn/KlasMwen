@@ -7,7 +7,7 @@ import ProfileError from "@/features/profile/components/ProfileError";
 import ProfileHeader from "@/features/profile/components/ProfileHeader";
 import ProfileNotFound from "@/features/profile/components/ProfileNotFound";
 import ProfileTabs from "@/features/profile/components/tabs/ProfileTabs";
-import { useProfileUser } from "@/queries/useProfile";
+import { useProfileUser } from "@/queries/profile.query";
 
 const Profile = ({ isSelf = false }: { isSelf?: boolean }) => {
   const location = useLocation();

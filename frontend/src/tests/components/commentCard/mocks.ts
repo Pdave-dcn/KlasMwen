@@ -1,4 +1,4 @@
-import { useParentCommentsQuery } from "@/queries/useComment";
+import { useParentCommentsQuery } from "@/queries/comment.query";
 
 export const mockComments = [
   {

@@ -6,7 +6,7 @@ import "@uiw/react-md-editor/markdown-editor.css";
 import "@uiw/react-markdown-preview/markdown.css";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import type { UpdatePostData } from "@/queries/usePosts";
+import type { UpdatePostData } from "@/queries/post.query";
 
 interface ContentFieldProps {
   control: Control<UpdatePostData>;

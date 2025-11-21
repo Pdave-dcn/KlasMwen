@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 import CommentCard from "@/components/cards/Comment/CommentCard";
-import { useParentCommentsQuery } from "@/queries/useComment";
+import { useParentCommentsQuery } from "@/queries/comment.query";
 import { useAuthStore } from "@/stores/auth.store";
 
 import {
@@ -22,7 +22,7 @@ vi.mock("react-router-dom", async () => {
   };
 });
 
-vi.mock("@/queries/useComment", () => ({
+vi.mock("@/queries/comment.query", () => ({
   useParentCommentsQuery: vi.fn(),
 }));
 

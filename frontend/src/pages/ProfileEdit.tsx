@@ -15,8 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
-import { useProfileUser as useGetActiveUserInfo } from "@/queries/useProfile";
-import { useUpdateUserInfo } from "@/queries/useUserMutation";
+import { useProfileUser as useGetActiveUserInfo } from "@/queries/profile.query";
+import { useUpdateUserInfo } from "@/queries/user.query";
 import formatMemberSince from "@/utils/dateFormatter.util";
 import { UpdateProfileSchema } from "@/zodSchemas/user.zod";
 

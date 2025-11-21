@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { useRepliesQuery } from "@/queries/useComment";
+import { useRepliesQuery } from "@/queries/comment.query";
 import { useAuthStore } from "@/stores/auth.store";
 import { formatTimeAgo } from "@/utils/dateFormatter.util";
 import { getInitials } from "@/utils/getInitials.util";

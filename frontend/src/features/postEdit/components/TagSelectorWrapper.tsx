@@ -1,7 +1,7 @@
 import type { UseFormReturn } from "react-hook-form";
 
 import TagsSelector from "@/features/PostCreation/components/postForm/TagSelector";
-import type { UpdatePostData } from "@/queries/usePosts";
+import type { UpdatePostData } from "@/queries/post.query";
 import type { Tag } from "@/zodSchemas/tag.zod";
 
 interface TagsSelectorWrapperProps {

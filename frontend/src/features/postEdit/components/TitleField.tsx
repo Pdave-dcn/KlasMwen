@@ -4,7 +4,7 @@ import { Label } from "@radix-ui/react-label";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
-import type { UpdatePostData } from "@/queries/usePosts";
+import type { UpdatePostData } from "@/queries/post.query";
 
 interface TitleFieldProps {
   control: Control<UpdatePostData>;

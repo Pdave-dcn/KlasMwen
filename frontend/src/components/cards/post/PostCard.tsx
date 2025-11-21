@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { useToggleBookmarkMutation } from "@/queries/useBookmarkMutation";
-import { useToggleLikeMutation } from "@/queries/useLikeMutation";
+import { useToggleBookmarkMutation } from "@/queries/bookmark.query";
+import { useToggleLikeMutation } from "@/queries/like.query";
 import { useAuthStore } from "@/stores/auth.store";
 import type { Post } from "@/zodSchemas/post.zod";
 

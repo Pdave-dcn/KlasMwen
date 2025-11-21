@@ -1,4 +1,4 @@
-import type { useSinglePostQuery } from "@/queries/usePosts";
+import type { useSinglePostQuery } from "@/queries/post.query";
 
 export const mockPost = {
   id: "5717559b-d7d1-4f56-a5a3-d18e8c6adefe",

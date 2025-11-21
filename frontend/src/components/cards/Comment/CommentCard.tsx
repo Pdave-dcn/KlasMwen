@@ -6,7 +6,7 @@ import { MessageCircle } from "lucide-react";
 
 import CommentForm from "@/components/CommentForm";
 import LoadMoreButton from "@/components/LoadMoreButton";
-import { useParentCommentsQuery } from "@/queries/useComment";
+import { useParentCommentsQuery } from "@/queries/comment.query";
 import { useAuthStore } from "@/stores/auth.store";
 import { formatTimeAgo } from "@/utils/dateFormatter.util";
 import { getInitials } from "@/utils/getInitials.util";

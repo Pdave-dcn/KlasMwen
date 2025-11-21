@@ -4,7 +4,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { ContentField } from "@/features/postEdit/components/ContentField";
-import type { UpdatePostData } from "@/queries/usePosts";
+import type { UpdatePostData } from "@/queries/post.query";
 
 // Mock the MDEditor component
 vi.mock("@uiw/react-md-editor", () => ({

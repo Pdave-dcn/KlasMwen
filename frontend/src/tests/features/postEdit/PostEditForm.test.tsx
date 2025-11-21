@@ -5,8 +5,8 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import PostEditForm from "@/features/postEdit/components/PostEditForm";
-import { usePostEditQuery, usePostUpdateMutation } from "@/queries/usePosts";
-import { useTagQuery } from "@/queries/useTag";
+import { usePostEditQuery, usePostUpdateMutation } from "@/queries/post.query";
+import { useTagQuery } from "@/queries/tag.query";
 import { usePostEditStore } from "@/stores/postEdit.store";
 
 class ResizeObserverMock {
@@ -17,12 +17,12 @@ class ResizeObserverMock {
 
 global.ResizeObserver = ResizeObserverMock as any;
 
-vi.mock("@/queries/usePosts", () => ({
+vi.mock("@/queries/post.query", () => ({
   usePostEditQuery: vi.fn(),
   usePostUpdateMutation: vi.fn(),
 }));
 
-vi.mock("@/queries/useTag", () => ({
+vi.mock("@/queries/tag.query", () => ({
   useTagQuery: vi.fn(),
 }));
 

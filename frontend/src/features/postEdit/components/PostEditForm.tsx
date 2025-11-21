@@ -7,8 +7,8 @@ import {
   usePostEditQuery,
   usePostUpdateMutation,
   type UpdatePostData,
-} from "@/queries/usePosts";
-import { useTagQuery } from "@/queries/useTag";
+} from "@/queries/post.query";
+import { useTagQuery } from "@/queries/tag.query";
 import { usePostEditStore } from "@/stores/postEdit.store";
 
 import { PostEditDialogHeader } from "./PostEditDialogHeader";

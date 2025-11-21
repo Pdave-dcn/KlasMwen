@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 import RepliesList from "@/components/RepliesList";
-import { useRepliesQuery } from "@/queries/useComment";
+import { useRepliesQuery } from "@/queries/comment.query";
 import { useAuthStore } from "@/stores/auth.store";
 
 import { mockQueryStates, mockQueryData, mockQueryDataWithMore } from "./mocks";
@@ -17,7 +17,7 @@ vi.mock("react-router-dom", async () => {
   };
 });
 
-vi.mock("@/queries/useComment", () => ({
+vi.mock("@/queries/comment.query", () => ({
   useRepliesQuery: vi.fn(),
 }));
 

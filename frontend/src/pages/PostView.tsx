@@ -11,9 +11,9 @@ import PostError from "@/features/postView/components/PostError";
 import PostHeader from "@/features/postView/components/PostHeader";
 import PostLoading from "@/features/postView/components/PostLoading";
 import PostNotFound from "@/features/postView/components/PostNotFound";
-import { useToggleBookmarkMutation } from "@/queries/useBookmarkMutation";
-import { useToggleLikeMutation } from "@/queries/useLikeMutation";
-import { useSinglePostQuery } from "@/queries/usePosts";
+import { useToggleBookmarkMutation } from "@/queries/bookmark.query";
+import { useToggleLikeMutation } from "@/queries/like.query";
+import { useSinglePostQuery } from "@/queries/post.query";
 
 const PostView = () => {
   const [isCommentFormOpen, setIsCommentFormOpen] = useState(false);

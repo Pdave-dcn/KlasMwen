@@ -1,7 +1,7 @@
 import type { UseFormReturn } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
-import type { usePostCreationMutation } from "@/queries/usePosts";
+import type { usePostCreationMutation } from "@/queries/post.query";
 import type { PostFormValues, PostType } from "@/zodSchemas/post.zod";
 import type { Tag } from "@/zodSchemas/tag.zod";
 

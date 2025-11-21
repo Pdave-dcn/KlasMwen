@@ -1,4 +1,4 @@
-import type { UpdatePostData } from "@/queries/usePosts";
+import type { UpdatePostData } from "@/queries/post.query";
 import handleZodValidationError from "@/utils/zodErrorHandler.util";
 import {
   CreatedPostResponseSchema,

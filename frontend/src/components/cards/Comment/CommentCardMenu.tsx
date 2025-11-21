@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { hasPermission } from "@/lib/permissions";
 import type { User } from "@/lib/permissions/types";
-import { useDeleteCommentMutation } from "@/queries/useComment";
+import { useDeleteCommentMutation } from "@/queries/comment.query";
 import { useReportModalStore } from "@/stores/reportModal.store";
 import type { Comment, Reply } from "@/zodSchemas/comment.zod";
 

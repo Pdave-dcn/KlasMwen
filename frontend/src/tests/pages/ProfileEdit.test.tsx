@@ -5,9 +5,9 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import ProfileEdit from "@/pages/ProfileEdit";
-import { useAvatars } from "@/queries/useAvatar";
-import { useProfileUser } from "@/queries/useProfile";
-import { useUpdateUserInfo } from "@/queries/useUserMutation";
+import { useAvatars } from "@/queries/avatar.query";
+import { useProfileUser } from "@/queries/profile.query";
+import { useUpdateUserInfo } from "@/queries/user.query";
 
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom");
@@ -17,15 +17,15 @@ vi.mock("react-router-dom", async () => {
   };
 });
 
-vi.mock("@/queries/useProfile", () => ({
+vi.mock("@/queries/profile.query", () => ({
   useProfileUser: vi.fn(),
 }));
 
-vi.mock("@/queries/useUserMutation", () => ({
+vi.mock("@/queries/user.query", () => ({
   useUpdateUserInfo: vi.fn(),
 }));
 
-vi.mock("@/queries/useAvatar", () => ({
+vi.mock("@/queries/avatar.query", () => ({
   useAvatars: vi.fn(),
 }));
 

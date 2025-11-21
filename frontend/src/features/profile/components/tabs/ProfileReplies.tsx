@@ -5,7 +5,7 @@ import { MessageSquare } from "lucide-react";
 import LoadMoreButton from "@/components/LoadMoreButton";
 import { Card } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
-import { useProfileComments } from "@/queries/useProfile";
+import { useProfileComments } from "@/queries/profile.query";
 
 import ProfileCommentCard from "../ProfileCommentCard";
 

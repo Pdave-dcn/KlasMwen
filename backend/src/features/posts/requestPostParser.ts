@@ -3,7 +3,7 @@ import {
   CompletePostSchema,
   NewPostRequestSchema,
 } from "../../zodSchemas/post.zod.js";
-import { uploadToCloudinary } from "../media/cloudinaryServices.js";
+import CloudinaryService from "../media/CloudinaryService.js";
 
 import type {
   CreatePostInput,
@@ -59,7 +59,7 @@ const handleRequestValidation = async (
     }
 
     try {
-      const cloudinaryResult = await uploadToCloudinary(
+      const cloudinaryResult = await CloudinaryService.upload(
         req.file.buffer,
         req.file.originalname,
         req.file.mimetype,

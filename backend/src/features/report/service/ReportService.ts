@@ -43,7 +43,7 @@ class ReportService {
     contentId: string | number
   ) {
     if (contentType === "post") {
-      return await PostService.postExists(contentId as string);
+      return await PostService.verifyPostExists(contentId as string);
     } else if (contentType === "comment") {
       return await CommentService.commentExists(contentId as number);
     }

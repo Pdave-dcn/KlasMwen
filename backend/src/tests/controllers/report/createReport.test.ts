@@ -66,7 +66,7 @@ vi.mock("../../../core/config/db.js", () => ({
 
 vi.mock("../../../features/posts/service/PostService", () => ({
   default: {
-    postExists: vi.fn(),
+    verifyPostExists: vi.fn(),
   },
 }));
 
@@ -131,7 +131,7 @@ describe("createReport controller", () => {
         reasonId: mockReasonId,
       };
 
-      vi.mocked(PostService.postExists).mockResolvedValue({
+      vi.mocked(PostService.verifyPostExists).mockResolvedValue({
         type: "NOTE" as const,
         id: mockPostId,
         createdAt: new Date(),
@@ -156,7 +156,7 @@ describe("createReport controller", () => {
 
       await createReport(mockRequest, mockResponse);
 
-      expect(PostService.postExists).toHaveBeenCalledWith(mockPostId);
+      expect(PostService.verifyPostExists).toHaveBeenCalledWith(mockPostId);
       expect(autoHideContent).toHaveBeenCalledWith({
         resourceType: "post",
         resourceId: mockPostId,
@@ -218,7 +218,7 @@ describe("createReport controller", () => {
         reasonId: mockReasonId,
       };
 
-      vi.mocked(PostService.postExists).mockResolvedValue({
+      vi.mocked(PostService.verifyPostExists).mockResolvedValue({
         id: mockPostId,
         authorId: mockUserId,
         createdAt: new Date(),
@@ -274,7 +274,7 @@ describe("createReport controller", () => {
         expect.any(AuthenticationError),
         mockResponse
       );
-      expect(PostService.postExists).not.toHaveBeenCalled();
+      expect(PostService.verifyPostExists).not.toHaveBeenCalled();
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
 
@@ -285,7 +285,7 @@ describe("createReport controller", () => {
         reasonId: mockReasonId,
       };
 
-      vi.mocked(PostService.postExists).mockRejectedValue(
+      vi.mocked(PostService.verifyPostExists).mockRejectedValue(
         new PostNotFoundError(mockPostId)
       );
 
@@ -326,7 +326,7 @@ describe("createReport controller", () => {
       };
 
       const dbError = new Error("Database connection failed");
-      vi.mocked(PostService.postExists).mockRejectedValue(dbError);
+      vi.mocked(PostService.verifyPostExists).mockRejectedValue(dbError);
 
       await createReport(mockRequest, mockResponse);
 
@@ -347,7 +347,7 @@ describe("createReport controller", () => {
       await createReport(mockRequest, mockResponse);
 
       expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
-      expect(PostService.postExists).not.toHaveBeenCalled();
+      expect(PostService.verifyPostExists).not.toHaveBeenCalled();
     });
 
     it("should handle invalid request body (missing both postId and commentId)", async () => {
@@ -360,7 +360,7 @@ describe("createReport controller", () => {
       await createReport(mockRequest, mockResponse);
 
       expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
-      expect(PostService.postExists).not.toHaveBeenCalled();
+      expect(PostService.verifyPostExists).not.toHaveBeenCalled();
       expect(CommentService.commentExists).not.toHaveBeenCalled();
     });
 
@@ -394,7 +394,7 @@ describe("createReport controller", () => {
         expect.any(ZodError),
         mockResponse
       );
-      expect(PostService.postExists).not.toHaveBeenCalled();
+      expect(PostService.verifyPostExists).not.toHaveBeenCalled();
     });
 
     it("should handle invalid commentId type", async () => {
@@ -420,7 +420,7 @@ describe("createReport controller", () => {
       await createReport(mockRequest, mockResponse);
 
       expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
-      expect(PostService.postExists).not.toHaveBeenCalled();
+      expect(PostService.verifyPostExists).not.toHaveBeenCalled();
     });
 
     it("should handle negative reasonId", async () => {
@@ -500,7 +500,7 @@ describe("createReport controller", () => {
         anotherExtra: 123,
       };
 
-      vi.mocked(PostService.postExists).mockResolvedValue({
+      vi.mocked(PostService.verifyPostExists).mockResolvedValue({
         id: mockPostId,
         authorId: mockUserId,
         createdAt: new Date(),
@@ -536,7 +536,7 @@ describe("createReport controller", () => {
         reasonId: Number.MAX_SAFE_INTEGER,
       };
 
-      vi.mocked(PostService.postExists).mockResolvedValue({
+      vi.mocked(PostService.verifyPostExists).mockResolvedValue({
         id: mockPostId,
         authorId: mockUserId,
         createdAt: new Date(),
@@ -576,7 +576,7 @@ describe("createReport controller", () => {
         reasonId: mockReasonId,
       };
 
-      vi.mocked(PostService.postExists).mockResolvedValue({
+      vi.mocked(PostService.verifyPostExists).mockResolvedValue({
         id: mockPostId,
         authorId: mockUserId,
         createdAt: new Date(),
@@ -613,7 +613,7 @@ describe("createReport controller", () => {
         reasonId: mockReasonId,
       };
 
-      vi.mocked(PostService.postExists).mockResolvedValue({
+      vi.mocked(PostService.verifyPostExists).mockResolvedValue({
         id: mockPostId,
         authorId: mockUserId,
         createdAt: new Date(),
@@ -681,14 +681,14 @@ describe("createReport controller", () => {
   });
 
   describe("Service Integration", () => {
-    it("should call PostService.postExists with correct postId", async () => {
+    it("should call PostService.verifyPostExists with correct postId", async () => {
       mockRequest.user = createAuthenticatedUser({ id: mockUserId });
       mockRequest.body = {
         postId: mockPostId,
         reasonId: mockReasonId,
       };
 
-      vi.mocked(PostService.postExists).mockResolvedValue({
+      vi.mocked(PostService.verifyPostExists).mockResolvedValue({
         id: mockPostId,
         authorId: mockUserId,
         createdAt: new Date(),
@@ -712,8 +712,8 @@ describe("createReport controller", () => {
 
       await createReport(mockRequest, mockResponse);
 
-      expect(PostService.postExists).toHaveBeenCalledWith(mockPostId);
-      expect(PostService.postExists).toHaveBeenCalledTimes(1);
+      expect(PostService.verifyPostExists).toHaveBeenCalledWith(mockPostId);
+      expect(PostService.verifyPostExists).toHaveBeenCalledTimes(1);
     });
 
     it("should call CommentService.commentExists with correct commentId", async () => {
@@ -757,7 +757,7 @@ describe("createReport controller", () => {
         reasonId: mockReasonId,
       };
 
-      vi.mocked(PostService.postExists).mockResolvedValue({
+      vi.mocked(PostService.verifyPostExists).mockResolvedValue({
         id: mockPostId,
         authorId: mockUserId,
         createdAt: new Date(),
@@ -781,6 +781,7 @@ describe("createReport controller", () => {
 
       await createReport(mockRequest, mockResponse);
 
+      expect(handleError).not.toHaveBeenCalled();
       expect(autoHideContent).toHaveBeenCalledWith({
         resourceType: "post",
         resourceId: mockPostId,

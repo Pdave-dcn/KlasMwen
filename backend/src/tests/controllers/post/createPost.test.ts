@@ -5,7 +5,7 @@ import prisma from "../../../core/config/db.js";
 import { AuthenticationError } from "../../../core/error/custom/auth.error.js";
 import { PostCreationFailedError } from "../../../core/error/custom/post.error.js";
 import { handleError } from "../../../core/error/index.js";
-import { deleteFromCloudinary } from "../../../features/media/cloudinaryServices.js";
+import CloudinaryService from "../../../features/media/CloudinaryService.js";
 import handleRequestValidation from "../../../features/posts/requestPostParser.js";
 import {
   CreatePostInput,
@@ -50,9 +50,7 @@ vi.mock("../../../core/config/db.js", () => ({
 }));
 
 vi.mock("../../../features/posts/requestPostParser.js");
-vi.mock("../../../features/media/cloudinaryServices.js", () => ({
-  deleteFromCloudinary: vi.fn(),
-}));
+vi.mock("../../../features/media/CloudinaryService.js");
 
 // Error handler mocks
 vi.mock("../../../core/error/index.js", () => ({
@@ -185,7 +183,7 @@ describe("createPost controller", () => {
 
     expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function));
 
-    expect(deleteFromCloudinary).toHaveBeenCalledWith(
+    expect(CloudinaryService.delete).toHaveBeenCalledWith(
       mockUploadedFileInfo.publicId,
       "raw"
     );
@@ -228,7 +226,7 @@ describe("createPost controller", () => {
 
       await createPost(mockReq, mockRes);
 
-      expect(deleteFromCloudinary).not.toHaveBeenCalled();
+      expect(CloudinaryService.delete).not.toHaveBeenCalled();
       expect(handleError).toHaveBeenCalledWith(
         expect.any(PostCreationFailedError),
         mockRes
@@ -256,13 +254,13 @@ describe("createPost controller", () => {
         uploadedFileInfo: mockUploadedFileInfo,
       });
       vi.mocked(prisma.$transaction).mockResolvedValue(null);
-      vi.mocked(deleteFromCloudinary).mockRejectedValue(
+      vi.mocked(CloudinaryService.delete).mockRejectedValue(
         new Error("Cloudinary deletion failed")
       );
 
       await createPost(mockReq, mockRes);
 
-      expect(deleteFromCloudinary).toHaveBeenCalledWith(
+      expect(CloudinaryService.delete).toHaveBeenCalledWith(
         mockUploadedFileInfo.publicId,
         "raw"
       );
@@ -330,7 +328,7 @@ describe("createPost controller", () => {
       );
       expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function));
 
-      expect(deleteFromCloudinary).not.toHaveBeenCalled(); // Should not cleanup on success
+      expect(CloudinaryService.delete).not.toHaveBeenCalled(); // Should not cleanup on success
       expect(mockRes.status).toHaveBeenCalledWith(201);
       expect(mockRes.json).toHaveBeenCalledWith({
         message: "Post created successfully",
@@ -659,11 +657,11 @@ describe("createPost controller", () => {
         uploadedFileInfo: mockUploadedFileInfo,
       });
       vi.mocked(prisma.$transaction).mockResolvedValue(null);
-      vi.mocked(deleteFromCloudinary).mockResolvedValue();
+      vi.mocked(CloudinaryService.delete).mockResolvedValue();
 
       await createPost(mockReq, mockRes);
 
-      expect(deleteFromCloudinary).toHaveBeenCalledWith(
+      expect(CloudinaryService.delete).toHaveBeenCalledWith(
         "failed_file_id",
         "raw"
       );

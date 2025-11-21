@@ -1,8 +1,5 @@
 import { logger } from "../../../../core/config/logger";
-import {
-  deleteFromCloudinary,
-  extractPublicIdFromUrl,
-} from "../../../media/cloudinaryServices";
+import CloudinaryService from "../../../media/CloudinaryService";
 
 /**
  * Handles Cloudinary file cleanup operations.
@@ -15,7 +12,7 @@ export class CloudinaryCleanupService {
    */
   static async cleanupFile(publicId: string, context: string): Promise<void> {
     try {
-      await deleteFromCloudinary(publicId, "raw");
+      await CloudinaryService.delete(publicId, "raw");
     } catch (error) {
       logger.error(
         { err: error, publicId, context },
@@ -31,7 +28,7 @@ export class CloudinaryCleanupService {
     fileUrl: string,
     context: string
   ): Promise<void> {
-    const publicId = extractPublicIdFromUrl(fileUrl);
+    const publicId = CloudinaryService.extractPublicId(fileUrl);
 
     if (!publicId) {
       logger.warn({ fileUrl, context }, "Could not extract public ID from URL");

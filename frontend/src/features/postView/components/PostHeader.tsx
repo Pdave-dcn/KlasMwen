@@ -1,3 +1,5 @@
+import { useNavigate } from "react-router-dom";
+
 import { CalendarDays, FileText, Tag, Bookmark } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,6 +21,7 @@ const PostHeader = ({
   onToggleBookmark,
   isBookmarkPending,
 }: PostHeaderProps) => {
+  const navigate = useNavigate();
   return (
     <CardHeader className="space-y-4">
       <div className="flex items-start justify-between">
@@ -55,7 +58,12 @@ const PostHeader = ({
             />
             <AvatarFallback>{getInitials(post.author.username)}</AvatarFallback>
           </Avatar>
-          <Button variant="link" size="sm" className="font-medium text-sm">
+          <Button
+            variant="link"
+            size="sm"
+            className="font-medium text-sm"
+            onClick={() => navigate(`/profile/${post.author.id}`)}
+          >
             {post.author.username}
           </Button>
         </div>

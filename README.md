@@ -161,10 +161,27 @@ ALLOWED_ORIGIN="http://localhost:5173"
 JWT_SECRET="your_jwt_secret"
 NODE_ENV="development"
 LOG_LEVEL="debug"
+
 CLOUDINARY_CLOUD_NAME="your_cloud_name"
 CLOUDINARY_API_KEY="your_api_key"
 CLOUDINARY_API_SECRET="your_api_secret"
+
+# Admin credentials (defaults are used only in development)
+ADMIN_USERNAME="admin_user"
+ADMIN_EMAIL="admin@example.com"
+ADMIN_PASSWORD="Admin123"
 ```
+
+> **⚠️ Production Note:**
+>
+> When NODE_ENV=production, you must provide real admin values:
+>
+> - "**`ADMIN_USERNAME`**"
+> - "**`ADMIN_EMAIL`**"
+> - "**`ADMIN_PASSWORD`**"
+>
+> If any of these are missing, the server will fail to start.
+> This ensures a secure admin account is created when seeding the database.
 
 #### Frontend (`/frontend/.env`)
 

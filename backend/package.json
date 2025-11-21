@@ -15,7 +15,8 @@
     "lint:fix": "eslint . --ext .js,.ts --fix",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "db:seed": "npx prisma db seed"
+    "db:seed": "npx prisma db seed",
+    "db:seed:admin": "npx prisma db seed:admin"
   },
   "keywords": [],
   "author": "",
@@ -71,6 +72,7 @@
     "vitest-mock-extended": "^3.1.0"
   },
   "prisma": {
-    "seed": "tsx src/seeds/index.ts"
+    "seed": "tsx src/seeds/index.ts",
+    "seed:admin": "tsx src/seeds/admin.ts"
   }
 }

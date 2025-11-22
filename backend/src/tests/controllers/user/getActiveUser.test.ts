@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { Request, Response } from "express";
 
-import { getActiveUser } from "../../../controllers/user.controller";
+import { getActiveUser } from "../../../controllers/user/user.profile.controller";
 import prisma from "../../../core/config/db";
 import { handleError } from "../../../core/error";
 import { UserNotFoundError } from "../../../core/error/custom/user.error";

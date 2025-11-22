@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 
-import { getMyPosts } from "../../../controllers/user.controller.js";
+import { getMyPosts } from "../../../controllers/user/user.content.controller";
 import prisma from "../../../core/config/db.js";
 import { AuthenticationError } from "../../../core/error/custom/auth.error.js";
 import { handleError } from "../../../core/error/index.js";

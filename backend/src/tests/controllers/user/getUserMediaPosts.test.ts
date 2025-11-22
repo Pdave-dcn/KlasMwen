@@ -1,4 +1,4 @@
-import { getUserMediaPosts } from "../../../controllers/user.controller.js";
+import { getUserMediaPosts } from "../../../controllers/user/user.content.controller";
 import prisma from "../../../core/config/db.js";
 import { UserNotFoundError } from "../../../core/error/custom/user.error.js";
 import { handleError } from "../../../core/error/index.js";

@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 
-import { getUserPosts } from "../../../controllers/user.controller.js";
+import { getUserPosts } from "../../../controllers/user/user.content.controller";
 import prisma from "../../../core/config/db.js";
 import { UserNotFoundError } from "../../../core/error/custom/user.error.js";
 import { handleError } from "../../../core/error/index.js";
@@ -92,6 +92,7 @@ const mockPosts = [
       comments: 0,
       likes: 0,
     },
+    hidden: false,
   },
   {
     id: mockPostId2,
@@ -107,6 +108,7 @@ const mockPosts = [
     authorId: mockUser.id,
     postTags: [],
     _count: { comments: 0, likes: 3 },
+    hidden: false,
   },
 ];
 

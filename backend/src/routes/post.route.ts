@@ -7,7 +7,6 @@ import {
   getAllPosts,
   getPostById,
   getPostForEdit,
-  getPostMetadata,
 } from "../controllers/post/post.fetch.controller.js";
 import { updatePost } from "../controllers/post/post.update.controller.js";
 import {
@@ -219,44 +218,6 @@ router.get(
   downloadLimiter,
   requireAuth,
   downloadResource
-);
-
-/**
- * @openapi
- * /posts/{id}/metadata:
- *   get:
- *     summary: Get post metadata (admin only)
- *     tags: [Posts]
- *     security:
- *       - cookieAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     responses:
- *       200:
- *         description: Post metadata
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/PostMetadata'
- *       403:
- *         description: Admin access required
- *       404:
- *         description: Post not found
- *       429:
- *         description: Too many requests (rate limit exceeded)
- *       500:
- *         description: Internal server error
- */
-router.get(
-  "/posts/:id/metadata",
-  generalApiLimiter,
-  requireAuth,
-  getPostMetadata
 );
 
 /**

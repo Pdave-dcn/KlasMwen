@@ -1,8 +1,8 @@
-import { getUserComments } from "../../../controllers/user.controller.js";
+import { getUserComments } from "../../../controllers/user/user.content.controller";
 import prisma from "../../../core/config/db.js";
 import { UserNotFoundError } from "../../../core/error/custom/user.error.js";
 import { handleError } from "../../../core/error/index.js";
-import { CommentWithRelations } from "../../../features/comments/commentService.js";
+import { CommentWithRelations } from "../../../features/comments/service/types";
 
 import { expectValidationError } from "./shared/helpers.js";
 import {
@@ -88,6 +88,7 @@ const mockUserComments: CommentWithRelations[] = [
     },
     parent: null,
     mentionedUserId: null,
+    hidden: false,
   },
   {
     id: 2,
@@ -116,6 +117,7 @@ const mockUserComments: CommentWithRelations[] = [
       author: { id: "user_777888999", username: "frontend_dev" },
     },
     mentionedUserId: null,
+    hidden: false,
   },
 ];
 

@@ -1,15 +1,17 @@
 import express from "express";
 
 import {
-  getActiveUser,
   getMyPosts,
   getPostsLikedByMe,
-  getUserById,
   getUserComments,
   getUserMediaPosts,
   getUserPosts,
+} from "../controllers/user/user.content.controller";
+import {
+  getActiveUser,
+  getUserById,
   updateUserProfile,
-} from "../controllers/user.controller";
+} from "../controllers/user/user.profile.controller";
 import {
   writeOperationsLimiter,
   generalApiLimiter,

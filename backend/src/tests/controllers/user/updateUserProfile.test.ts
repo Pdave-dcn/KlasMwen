@@ -1,4 +1,4 @@
-import { updateUserProfile } from "../../../controllers/user.controller.js";
+import { updateUserProfile } from "../../../controllers/user/user.profile.controller";
 import prisma from "../../../core/config/db.js";
 import { AuthenticationError } from "../../../core/error/custom/auth.error.js";
 import { UserNotFoundError } from "../../../core/error/custom/user.error.js";

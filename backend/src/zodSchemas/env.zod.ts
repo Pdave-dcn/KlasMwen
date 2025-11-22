@@ -18,7 +18,7 @@ const baseSchema = z.object({
   CLOUDINARY_API_KEY: z.string().min(1, "CLOUDINARY_API_KEY is required"),
   CLOUDINARY_API_SECRET: z.string().min(1, "CLOUDINARY_API_SECRET is required"),
 
-  // Admin values may have defaults, but only for development
+  // ADMIN FIELDS
   ADMIN_USERNAME: z
     .string()
     .trim()
@@ -38,6 +38,26 @@ const baseSchema = z.object({
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
     .regex(/^[\u0020-\u007E]+$/)
     .default("Admin123"),
+
+  // GUEST FIELDS
+  GUEST_USERNAME: z
+    .string()
+    .trim()
+    .min(3)
+    .max(50)
+    .regex(/^[a-zA-Z0-9_-]+$/)
+    .default("guest_user"),
+
+  GUEST_EMAIL: z
+    .email("GUEST_EMAIL must be a valid email address.")
+    .default("guest@example.com"),
+
+  GUEST_PASSWORD: z
+    .string()
+    .trim()
+    .min(8)
+    .regex(/^[\u0020-\u007E]+$/)
+    .default("Guest123"),
 });
 
 // Enforce production rules

@@ -3,9 +3,13 @@ import { Link } from "react-router-dom";
 import { ArrowRight, BookOpen, CheckCircle, Shield, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useGuestAuthMutation } from "@/queries/guest.query";
 
 const LandingPage = () => {
   const currentYear = new Date().getFullYear();
+
+  const guestMutation = useGuestAuthMutation();
+
   return (
     <main className="min-h-screen bg-background">
       {/* Hero Section */}
@@ -70,6 +74,15 @@ const LandingPage = () => {
                     Discover KlasMwen
                   </Button>
                 </Link>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => guestMutation.mutate()}
+                  disabled={guestMutation.isPending}
+                  className="text-lg px-8 py-4 h-auto font-semibold cursor-pointer bg-white/10 border-white/30 text-white hover:bg-white/20"
+                >
+                  Continue as Guest
+                </Button>
               </div>
 
               {/* Trust Indicators */}

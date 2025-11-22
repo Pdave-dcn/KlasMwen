@@ -37,9 +37,9 @@ const writeOperationsLimiter = rateLimit({
       "You've reached the hourly limit. You can make up to 10 changes (create, update, or delete) per hour. Please try again later."
     );
   },
-  keyGenerator: (req: Request, _res: Response) => {
+  keyGenerator: (req: Request, _res: Response): string => {
+    if (req.user && req.user.role === "GUEST") return req.ip ?? "unknown";
     if (req.user) return req.user.id;
-
     if (req.ip) return ipKeyGenerator(req.ip);
 
     return "unknown";

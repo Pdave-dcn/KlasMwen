@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
+import env from "../../../core/config/env";
 import { createLogger } from "../../../core/config/logger";
 import { UserNotFoundError } from "../../../core/error/custom/user.error";
 import { getRandomDefaultAvatar } from "../../avatar/avatarService";
@@ -46,12 +47,6 @@ class UserService {
 
     methodLogger.debug("Generating JWT token");
 
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      methodLogger.error("JWT_SECRET not defined in environment variables");
-      throw new Error("JWT_SECRET not defined in environment variables");
-    }
-
     const token = jwt.sign(
       {
         id: userData.id,
@@ -59,7 +54,7 @@ class UserService {
         email: userData.email,
         role: userData.role,
       },
-      jwtSecret,
+      env.JWT_SECRET,
       { expiresIn: "3d" }
     );
 

@@ -22,6 +22,18 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // Handle 403 Forbidden
+    if (status === 403) {
+      const errorData = error.response?.data as { message?: string };
+      const message = errorData?.message ?? "Access denied";
+
+      toast.error("Action Restricted", {
+        description: message ?? "You're not allowed to perform this action.",
+        duration: 5000,
+      });
+      return Promise.reject(error);
+    }
+
     // handle general network/server issues
     if (!error.response) {
       toast.error("Network Error", {
@@ -42,6 +54,7 @@ api.interceptors.response.use(
  * Automatically derive context (used by handleRateLimitError)
  * from the request URL and method.
  */
+// eslint-disable-next-line complexity
 function getRequestContext(error: AxiosError): string {
   const url = error.config?.url ?? "";
   const method = (error.config?.method ?? "").toLowerCase();

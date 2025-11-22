@@ -104,7 +104,9 @@ const getAllReports = async (req: Request, res: Response) => {
     actionLogger.info("Fetching all reports");
     const startTime = Date.now();
 
-    checkModeratorAuth(req.user);
+    if (req.user && req.user.role !== "GUEST") {
+      checkModeratorAuth(req.user);
+    }
 
     const validatedQuery = ReportQuerySchema.parse(req.query);
 
@@ -161,7 +163,9 @@ const getReportById = async (req: Request, res: Response) => {
     actionLogger.info("Fetching report by ID");
     const startTime = Date.now();
 
-    checkModeratorAuth(req.user);
+    if (req.user && req.user.role !== "GUEST") {
+      checkModeratorAuth(req.user);
+    }
     const { id: reportId } = ReportIdParamSchema.parse(req.params);
     actionLogger.info("User authorized and report ID parsed");
 
@@ -330,7 +334,9 @@ const getReportStats = async (req: Request, res: Response) => {
     actionLogger.info("Fetching report statistics");
     const startTime = Date.now();
 
-    checkModeratorAuth(req.user);
+    if (req.user && req.user.role !== "GUEST") {
+      checkModeratorAuth(req.user);
+    }
     actionLogger.info("User authorized");
 
     actionLogger.debug("Processing report stats fetching");

@@ -12,6 +12,7 @@ enum Role {
   STUDENT
   ADMIN
   MODERATOR
+  GUEST
 }
 
 // Statuses that represent the state of a report during moderation

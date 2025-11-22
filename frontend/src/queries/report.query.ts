@@ -98,10 +98,6 @@ const useToggleVisibilityMutation = () => {
           queryClient.setQueryData(queryKey, data);
         });
       }
-
-      toast.error("Failed to toggle visibility", {
-        description: "Please try again later",
-      });
     },
     onSuccess: async (_data, variables) => {
       const action = variables.hidden ? "hidden" : "shown";
@@ -169,10 +165,6 @@ const useUpdateReportStatusMutation = () => {
           queryClient.setQueryData(queryKey, data);
         });
       }
-
-      toast.error("Failed to update report status", {
-        description: "Please try again later",
-      });
     },
     onSuccess: async (_data, variables) => {
       const statusLabel =
@@ -230,10 +222,6 @@ const useDeleteReportMutation = () => {
           queryClient.setQueryData(queryKey, data);
         });
       }
-
-      toast.error("Failed to delete report", {
-        description: "Please try again later",
-      });
     },
     onSuccess: async () => {
       toast.success("Report deleted", {

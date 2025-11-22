@@ -95,7 +95,7 @@ export const AppRoutes = () => {
       <Route
         path="/mod/dashboard"
         element={
-          <ProtectedRoute allowedRoles={["ADMIN", "MODERATOR"]}>
+          <ProtectedRoute allowedRoles={["ADMIN", "MODERATOR", "GUEST"]}>
             <ModDashboard />
           </ProtectedRoute>
         }

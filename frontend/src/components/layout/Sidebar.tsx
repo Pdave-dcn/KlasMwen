@@ -144,7 +144,7 @@ const Sidebar = ({ onCreateClick }: SidebarProps) => {
         )}
 
         {/* Moderator Dashboard Button */}
-        <RequireRole allowed={["ADMIN", "MODERATOR"]}>
+        <RequireRole allowed={["ADMIN", "MODERATOR", "GUEST"]}>
           <NavLink
             to="/mod/dashboard"
             className={({ isActive }) =>

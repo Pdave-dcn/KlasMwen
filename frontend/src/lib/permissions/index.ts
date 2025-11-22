@@ -84,6 +84,23 @@ export const POLICY: PolicyMap = {
       report: (u, c) => u.id !== c.author.id,
     },
   },
+
+  GUEST: {
+    posts: {
+      create: true,
+      read: true,
+      update: (u, p) => u.id === p.author.id,
+      delete: (u, p) => u.id === p.author.id,
+      report: (u, p) => u.id !== p.author.id,
+    },
+    comments: {
+      create: true,
+      read: true,
+      update: (u, c) => u.id === c.author.id,
+      delete: (u, c) => u.id === c.author.id,
+      report: (u, c) => u.id !== c.author.id,
+    },
+  },
 };
 
 /**

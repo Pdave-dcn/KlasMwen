@@ -53,6 +53,7 @@ export const handleRateLimitError = (
 
   toast.error("Too Many Requests", {
     description: message,
+    duration: 5000,
   });
 
   return true;

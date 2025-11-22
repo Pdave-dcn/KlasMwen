@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuthStore } from "@/stores/auth.store";
 import type { ReportStatusEnum, Report } from "@/zodSchemas/report.zod";
 
 export type ControlsProps = {
@@ -31,12 +32,18 @@ export const ReportControls = ({
   onStatusChange,
   onToggleHidden,
 }: ControlsProps) => {
+  const { isGuest } = useAuthStore();
+
   return (
     <div className="space-y-4 border-t pt-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="status">Status</Label>
-          <Select value={localStatus} onValueChange={onStatusChange}>
+          <Select
+            value={localStatus}
+            onValueChange={onStatusChange}
+            disabled={isGuest}
+          >
             <SelectTrigger id="status">
               <SelectValue />
             </SelectTrigger>
@@ -54,6 +61,7 @@ export const ReportControls = ({
             id="hidden"
             checked={localIsHidden}
             onCheckedChange={onToggleHidden}
+            disabled={isGuest}
           />
         </div>
       </div>
@@ -73,6 +81,7 @@ export const ReportControls = ({
           variant="outline"
           size="sm"
           className="mt-2"
+          disabled={isGuest}
         >
           Save Notes
         </Button>

@@ -10,6 +10,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { useAuthStore } from "@/stores/auth.store";
 import type { Report, ReportStatusEnum } from "@/zodSchemas/report.zod";
 
 import { getStatusBadge, formatDate } from "../../helpers/reportModalHelpers";
@@ -44,6 +45,8 @@ export const ReportModal = ({
   const [localStatus, setLocalStatus] = useState<ReportStatusEnum>("PENDING");
   const [localIsHidden, setLocalIsHidden] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const { isGuest } = useAuthStore();
 
   // sync local state when report changes (same deps as original)
   useEffect(() => {
@@ -140,6 +143,7 @@ export const ReportModal = ({
                 onClick={() => setShowDeleteDialog(true)}
                 variant="destructive"
                 className="w-full"
+                disabled={isGuest}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete Report Permanently

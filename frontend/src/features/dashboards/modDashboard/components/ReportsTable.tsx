@@ -2,6 +2,7 @@ import { Eye, EyeOff, CheckCircle, XCircle } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/stores/auth.store";
 import type { Report } from "@/zodSchemas/report.zod";
 
 interface ReportsTableProps {
@@ -59,6 +60,8 @@ export const ReportsTable = ({
   isTogglingVisibility = false,
   isUpdatingStatus = false,
 }: ReportsTableProps) => {
+  const { isGuest } = useAuthStore();
+
   return (
     <div className="bg-card border border-border rounded-lg overflow-hidden">
       <div className="overflow-x-auto">
@@ -141,7 +144,7 @@ export const ReportsTable = ({
                       title={
                         report.isContentHidden ? "Show content" : "Hide content"
                       }
-                      disabled={isTogglingVisibility}
+                      disabled={isTogglingVisibility || isGuest}
                     >
                       {report.isContentHidden ? (
                         <Eye className="h-4 w-4" />
@@ -156,7 +159,7 @@ export const ReportsTable = ({
                           variant="outline"
                           onClick={() => onMarkReviewed(report.id)}
                           title="Mark as reviewed"
-                          disabled={isUpdatingStatus}
+                          disabled={isUpdatingStatus || isGuest}
                         >
                           <CheckCircle className="h-4 w-4" />
                         </Button>
@@ -165,7 +168,7 @@ export const ReportsTable = ({
                           variant="outline"
                           onClick={() => onDismiss(report.id)}
                           title="Dismiss report"
-                          disabled={isUpdatingStatus}
+                          disabled={isUpdatingStatus || isGuest}
                         >
                           <XCircle className="h-4 w-4" />
                         </Button>

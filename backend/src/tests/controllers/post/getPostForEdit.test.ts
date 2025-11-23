@@ -80,6 +80,7 @@ describe("getPostForEdit", () => {
     title: "Test Post",
     content: "Content",
     hidden: false,
+    isMock: false,
     type: "NOTE" as PostType,
     fileUrl: null,
     fileName: null,

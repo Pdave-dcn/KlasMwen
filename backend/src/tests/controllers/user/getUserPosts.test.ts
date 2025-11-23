@@ -93,6 +93,7 @@ const mockPosts = [
       likes: 0,
     },
     hidden: false,
+    isMock: false,
   },
   {
     id: mockPostId2,
@@ -109,6 +110,7 @@ const mockPosts = [
     postTags: [],
     _count: { comments: 0, likes: 3 },
     hidden: false,
+    isMock: false,
   },
 ];
 

@@ -57,6 +57,7 @@ describe("autoHideContent", () => {
     fileName: null,
     fileSize: null,
     mimeType: null,
+    isMock: false,
   };
 
   const mockComment = {

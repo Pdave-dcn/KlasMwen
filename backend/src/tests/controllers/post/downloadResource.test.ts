@@ -62,6 +62,7 @@ describe("downloadResource controller", () => {
     title: "Test Post",
     content: null,
     hidden: false,
+    isMock: false,
     authorId: "author-id",
     type: "RESOURCE",
     fileName: "testfile.pdf",

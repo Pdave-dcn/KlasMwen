@@ -154,12 +154,20 @@ const seedReports = async (
     );
 
     // -------------------------------
-    // PHASE 3: CREATE ALL REPORTS
+    // PHASE 3: SHUFFLE REPORTS FOR REALISTIC ORDER
+    // -------------------------------
+    logger.debug("Shuffling reports to simulate realistic reporting timeline");
+
+    // Shuffle the reports array to mix post and comment reports randomly
+    const shuffledReportsData = faker.helpers.shuffle(reportsData);
+
+    // -------------------------------
+    // PHASE 4: CREATE ALL REPORTS
     // -------------------------------
     logger.debug("Inserting reports into database");
 
     const createdReports = await prisma.report.createManyAndReturn({
-      data: reportsData,
+      data: shuffledReportsData,
     });
 
     logger.info(

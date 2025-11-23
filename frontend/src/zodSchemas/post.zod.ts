@@ -31,6 +31,7 @@ const PostDataSchema = z.object({
   title: z.string(),
   content: z.string().nullable(),
   type: PostTypeSchema,
+  isMock: z.boolean(),
   fileUrl: z.string().nullable(),
   fileName: z.string().nullable(),
   createdAt: z.string(),

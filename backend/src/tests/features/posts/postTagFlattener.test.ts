@@ -9,7 +9,10 @@ describe("transformPostTagsToFlat", () => {
   const mockAuthor = {
     id: "user-123",
     username: "testuser",
-    avatarUrl: "https://example.com/avatar.jpg",
+    Avatar: {
+      id: 1,
+      url: "http://example.com/avatar.jpg",
+    },
   };
 
   const mockComment = {
@@ -107,7 +110,10 @@ describe("transformPostTagsToFlat", () => {
       author: {
         id: "user-456",
         username: "anotheruser",
-        avatarUrl: null,
+        Avatar: {
+          id: 2,
+          url: "http://example.com/avatar2.jpg",
+        },
       },
       postTags: [
         {
@@ -139,7 +145,10 @@ describe("transformPostTagsToFlat", () => {
       author: {
         id: "user-456",
         username: "anotheruser",
-        avatarUrl: null,
+        Avatar: {
+          id: 2,
+          url: "http://example.com/avatar2.jpg",
+        },
       },
       tags: [{ id: 3, name: "React" }],
       comments: [mockComment],

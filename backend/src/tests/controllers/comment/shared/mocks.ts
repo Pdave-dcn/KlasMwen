@@ -11,6 +11,7 @@ const mockComments = [
     postId: "post123",
     authorId: "authorC",
     mentionedUserId: null,
+    hidden: false,
   },
   {
     id: 6,
@@ -21,6 +22,7 @@ const mockComments = [
     postId: "post123",
     authorId: "authorB",
     mentionedUserId: null,
+    hidden: false,
   },
   {
     id: 5,
@@ -31,6 +33,7 @@ const mockComments = [
     postId: "post123",
     authorId: "authorA",
     mentionedUserId: null,
+    hidden: false,
   },
 ];
 

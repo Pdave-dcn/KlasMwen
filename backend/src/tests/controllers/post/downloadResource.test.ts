@@ -61,6 +61,7 @@ describe("downloadResource controller", () => {
     id: resourceId,
     title: "Test Post",
     content: null,
+    hidden: false,
     authorId: "author-id",
     type: "RESOURCE",
     fileName: "testfile.pdf",

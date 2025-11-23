@@ -4,7 +4,6 @@ import { it, expect, describe, vi, beforeEach } from "vitest";
 
 import { toggleLike } from "../../controllers/reaction.controller";
 import prisma from "../../core/config/db.js";
-import { createLogger } from "../../core/config/logger.js";
 import { AuthenticationError } from "../../core/error/custom/auth.error";
 import { handleError } from "../../core/error/index";
 import { PostIdParamSchema } from "../../zodSchemas/post.zod.js";

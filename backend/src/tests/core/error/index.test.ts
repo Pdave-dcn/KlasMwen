@@ -3,7 +3,6 @@ import { MulterError } from "multer";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { z } from "zod";
 
-import { createLogger } from "../../../core/config/logger.js";
 import { handleError } from "../../../core/error/index.js";
 
 import type { Response } from "express";

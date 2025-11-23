@@ -39,7 +39,10 @@ describe("handlePostCreation", () => {
     author: {
       id: mockUserId,
       username: "testuser",
-      avatarUrl: "http://example.com/avatar.jpg",
+      Avatar: {
+        id: 1,
+        url: "http://example.com/avatar.jpg",
+      },
     },
     postTags: [],
     _count: {
@@ -62,7 +65,10 @@ describe("handlePostCreation", () => {
     author: {
       id: mockUserId,
       username: "testuser",
-      avatarUrl: "http://example.com/avatar.jpg",
+      Avatar: {
+        id: 2,
+        url: "http://example.com/avatar2.jpg",
+      },
     },
     postTags: [
       { postId: mockCreatedPostId, tagId: 1, tag: { id: 1, name: "tag1" } },
@@ -107,7 +113,7 @@ describe("handlePostCreation", () => {
       authorId: mockUserId,
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
+    } as any);
 
     // Mock prisma.post.findUnique to return the full post object, which matches the RawPost type
     prismaMock.post.findUnique.mockResolvedValueOnce(
@@ -146,7 +152,7 @@ describe("handlePostCreation", () => {
       authorId: mockUserId,
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
+    } as any);
 
     // Mock prisma.postTag.createMany to resolve successfully
     prismaMock.postTag.createMany.mockResolvedValueOnce({
@@ -196,7 +202,7 @@ describe("handlePostCreation", () => {
       authorId: mockUserId,
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
+    } as any);
 
     // Mock prisma.postTag.createMany to throw an error
     const mockError = new Error("Tag creation failed");

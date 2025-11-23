@@ -90,6 +90,7 @@ describe("deleteComment controller", () => {
         parentId: null,
         createdAt: new Date(),
         mentionedUserId: null,
+        hidden: false,
       });
       vi.mocked(prisma.comment.delete).mockResolvedValue({} as any);
 
@@ -119,6 +120,7 @@ describe("deleteComment controller", () => {
         parentId: null,
         createdAt: new Date(),
         mentionedUserId: null,
+        hidden: false,
       });
       vi.mocked(prisma.comment.delete).mockResolvedValue({} as any);
 
@@ -175,6 +177,7 @@ describe("deleteComment controller", () => {
         parentId: null,
         createdAt: new Date(),
         mentionedUserId: null,
+        hidden: false,
       });
 
       await deleteComment(mockRequest, mockResponse);

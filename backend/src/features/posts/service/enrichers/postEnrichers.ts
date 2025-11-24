@@ -1,4 +1,4 @@
-import PostRepository from "../repositories/postRepository";
+import PostRepository from "../repositories/postRepository.js";
 
 import type {
   BookmarkAndLikeStates,
@@ -6,7 +6,7 @@ import type {
   PostPreview,
   EnrichedPost,
   EnrichedPostPreview,
-} from "../types/postTypes";
+} from "../types/postTypes.js";
 
 /**
  * PostEnricher - Adds user-specific state (bookmarks, likes) to posts

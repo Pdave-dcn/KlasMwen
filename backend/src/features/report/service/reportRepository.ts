@@ -1,10 +1,10 @@
-import prisma from "../../../core/config/db";
+import prisma from "../../../core/config/db.js";
 
 import {
   BaseSelectors,
   type CreateReportData,
   type UpdateStatusData,
-} from "./reportTypes";
+} from "./reportTypes.js";
 
 import type { Prisma } from "@prisma/client";
 

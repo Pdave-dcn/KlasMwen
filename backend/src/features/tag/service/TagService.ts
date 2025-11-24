@@ -1,16 +1,16 @@
 import {
   TagNotFoundError,
   TagUpdateFailedError,
-} from "../../../core/error/custom/tag.error";
+} from "../../../core/error/custom/tag.error.js";
 
-import TagRepository from "./tagRepository";
-import TagTransformer from "./tagTransFormer";
+import TagRepository from "./tagRepository.js";
+import TagTransformer from "./tagTransFormer.js";
 
 import type {
   CreateTagData,
   UpdateTagData,
   TagValidationResult,
-} from "./types";
+} from "./types.js";
 
 /**
  * Service layer for Tag business logic

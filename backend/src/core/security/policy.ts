@@ -1,6 +1,6 @@
 import { getAuthorId, isOwner } from "./helpers";
 
-import type { Registry } from "./types";
+import type { Registry } from "./types.js";
 import type { Role } from "@prisma/client";
 
 type PermissionCheck<K extends keyof Registry> =

@@ -1,15 +1,15 @@
-import { PostNotFoundError } from "../../../../core/error/custom/post.error";
-import { processPaginatedResults } from "../../../../utils/pagination.util";
-import PostEnricher from "../enrichers/postEnrichers";
-import PostRepository from "../repositories/postRepository";
-import PostTransformer from "../transformers/postTransformers";
+import { PostNotFoundError } from "../../../../core/error/custom/post.error.js";
+import { processPaginatedResults } from "../../../../utils/pagination.util.js";
+import PostEnricher from "../enrichers/postEnrichers.js";
+import PostRepository from "../repositories/postRepository.js";
+import PostTransformer from "../transformers/postTransformers.js";
 
 import type {
   EnrichedPost,
   EnrichedPostPreview,
   PaginatedPostsResponse,
   RawPost,
-} from "../types/postTypes";
+} from "../types/postTypes.js";
 import type { Prisma } from "@prisma/client";
 
 /**

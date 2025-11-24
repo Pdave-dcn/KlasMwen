@@ -1,7 +1,11 @@
-import { truncatePostContentValue } from "../../postContentValueFormatter";
-import transformPostTagsToFlat from "../../postTagFlattener";
+import { truncatePostContentValue } from "../../postContentValueFormatter.js";
+import transformPostTagsToFlat from "../../postTagFlattener.js";
 
-import type { RawPost, TransformedPost, PostPreview } from "../types/postTypes";
+import type {
+  RawPost,
+  TransformedPost,
+  PostPreview,
+} from "../types/postTypes.js";
 
 /**
  * PostTransformer - Handles all post transformations

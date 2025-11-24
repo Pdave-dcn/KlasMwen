@@ -1,8 +1,8 @@
-import prisma from "../../../../core/config/db";
+import prisma from "../../../../core/config/db.js";
 import {
   buildCompoundCursorQuery,
   buildPaginatedQuery,
-} from "../../../../utils/pagination.util";
+} from "../../../../utils/pagination.util.js";
 import {
   BaseSelectors,
   likeWithPost,
@@ -10,7 +10,7 @@ import {
   type LikeWithPost,
   type BookmarkWithPost,
   type CreatePostInput,
-} from "../types/postTypes";
+} from "../types/postTypes.js";
 
 import type { Prisma } from "@prisma/client";
 

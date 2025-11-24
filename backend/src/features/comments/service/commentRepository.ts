@@ -1,6 +1,6 @@
-import prisma from "../../../core/config/db";
+import prisma from "../../../core/config/db.js";
 
-import { BaseSelectors } from "./types";
+import { BaseSelectors } from "./types.js";
 
 import type { Prisma } from "@prisma/client";
 

@@ -1,10 +1,10 @@
 import jwt from "jsonwebtoken";
 
-import { createLogger } from "../../core/config/logger";
-import { handleError } from "../../core/error";
-import createActionLogger from "../../utils/logger.util";
+import { createLogger } from "../../core/config/logger.js";
+import { handleError } from "../../core/error/index.js";
+import createActionLogger from "../../utils/logger.util.js";
 
-import type { JwtPayload } from "../../core/config/strategies/jwtStrategy";
+import type { JwtPayload } from "../../core/config/strategies/jwtStrategy.js";
 import type { Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "AuthController" });

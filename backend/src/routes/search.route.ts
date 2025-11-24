@@ -1,8 +1,8 @@
 import express from "express";
 
-import { searchPosts } from "../controllers/search.controller";
-import { generalApiLimiter } from "../middleware/coreRateLimits.middleware";
-import { requireAuth } from "../middleware/requireAuth.middleware";
+import { searchPosts } from "../controllers/search.controller.js";
+import { generalApiLimiter } from "../middleware/coreRateLimits.middleware.js";
+import { requireAuth } from "../middleware/requireAuth.middleware.js";
 
 const router = express.Router();
 

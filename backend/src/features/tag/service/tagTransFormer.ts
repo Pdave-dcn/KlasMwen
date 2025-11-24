@@ -1,4 +1,4 @@
-import type { PopularTag } from "./types";
+import type { PopularTag } from "./types.js";
 
 /**
  * Utility functions for transforming tag data

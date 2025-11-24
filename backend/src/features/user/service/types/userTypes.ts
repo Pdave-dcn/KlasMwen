@@ -1,4 +1,4 @@
-import type { UpdateUserProfileData } from "../../../../zodSchemas/user.zod";
+import type { UpdateUserProfileData } from "../../../../zodSchemas/user.zod.js";
 import type { Prisma } from "@prisma/client";
 
 const UserFragments = {

@@ -1,4 +1,4 @@
-import BaseCustomError from "./base.error";
+import BaseCustomError from "./base.error.js";
 
 class TagNotFoundError extends BaseCustomError {
   statusCode = 404;

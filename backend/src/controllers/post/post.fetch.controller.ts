@@ -1,12 +1,12 @@
 import axios from "axios";
 
-import { createLogger } from "../../core/config/logger";
-import { handleError } from "../../core/error";
-import PostService from "../../features/posts/service/PostService";
-import { ensureAuthenticated } from "../../utils/auth.util";
-import createActionLogger from "../../utils/logger.util";
-import { uuidPaginationSchema } from "../../utils/pagination.util";
-import { PostIdParamSchema } from "../../zodSchemas/post.zod";
+import { createLogger } from "../../core/config/logger.js";
+import { handleError } from "../../core/error/index.js";
+import PostService from "../../features/posts/service/PostService.js";
+import { ensureAuthenticated } from "../../utils/auth.util.js";
+import createActionLogger from "../../utils/logger.util.js";
+import { uuidPaginationSchema } from "../../utils/pagination.util.js";
+import { PostIdParamSchema } from "../../zodSchemas/post.zod.js";
 
 import type { Request, Response } from "express";
 

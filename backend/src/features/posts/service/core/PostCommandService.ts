@@ -2,21 +2,21 @@ import {
   PostCreationFailedError,
   PostNotFoundError,
   PostUpdateFailedError,
-} from "../../../../core/error/custom/post.error";
-import { assertPermission } from "../../../../core/security/rbac";
-import createEditResponse from "../../createEditResponse";
-import transformPostTagsToFlat from "../../postTagFlattener";
-import PostRepository from "../repositories/postRepository";
+} from "../../../../core/error/custom/post.error.js";
+import { assertPermission } from "../../../../core/security/rbac.js";
+import createEditResponse from "../../createEditResponse.js";
+import transformPostTagsToFlat from "../../postTagFlattener.js";
+import PostRepository from "../repositories/postRepository.js";
 
-import { CloudinaryCleanupService } from "./CloudinaryCleanupService";
-import { PostValidationService } from "./PostValidationService";
+import { CloudinaryCleanupService } from "./CloudinaryCleanupService.js";
+import { PostValidationService } from "./PostValidationService.js";
 
-import type { ValidatedPostUpdateData } from "../../../../zodSchemas/post.zod";
+import type { ValidatedPostUpdateData } from "../../../../zodSchemas/post.zod.js";
 import type {
   CreatePostInput,
   RawPost,
   UploadedFileInfo,
-} from "../types/postTypes";
+} from "../types/postTypes.js";
 
 /**
  * Handles all write operations (create, update, delete) for posts.

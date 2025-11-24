@@ -1,4 +1,4 @@
-import type { CommentWithRelations, TransformedComment } from "./types";
+import type { CommentWithRelations, TransformedComment } from "./types.js";
 
 /**
  * Utility functions for transforming comment data

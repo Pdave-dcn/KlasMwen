@@ -1,8 +1,8 @@
 /* eslint-disable require-await */
 import { Readable } from "stream";
 
-import cloudinary from "../../core/config/cloudinary";
-import { logger } from "../../core/config/logger";
+import cloudinary from "../../core/config/cloudinary.js";
+import { logger } from "../../core/config/logger.js";
 
 interface CloudinaryUploadResult {
   publicId: string;

@@ -1,8 +1,8 @@
 import {
   PostNotFoundError,
   PostUpdateFailedError,
-} from "../../../../core/error/custom/post.error";
-import PostRepository from "../repositories/postRepository";
+} from "../../../../core/error/custom/post.error.js";
+import PostRepository from "../repositories/postRepository.js";
 
 import type { Prisma } from "@prisma/client";
 

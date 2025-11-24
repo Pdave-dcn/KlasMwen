@@ -13,9 +13,7 @@
     "forceConsistentCasingInFileNames": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noImplicitReturns": true,
-
-    "types": ["vitest", "vitest/globals", "@testing-library/jest-dom"]
+    "noImplicitReturns": true
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]

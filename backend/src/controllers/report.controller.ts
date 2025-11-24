@@ -104,7 +104,8 @@ const getAllReports = async (req: Request, res: Response) => {
     actionLogger.info("Fetching all reports");
     const startTime = Date.now();
 
-    if (req.user && req.user.role !== "GUEST") {
+    const user = ensureAuthenticated(req);
+    if (user && user.role !== "GUEST") {
       checkModeratorAuth(req.user);
     }
 
@@ -334,7 +335,8 @@ const getReportStats = async (req: Request, res: Response) => {
     actionLogger.info("Fetching report statistics");
     const startTime = Date.now();
 
-    if (req.user && req.user.role !== "GUEST") {
+    const user = ensureAuthenticated(req);
+    if (user && user.role !== "GUEST") {
       checkModeratorAuth(req.user);
     }
     actionLogger.info("User authorized");

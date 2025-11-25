@@ -36,7 +36,12 @@ const PostCard = ({ post, onComment }: PostCardProps) => {
 
   const handleUserNavigation = async (e: React.MouseEvent, userId: string) => {
     e.stopPropagation();
-    await navigate(`/profile/${userId}`);
+
+    if (user.id === userId) {
+      await navigate(`/profile/me`);
+    } else {
+      await navigate(`/profile/${userId}`);
+    }
   };
 
   const handleLike = (e: React.MouseEvent) => {

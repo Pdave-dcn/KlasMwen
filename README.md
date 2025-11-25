@@ -84,7 +84,7 @@ KlasMwen includes a rich set of features designed to create a safe, collaborativ
 
 ## Live Demo
 
-> Coming Soon ⏰
+[https://klasmwen.netlify.app/](https://klasmwen.netlify.app/)
 
 ## Tech Stack
 

@@ -1,6 +1,6 @@
 import { createLogger } from "../core/config/logger.js";
-import { handleError } from "../core/error/index";
-import CommentService from "../features/comments/service/CommentService";
+import { handleError } from "../core/error/index.js";
+import CommentService from "../features/comments/service/CommentService.js";
 import { ensureAuthenticated } from "../utils/auth.util";
 import createActionLogger from "../utils/logger.util.js";
 import { createPaginationSchema } from "../utils/pagination.util";
@@ -8,7 +8,7 @@ import {
   CommentIdParamSchema,
   CreateCommentSchema,
 } from "../zodSchemas/comment.zod";
-import { PostIdParamSchema } from "../zodSchemas/post.zod";
+import { PostIdParamSchema } from "../zodSchemas/post.zod.js";
 
 import type { Request, Response } from "express";
 

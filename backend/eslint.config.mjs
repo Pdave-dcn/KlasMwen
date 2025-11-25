@@ -160,7 +160,21 @@ export default defineConfig([
       "**/tests/**/*.{js,ts}",
       "**/__tests__/**/*.{js,ts}",
     ],
+    settings: {
+      "import/resolver": {
+        typescript: {
+          project: "./tsconfig.test.json",
+        },
+        node: {
+          extensions: [".js", ".jsx", ".ts", ".tsx"],
+        },
+      },
+    },
     languageOptions: {
+      parserOptions: {
+        project: "./tsconfig.test.json",
+        tsconfigRootDir: __dirname,
+      },
       globals: {
         ...globals.node,
         // Add vitest globals

@@ -1,8 +1,8 @@
 import jwt from "jsonwebtoken";
 
-import prisma from "../../core/config/db";
-import env from "../../core/config/env";
-import { handleError } from "../../core/error";
+import prisma from "../../core/config/db.js";
+import env from "../../core/config/env.js";
+import { handleError } from "../../core/error/index.js";
 
 import type { Request, Response } from "express";
 

@@ -1,15 +1,15 @@
-import { createLogger } from "../../core/config/logger";
-import { handleError } from "../../core/error";
-import CommentService from "../../features/comments/service/CommentService";
-import PostService from "../../features/posts/service/PostService";
-import UserService from "../../features/user/service/UserService";
-import { ensureAuthenticated } from "../../utils/auth.util";
-import createActionLogger from "../../utils/logger.util";
+import { createLogger } from "../../core/config/logger.js";
+import { handleError } from "../../core/error/index.js";
+import CommentService from "../../features/comments/service/CommentService.js";
+import PostService from "../../features/posts/service/PostService.js";
+import UserService from "../../features/user/service/UserService.js";
+import { ensureAuthenticated } from "../../utils/auth.util.js";
+import createActionLogger from "../../utils/logger.util.js";
 import {
   createPaginationSchema,
   uuidPaginationSchema,
-} from "../../utils/pagination.util";
-import { UserIdParamSchema } from "../../zodSchemas/user.zod";
+} from "../../utils/pagination.util.js";
+import { UserIdParamSchema } from "../../zodSchemas/user.zod.js";
 
 import type { Request, Response } from "express";
 

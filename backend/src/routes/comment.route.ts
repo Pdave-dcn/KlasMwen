@@ -5,13 +5,13 @@ import {
   deleteComment,
   getParentComments,
   getReplies,
-} from "../controllers/comment.controller";
+} from "../controllers/comment.controller.js";
 import {
   writeOperationsLimiter,
   generalApiLimiter,
-} from "../middleware/coreRateLimits.middleware";
-import attachLogContext from "../middleware/logContext.middleware";
-import { requireAuth } from "../middleware/requireAuth.middleware";
+} from "../middleware/coreRateLimits.middleware.js";
+import attachLogContext from "../middleware/logContext.middleware.js";
+import { requireAuth } from "../middleware/requireAuth.middleware.js";
 
 const router = express.Router();
 

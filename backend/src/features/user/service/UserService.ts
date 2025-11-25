@@ -1,18 +1,24 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
+<<<<<<< HEAD
 import env from "../../../core/config/env";
 import { createLogger } from "../../../core/config/logger";
 import { UserNotFoundError } from "../../../core/error/custom/user.error";
 import { getRandomDefaultAvatar } from "../../avatar/avatarService";
+=======
+import { createLogger } from "../../../core/config/logger.js";
+import { UserNotFoundError } from "../../../core/error/custom/user.error.js";
+import { getRandomDefaultAvatar } from "../../avatar/avatarService.js";
+>>>>>>> origin/master
 
-import { UserRepository } from "./repositories/userRepository";
+import { UserRepository } from "./repositories/userRepository.js";
 
 import type {
   AuthTokenPayload,
   RegisterUserData,
   UpdateUserProfileData,
-} from "./types/userTypes";
+} from "./types/userTypes.js";
 
 const serviceLogger = createLogger({ service: "UserService" });
 

@@ -1,8 +1,8 @@
-import PostRepository from "../repositories/postRepository";
+import PostRepository from "../repositories/postRepository.js";
 
-import { PostQueryService } from "./PostQueryService";
+import { PostQueryService } from "./PostQueryService.js";
 
-import type { PaginatedPostsResponse } from "../types/postTypes";
+import type { PaginatedPostsResponse } from "../types/postTypes.js";
 import type { Prisma } from "@prisma/client";
 
 /**

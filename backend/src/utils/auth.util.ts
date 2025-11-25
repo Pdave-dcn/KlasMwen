@@ -1,7 +1,7 @@
 import {
   AuthenticationError,
   AuthorizationError,
-} from "../core/error/custom/auth.error";
+} from "../core/error/custom/auth.error.js";
 
 import type { Request } from "express";
 

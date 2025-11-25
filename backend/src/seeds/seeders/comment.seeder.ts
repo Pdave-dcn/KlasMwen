@@ -1,9 +1,9 @@
 /* eslint-disable max-lines-per-function */
 import { faker } from "@faker-js/faker";
 
-import prisma from "../../core/config/db";
-import { createLogger } from "../../core/config/logger";
-import { calculateMetrics, handleSeedingError } from "../utils/seedHelpers";
+import prisma from "../../core/config/db.js";
+import { createLogger } from "../../core/config/logger.js";
+import { calculateMetrics, handleSeedingError } from "../utils/seedHelpers.js";
 
 import type { Post, Prisma, User } from "@prisma/client";
 

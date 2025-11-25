@@ -1,4 +1,4 @@
-import prisma from "../../../../core/config/db";
+import prisma from "../../../../core/config/db.js";
 import {
   BaseSelectors,
   type UpdateUserProfileData,

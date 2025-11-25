@@ -1,18 +1,18 @@
 import {
   CommentNotFoundError,
   CommentPostMismatchError,
-} from "../../../core/error/custom/comment.error";
-import { PostNotFoundError } from "../../../core/error/custom/post.error";
-import { assertPermission } from "../../../core/security/rbac";
+} from "../../../core/error/custom/comment.error.js";
+import { PostNotFoundError } from "../../../core/error/custom/post.error.js";
+import { assertPermission } from "../../../core/security/rbac.js";
 import {
   buildPaginatedQuery,
   processPaginatedResults,
-} from "../../../utils/pagination.util";
+} from "../../../utils/pagination.util.js";
 
-import CommentRepository from "./commentRepository";
-import CommentTransformer from "./commentTransformer";
+import CommentRepository from "./commentRepository.js";
+import CommentTransformer from "./commentTransformer.js";
 
-import type { CreateCommentData, CommentWithRelations } from "./types";
+import type { CreateCommentData, CommentWithRelations } from "./types.js";
 import type { Prisma } from "@prisma/client";
 
 /**

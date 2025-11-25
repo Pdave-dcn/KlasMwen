@@ -1,8 +1,8 @@
-import { AuthorizationError } from "../error/custom/auth.error";
+import { AuthorizationError } from "../error/custom/auth.error.js";
 
-import { POLICY } from "./policy";
+import { POLICY } from "./policy.js";
 
-import type { Registry } from "./types";
+import type { Registry } from "./types.js";
 
 /**
  * Evaluates whether a user has permission to perform an action on a resource.

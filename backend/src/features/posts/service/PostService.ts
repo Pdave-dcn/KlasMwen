@@ -1,7 +1,7 @@
-import { PostCommandService } from "./core/PostCommandService";
-import { PostQueryService } from "./core/PostQueryService";
-import { PostSearchService } from "./core/PostSearchService";
-import { PostValidationService } from "./core/PostValidationService";
+import { PostCommandService } from "./core/PostCommandService.js";
+import { PostQueryService } from "./core/PostQueryService.js";
+import { PostSearchService } from "./core/PostSearchService.js";
+import { PostValidationService } from "./core/PostValidationService.js";
 
 /**
  * Main facade for post operations.

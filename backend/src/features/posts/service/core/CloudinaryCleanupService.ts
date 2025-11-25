@@ -1,5 +1,5 @@
-import { logger } from "../../../../core/config/logger";
-import CloudinaryService from "../../../media/CloudinaryService";
+import { logger } from "../../../../core/config/logger.js";
+import CloudinaryService from "../../../media/CloudinaryService.js";
 
 /**
  * Handles Cloudinary file cleanup operations.

@@ -1,6 +1,6 @@
 import MarkdownIt from "markdown-it";
 
-import type { TransformedPost } from "../../types/postTypes";
+import type { TransformedPost } from "../../types/postTypes.js";
 
 type PostForTruncation = Omit<
   TransformedPost,

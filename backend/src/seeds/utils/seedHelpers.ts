@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker";
 
-import SeedingError from "../../core/error/custom/seed.error";
+import SeedingError from "../../core/error/custom/seed.error.js";
 
 import type { Avatar, Tag } from "@prisma/client";
 import type { Logger } from "pino";

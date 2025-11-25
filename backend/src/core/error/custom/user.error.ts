@@ -1,4 +1,4 @@
-import BaseCustomError from "./base.error";
+import BaseCustomError from "./base.error.js";
 
 /**
  * Error thrown when a user is not found

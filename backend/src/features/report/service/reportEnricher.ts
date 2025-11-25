@@ -1,4 +1,8 @@
-import type { Report, EnrichedReport, ReportContentType } from "./reportTypes";
+import type {
+  Report,
+  EnrichedReport,
+  ReportContentType,
+} from "./reportTypes.js";
 
 class ReportEnricher {
   /**

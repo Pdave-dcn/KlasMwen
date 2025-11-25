@@ -4,13 +4,13 @@ import {
   createBookmark,
   deleteBookmark,
   getBookmarks,
-} from "../controllers/bookmark.controller";
+} from "../controllers/bookmark.controller.js";
 import {
   generalApiLimiter,
   writeOperationsLimiter,
-} from "../middleware/coreRateLimits.middleware";
-import attachLogContext from "../middleware/logContext.middleware";
-import { requireAuth } from "../middleware/requireAuth.middleware";
+} from "../middleware/coreRateLimits.middleware.js";
+import attachLogContext from "../middleware/logContext.middleware.js";
+import { requireAuth } from "../middleware/requireAuth.middleware.js";
 
 const router = express.Router();
 

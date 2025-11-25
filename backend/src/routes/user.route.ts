@@ -6,18 +6,18 @@ import {
   getUserComments,
   getUserMediaPosts,
   getUserPosts,
-} from "../controllers/user/user.content.controller";
+} from "../controllers/user/user.content.controller.js";
 import {
   getActiveUser,
   getUserById,
   updateUserProfile,
-} from "../controllers/user/user.profile.controller";
+} from "../controllers/user/user.profile.controller.js";
 import {
   writeOperationsLimiter,
   generalApiLimiter,
-} from "../middleware/coreRateLimits.middleware";
-import attachLogContext from "../middleware/logContext.middleware";
-import { requireAuth } from "../middleware/requireAuth.middleware";
+} from "../middleware/coreRateLimits.middleware.js";
+import attachLogContext from "../middleware/logContext.middleware.js";
+import { requireAuth } from "../middleware/requireAuth.middleware.js";
 
 const router = express.Router();
 

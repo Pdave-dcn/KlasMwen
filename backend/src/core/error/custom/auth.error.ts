@@ -1,4 +1,4 @@
-import BaseCustomError from "./base.error";
+import BaseCustomError from "./base.error.js";
 
 class AuthenticationError extends BaseCustomError {
   statusCode = 401;

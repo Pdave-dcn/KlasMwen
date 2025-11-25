@@ -1,8 +1,8 @@
 import { faker } from "@faker-js/faker";
 
-import prisma from "../../core/config/db";
-import { createLogger } from "../../core/config/logger";
-import { handleSeedingError } from "../utils/seedHelpers";
+import prisma from "../../core/config/db.js";
+import { createLogger } from "../../core/config/logger.js";
+import { handleSeedingError } from "../utils/seedHelpers.js";
 
 import type { Prisma } from "@prisma/client";
 

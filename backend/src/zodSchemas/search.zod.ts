@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { uuidPaginationSchema } from "../utils/pagination.util";
+import { uuidPaginationSchema } from "../utils/pagination.util.js";
 
 const SearchPostsSchema = uuidPaginationSchema.extend({
   search: z.string().trim().optional(),

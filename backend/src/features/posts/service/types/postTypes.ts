@@ -4,8 +4,8 @@ import type {
   RawPost,
   TransformedPost,
   CreatePostInput,
-} from "../../../../types/postTypes";
-import type { PostPreview } from "../../postContentValueFormatter";
+} from "../../../../types/postTypes.js";
+import type { PostPreview } from "../../postContentValueFormatter.js";
 
 const PostFragments = {
   author: {

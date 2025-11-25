@@ -32,7 +32,7 @@ const main = async () => {
 
     // Phase 4: Create users
     if (!avatars) return;
-    const { users, userStats } = await seedUsers(20, avatars);
+    const { users, userStats } = await seedUsers(10, avatars);
 
     // Phase 5: Create posts
     if (!users || !tags) return;

@@ -1,7 +1,7 @@
 /* eslint-disable max-lines-per-function*/
 import prisma from "../core/config/db.js";
 import { createLogger } from "../core/config/logger.js";
-import { handleError } from "../core/error/index";
+import { handleError } from "../core/error/index.js";
 import { ensureAuthenticated } from "../utils/auth.util.js";
 import createActionLogger from "../utils/logger.util.js";
 import { PostIdParamSchema } from "../zodSchemas/post.zod.js";

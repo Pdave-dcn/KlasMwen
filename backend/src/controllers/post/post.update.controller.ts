@@ -6,7 +6,7 @@ import createActionLogger from "../../utils/logger.util.js";
 import {
   PostIdParamSchema,
   UpdatedPostSchema,
-} from "../../zodSchemas/post.zod";
+} from "../../zodSchemas/post.zod.js";
 
 import type { Request, Response } from "express";
 

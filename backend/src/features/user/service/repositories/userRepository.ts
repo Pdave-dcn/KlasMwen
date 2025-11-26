@@ -3,7 +3,7 @@ import {
   BaseSelectors,
   type UpdateUserProfileData,
   type CreateUserData,
-} from "../types/userTypes";
+} from "../types/userTypes.js";
 
 export class UserRepository {
   /**

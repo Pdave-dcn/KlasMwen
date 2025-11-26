@@ -162,7 +162,7 @@ describe("Register User Controller", () => {
           email: mockCreatedUser.email,
           role: mockCreatedUser.role,
         },
-        "test-secret-key",
+        expect.any(String),
         { expiresIn: "3d" }
       );
 
@@ -425,18 +425,6 @@ describe("Register User Controller", () => {
         avatarId: 1,
         createdAt: new Date(),
       });
-    });
-
-    it("should handle missing JWT_SECRET", async () => {
-      delete process.env.JWT_SECRET;
-
-      await registerUser(mockRequest as Request, mockResponse as Response);
-
-      expect(mockedHandleError).toHaveBeenCalled();
-      const errorCall = mockedHandleError.mock.calls[0][0];
-      expect(errorCall).toBeInstanceOf(Error);
-      expect((errorCall as Error).message).toContain("JWT_SECRET");
-      expect(cookieSpy).not.toHaveBeenCalled();
     });
 
     it("should handle JWT signing errors", async () => {

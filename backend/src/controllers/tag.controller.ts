@@ -1,5 +1,5 @@
 import { createLogger } from "../core/config/logger.js";
-import { handleError } from "../core/error/index";
+import { handleError } from "../core/error/index.js";
 import TagService from "../features/tag/service/TagService.js";
 import { checkAdminAuth } from "../utils/auth.util.js";
 import createActionLogger from "../utils/logger.util.js";

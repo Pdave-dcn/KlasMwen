@@ -1,6 +1,6 @@
 /* eslint-disable max-lines-per-function*/
 import { createLogger } from "../core/config/logger.js";
-import { handleError } from "../core/error/index";
+import { handleError } from "../core/error/index.js";
 import PostService from "../features/posts/service/PostService.js";
 import { ensureAuthenticated } from "../utils/auth.util.js";
 import createActionLogger from "../utils/logger.util.js";

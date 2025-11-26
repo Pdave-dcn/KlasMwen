@@ -1,6 +1,6 @@
 import prisma from "../../../core/config/db.js";
 
-import { BaseSelectors } from "./types";
+import { BaseSelectors } from "./types.js";
 
 /**
  * Repository layer for Tag data access

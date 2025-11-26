@@ -1,4 +1,4 @@
-import { getAuthorId, isOwner } from "./helpers";
+import { getAuthorId, isOwner } from "./helpers.js";
 
 import type { Registry } from "./types.js";
 import type { Role } from "@prisma/client";

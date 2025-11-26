@@ -1,7 +1,13 @@
 import { BrowserRouter, useNavigate } from "react-router-dom";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  cleanup,
+} from "@testing-library/react";
 
 import CommentCard from "@/components/cards/Comment/CommentCard";
 import { useParentCommentsQuery } from "@/queries/comment.query";
@@ -118,8 +124,8 @@ const mockUser = {
 const TestWrapper = ({ children }: { children: React.ReactNode }) => {
   const queryClient = new QueryClient({
     defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
+      queries: { retry: false, gcTime: 0 },
+      mutations: { retry: false, gcTime: 0 },
     },
   });
 
@@ -137,6 +143,10 @@ describe("CommentCard Component", () => {
     vi.clearAllMocks();
     mockUseNavigate.mockReturnValue(mockNavigate);
     mockUseAuthStore.mockReturnValue({ user: mockUser });
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe("Authentication", () => {
@@ -365,8 +375,8 @@ describe("CommentCard Component", () => {
       expect(screen.getByText("Reply to john_doe")).toBeInTheDocument();
     });
 
-    it("should hide comment form when Reply button is clicked again", () => {
-      render(
+    it("DEBUG: check if form renders at all", async () => {
+      const { debug } = render(
         <TestWrapper>
           <CommentCard postId="123" />
         </TestWrapper>
@@ -374,10 +384,43 @@ describe("CommentCard Component", () => {
 
       const replyButtons = screen.getAllByText("Reply");
       fireEvent.click(replyButtons[0]);
-      expect(screen.getByText("Reply to john_doe")).toBeInTheDocument();
 
+      await waitFor(() => {
+        debug(); // This will show the actual DOM after clicking
+      });
+    });
+
+    it("should hide comment form when Reply button is clicked again", async () => {
+      const { unmount } = render(
+        <TestWrapper>
+          <CommentCard postId="123" />
+        </TestWrapper>
+      );
+
+      // Wait for initial render to complete
+      await waitFor(() => {
+        expect(screen.getByText("john_doe")).toBeInTheDocument();
+      });
+
+      const replyButtons = screen.getAllByText("Reply");
+
+      // First click to open
       fireEvent.click(replyButtons[0]);
-      expect(screen.queryByText("Reply to john_doe")).not.toBeInTheDocument();
+
+      // Wait for form to appear
+      await waitFor(() => {
+        expect(screen.getByTestId("reply-form-1")).toBeInTheDocument();
+      });
+
+      // Second click to close
+      fireEvent.click(replyButtons[0]);
+
+      // Wait for form to disappear
+      await waitFor(() => {
+        expect(screen.queryByTestId("reply-form-1")).not.toBeInTheDocument();
+      });
+
+      unmount();
     });
 
     it("should allow multiple reply forms to be open simultaneously", () => {

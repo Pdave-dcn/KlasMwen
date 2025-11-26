@@ -1,11 +1,5 @@
-import { useNavigate } from "react-router-dom";
-
-import { toast } from "sonner";
-
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { useToggleBookmarkMutation } from "@/queries/bookmark.query";
-import { useToggleLikeMutation } from "@/queries/like.query";
-import { useAuthStore } from "@/stores/auth.store";
+import { usePostCardActions } from "@/hooks/usePostCardActions";
 import type { Post } from "@/zodSchemas/post.zod";
 
 import PostCardActions from "./PostCardActions";
@@ -15,67 +9,22 @@ import PostCardTags from "./PostCardTags";
 
 interface PostCardProps {
   post: Post;
-  onComment?: (postId: string) => void;
 }
 
-const PostCard = ({ post, onComment }: PostCardProps) => {
-  const navigate = useNavigate();
-  const { user } = useAuthStore();
-
-  const toggleBookmarkMutation = useToggleBookmarkMutation(
-    post.id,
-    post.isBookmarked
-  );
-  const toggleLikeMutation = useToggleLikeMutation(post.id);
+const PostCard = ({ post }: PostCardProps) => {
+  const { user, handlers, mutations } = usePostCardActions({ post });
 
   if (!user) return null;
-
-  const handlePostNavigation = async () => {
-    await navigate(`/@${post.author.username}/post/${post.id}`);
-  };
-
-  const handleUserNavigation = async (e: React.MouseEvent, userId: string) => {
-    e.stopPropagation();
-
-    if (user.id === userId) {
-      await navigate(`/profile/me`);
-    } else {
-      await navigate(`/profile/${userId}`);
-    }
-  };
-
-  const handleLike = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    toggleLikeMutation.mutate();
-  };
-
-  const handleBookmark = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    toggleBookmarkMutation.mutate();
-  };
-
-  // ! Not in use
-  const handleComment = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onComment?.(post.id);
-  };
-
-  const handleShare = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    // * share logic here
-    toast.info("Share feature coming soon!");
-  };
-
   return (
     <Card
       className="w-full max-w-2xl cursor-pointer hover:bg-muted/50 transition-colors"
-      onClick={handlePostNavigation}
+      onClick={handlers.handlePostNavigation}
     >
       <CardHeader className="pb-3">
         <PostCardHeader
           post={post}
           user={user}
-          onUserNavigation={handleUserNavigation}
+          onUserNavigation={handlers.handleUserNavigation}
         />
       </CardHeader>
 
@@ -84,12 +33,11 @@ const PostCard = ({ post, onComment }: PostCardProps) => {
         <PostCardTags tags={post.tags} />
         <PostCardActions
           post={post}
-          onLike={handleLike}
-          onComment={handleComment}
-          onBookmark={handleBookmark}
-          onShare={handleShare}
-          isLikePending={toggleLikeMutation.isPending}
-          isBookmarkPending={toggleBookmarkMutation.isPending}
+          onLike={handlers.handleLike}
+          onBookmark={handlers.handleBookmark}
+          onShare={handlers.handleShare}
+          isLikePending={mutations.toggleLikeMutation.isPending}
+          isBookmarkPending={mutations.toggleBookmarkMutation.isPending}
         />
       </CardContent>
     </Card>

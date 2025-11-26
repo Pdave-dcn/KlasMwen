@@ -68,7 +68,7 @@ const RepliesList = ({ parentId, postId }: RepliesListProps) => {
     );
 
   return (
-    <div className="ml-10">
+    <div className="ml-11">
       <div className="mt-2 flex flex-col gap-3">
         {replies.map((reply, index) => (
           <div key={reply.id}>
@@ -80,7 +80,7 @@ const RepliesList = ({ parentId, postId }: RepliesListProps) => {
                 </AvatarFallback>
               </Avatar>
 
-              <div className="flex-1 space-y-1">
+              <div className="flex-1">
                 <div className="flex items-center space-x-2">
                   <Button
                     variant="link"

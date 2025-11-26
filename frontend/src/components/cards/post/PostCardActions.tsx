@@ -6,7 +6,6 @@ import type { Post } from "@/zodSchemas/post.zod";
 interface PostCardActionsProps {
   post: Post;
   onLike: (e: React.MouseEvent) => void;
-  onComment: (e: React.MouseEvent) => void;
   onBookmark: (e: React.MouseEvent) => void;
   onShare: (e: React.MouseEvent) => void;
   isLikePending: boolean;
@@ -16,7 +15,6 @@ interface PostCardActionsProps {
 const PostCardActions = ({
   post,
   onLike,
-  onComment,
   onBookmark,
   onShare,
   isLikePending,
@@ -40,10 +38,10 @@ const PostCardActions = ({
           <span className="text-sm">{post._count.likes}</span>
         </Button>
 
+        {/* Comments button is disabled for now */}
         <Button
           variant="ghost"
           size="sm"
-          onClick={onComment}
           className="gap-2 text-muted-foreground hover:text-primary pointer-events-none"
         >
           <MessageCircle className="w-4 h-4" />

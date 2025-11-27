@@ -12,9 +12,8 @@ interface PostCardProps {
 }
 
 const PostCard = ({ post }: PostCardProps) => {
-  const { user, handlers, mutations } = usePostCardActions({ post });
+  const { handlers, mutations } = usePostCardActions({ post });
 
-  if (!user) return null;
   return (
     <Card
       className="w-full max-w-2xl cursor-pointer hover:bg-muted/50 transition-colors"
@@ -23,7 +22,6 @@ const PostCard = ({ post }: PostCardProps) => {
       <CardHeader className="pb-3">
         <PostCardHeader
           post={post}
-          user={user}
           onUserNavigation={handlers.handleUserNavigation}
         />
       </CardHeader>

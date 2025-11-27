@@ -1,15 +1,15 @@
 import express from "express";
 
 import {
-  createReport,
   deleteReport,
   getAllReports,
   getReportById,
-  getReportReasons,
   getReportStats,
   toggleVisibility,
   updateReportStatus,
-} from "../controllers/report.controller.js";
+} from "../controllers/report/report.moderator.controller.js";
+import { getReportReasons } from "../controllers/report/report.public.controller.js";
+import { createReport } from "../controllers/report/report.user.controller.js";
 import {
   generalApiLimiter,
   reportCreationLimiter,

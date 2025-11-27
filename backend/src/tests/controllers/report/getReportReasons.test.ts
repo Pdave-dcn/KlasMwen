@@ -1,4 +1,4 @@
-import { getReportReasons } from "../../../controllers/report.controller";
+import { getReportReasons } from "../../../controllers/report/report.public.controller.js";
 import prisma from "../../../core/config/db.js";
 import { handleError } from "../../../core/error";
 

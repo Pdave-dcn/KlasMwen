@@ -19,7 +19,6 @@ const searchPosts = async (req: Request, res: Response) => {
 
     const user = ensureAuthenticated(req);
 
-    actionLogger.debug("Validating search parameters");
     const {
       limit,
       cursor,
@@ -27,7 +26,6 @@ const searchPosts = async (req: Request, res: Response) => {
       tagIds,
     } = SearchPostsSchema.parse(req.query);
 
-    actionLogger.debug("Sanitizing search term");
     const sanitizedSearchTerm = searchTerm
       ? searchTerm.replace(/[%_]/g, "\\$&")
       : undefined;
@@ -39,7 +37,7 @@ const searchPosts = async (req: Request, res: Response) => {
         hasCursor: !!cursor,
         limit,
       },
-      "Search parameters validated and sanitized"
+      "User authentication and search parameters validated and sanitized"
     );
 
     actionLogger.debug("Executing post search");

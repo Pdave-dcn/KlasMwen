@@ -1,6 +1,6 @@
 import { ZodError } from "zod";
 
-import { updateReportStatus } from "../../../controllers/report.controller";
+import { updateReportStatus } from "../../../controllers/report/report.moderator.controller.js";
 import prisma from "../../../core/config/db.js";
 import { handleError } from "../../../core/error";
 import { AuthorizationError } from "../../../core/error/custom/auth.error";

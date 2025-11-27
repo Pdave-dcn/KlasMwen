@@ -1,6 +1,6 @@
 import { ZodError } from "zod";
 
-import { toggleVisibility } from "../../../controllers/report.controller";
+import { toggleVisibility } from "../../../controllers/report/report.moderator.controller.js";
 import prisma from "../../../core/config/db.js";
 import { handleError } from "../../../core/error";
 import { AuthorizationError } from "../../../core/error/custom/auth.error";

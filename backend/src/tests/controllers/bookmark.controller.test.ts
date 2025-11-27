@@ -8,6 +8,7 @@ import {
 } from "../../controllers/bookmark.controller.js";
 import prisma from "../../core/config/db.js";
 import { AuthenticationError } from "../../core/error/custom/auth.error.js";
+import { PostNotFoundError } from "../../core/error/custom/post.error.js";
 import { handleError } from "../../core/error/index.js";
 
 import type { Post, Bookmark } from "@prisma/client";
@@ -114,9 +115,11 @@ describe("Bookmark controller", () => {
       await createBookmark(mockRequest as Request, mockResponse as Response);
 
       expect(handleError).not.toHaveBeenCalled();
-      expect(prisma.post.findUnique).toHaveBeenCalledWith({
-        where: { id: mockPostId },
-      });
+      expect(prisma.post.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: mockPostId },
+        })
+      );
       expect(prisma.bookmark.create).toHaveBeenCalledWith({
         data: { userId: mockUserId, postId: mockPostId },
       });
@@ -126,7 +129,7 @@ describe("Bookmark controller", () => {
       });
     });
 
-    it("should return 404 when post does not exist", async () => {
+    it("should call handleError when post does not exist", async () => {
       mockRequest = {
         body: {},
         user: {
@@ -142,14 +145,16 @@ describe("Bookmark controller", () => {
 
       await createBookmark(mockRequest as Request, mockResponse as Response);
 
-      expect(prisma.post.findUnique).toHaveBeenCalledWith({
-        where: { id: mockPostId },
-      });
+      expect(prisma.post.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: mockPostId },
+        })
+      );
       expect(prisma.bookmark.create).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(404);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Post not found",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(PostNotFoundError),
+        mockResponse
+      );
     });
 
     it("should call handleError with AuthenticationError when user is not authenticated", async () => {

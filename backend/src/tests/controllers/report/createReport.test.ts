@@ -1,6 +1,6 @@
 import { ZodError } from "zod";
 
-import { createReport } from "../../../controllers/report.controller";
+import { createReport } from "../../../controllers/report/report.user.controller.js";
 import prisma from "../../../core/config/db.js";
 import { handleError } from "../../../core/error";
 import { AuthenticationError } from "../../../core/error/custom/auth.error";

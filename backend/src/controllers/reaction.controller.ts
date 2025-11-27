@@ -2,6 +2,7 @@
 import prisma from "../core/config/db.js";
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index.js";
+import PostService from "../features/posts/service/PostService.js";
 import { ensureAuthenticated } from "../utils/auth.util.js";
 import createActionLogger from "../utils/logger.util.js";
 import { PostIdParamSchema } from "../zodSchemas/post.zod.js";
@@ -17,72 +18,32 @@ const toggleLike = async (req: Request, res: Response) => {
     actionLogger.info("Like toggle attempt started");
     const startTime = Date.now();
 
-    actionLogger.debug("Authenticating user");
-    const authStartTime = Date.now();
     const user = ensureAuthenticated(req);
-    const userId = user.id;
-    const authDuration = Date.now() - authStartTime;
-
-    actionLogger.debug("Validating post ID parameter");
-    const validationStartTime = Date.now();
     const { id: postId } = PostIdParamSchema.parse(req.params);
-    const validationDuration = Date.now() - validationStartTime;
-
     actionLogger.info(
       {
-        userId,
+        userId: user.id,
         postId,
-        authDuration,
-        validationDuration,
       },
       "User authenticated and post ID validated"
     );
 
-    actionLogger.debug("Checking post existence and current like status");
     const dbCheckStartTime = Date.now();
-    const [existingPost, existingLike] = await Promise.all([
-      prisma.post.findUnique({ where: { id: postId } }),
+    const [_existingPost, existingLike] = await Promise.all([
+      PostService.verifyPostExists(postId),
       prisma.like.findUnique({
-        where: { userId_postId: { userId, postId } },
+        where: { userId_postId: { userId: user.id, postId } },
       }),
     ]);
     const dbCheckDuration = Date.now() - dbCheckStartTime;
-
-    actionLogger.info(
-      {
-        postExists: !!existingPost,
-        alreadyLiked: !!existingLike,
-        dbCheckDuration,
-      },
-      "Post and like status check completed"
-    );
-
-    if (!existingPost) {
-      const totalDuration = Date.now() - startTime;
-      actionLogger.warn(
-        {
-          postId,
-          userId,
-          authDuration,
-          validationDuration,
-          dbCheckDuration,
-          totalDuration,
-        },
-        "Like toggle failed - post not found"
-      );
-      return res
-        .status(404)
-        .json({ message: "The post being reacted to is not found" });
-    }
 
     let action: "unlike" | "like";
     let dbOperationDuration: number;
 
     if (existingLike) {
-      actionLogger.debug("Removing existing like");
       const unlikeStartTime = Date.now();
       await prisma.like.delete({
-        where: { userId_postId: { userId, postId } },
+        where: { userId_postId: { userId: user.id, postId } },
       });
       dbOperationDuration = Date.now() - unlikeStartTime;
       action = "unlike";
@@ -90,11 +51,9 @@ const toggleLike = async (req: Request, res: Response) => {
       const totalDuration = Date.now() - startTime;
       actionLogger.info(
         {
-          userId,
+          userId: user.id,
           postId,
           action,
-          authDuration,
-          validationDuration,
           dbCheckDuration,
           dbOperationDuration,
           totalDuration,
@@ -107,10 +66,9 @@ const toggleLike = async (req: Request, res: Response) => {
       });
     }
 
-    actionLogger.debug("Creating new like");
     const likeStartTime = Date.now();
     await prisma.like.create({
-      data: { userId, postId },
+      data: { userId: user.id, postId },
     });
     dbOperationDuration = Date.now() - likeStartTime;
     action = "like";
@@ -118,11 +76,9 @@ const toggleLike = async (req: Request, res: Response) => {
     const totalDuration = Date.now() - startTime;
     actionLogger.info(
       {
-        userId,
+        userId: user.id,
         postId,
         action,
-        authDuration,
-        validationDuration,
         dbCheckDuration,
         dbOperationDuration,
         totalDuration,

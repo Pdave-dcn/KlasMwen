@@ -5,6 +5,7 @@ import { it, expect, describe, vi, beforeEach } from "vitest";
 import { toggleLike } from "../../controllers/reaction.controller";
 import prisma from "../../core/config/db.js";
 import { AuthenticationError } from "../../core/error/custom/auth.error";
+import { PostNotFoundError } from "../../core/error/custom/post.error";
 import { handleError } from "../../core/error/index";
 import { PostIdParamSchema } from "../../zodSchemas/post.zod.js";
 
@@ -165,7 +166,7 @@ describe("Reaction controller", () => {
       expect(prisma.post.findUnique).not.toHaveBeenCalled();
     });
 
-    it("should return 404 if the post does not exist", async () => {
+    it("should call handleError if the post does not exist", async () => {
       mockRequest = {
         user: {
           id: mockUserId,
@@ -181,10 +182,10 @@ describe("Reaction controller", () => {
       await toggleLike(mockRequest as Request, mockResponse as Response);
 
       expect(PostIdParamSchema.parse).toHaveBeenCalledWith({ id: mockPostId });
-      expect(mockResponse.status).toHaveBeenCalledWith(404);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "The post being reacted to is not found",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(PostNotFoundError),
+        mockResponse
+      );
     });
 
     it("should throw an error and call handleError if the post ID is invalid", async () => {

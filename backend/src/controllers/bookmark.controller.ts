@@ -23,12 +23,10 @@ const getBookmarks = async (req: Request, res: Response) => {
     const startTime = Date.now();
 
     const user = ensureAuthenticated(req);
-    actionLogger.info({ userId: user.id }, "User authenticated");
-
     const { limit, cursor } = uuidPaginationSchema.parse(req.query);
-    actionLogger.debug(
-      { limit, cursor, hasCursor: !!cursor },
-      "Pagination parameters parsed"
+    actionLogger.info(
+      { userId: user.id, limit, cursor: !!cursor },
+      "User authenticated and pagination parameters parsed"
     );
 
     actionLogger.debug("Processing user bookmarks request");
@@ -74,29 +72,19 @@ const createBookmark = async (req: Request, res: Response) => {
     const startTime = Date.now();
 
     const user = ensureAuthenticated(req);
-    const userId = user.id;
-    actionLogger.info({ userId }, "User authenticated");
-
-    actionLogger.debug("Parsing post ID parameter");
     const { id: postId } = PostIdParamSchema.parse(req.params);
-
-    actionLogger.info({ postId, userId }, "Creating bookmark for post");
+    actionLogger.info(
+      { postId, userId: user.id },
+      "User authenticated and post ID parsed"
+    );
 
     actionLogger.debug("Verifying post exists");
-    const post = await prisma.post.findUnique({ where: { id: postId } });
-    if (!post) {
-      actionLogger.warn({ postId }, "Attempted to bookmark non-existent post");
-      return res.status(404).json({ message: "Post not found" });
-    }
-
-    actionLogger.debug(
-      { postId, postTitle: post.title },
-      "Post found, creating bookmark"
-    );
+    await PostService.verifyPostExists(postId);
+    actionLogger.info("Post found, creating bookmark");
 
     const dbStartTime = Date.now();
     await prisma.bookmark.create({
-      data: { userId, postId },
+      data: { userId: user.id, postId },
     });
 
     const dbDuration = Date.now() - dbStartTime;
@@ -104,9 +92,8 @@ const createBookmark = async (req: Request, res: Response) => {
 
     actionLogger.info(
       {
-        userId,
+        userId: user.id,
         postId,
-        postTitle: post.title,
         dbDuration,
         totalDuration,
       },
@@ -133,35 +120,28 @@ const deleteBookmark = async (req: Request, res: Response) => {
     const startTime = Date.now();
 
     const user = ensureAuthenticated(req);
-    const userId = user.id;
-    actionLogger.info({ userId }, "User authenticated");
-
-    actionLogger.debug("Parsing post ID parameter");
     const { id: postId } = PostIdParamSchema.parse(req.params);
-
-    actionLogger.info({ postId, userId }, "Deleting bookmark for post");
+    actionLogger.info(
+      { postId, userId: user.id },
+      "User authenticated and post ID parsed"
+    );
 
     actionLogger.debug("Checking if bookmark exists");
     const existingBookmark = await prisma.bookmark.findUnique({
-      where: { userId_postId: { userId, postId } },
+      where: { userId_postId: { userId: user.id, postId } },
     });
 
     if (!existingBookmark) {
       actionLogger.warn(
-        { postId, userId },
+        { postId, userId: user.id },
         "Attempted to delete non-existent bookmark"
       );
       return res.status(404).json({ message: "Bookmark not found" });
     }
 
-    actionLogger.debug(
-      { postId, userId },
-      "Bookmark found, proceeding with deletion"
-    );
-
     const dbStartTime = Date.now();
     await prisma.bookmark.delete({
-      where: { userId_postId: { userId, postId } },
+      where: { userId_postId: { userId: user.id, postId } },
     });
 
     const dbDuration = Date.now() - dbStartTime;
@@ -169,7 +149,7 @@ const deleteBookmark = async (req: Request, res: Response) => {
 
     actionLogger.info(
       {
-        userId,
+        userId: user.id,
         postId,
         dbDuration,
         totalDuration,

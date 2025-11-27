@@ -1,4 +1,4 @@
-import { getReportStats } from "../../../controllers/report.controller";
+import { getReportStats } from "../../../controllers/report/report.moderator.controller.js";
 import prisma from "../../../core/config/db.js";
 import { AuthorizationError } from "../../../core/error/custom/auth.error";
 import { handleError } from "../../../core/error/index.js";

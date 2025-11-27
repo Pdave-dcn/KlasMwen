@@ -5,8 +5,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Toaster } from "sonner";
 
 import { AppRoutes } from "./components/AppRoutes";
-import ScrollToTop from "./components/ScrollToTop";
-import SplashScreen from "./components/SplashScreen";
+import SplashScreen from "./components/layout/SplashScreen";
+import ScrollManager from "./components/ScrollManager";
 import { useAuthInitialization } from "./hooks/useAuthInitialization";
 
 const PROTECTED_ROUTES = [
@@ -63,7 +63,7 @@ const App = () => {
 
   return (
     <>
-      <ScrollToTop />
+      <ScrollManager />
       <Toaster position="top-center" />
       <AppRoutes />
     </>

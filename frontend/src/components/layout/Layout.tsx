@@ -8,7 +8,7 @@ import { useReportSubmission } from "@/hooks/useReportSubmission";
 import { usePostEditStore } from "@/stores/postEdit.store";
 import { useReportModalStore } from "@/stores/reportModal.store";
 
-import { ReportDialog } from "../ReportDialog";
+import { ReportDialog } from "../modals/ReportDialog";
 
 import MobileTabBar from "./MobileTabBar";
 import Sidebar from "./Sidebar";
@@ -53,7 +53,12 @@ const Layout = ({ children }: LayoutProps) => {
         <Sidebar onCreateClick={openPostTypeModal} />
       </aside>
 
-      <div className="flex-1 overflow-auto pb-10 md:pb-0">{children}</div>
+      <div
+        id="app-scroll-container"
+        className="flex-1 overflow-auto pb-10 md:pb-0"
+      >
+        {children}
+      </div>
 
       <MobileTabBar onCreateClick={openPostTypeModal} />
 

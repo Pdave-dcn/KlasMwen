@@ -16,7 +16,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAvatars } from "@/queries/avatar.query";
 
-import LoadMoreButton from "./LoadMoreButton";
+import LoadMoreButton from "../LoadMoreButton";
 
 const AvatarModal = ({
   isOpen,

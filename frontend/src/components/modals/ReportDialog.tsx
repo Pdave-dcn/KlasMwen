@@ -20,7 +20,7 @@ import {
 import { useReportReasonsQuery } from "@/queries/report.query";
 import type { ResourceType } from "@/zodSchemas/report.zod";
 
-import { Spinner } from "./ui/spinner";
+import { Spinner } from "../ui/spinner";
 
 interface ReportDialogProps {
   isOpen: boolean;

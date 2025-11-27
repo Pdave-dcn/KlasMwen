@@ -1,4 +1,4 @@
-import AvatarModal from "@/components/AvatarModal";
+import AvatarModal from "@/components/modals/AvatarModal";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";

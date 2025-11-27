@@ -15,7 +15,7 @@ backend/
 ├── prisma/           # Schema, migrations, seed scripts
 └── src/
     ├── controllers/ # Route handlers (thin layer)
-    ├── core/        # Config, logging, error handling
+    ├── core/        # Config, security, logging, error handling
     ├── features/    # Feature-specific services, repositories
     ├── middlewares/ # Auth, rate-limiting, logging
     ├── routes/      # API routes
@@ -52,7 +52,7 @@ Client → Middleware → Controller → Service → Repository → Prisma → R
 
 ### Controller Responsibilities
 
-- Executes **middleware** (logging, rate limiting, auth).
+- Executes authentication.
 - Validates inputs using **Zod schemas**.
 - Calls **service methods**.
 - Returns **standardized JSON responses**.
@@ -187,7 +187,38 @@ Follows **12-Factor App principles**:
 - `process.env` used throughout.
 - Configuration isolated in `src/core/config/`.
 - Pre-flight checks verify DB, Cloudinary, and logger.
-- Secrets managed via env variables; never committed.
+
+### Environment Variable Validation
+
+To ensure type safety and correctness, environment variables are validated using a **Zod schema** (`envSchema`) on startup:
+
+```ts
+import dotenv from "dotenv";
+import { z } from "zod";
+import envSchema from "../../zodSchemas/env.zod.js";
+
+dotenv.config({ override: true });
+
+const parsed = envSchema.safeParse(process.env);
+if (!parsed.success) {
+  console.error(
+    "Invalid environment variables:",
+    z.prettifyError(parsed.error)
+  );
+  throw new Error("Invalid environment variables");
+}
+
+const env = parsed.data;
+export default env;
+```
+
+- `env` is exported and used across the backend wherever environment variables are needed.
+- This ensures **type-safe, validated access** to all critical configuration values.
+
+### Pre-flight Checks
+
+- Ensures that DB connections, Cloudinary, logger, and other critical services are reachable before starting the server.
+- Provides early failure and clear error reporting for misconfigurations.
 
 ---
 
@@ -203,7 +234,99 @@ Enables **traceable, correlated logs** across requests.
 
 ---
 
-## 9. Testing Philosophy & Setup
+## 9. Role-Based Access Control (RBAC)
+
+The backend implements a **type-safe, flexible RBAC system** using a **registry** and **policy** approach.
+
+### Registry & Policy
+
+- **`registry`** defines resources (e.g., `post`, `comment`) and actions (`create`, `read`, `update`, `delete`, `report`).
+- **`POLICY`** maps roles to resources and actions, with values that are **boolean** or **functions** for dynamic checks (like ownership).
+
+### Permission Functions
+
+- **`hasPermission(user, resource, action, data?)`** → returns `true/false` depending on the user's rights.
+- **`assertPermission(user, resource, action, data?)`** → throws `AuthorizationError` if permission is denied.
+
+### Example Usage in Service
+
+```ts
+const user = ensureAuthenticated(req);
+assertPermission(user, "post", "delete", post);
+await PostRepository.delete(post.id);
+```
+
+- Fine-grained permission checks are typically done inside **services** using `assertPermission` or `hasPermission`.
+
+### Benefits
+
+- Centralized, type-safe permissions.
+- Supports ownership and conditional access.
+- Consistent enforcement across controllers, services, and even frontend checks.
+
+---
+
+## 10. Quick Start / How-To Guides
+
+This section provides a structured approach for adding new features, routes, controllers, and RBAC permissions in the KlasMwen backend.
+
+### 10.1 Add a New Feature
+
+1. Create a folder under `src/features/featureName/`.
+2. Add core subdirectories:
+
+   - `serviceLayer/` → Business logic for the feature.
+   - `helpers/` or `utils/` → Reusable utilities specific to the feature.
+
+3. Add `controllers/`:
+
+   - `src/controllers/moduleName.controller.ts` → Define route handlers.
+
+4. Add `routes/`:
+
+   - `src/routes/moduleName.route.ts` → Define endpoints and route logic.
+
+5. Define request/response validation using **Zod schemas** in `src/zodSchemas/`.
+6. Connect repository/service methods to controllers.
+7. Register routes in the backend router (`src/routes/index.route.ts`).
+
+### 10.2 Add a Controller Method
+
+1. Create or update the controller for your feature.
+2. Import the relevant service methods.
+3. Wrap logic in `try/catch` and use `handleError` for error handling.
+4. Validate incoming requests with the corresponding Zod schema.
+5. Return standardized JSON responses.
+
+### 10.3 Add a Route
+
+1. Define a route in `routes/moduleName.route.ts`.
+2. Wrap the route with middleware if authentication or RBAC is required (`ensureAuthenticated`, `assertPermission`, etc.).
+3. Connect route handlers from the controller.
+
+### 10.4 Add Permission Checks
+
+1. Update `registry` with the new resource and allowed actions.
+2. Update `POLICY` to define role-based rules and ownership logic.
+3. Use `hasPermission` in services or `assertPermission` to enforce backend checks.
+
+**Example in a service:**
+
+```ts
+const user = ensureAuthenticated(req);
+assertPermission(user, "post", "delete", post);
+await PostRepository.delete(post.id);
+```
+
+**Benefits:**
+
+- Consistent structure for new features.
+- Centralized permission enforcement.
+- Type-safe validation with Zod ensures runtime safety.
+
+---
+
+## 10. Testing Philosophy & Setup
 
 Uses **Vitest** with focus on **controller integration**:
 
@@ -220,7 +343,7 @@ npm run test:ui --workspace backend
 
 ---
 
-## 10. Seeding Strategy
+## 11. Seeding Strategy
 
 Multi-phased, deterministic seeding ensures **realistic data**:
 

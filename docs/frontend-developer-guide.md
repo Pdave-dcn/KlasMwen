@@ -65,11 +65,11 @@ features/postView/
 
 ### 3.1 Core Component Hierarchy
 
-| Component            | Responsibility                     | Description                                                               |
-| -------------------- | ---------------------------------- | ------------------------------------------------------------------------- |
-| `App.tsx`            | Initialization & Top-Level Routing | Hydrates state, verifies authentication, defines routes.                  |
-| `ProtectedRoute.tsx` | Auth Enforcement & Layout          | Wraps authenticated routes with `<Layout>`; redirects unauthorized users. |
-| `Layout.tsx`         | Global UI Shell                    | Renders persistent UI elements and global modals.                         |
+| Component            | Responsibility                     | Description                                                                                                                                                                                                                                |
+| -------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `App.tsx`            | Initialization & Top-Level Routing | Initializes authentication (`useAuthInitialization`), defines routes (`AppRoutes`), manages navigation between public/protected routes, renders `SplashScreen` during loading, and sets up global UI helpers (`ScrollManager`, `Toaster`). |
+| `ProtectedRoute.tsx` | Auth Enforcement & Layout          | Wraps authenticated routes with `<Layout>`; redirects unauthorized users; supports `allowedRoles` to restrict access based on user role. Uses `RequireRole` internally for fine-grained role checks.                                       |
+| `Layout.tsx`         | Global UI Shell                    | Renders persistent UI elements and global modals.                                                                                                                                                                                          |
 
 ### 3.2 Authentication Verification Flow
 
@@ -77,7 +77,7 @@ features/postView/
 
 1. **State Hydration**: Wait for Zustand store to hydrate.
 2. **Server Verification**: Validate session via `/auth/me`.
-3. **Render UI / Redirect**: Show `<Spinner />` until complete; redirect if unauthorized.
+3. **Render UI / Redirect**: Show `<SplashScreen />` until complete; redirect if unauthorized.
 
 ```bash
 # Legend:
@@ -98,8 +98,8 @@ features/postView/
 
 ### 3.3 Routing
 
-- **Public Routes**: `/`, `/sign-in`, `/register`
-- **Protected Routes**: `/home`, `/profile/me`, `/search`
+- **Public Routes**: `/`, `/sign-in`, `/register`, etc.
+- **Protected Routes**: `/home`, `/profile/me`, `/search`, etc.
 - Use `<ProtectedRoute>` to enforce auth.
 
 ---
@@ -161,7 +161,7 @@ const form = useForm<PostFormValues>({
 ## 7. API Communication
 
 - **Base Axios Instance** (`api/api.ts`) configured with base URL, JSON headers, credentials, and timeout.
-- **Global Interceptors** handle errors (429, 401, 500, network errors) centrally.
+- **Global Interceptors** handle errors (403, 429, 401, 500, network errors) centrally.
 - **Zod validation** ensures server response integrity.
 
 **Flow:**
@@ -176,11 +176,19 @@ Component → queries → api/post.api.ts → api/api.ts → HTTP Request
 
 ## 8. Role-Based Permission System (RBAC)
 
-- Type-safe, context-aware, flexible.
-- Components: `registry`, `POLICY`, `hasPermission`.
-- Handles UI rendering and API access.
+KlasMwen uses a **type-safe, context-aware, and flexible** role-based access control system to manage both UI rendering and API access.
 
-**Usage Example:**
+### Core Components
+
+- `registry` — Defines the resources, actions, and data types.
+- `POLICY` — Encodes rules and ownership logic.
+- `hasPermission` — Function to evaluate if a user has permission for a resource/action.
+- `RequireRole` — Component wrapper for restricting access to UI components based on user role.
+- `useCan` — React hook to check permissions in functional components with optional data context.
+
+### Usage Examples
+
+**Using `hasPermission`:**
 
 ```tsx
 if (hasPermission(user, "posts", "delete", post)) {
@@ -188,7 +196,25 @@ if (hasPermission(user, "posts", "delete", post)) {
 }
 ```
 
-> **Tip:** Add new permissions in `registry` and `POLICY` to maintain type safety.
+**Using `useCan` hook:**
+
+```tsx
+// Check if user can create posts
+const canCreatePost = useCan("post", "create");
+
+// Check if user can edit a specific post (with data context)
+const canEditPost = useCan("post", "update", postData);
+```
+
+**Using `RequireRole` component:**
+
+```tsx
+<RequireRole allowed={["Admin", "Moderator"]} fallback={<p>Access Denied</p>}>
+  <AdminPanel />
+</RequireRole>
+```
+
+> **Tip:** Add new permissions in `registry` and `POLICY` to maintain type safety and consistency.
 
 ---
 
@@ -219,9 +245,11 @@ expect(hasPermission(mockUser, "posts", "delete", mockPost)).toBe(true);
 ### 10.1 Add a New Feature
 
 1. Create folder under `features/featureName/`.
-2. Add `components/` and `utils/` inside.
-3. Connect API calls via `queries/`.
-4. Add routes in `App.tsx`.
+2. Add `components/`, `hooks/` and `utils/` inside.
+3. Define Request/Response validation using zod schemas in `zodSchemas/`.
+4. Add Axios endpoints in `api/`.
+5. Connect API calls via `queries/`.
+6. Add routes in `AppRoutes.tsx`.
 
 ### 10.2 Add a Form
 
@@ -233,14 +261,14 @@ expect(hasPermission(mockUser, "posts", "delete", mockPost)).toBe(true);
 ### 10.3 Add a Route
 
 1. Add page component under `pages/`.
-2. Wrap with `<ProtectedRoute>` if needed.
+2. Wrap with `<ProtectedRoute>` if authentication is required.
 3. Update navigation (`Sidebar` / `MobileTabBar`).
 
 ### 10.4 Add Permission
 
-1. Update `registry`.
-2. Update `POLICY`.
-3. Use `hasPermission` in components.
+1. Update `registry`with the new resource/action.
+2. Update `POLICY`to define rules and ownership logic.
+3. Use `hasPermission` in components or `useCan` hook in functional components to check permissions.
 
 ---
 

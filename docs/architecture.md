@@ -161,12 +161,12 @@ frontend/
 │   ├── contexts/                # React context providers (e.g., theme, auth)
 │   ├── features/                # Feature-specific UI and logic (posts, comments, etc.)
 │   ├── hooks/                   # Custom reusable hooks
-│   ├── lib/                     # Utility libraries (e.g., constants, formatters)
+│   ├── lib/                     # Utility libraries (e.g., constants, permissions)
 │   ├── pages/                   # Page-level components (routed views)
 │   ├── queries/                 # TanStack Query hooks organized by domain
-│   │   ├── useProfile.ts        # User profile-related queries
-│   │   ├── useComment.ts        # Comment fetching/mutation hooks
-│   │   └── useUserMutation.ts   # User mutation hooks
+│   │   ├── profile.query.ts     # User profile-related queries
+│   │   ├── comment.query.ts     # Comment fetching/mutation queries
+│   │   └── post.query.ts        # Post fetching/mutation queries
 │   ├── stores/                  # Zustand stores for global state
 │   ├── tests/                   # Frontend tests (Vitest + Testing Library)
 │   ├── types/                   # Shared TypeScript types and interfaces

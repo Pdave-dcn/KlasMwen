@@ -95,62 +95,62 @@ describe("Login Controller", () => {
       mockedJwt.sign.mockReturnValue(generatedToken as never);
     });
 
-    // it("should login user successfully with complete flow", () => {
-    //   const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
-    //     // Simulate successful passport authentication
-    //     callback(null, mockUser, undefined);
-    //     return vi.fn();
-    //   });
+    it("should login user successfully with complete flow", () => {
+      const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
+        // Simulate successful passport authentication
+        callback(null, mockUser, undefined);
+        return vi.fn();
+      });
 
-    //   mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
 
-    //   loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
 
-    //   // Verify passport was called correctly
-    //   expect(mockedPassport.authenticate).toHaveBeenCalledWith(
-    //     "local",
-    //     { session: false },
-    //     expect.any(Function)
-    //   );
+      // Verify passport was called correctly
+      expect(mockedPassport.authenticate).toHaveBeenCalledWith(
+        "local",
+        { session: false },
+        expect.any(Function)
+      );
 
-    //   // Verify token was generated
-    //   expect(mockedJwt.sign).toHaveBeenCalledWith(
-    //     {
-    //       id: mockUser.id,
-    //       username: mockUser.username,
-    //       email: mockUser.email,
-    //       role: mockUser.role,
-    //     },
-    //     "test-secret-key",
-    //     { expiresIn: "3d" }
-    //   );
+      // Verify token was generated
+      expect(mockedJwt.sign).toHaveBeenCalledWith(
+        {
+          id: mockUser.id,
+          username: mockUser.username,
+          email: mockUser.email,
+          role: mockUser.role,
+        },
+        expect.any(String),
+        { expiresIn: "3d" }
+      );
 
-    //   // Verify cookie was set
-    //   expect(cookieSpy).toHaveBeenCalledWith("token", generatedToken, {
-    //     httpOnly: true,
-    //     secure: false, // test environment
-    //     sameSite: "lax",
-    //     maxAge: 3 * 24 * 60 * 60 * 1000,
-    //     path: "/",
-    //   });
+      // Verify cookie was set
+      expect(cookieSpy).toHaveBeenCalledWith("token", generatedToken, {
+        httpOnly: true,
+        secure: false, // test environment
+        sameSite: "lax",
+        maxAge: 3 * 24 * 60 * 60 * 1000,
+        path: "/",
+      });
 
-    //   // Verify response
-    //   expect(statusSpy).toHaveBeenCalledWith(200);
-    //   expect(jsonSpy).toHaveBeenCalledWith({
-    //     message: "Login successful",
-    //     user: {
-    //       id: mockUser.id,
-    //       username: mockUser.username,
-    //       email: mockUser.email,
-    //       role: mockUser.role,
-    //       avatar: mockUser.Avatar,
-    //     },
-    //   });
+      // Verify response
+      expect(statusSpy).toHaveBeenCalledWith(200);
+      expect(jsonSpy).toHaveBeenCalledWith({
+        message: "Login successful",
+        user: {
+          id: mockUser.id,
+          username: mockUser.username,
+          email: mockUser.email,
+          role: mockUser.role,
+          avatar: mockUser.Avatar,
+        },
+      });
 
-    //   // Verify no errors
-    //   expect(mockNext).not.toHaveBeenCalled();
-    //   expect(mockedHandleError).not.toHaveBeenCalled();
-    // });
+      // Verify no errors
+      expect(mockNext).not.toHaveBeenCalled();
+      expect(mockedHandleError).not.toHaveBeenCalled();
+    });
 
     it("should set secure cookie in production environment", () => {
       vi.spyOn(env, "NODE_ENV", "get").mockReturnValue("production");
@@ -225,36 +225,36 @@ describe("Login Controller", () => {
       });
     });
 
-    // it("should handle different user roles correctly", () => {
-    //   const adminUser = {
-    //     ...mockUser,
-    //     role: "ADMIN",
-    //   };
+    it("should handle different user roles correctly", () => {
+      const adminUser = {
+        ...mockUser,
+        role: "ADMIN",
+      };
 
-    //   const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
-    //     callback(null, adminUser, undefined);
-    //     return vi.fn();
-    //   });
+      const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
+        callback(null, adminUser, undefined);
+        return vi.fn();
+      });
 
-    //   mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
+      mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
 
-    //   loginUser(mockRequest as Request, mockResponse as Response, mockNext);
+      loginUser(mockRequest as Request, mockResponse as Response, mockNext);
 
-    //   expect(mockedJwt.sign).toHaveBeenCalledWith(
-    //     expect.objectContaining({
-    //       role: "ADMIN",
-    //     }),
-    //     "test-secret-key",
-    //     { expiresIn: "3d" }
-    //   );
+      expect(mockedJwt.sign).toHaveBeenCalledWith(
+        expect.objectContaining({
+          role: "ADMIN",
+        }),
+        expect.any(String),
+        { expiresIn: "3d" }
+      );
 
-    //   expect(jsonSpy).toHaveBeenCalledWith({
-    //     message: "Login successful",
-    //     user: expect.objectContaining({
-    //       role: "ADMIN",
-    //     }),
-    //   });
-    // });
+      expect(jsonSpy).toHaveBeenCalledWith({
+        message: "Login successful",
+        user: expect.objectContaining({
+          role: "ADMIN",
+        }),
+      });
+    });
   });
 
   describe("Authentication Failures", () => {
@@ -402,27 +402,6 @@ describe("Login Controller", () => {
         url: "https://cdn.example.com/avatar1.png",
       },
     };
-
-    // it("should handle missing JWT_SECRET", () => {
-    //   delete process.env.JWT_SECRET;
-
-    //   const mockAuthenticate = vi.fn((_strategy, _options, callback) => {
-    //     callback(null, mockUser, undefined);
-    //     return vi.fn();
-    //   });
-
-    //   mockedPassport.authenticate.mockImplementation(mockAuthenticate as any);
-
-    //   loginUser(mockRequest as Request, mockResponse as Response, mockNext);
-
-    //   expect(mockedHandleError).toHaveBeenCalled();
-    //   const errorCall = mockedHandleError.mock.calls[0][0];
-    //   expect(errorCall).toBeInstanceOf(Error);
-    //   expect((errorCall as Error).message).toContain("JWT_SECRET");
-
-    //   expect(cookieSpy).not.toHaveBeenCalled();
-    //   expect(statusSpy).not.toHaveBeenCalledWith(200);
-    // });
 
     it("should handle JWT signing errors", () => {
       const jwtError = new Error("Invalid JWT configuration");

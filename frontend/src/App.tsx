@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -24,17 +24,30 @@ const App = () => {
   const authStatus = useAuthInitialization();
   const navigate = useNavigate();
   const location = useLocation();
+  const hasCheckedAuth = useRef(false);
 
   useEffect(() => {
     if (authStatus === "loading") return;
 
+    // Only check once when auth is determined
+    if (hasCheckedAuth.current) return;
+    hasCheckedAuth.current = true;
+
     const currentPath = location.pathname;
+
+    // Check protected routes first
     const isProtectedRoute = PROTECTED_ROUTES.some((route) =>
       currentPath.startsWith(route)
     );
-    const isPublicRoute = PUBLIC_ROUTES.some((route) =>
-      currentPath.startsWith(route)
-    );
+
+    // For public routes, match exactly or ensure it's not a protected route
+    const isPublicRoute = PUBLIC_ROUTES.some((route) => {
+      if (route === "/") {
+        // "/" only matches exactly "/", not "/home" or "/profile"
+        return currentPath === "/";
+      }
+      return currentPath.startsWith(route);
+    });
 
     if (authStatus === "authenticated" && isPublicRoute) {
       void navigate("/home", { replace: true });

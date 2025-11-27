@@ -1,4 +1,3 @@
-// hooks/useCan.ts
 import { hasPermission } from "@/lib/permissions";
 import type { registry } from "@/lib/permissions/types";
 import { useAuthStore } from "@/stores/auth.store";

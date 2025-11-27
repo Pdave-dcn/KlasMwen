@@ -86,10 +86,13 @@ describe("AuthForm component", () => {
       await user.click(screen.getByRole("button", { name: /sign in/i }));
 
       await waitFor(() => {
-        expect(mockSignIn).toHaveBeenCalledWith({
-          email: "test@example.com",
-          password: "ValidPass123",
-        });
+        expect(mockSignIn).toHaveBeenCalledWith(
+          {
+            email: "test@example.com",
+            password: "ValidPass123",
+          },
+          expect.any(Object)
+        );
         expect(mockLogin).toHaveBeenCalledWith(mockUser);
         expect(mockNavigate).toHaveBeenCalledWith("/home");
       });
@@ -227,11 +230,14 @@ describe("AuthForm component", () => {
       await user.click(screen.getByRole("button", { name: /create account/i }));
 
       await waitFor(() => {
-        expect(mockSignUp).toHaveBeenCalledWith({
-          username: "newuser",
-          email: "new@example.com",
-          password: "ValidPass123",
-        });
+        expect(mockSignUp).toHaveBeenCalledWith(
+          {
+            username: "newuser",
+            email: "new@example.com",
+            password: "ValidPass123",
+          },
+          expect.any(Object)
+        );
         expect(mockLogin).toHaveBeenCalledWith(mockUser);
         expect(mockNavigate).toHaveBeenCalledWith("/home");
       });
@@ -733,11 +739,14 @@ describe("AuthForm component", () => {
       await user.click(screen.getByRole("button", { name: /create account/i }));
 
       await waitFor(() => {
-        expect(mockSignUp).toHaveBeenCalledWith({
-          username: "validuser",
-          email: "test@example.com",
-          password: "ValidPass123",
-        });
+        expect(mockSignUp).toHaveBeenCalledWith(
+          {
+            username: "validuser",
+            email: "test@example.com",
+            password: "ValidPass123",
+          },
+          expect.any(Object)
+        );
       });
     });
   });

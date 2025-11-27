@@ -350,6 +350,40 @@ KlasMwen is a monorepo with **frontend**, **backend**, and **PostgreSQL** databa
 
 ---
 
+## Future Improvements / Roadmap
+
+KlasMwen is actively evolving, and several impactful features are planned to elevate collaboration, engagement, and accessibility.
+
+### Upcoming Features
+
+- **Real-Time Notifications**
+  Receive instant alerts for comments, replies, mentions, and moderation updates.
+
+- **Group Chats & Study Circles**
+  Create collaborative group spaces for classes, clubs, or focused study groups.
+
+- **Analytics Dashboard**
+  Insights for students, moderators, and admins, including:
+
+  - Post and engagement metrics
+  - Activity and learning trends
+  - Moderation and report statistics
+
+- **Multi-Language Support (i18n)**
+  Full internationalization for a more accessible experience, starting with:
+
+  - French
+  - Haitian Creole
+
+### Longer‑Term Ideas
+
+- Quiz creation
+- Scheduled study sessions
+- AI-powered note summarization and question assistance
+- Peer tutoring sessions via video or chat
+- Integrations with platforms like Google Classroom or Moodle
+- Mobile app (React Native / Expo)
+
 ## License
 
 This project is licensed under the terms in the [LICENSE](./LICENSE.md) file.

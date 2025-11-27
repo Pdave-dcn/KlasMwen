@@ -326,7 +326,7 @@ await PostRepository.delete(post.id);
 
 ---
 
-## 10. Testing Philosophy & Setup
+## 11. Testing Philosophy & Setup
 
 Uses **Vitest** with focus on **controller integration**:
 
@@ -343,7 +343,7 @@ npm run test:ui --workspace backend
 
 ---
 
-## 11. Seeding Strategy
+## 12. Seeding Strategy
 
 Multi-phased, deterministic seeding ensures **realistic data**:
 

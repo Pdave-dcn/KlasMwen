@@ -1,7 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { User } from "@/types/auth.type";
 import { formatTimeAgo } from "@/utils/dateFormatter.util";
 import { getTypeDisplayName } from "@/utils/post.util";
 import type { Post } from "@/zodSchemas/post.zod";
@@ -10,15 +9,10 @@ import PostCardMenu from "./PostCardMenu";
 
 interface PostCardHeaderProps {
   post: Post;
-  user: User;
   onUserNavigation: (e: React.MouseEvent, userId: string) => void;
 }
 
-const PostCardHeader = ({
-  post,
-  user,
-  onUserNavigation,
-}: PostCardHeaderProps) => {
+const PostCardHeader = ({ post, onUserNavigation }: PostCardHeaderProps) => {
   return (
     <div className="flex items-start justify-between">
       <div className="flex items-center gap-3">
@@ -52,7 +46,7 @@ const PostCardHeader = ({
           </div>
         </div>
       </div>
-      <PostCardMenu user={user} post={post} />
+      <PostCardMenu post={post} />
     </div>
   );
 };

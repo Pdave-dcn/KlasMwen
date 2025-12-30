@@ -14,7 +14,7 @@ const getPostParentComments = async (
   limit = 10
 ) => {
   try {
-    const res = await api.get(`/posts/${postId}/comments`, {
+    const res = await api.get(`/comments/post/${postId}`, {
       params: { cursor, limit },
     });
 

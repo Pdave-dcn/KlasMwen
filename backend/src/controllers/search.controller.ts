@@ -1,11 +1,10 @@
-/* eslint-disable max-lines-per-function*/
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index.js";
 import PostService from "../features/posts/service/PostService.js";
-import { ensureAuthenticated } from "../utils/auth.util.js";
 import createActionLogger from "../utils/logger.util.js";
 import { SearchPostsSchema } from "../zodSchemas/search.zod.js";
 
+import type { AuthenticatedRequest } from "../types/AuthRequest.js";
 import type { Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "SearchController" });
@@ -17,7 +16,7 @@ const searchPosts = async (req: Request, res: Response) => {
     actionLogger.info("Post search attempt started");
     const startTime = Date.now();
 
-    const user = ensureAuthenticated(req);
+    const { user } = req as AuthenticatedRequest;
 
     const {
       limit,
@@ -29,16 +28,6 @@ const searchPosts = async (req: Request, res: Response) => {
     const sanitizedSearchTerm = searchTerm
       ? searchTerm.replace(/[%_]/g, "\\$&")
       : undefined;
-
-    actionLogger.info(
-      {
-        hasSearchTerm: !!searchTerm,
-        hasTagIds: tagIds.length > 0,
-        hasCursor: !!cursor,
-        limit,
-      },
-      "User authentication and search parameters validated and sanitized"
-    );
 
     actionLogger.debug("Executing post search");
     const serviceStartTime = Date.now();

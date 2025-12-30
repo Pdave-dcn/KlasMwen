@@ -1,7 +1,6 @@
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index.js";
 import TagService from "../features/tag/service/TagService.js";
-import { checkAdminAuth } from "../utils/auth.util.js";
 import createActionLogger from "../utils/logger.util.js";
 import { CreateTagSchema, TagIdParamSchema } from "../zodSchemas/tag.zod.js";
 
@@ -16,9 +15,7 @@ const createTag = async (req: Request, res: Response) => {
     actionLogger.info("Tag creation attempt started");
     const startTime = Date.now();
 
-    checkAdminAuth(req.user);
     const { name } = CreateTagSchema.parse(req.body);
-    actionLogger.info("User authorized and tag data validated");
 
     actionLogger.debug("Creating tag via service");
     const serviceStartTime = Date.now();
@@ -56,9 +53,7 @@ const getTagForEdit = async (req: Request, res: Response) => {
     actionLogger.info("Fetching tag for edit");
     const startTime = Date.now();
 
-    checkAdminAuth(req.user);
     const { id: tagId } = TagIdParamSchema.parse(req.params);
-    actionLogger.info("User authorized and tag ID validated");
 
     actionLogger.debug("Fetching tag from service");
     const serviceStartTime = Date.now();
@@ -149,10 +144,8 @@ const updateTag = async (req: Request, res: Response) => {
     actionLogger.info("Tag update attempt started");
     const startTime = Date.now();
 
-    checkAdminAuth(req.user);
     const { id: tagId } = TagIdParamSchema.parse(req.params);
     const { name } = CreateTagSchema.parse(req.body);
-    actionLogger.info("User authorized and tag data validated");
 
     actionLogger.debug("Updating tag via service");
     const serviceStartTime = Date.now();
@@ -187,9 +180,7 @@ const deleteTag = async (req: Request, res: Response) => {
     actionLogger.info("Tag deletion attempt started");
     const startTime = Date.now();
 
-    checkAdminAuth(req.user);
     const { id: tagId } = TagIdParamSchema.parse(req.params);
-    actionLogger.info("User authorized and tag ID validated");
 
     actionLogger.debug("Deleting tag via service");
     const serviceStartTime = Date.now();

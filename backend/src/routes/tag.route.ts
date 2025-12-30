@@ -14,10 +14,13 @@ import {
 } from "../middleware/coreRateLimits.middleware.js";
 import attachLogContext from "../middleware/logContext.middleware.js";
 import { requireAuth } from "../middleware/requireAuth.middleware.js";
+import { requireRole } from "../middleware/requireRole.middleware.js";
 
 const router = express.Router();
 
 router.use(attachLogContext("TagController"));
+router.use(generalApiLimiter);
+router.use(requireAuth);
 
 /**
  * @openapi
@@ -233,11 +236,17 @@ router.use(attachLogContext("TagController"));
  *       500:
  *         description: Internal server error
  */
-router.get("/tags", generalApiLimiter, getAllTags);
-router.get("/tags/popular", generalApiLimiter, getPopularTags);
-router.get("/tags/:id/edit", generalApiLimiter, requireAuth, getTagForEdit);
-router.post("/tags", writeOperationsLimiter, requireAuth, createTag);
-router.put("/tags/:id", writeOperationsLimiter, requireAuth, updateTag);
-router.delete("/tags/:id", writeOperationsLimiter, requireAuth, deleteTag);
+router.get("/", getAllTags);
+router.get("/popular", getPopularTags);
+
+router.use(requireRole("ADMIN"));
+
+router.get("/:id/edit", getTagForEdit);
+
+router.use(writeOperationsLimiter);
+
+router.post("/", createTag);
+router.put("/:id", updateTag);
+router.delete("/:id", deleteTag);
 
 export default router;

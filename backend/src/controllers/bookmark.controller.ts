@@ -2,11 +2,11 @@ import prisma from "../core/config/db.js";
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index.js";
 import PostService from "../features/posts/service/PostService.js";
-import { ensureAuthenticated } from "../utils/auth.util.js";
 import createActionLogger from "../utils/logger.util.js";
 import { uuidPaginationSchema } from "../utils/pagination.util.js";
 import { PostIdParamSchema } from "../zodSchemas/post.zod.js";
 
+import type { AuthenticatedRequest } from "../types/AuthRequest.js";
 import type { Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "BookmarkController" });
@@ -22,12 +22,8 @@ const getBookmarks = async (req: Request, res: Response) => {
     actionLogger.info("Fetching user bookmarks");
     const startTime = Date.now();
 
-    const user = ensureAuthenticated(req);
+    const { user } = req as AuthenticatedRequest;
     const { limit, cursor } = uuidPaginationSchema.parse(req.query);
-    actionLogger.info(
-      { userId: user.id, limit, cursor: !!cursor },
-      "User authenticated and pagination parameters parsed"
-    );
 
     actionLogger.debug("Processing user bookmarks request");
     const serviceStartTime = Date.now();
@@ -71,16 +67,11 @@ const createBookmark = async (req: Request, res: Response) => {
     actionLogger.info("Creating bookmark attempt");
     const startTime = Date.now();
 
-    const user = ensureAuthenticated(req);
+    const { user } = req as AuthenticatedRequest;
     const { id: postId } = PostIdParamSchema.parse(req.params);
-    actionLogger.info(
-      { postId, userId: user.id },
-      "User authenticated and post ID parsed"
-    );
 
     actionLogger.debug("Verifying post exists");
     await PostService.verifyPostExists(postId);
-    actionLogger.info("Post found, creating bookmark");
 
     const dbStartTime = Date.now();
     await prisma.bookmark.create({
@@ -119,12 +110,8 @@ const deleteBookmark = async (req: Request, res: Response) => {
     actionLogger.info("Deleting bookmark attempt");
     const startTime = Date.now();
 
-    const user = ensureAuthenticated(req);
+    const { user } = req as AuthenticatedRequest;
     const { id: postId } = PostIdParamSchema.parse(req.params);
-    actionLogger.info(
-      { postId, userId: user.id },
-      "User authenticated and post ID parsed"
-    );
 
     actionLogger.debug("Checking if bookmark exists");
     const existingBookmark = await prisma.bookmark.findUnique({

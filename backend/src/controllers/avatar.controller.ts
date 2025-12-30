@@ -1,7 +1,6 @@
 import prisma from "../core/config/db.js";
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index.js";
-import { checkAdminAuth } from "../utils/auth.util.js";
 import createActionLogger from "../utils/logger.util.js";
 import {
   buildPaginatedQuery,
@@ -27,15 +26,6 @@ const getAvailableAvatars = async (req: Request, res: Response) => {
     const customTagsSchema = createPaginationSchema(20, 60, "number");
     const { limit, cursor } = customTagsSchema.parse(req.query);
 
-    actionLogger.debug(
-      {
-        limit,
-        cursor,
-        hasCursor: !!cursor,
-      },
-      "Pagination parameters parsed"
-    );
-
     const paginatedQuery = buildPaginatedQuery<"avatar">(
       { where: { isDefault: false } },
       {
@@ -49,11 +39,6 @@ const getAvailableAvatars = async (req: Request, res: Response) => {
     const dbStartTime = Date.now();
     const avatars = await prisma.avatar.findMany(paginatedQuery);
     const dbDuration = Date.now() - dbStartTime;
-
-    actionLogger.info(
-      { avatarsCount: avatars.length, dbDuration },
-      "Available avatars retrieved from database"
-    );
 
     const result = processPaginatedResults(avatars, limit);
 
@@ -83,10 +68,8 @@ const getAvatars = async (req: Request, res: Response) => {
     actionLogger.info("Fetching avatars");
     const startTime = Date.now();
 
-    checkAdminAuth(req.user);
     const customTagsSchema = createPaginationSchema(20, 60, "number");
     const { limit, cursor } = customTagsSchema.parse(req.query);
-    actionLogger.info("User authorized and pagination parameters parsed");
 
     const paginatedQuery = buildPaginatedQuery<"avatar">(
       {},
@@ -101,11 +84,6 @@ const getAvatars = async (req: Request, res: Response) => {
     const dbStartTime = Date.now();
     const avatars = await prisma.avatar.findMany(paginatedQuery);
     const dbDuration = Date.now() - dbStartTime;
-
-    actionLogger.info(
-      { avatarsCount: avatars.length, dbDuration },
-      "Avatars retrieved from database"
-    );
 
     const result = processPaginatedResults(avatars, limit);
 
@@ -134,9 +112,7 @@ const addAvatar = async (req: Request, res: Response) => {
     actionLogger.info("Avatar addition attempt started");
     const startTime = Date.now();
 
-    checkAdminAuth(req.user);
     const parsedData = AddAvatarsSchema.parse(req.body);
-    actionLogger.info("User authorized and avatar data validated");
 
     let createdAvatars;
     const dbStartTime = Date.now();
@@ -191,9 +167,7 @@ const deleteAvatar = async (req: Request, res: Response) => {
     actionLogger.info("Avatar deletion attempt started");
     const startTime = Date.now();
 
-    checkAdminAuth(req.user);
     const { id } = AvatarIdParamSchema.parse(req.params);
-    actionLogger.info("User authorized and avatar ID validated");
 
     actionLogger.debug({ id }, "Checking if avatar exists");
     const avatar = await prisma.avatar.findUnique({

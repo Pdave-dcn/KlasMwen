@@ -14,6 +14,7 @@ import attachLogContext from "../middleware/logContext.middleware.js";
 const router = express.Router();
 
 router.use(attachLogContext("AuthController"));
+router.use(generalApiLimiter);
 
 /**
  * @openapi
@@ -88,7 +89,7 @@ router.use(attachLogContext("AuthController"));
  *       500:
  *         description: Internal server error
  */
-router.post("/auth/register", registerLimiter, registerUser);
+router.post("/register", registerLimiter, registerUser);
 
 /**
  * @openapi
@@ -162,7 +163,7 @@ router.post("/auth/register", registerLimiter, registerUser);
  *       500:
  *         description: Internal server error
  */
-router.post("/auth/login", authLimiter, loginUser);
+router.post("/login", authLimiter, loginUser);
 
 /**
  * @openapi
@@ -200,7 +201,7 @@ router.post("/auth/login", authLimiter, loginUser);
  *       500:
  *         description: Server configuration error
  */
-router.get("/auth/me", generalApiLimiter, verifyAuth);
+router.get("/me", verifyAuth);
 
 /**
  * @openapi
@@ -221,7 +222,7 @@ router.get("/auth/me", generalApiLimiter, verifyAuth);
  *                   type: string
  *                   example: "Logout successful"
  */
-router.post("/auth/logout", (_req, res) => {
+router.post("/logout", (_req, res) => {
   res.clearCookie("token", getClearCookieConfig());
   return res.status(200).json({ message: "Logout successful" });
 });

@@ -21,6 +21,8 @@ import { requireAuth } from "../middleware/requireAuth.middleware.js";
 const router = express.Router();
 
 router.use(attachLogContext("PostController"));
+router.use(generalApiLimiter);
+router.use(requireAuth);
 
 /**
  * @openapi
@@ -84,14 +86,8 @@ router.use(attachLogContext("PostController"));
  *       500:
  *         description: Unexpected error, post creation failed
  */
-router.get("/posts", generalApiLimiter, requireAuth, getAllPosts);
-router.post(
-  "/posts",
-  writeOperationsLimiter,
-  requireAuth,
-  upload.single("resource"),
-  createPost
-);
+router.get("/", getAllPosts);
+router.post("/", writeOperationsLimiter, upload.single("resource"), createPost);
 
 /**
  * @openapi
@@ -127,7 +123,7 @@ router.post(
  *       500:
  *         description: Internal server error
  */
-router.get("/posts/:id", generalApiLimiter, requireAuth, getPostById);
+router.get("/:id", getPostById);
 
 /**
  * @openapi
@@ -162,7 +158,7 @@ router.get("/posts/:id", generalApiLimiter, requireAuth, getPostById);
  *       500:
  *         description: Internal server error
  */
-router.get("/posts/:id/edit", generalApiLimiter, requireAuth, getPostForEdit);
+router.get("/:id/edit", getPostForEdit);
 
 /**
  * @openapi
@@ -213,12 +209,7 @@ router.get("/posts/:id/edit", generalApiLimiter, requireAuth, getPostForEdit);
  *       500:
  *         description: Internal server error or error streaming file
  */
-router.get(
-  "/posts/:id/download",
-  downloadLimiter,
-  requireAuth,
-  downloadResource
-);
+router.get("/:id/download", downloadLimiter, downloadResource);
 
 /**
  * @openapi
@@ -261,7 +252,7 @@ router.get(
  *       500:
  *         description: Internal server error
  */
-router.put("/posts/:id", writeOperationsLimiter, requireAuth, updatePost);
+router.put("/:id", writeOperationsLimiter, updatePost);
 
 /**
  * @openapi
@@ -294,6 +285,6 @@ router.put("/posts/:id", writeOperationsLimiter, requireAuth, updatePost);
  *       500:
  *         description: Internal server error
  */
-router.delete("/posts/:id", writeOperationsLimiter, requireAuth, deletePost);
+router.delete("/:id", writeOperationsLimiter, deletePost);
 
 export default router;

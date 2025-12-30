@@ -1,13 +1,13 @@
 import { createLogger } from "../../core/config/logger.js";
 import { handleError } from "../../core/error/index.js";
 import UserService from "../../features/user/service/UserService.js";
-import { ensureAuthenticated } from "../../utils/auth.util.js";
 import createActionLogger from "../../utils/logger.util.js";
 import {
   UpdateUserProfileSchema,
   UserIdParamSchema,
 } from "../../zodSchemas/user.zod.js";
 
+import type { AuthenticatedRequest } from "../../types/AuthRequest.js";
 import type { Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "UserController" });
@@ -23,11 +23,7 @@ const getActiveUser = async (req: Request, res: Response) => {
     actionLogger.info("Active user fetch attempt started");
     const startTime = Date.now();
 
-    const validUser = ensureAuthenticated(req);
-    actionLogger.info(
-      { userId: validUser.id },
-      "User authenticated successfully"
-    );
+    const { user: validUser } = req as AuthenticatedRequest;
 
     actionLogger.debug("Fetching active user from database ");
     const serviceStartTime = Date.now();
@@ -64,12 +60,6 @@ const getUserById = async (req: Request, res: Response) => {
     const startTime = Date.now();
 
     const { id: userId } = UserIdParamSchema.parse(req.params);
-    actionLogger.info(
-      {
-        requestedUserId: userId,
-      },
-      "User ID parameter validated"
-    );
 
     actionLogger.debug("Fetching user from database");
     const serviceStartTime = Date.now();
@@ -109,16 +99,8 @@ const updateUserProfile = async (req: Request, res: Response) => {
     actionLogger.info("User profile update attempt started");
     const startTime = Date.now();
 
-    const user = ensureAuthenticated(req);
+    const { user } = req as AuthenticatedRequest;
     const { bio, avatarId } = UpdateUserProfileSchema.parse(req.body);
-    actionLogger.info(
-      {
-        userId: user.id,
-        hasBioUpdate: !!bio,
-        hasAvatarUpdate: !!avatarId,
-      },
-      "User authenticated and profile data validated"
-    );
 
     actionLogger.debug("Processing user profile update");
     const serviceStartTime = Date.now();

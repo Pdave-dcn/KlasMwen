@@ -12,10 +12,13 @@ import {
 } from "../middleware/coreRateLimits.middleware.js";
 import attachLogContext from "../middleware/logContext.middleware.js";
 import { requireAuth } from "../middleware/requireAuth.middleware.js";
+import { requireRole } from "../middleware/requireRole.middleware.js";
 
 const router = express.Router();
 
 router.use(attachLogContext("avatarController"));
+router.use(generalApiLimiter);
+router.use(requireAuth);
 
 /**
  * @openapi
@@ -55,7 +58,7 @@ router.use(attachLogContext("avatarController"));
  *       '500':
  *         description: Internal server error
  */
-router.get("/avatars/available", generalApiLimiter, getAvailableAvatars);
+router.get("/available", getAvailableAvatars);
 
 /**
  * @openapi
@@ -185,8 +188,12 @@ router.get("/avatars/available", generalApiLimiter, getAvailableAvatars);
  *       '500':
  *         description: Internal server error
  */
-router.get("/avatars", generalApiLimiter, requireAuth, getAvatars);
-router.post("/avatars", writeOperationsLimiter, requireAuth, addAvatar);
+router.get("/", getAvatars);
+
+router.use(writeOperationsLimiter);
+router.use(requireRole("ADMIN"));
+
+router.post("/", addAvatar);
 
 /**
  * @openapi
@@ -221,11 +228,6 @@ router.post("/avatars", writeOperationsLimiter, requireAuth, addAvatar);
  *       '500':
  *         description: Internal server error
  */
-router.delete(
-  "/avatars/:id",
-  writeOperationsLimiter,
-  requireAuth,
-  deleteAvatar
-);
+router.delete("/:id", deleteAvatar);
 
 export default router;

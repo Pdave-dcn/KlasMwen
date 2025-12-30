@@ -2,9 +2,9 @@ import { createLogger } from "../../core/config/logger.js";
 import { handleError } from "../../core/error/index.js";
 import handleRequestValidation from "../../features/posts/requestPostParser.js";
 import PostService from "../../features/posts/service/PostService.js";
-import { ensureAuthenticated } from "../../utils/auth.util.js";
 import createActionLogger from "../../utils/logger.util.js";
 
+import type { AuthenticatedRequest } from "../../types/AuthRequest.js";
 import type { Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "PostController" });
@@ -16,10 +16,10 @@ const createPost = async (req: Request, res: Response) => {
     actionLogger.info("Post creation attempt started");
     const startTime = Date.now();
 
-    const user = ensureAuthenticated(req);
+    const { user } = req as AuthenticatedRequest;
+
     const { completeValidatedData, uploadedFileInfo } =
       await handleRequestValidation(req, user.id);
-    actionLogger.info("User authenticated and post data validated");
 
     actionLogger.debug("Processing post creation");
     const serviceStartTime = Date.now();

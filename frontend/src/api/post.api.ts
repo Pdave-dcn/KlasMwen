@@ -98,7 +98,7 @@ const getActiveUserLikedPosts = async (
 
 const getActiveUserBookmarks = async (cursor?: string | number, limit = 10) => {
   try {
-    const res = await api.get("/users/bookmarks", {
+    const res = await api.get("/bookmarks/user", {
       params: { cursor, limit },
     });
 

@@ -1,15 +1,14 @@
 import jwt from "jsonwebtoken";
 
 import { createLogger } from "../../core/config/logger.js";
-import { handleError } from "../../core/error/index.js";
 import createActionLogger from "../../utils/logger.util.js";
 
 import type { JwtPayload } from "../../core/config/strategies/jwtStrategy.js";
-import type { Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "AuthController" });
 
-export const verifyAuth = (req: Request, res: Response) => {
+export const verifyAuth = (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(controllerLogger, "verifyAuth", req);
   try {
     actionLogger.info("User authentication verification attempt started");
@@ -57,6 +56,6 @@ export const verifyAuth = (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    return handleError(error, res);
+    return next(error);
   }
 };

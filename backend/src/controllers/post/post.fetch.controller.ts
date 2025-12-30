@@ -3,11 +3,11 @@ import axios from "axios";
 import { createLogger } from "../../core/config/logger.js";
 import { handleError } from "../../core/error/index.js";
 import PostService from "../../features/posts/service/PostService.js";
-import { ensureAuthenticated } from "../../utils/auth.util.js";
 import createActionLogger from "../../utils/logger.util.js";
 import { uuidPaginationSchema } from "../../utils/pagination.util.js";
 import { PostIdParamSchema } from "../../zodSchemas/post.zod.js";
 
+import type { AuthenticatedRequest } from "../../types/AuthRequest.js";
 import type { Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "PostController" });
@@ -19,17 +19,9 @@ const getAllPosts = async (req: Request, res: Response) => {
     actionLogger.info("Fetching all posts");
     const startTime = Date.now();
 
-    const user = ensureAuthenticated(req);
-    actionLogger.info(
-      { userId: user.id, username: user.username },
-      "User authenticated for post update"
-    );
+    const { user } = req as AuthenticatedRequest;
 
     const { limit, cursor } = uuidPaginationSchema.parse(req.query);
-    actionLogger.debug(
-      { limit, cursor, hasCursor: !!cursor },
-      "Pagination parameters parsed"
-    );
 
     actionLogger.debug("Processing user posts request");
     const serviceStartTime = Date.now();
@@ -68,20 +60,9 @@ const getPostById = async (req: Request, res: Response) => {
     actionLogger.info("Fetching post by ID");
     const startTime = Date.now();
 
-    const user = ensureAuthenticated(req);
-    actionLogger.info(
-      { userId: user.id, username: user.username },
-      "User authenticated for post update"
-    );
+    const { user } = req as AuthenticatedRequest;
 
     const { id: postId } = PostIdParamSchema.parse(req.params);
-
-    actionLogger.debug(
-      {
-        postId,
-      },
-      "Parameter parsed"
-    );
 
     actionLogger.debug("Processing user post fetching by ID request");
     const serviceStartTime = Date.now();
@@ -117,17 +98,8 @@ const getPostForEdit = async (req: Request, res: Response) => {
     actionLogger.info("Fetching post for edit");
     const startTime = Date.now();
 
-    const user = ensureAuthenticated(req);
+    const { user } = req as AuthenticatedRequest;
     const { id: postId } = PostIdParamSchema.parse(req.params);
-
-    actionLogger.info(
-      {
-        userId: user.id,
-        username: user.username,
-        postId,
-      },
-      "User authenticated and post ID parsed"
-    );
 
     actionLogger.debug("Processing user post fetch request");
     const serviceStartTime = Date.now();
@@ -163,12 +135,9 @@ const downloadResource = async (req: Request, res: Response) => {
     actionLogger.info("Downloading post resource");
     const startTime = Date.now();
 
-    const user = ensureAuthenticated(req);
+    const { user } = req as AuthenticatedRequest;
+
     const { id: postId } = PostIdParamSchema.parse(req.params);
-    actionLogger.info(
-      { userId: user.id, postId },
-      "User authenticated and post ID parsed"
-    );
 
     const serviceStartTime = Date.now();
     const resource = await PostService.getResourcePostById(postId);

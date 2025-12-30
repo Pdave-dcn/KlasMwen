@@ -3,10 +3,10 @@ import prisma from "../core/config/db.js";
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index.js";
 import PostService from "../features/posts/service/PostService.js";
-import { ensureAuthenticated } from "../utils/auth.util.js";
 import createActionLogger from "../utils/logger.util.js";
 import { PostIdParamSchema } from "../zodSchemas/post.zod.js";
 
+import type { AuthenticatedRequest } from "../types/AuthRequest.js";
 import type { Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "reactionController" });
@@ -18,15 +18,8 @@ const toggleLike = async (req: Request, res: Response) => {
     actionLogger.info("Like toggle attempt started");
     const startTime = Date.now();
 
-    const user = ensureAuthenticated(req);
+    const { user } = req as AuthenticatedRequest;
     const { id: postId } = PostIdParamSchema.parse(req.params);
-    actionLogger.info(
-      {
-        userId: user.id,
-        postId,
-      },
-      "User authenticated and post ID validated"
-    );
 
     const dbCheckStartTime = Date.now();
     const [_existingPost, existingLike] = await Promise.all([

@@ -17,10 +17,13 @@ import {
 } from "../middleware/coreRateLimits.middleware.js";
 import attachLogContext from "../middleware/logContext.middleware.js";
 import { requireAuth } from "../middleware/requireAuth.middleware.js";
+import { requireRole } from "../middleware/requireRole.middleware.js";
 
 const router = express.Router();
 
 router.use(attachLogContext("ReportController"));
+router.use(generalApiLimiter);
+router.use(requireAuth);
 
 /**
  * @openapi
@@ -46,7 +49,7 @@ router.use(attachLogContext("ReportController"));
  *       '500':
  *         description: Internal server error
  */
-router.get("/reports/reasons", generalApiLimiter, getReportReasons);
+router.get("/reasons", requireRole("MODERATOR", "ADMIN"), getReportReasons);
 
 /**
  * @openapi
@@ -104,7 +107,7 @@ router.get("/reports/reasons", generalApiLimiter, getReportReasons);
  *       '500':
  *         description: Internal server error
  */
-router.get("/reports/stats", generalApiLimiter, requireAuth, getReportStats);
+router.get("/stats", requireRole("MODERATOR", "ADMIN"), getReportStats);
 
 /**
  * @openapi
@@ -205,8 +208,10 @@ router.get("/reports/stats", generalApiLimiter, requireAuth, getReportStats);
  *       '500':
  *         description: Internal server error
  */
-router.get("/reports", generalApiLimiter, requireAuth, getAllReports);
-router.post("/reports", reportCreationLimiter, requireAuth, createReport);
+router.get("/", requireRole("MODERATOR", "ADMIN"), getAllReports);
+router.post("/", reportCreationLimiter, createReport);
+
+router.use(requireRole("MODERATOR", "ADMIN"));
 
 /**
  * @openapi
@@ -335,19 +340,12 @@ router.post("/reports", reportCreationLimiter, requireAuth, createReport);
  *       '500':
  *         description: Internal server error
  */
-router.get("/reports/:id", generalApiLimiter, requireAuth, getReportById);
-router.put(
-  "/reports/:id",
-  reportModerationLimiter,
-  requireAuth,
-  updateReportStatus
-);
-router.delete(
-  "/reports/:id",
-  reportModerationLimiter,
-  requireAuth,
-  deleteReport
-);
+router.get("/:id", getReportById);
+
+router.use(reportModerationLimiter);
+
+router.put("/:id", updateReportStatus);
+router.delete("/:id", deleteReport);
 
 /**
  * @openapi
@@ -433,11 +431,6 @@ router.delete(
  *       '500':
  *         description: Internal server error
  */
-router.patch(
-  "/reports/toggle-visibility",
-  reportModerationLimiter,
-  requireAuth,
-  toggleVisibility
-);
+router.patch("/toggle-visibility", toggleVisibility);
 
 export default router;

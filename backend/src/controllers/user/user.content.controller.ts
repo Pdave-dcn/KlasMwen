@@ -3,7 +3,6 @@ import { handleError } from "../../core/error/index.js";
 import CommentService from "../../features/comments/service/CommentService.js";
 import PostService from "../../features/posts/service/PostService.js";
 import UserService from "../../features/user/service/UserService.js";
-import { ensureAuthenticated } from "../../utils/auth.util.js";
 import createActionLogger from "../../utils/logger.util.js";
 import {
   createPaginationSchema,
@@ -11,6 +10,7 @@ import {
 } from "../../utils/pagination.util.js";
 import { UserIdParamSchema } from "../../zodSchemas/user.zod.js";
 
+import type { AuthenticatedRequest } from "../../types/AuthRequest.js";
 import type { Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "UserController" });
@@ -22,16 +22,9 @@ const getMyPosts = async (req: Request, res: Response) => {
     actionLogger.info("Fetching user's own posts");
     const startTime = Date.now();
 
-    const user = ensureAuthenticated(req);
+    const { user } = req as AuthenticatedRequest;
+
     const { limit, cursor } = uuidPaginationSchema.parse(req.query);
-    actionLogger.info(
-      {
-        userId: user.id,
-        limit,
-        hasCursor: !!cursor,
-      },
-      "User authenticated and pagination parameters parsed"
-    );
 
     actionLogger.debug("Processing user posts request");
     const serviceStartTime = Date.now();
@@ -77,16 +70,8 @@ const getPostsLikedByMe = async (req: Request, res: Response) => {
     actionLogger.info("Fetching user liked posts");
     const startTime = Date.now();
 
-    const user = ensureAuthenticated(req);
+    const { user } = req as AuthenticatedRequest;
     const { limit, cursor } = uuidPaginationSchema.parse(req.query);
-    actionLogger.info(
-      {
-        userId: user.id,
-        limit,
-        hasCursor: !!cursor,
-      },
-      "User authenticated and pagination parameters parsed"
-    );
 
     actionLogger.debug("Fetching and processing user liked posts");
     const serviceStartTime = Date.now();
@@ -134,14 +119,6 @@ const getUserPosts = async (req: Request, res: Response) => {
 
     const { id: userId } = UserIdParamSchema.parse(req.params);
     const { limit, cursor } = uuidPaginationSchema.parse(req.query);
-    actionLogger.info(
-      {
-        requestedUserId: userId,
-        limit,
-        hasCursor: !!cursor,
-      },
-      "User ID validated and pagination parameters parsed"
-    );
 
     actionLogger.debug("Verifying user exists");
     await UserService.userExists(userId);
@@ -194,15 +171,6 @@ const getUserComments = async (req: Request, res: Response) => {
     const customPaginationSchema = createPaginationSchema(10, 50, "number");
     const { limit, cursor } = customPaginationSchema.parse(req.query);
 
-    actionLogger.info(
-      {
-        requestedUserId: userId,
-        limit,
-        hasCursor: !!cursor,
-      },
-      "User ID validated and pagination parameters parsed"
-    );
-
     actionLogger.debug("Verifying user exists");
     await UserService.userExists(userId);
 
@@ -252,15 +220,6 @@ const getUserMediaPosts = async (req: Request, res: Response) => {
 
     const { id: userId } = UserIdParamSchema.parse(req.params);
     const { limit, cursor } = uuidPaginationSchema.parse(req.query);
-
-    actionLogger.info(
-      {
-        requestedUserId: userId,
-        limit,
-        hasCursor: !!cursor,
-      },
-      "User ID validated and pagination parameters parsed"
-    );
 
     actionLogger.debug("Verifying user exists");
     await UserService.userExists(userId);

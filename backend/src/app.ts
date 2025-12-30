@@ -1,15 +1,13 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import express, {
-  type Request,
-  type Response,
-  type NextFunction,
-} from "express";
+import express from "express";
 import passport from "passport";
 
 import { corsOptions } from "./core/config/cors.js";
 import initializePassport from "./core/config/passport.js";
-import router from "./routes/index.route.js";
+import { errorMiddleware } from "./middleware/error.middleware.js";
+import { httpLogger } from "./middleware/httpLogger.middleware.js";
+import router from "./routes/index.js";
 import setupSwagger from "./swagger/index.js";
 
 const app = express();
@@ -26,45 +24,10 @@ initializePassport(passport);
 
 setupSwagger(app);
 
+app.use(httpLogger);
+
 app.use("/", router);
 
-app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
-  console.error("Error occurred:", {
-    error: err,
-    method: req.method,
-    url: req.url,
-    ip: req.ip,
-    userAgent: req.get("User-Agent"),
-    timestamp: new Date().toISOString(),
-  });
-
-  let statusCode = 500;
-  let message = "Internal Server Error";
-
-  if (err && typeof err === "object") {
-    if ("status" in err && typeof err.status === "number") {
-      statusCode = err.status;
-    }
-
-    if ("statusCode" in err && typeof err.statusCode === "number") {
-      statusCode = err.statusCode;
-    }
-
-    if ("message" in err && typeof err.message === "string") {
-      message = err.message;
-    }
-  }
-
-  if (process.env.NODE_ENV === "production" && statusCode === 500) {
-    message = "Internal Server Error";
-  }
-
-  res.status(statusCode).json({
-    message,
-    ...(process.env.NODE_ENV === "development" && {
-      stack: err instanceof Error ? err.stack : undefined,
-    }),
-  });
-});
+app.use(errorMiddleware);
 
 export default app;

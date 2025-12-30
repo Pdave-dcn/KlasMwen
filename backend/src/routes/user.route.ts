@@ -22,6 +22,8 @@ import { requireAuth } from "../middleware/requireAuth.middleware.js";
 const router = express.Router();
 
 router.use(attachLogContext("userController"));
+router.use(generalApiLimiter);
+router.use(requireAuth);
 
 /**
  * @openapi
@@ -88,7 +90,7 @@ router.use(attachLogContext("userController"));
  *       500:
  *         description: Internal server error
  */
-router.get("/users/me", generalApiLimiter, requireAuth, getActiveUser);
+router.get("/me", getActiveUser);
 
 /**
  * @openapi
@@ -124,7 +126,7 @@ router.get("/users/me", generalApiLimiter, requireAuth, getActiveUser);
  *       500:
  *         description: Internal server error
  */
-router.put("/users/me", writeOperationsLimiter, requireAuth, updateUserProfile);
+router.put("/me", writeOperationsLimiter, updateUserProfile);
 
 /**
  * @openapi
@@ -179,7 +181,7 @@ router.put("/users/me", writeOperationsLimiter, requireAuth, updateUserProfile);
  *       500:
  *         description: Internal server error
  */
-router.get("/users/me/posts", generalApiLimiter, requireAuth, getMyPosts);
+router.get("/me/posts", getMyPosts);
 
 /**
  * @openapi
@@ -267,9 +269,8 @@ router.get("/users/me/posts", generalApiLimiter, requireAuth, getMyPosts);
  *         description: Internal server error
  */
 router.get(
-  "/users/me/posts/like",
-  generalApiLimiter,
-  requireAuth,
+  "/me/posts/like",
+
   getPostsLikedByMe
 );
 
@@ -305,7 +306,7 @@ router.get(
  *       500:
  *         description: Internal server error
  */
-router.get("/users/:id", generalApiLimiter, getUserById);
+router.get("/:id", getUserById);
 
 /**
  * @openapi
@@ -354,7 +355,7 @@ router.get("/users/:id", generalApiLimiter, getUserById);
  *       500:
  *         description: Internal server error
  */
-router.get("/users/:id/posts", generalApiLimiter, getUserPosts);
+router.get("/:id/posts", getUserPosts);
 
 /**
  * @openapi
@@ -420,7 +421,7 @@ router.get("/users/:id/posts", generalApiLimiter, getUserPosts);
  *       500:
  *         description: Internal server error
  */
-router.get("/users/:id/posts/media", generalApiLimiter, getUserMediaPosts);
+router.get("/:id/posts/media", getUserMediaPosts);
 
 /**
  * @openapi
@@ -469,6 +470,6 @@ router.get("/users/:id/posts/media", generalApiLimiter, getUserMediaPosts);
  *       500:
  *         description: Internal server error
  */
-router.get("/users/:id/comments", generalApiLimiter, getUserComments);
+router.get("/:id/comments", getUserComments);
 
 export default router;

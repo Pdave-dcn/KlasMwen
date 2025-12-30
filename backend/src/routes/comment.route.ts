@@ -16,6 +16,8 @@ import { requireAuth } from "../middleware/requireAuth.middleware.js";
 const router = express.Router();
 
 router.use(attachLogContext("commentController"));
+router.use(generalApiLimiter);
+router.use(requireAuth);
 
 /**
  * @openapi
@@ -61,7 +63,7 @@ router.use(attachLogContext("commentController"));
  *       500:
  *         description: Internal server error
  */
-router.get("/posts/:id/comments", generalApiLimiter, getParentComments);
+router.get("/post/:id", getParentComments);
 
 /**
  * @openapi
@@ -106,7 +108,9 @@ router.get("/posts/:id/comments", generalApiLimiter, getParentComments);
  *       500:
  *         description: Internal server error
  */
-router.get("/comments/:id/replies", generalApiLimiter, getReplies);
+router.get("/:id/replies", getReplies);
+
+router.use(writeOperationsLimiter);
 
 /**
  * @openapi
@@ -150,9 +154,8 @@ router.get("/comments/:id/replies", generalApiLimiter, getReplies);
  *         description: Internal server error
  */
 router.post(
-  "/comments/:id",
-  writeOperationsLimiter,
-  requireAuth,
+  "/:id",
+
   createComment
 );
 
@@ -197,9 +200,8 @@ router.post(
  *         description: Internal server error
  */
 router.delete(
-  "/comments/:id",
-  writeOperationsLimiter,
-  requireAuth,
+  "/:id",
+
   deleteComment
 );
 

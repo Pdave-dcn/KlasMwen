@@ -54,6 +54,6 @@ const router = express.Router();
  *       500:
  *         description: Internal Server Error
  */
-router.get("/search", generalApiLimiter, requireAuth, searchPosts);
+router.get("/", generalApiLimiter, requireAuth, searchPosts);
 
 export default router;

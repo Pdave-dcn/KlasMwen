@@ -41,16 +41,16 @@ router.get("/status", async (_req, res) => {
   }
 });
 
-router.use("/api", authRoutes);
-router.use("/api", avatarRoutes);
-router.use("/api", bookmarkRoutes);
-router.use("/api", commentRoutes);
-router.use("/api", postRoutes);
+router.use("/api/auth", authRoutes);
+router.use("/api/avatars", avatarRoutes);
+router.use("/api/bookmarks", bookmarkRoutes);
+router.use("/api/comments", commentRoutes);
+router.use("/api/posts", postRoutes);
 router.use("/api", reactionRoutes);
-router.use("/api", reportRoutes);
-router.use("/api", searchRoutes);
-router.use("/api", tagRoutes);
-router.use("/api", userRoutes);
+router.use("/api/reports", reportRoutes);
+router.use("/api/search", searchRoutes);
+router.use("/api/tags", tagRoutes);
+router.use("/api/users", userRoutes);
 
 router.use(/.*/, (_req, res) => {
   res.status(404).json({

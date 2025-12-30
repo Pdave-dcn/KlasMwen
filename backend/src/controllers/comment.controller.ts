@@ -1,7 +1,6 @@
 import { createLogger } from "../core/config/logger.js";
 import { handleError } from "../core/error/index.js";
 import CommentService from "../features/comments/service/CommentService.js";
-import { ensureAuthenticated } from "../utils/auth.util.js";
 import createActionLogger from "../utils/logger.util.js";
 import { createPaginationSchema } from "../utils/pagination.util.js";
 import {
@@ -10,6 +9,7 @@ import {
 } from "../zodSchemas/comment.zod.js";
 import { PostIdParamSchema } from "../zodSchemas/post.zod.js";
 
+import type { AuthenticatedRequest } from "../types/AuthRequest.js";
 import type { Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "CommentController" });
@@ -25,20 +25,10 @@ const createComment = async (req: Request, res: Response) => {
     actionLogger.info("Comment creation attempt started");
     const startTime = Date.now();
 
-    const user = ensureAuthenticated(req);
+    const { user } = req as AuthenticatedRequest;
 
     const { id: postId } = PostIdParamSchema.parse(req.params);
     const { content, parentId } = CreateCommentSchema.parse(req.body);
-
-    actionLogger.info(
-      {
-        userId: user.id,
-        postId,
-        parentId,
-        contentLength: content.length,
-      },
-      "User authenticated and request data validated"
-    );
 
     actionLogger.debug("Processing comment creation");
     const serviceStartTime = Date.now();
@@ -91,15 +81,6 @@ const getParentComments = async (req: Request, res: Response) => {
     const customRepliesSchema = createPaginationSchema(10, 40, "number");
     const { limit, cursor } = customRepliesSchema.parse(req.query);
 
-    actionLogger.info(
-      {
-        postId,
-        limit,
-        cursor,
-      },
-      "Parsed pagination parameters"
-    );
-
     actionLogger.debug("Processing post parent comments fetch request");
     const serviceStartTime = Date.now();
     const result = await CommentService.getParentComments(
@@ -143,15 +124,6 @@ const getReplies = async (req: Request, res: Response) => {
     const customRepliesSchema = createPaginationSchema(10, 40, "number");
     const { limit, cursor } = customRepliesSchema.parse(req.query);
 
-    actionLogger.info(
-      {
-        parentId,
-        limit,
-        cursor,
-      },
-      "Parsed pagination parameters"
-    );
-
     actionLogger.debug("Processing replies fetch request");
     const serviceStartTime = Date.now();
     const result = await CommentService.getReplies(
@@ -194,9 +166,8 @@ const deleteComment = async (req: Request, res: Response) => {
     actionLogger.info("Comment deletion attempt started");
     const startTime = Date.now();
 
-    const user = ensureAuthenticated(req);
+    const { user } = req as AuthenticatedRequest;
     const { id: commentId } = CommentIdParamSchema.parse(req.params);
-    actionLogger.debug("User authenticated and comment ID validated");
 
     actionLogger.debug("Processing comment deletion");
     const serviceStartTime = Date.now();

@@ -15,6 +15,8 @@ import { requireAuth } from "../middleware/requireAuth.middleware.js";
 const router = express.Router();
 
 router.use(attachLogContext("BookmarkController"));
+router.use(generalApiLimiter);
+router.use(requireAuth);
 
 /**
  * @openapi
@@ -60,7 +62,9 @@ router.use(attachLogContext("BookmarkController"));
  *       500:
  *         description: Internal server error
  */
-router.get("/users/bookmarks", generalApiLimiter, requireAuth, getBookmarks);
+router.get("/user", getBookmarks);
+
+router.use(writeOperationsLimiter);
 
 /**
  * @openapi
@@ -97,9 +101,8 @@ router.get("/users/bookmarks", generalApiLimiter, requireAuth, getBookmarks);
  *         description: Internal server error
  */
 router.post(
-  "/bookmarks/:id",
-  writeOperationsLimiter,
-  requireAuth,
+  "/:id",
+
   createBookmark
 );
 
@@ -136,9 +139,8 @@ router.post(
  *         description: Internal server error
  */
 router.delete(
-  "/bookmarks/:id",
-  writeOperationsLimiter,
-  requireAuth,
+  "/:id",
+
   deleteBookmark
 );
 

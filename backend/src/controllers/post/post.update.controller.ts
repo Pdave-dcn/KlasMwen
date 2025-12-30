@@ -1,13 +1,13 @@
 import { createLogger } from "../../core/config/logger.js";
 import { handleError } from "../../core/error/index.js";
 import PostService from "../../features/posts/service/PostService.js";
-import { ensureAuthenticated } from "../../utils/auth.util.js";
 import createActionLogger from "../../utils/logger.util.js";
 import {
   PostIdParamSchema,
   UpdatedPostSchema,
 } from "../../zodSchemas/post.zod.js";
 
+import type { AuthenticatedRequest } from "../../types/AuthRequest.js";
 import type { Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "PostController" });
@@ -18,13 +18,9 @@ const updatePost = async (req: Request, res: Response) => {
     actionLogger.info("Post update attempt started");
     const startTime = Date.now();
 
-    const user = ensureAuthenticated(req);
-    const { id: postId } = PostIdParamSchema.parse(req.params);
+    const { user } = req as AuthenticatedRequest;
 
-    actionLogger.info(
-      { userId: user.id, username: user.username, postId },
-      "User authenticated and post ID parsed"
-    );
+    const { id: postId } = PostIdParamSchema.parse(req.params);
 
     const validatedData = UpdatedPostSchema.parse({
       title: req.body.title,
@@ -33,7 +29,6 @@ const updatePost = async (req: Request, res: Response) => {
       ...(req.body.content !== undefined && { content: req.body.content }),
       ...(req.body.fileName !== undefined && { fileName: req.body.fileName }),
     });
-    actionLogger.info("Post update data validated");
 
     actionLogger.debug("Executing post update");
     const serviceStartTime = Date.now();

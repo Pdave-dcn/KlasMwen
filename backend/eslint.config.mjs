@@ -162,6 +162,7 @@ export default defineConfig([
       "**/*.spec.ts",
       "**/*.spec.js",
       "**/__tests__/**/*",
+      "prisma.config.ts",
     ],
   },
 ]);

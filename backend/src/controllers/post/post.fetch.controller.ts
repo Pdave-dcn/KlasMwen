@@ -1,18 +1,17 @@
 import axios from "axios";
 
 import { createLogger } from "../../core/config/logger.js";
-import { handleError } from "../../core/error/index.js";
 import PostService from "../../features/posts/service/PostService.js";
 import createActionLogger from "../../utils/logger.util.js";
 import { uuidPaginationSchema } from "../../utils/pagination.util.js";
 import { PostIdParamSchema } from "../../zodSchemas/post.zod.js";
 
 import type { AuthenticatedRequest } from "../../types/AuthRequest.js";
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 
 const controllerLogger = createLogger({ module: "PostController" });
 
-const getAllPosts = async (req: Request, res: Response) => {
+const getAllPosts = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(controllerLogger, "getAllPosts", req);
 
   try {
@@ -49,11 +48,11 @@ const getAllPosts = async (req: Request, res: Response) => {
       pagination: result.pagination,
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const getPostById = async (req: Request, res: Response) => {
+const getPostById = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(controllerLogger, "getPostById", req);
 
   try {
@@ -83,11 +82,15 @@ const getPostById = async (req: Request, res: Response) => {
 
     return res.status(200).json({ data: post });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const getPostForEdit = async (req: Request, res: Response) => {
+const getPostForEdit = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "getPostForEdit",
@@ -119,12 +122,16 @@ const getPostForEdit = async (req: Request, res: Response) => {
 
     return res.status(200).json({ data: post });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
 /* eslint-disable-next-line max-lines-per-function */
-const downloadResource = async (req: Request, res: Response) => {
+const downloadResource = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "downloadResource",
@@ -196,7 +203,7 @@ const downloadResource = async (req: Request, res: Response) => {
 
     return;
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 

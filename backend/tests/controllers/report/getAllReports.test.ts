@@ -1,8 +1,6 @@
 import { getAllReports } from "../../../src/controllers/report/report.moderator.controller.js";
 import prisma from "../../../src/core/config/db.js";
 import { AuthorizationError } from "../../../src/core/error/custom/auth.error";
-import { handleError } from "../../../src/core/error/index.js";
-
 import { createAuthenticatedUser } from "./shared/helpers";
 import { createMockRequest, createMockResponse } from "./shared/mocks";
 
@@ -55,6 +53,7 @@ vi.mock("../../../src/core/config/db.js", () => ({
 describe("getAllReports controller", () => {
   let mockRequest: Request;
   let mockResponse: Response;
+  let mockNext: any;
   const mockAdminUser = createAuthenticatedUser({ role: "ADMIN" });
 
   const mockReports = [
@@ -104,6 +103,7 @@ describe("getAllReports controller", () => {
 
   beforeEach(() => {
     mockRequest = createMockRequest();
+    mockNext = vi.fn();
     mockResponse = createMockResponse();
     vi.clearAllMocks();
   });
@@ -119,7 +119,7 @@ describe("getAllReports controller", () => {
       vi.mocked(prisma.report.findMany).mockResolvedValue(mockReports);
       vi.mocked(prisma.report.count).mockResolvedValue(2);
 
-      await getAllReports(mockRequest, mockResponse);
+      await getAllReports(mockRequest, mockResponse, mockNext);
 
       expect(prisma.report.findMany).toHaveBeenCalledWith({
         where: {},
@@ -141,7 +141,7 @@ describe("getAllReports controller", () => {
           hasPrevious: false,
         },
       });
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
     it("should fetch reports filtered by status (e.g., PENDING)", async () => {
@@ -150,7 +150,7 @@ describe("getAllReports controller", () => {
       vi.mocked(prisma.report.findMany).mockResolvedValue([mockReports[0]]);
       vi.mocked(prisma.report.count).mockResolvedValue(1);
 
-      await getAllReports(mockRequest, mockResponse);
+      await getAllReports(mockRequest, mockResponse, mockNext);
 
       expect(prisma.report.findMany).toHaveBeenCalledWith({
         where: { status: "PENDING" },
@@ -183,7 +183,7 @@ describe("getAllReports controller", () => {
       vi.mocked(prisma.report.findMany).mockResolvedValue([mockReports[0]]);
       vi.mocked(prisma.report.count).mockResolvedValue(1);
 
-      await getAllReports(mockRequest, mockResponse);
+      await getAllReports(mockRequest, mockResponse, mockNext);
 
       expect(prisma.report.findMany).toHaveBeenCalledWith({
         where: { postId, commentId: null }, // commentId null because resourceType=post
@@ -207,7 +207,7 @@ describe("getAllReports controller", () => {
       vi.mocked(prisma.report.findMany).mockResolvedValue([mockReports[1]]);
       vi.mocked(prisma.report.count).mockResolvedValue(1);
 
-      await getAllReports(mockRequest, mockResponse);
+      await getAllReports(mockRequest, mockResponse, mockNext);
 
       expect(prisma.report.findMany).toHaveBeenCalledWith({
         where: { commentId, postId: null }, // postId null because resourceType=comment
@@ -231,7 +231,7 @@ describe("getAllReports controller", () => {
       vi.mocked(prisma.report.findMany).mockResolvedValue([]);
       vi.mocked(prisma.report.count).mockResolvedValue(0);
 
-      await getAllReports(mockRequest, mockResponse);
+      await getAllReports(mockRequest, mockResponse, mockNext);
 
       expect(prisma.report.findMany).toHaveBeenCalledWith({
         where: {
@@ -259,7 +259,7 @@ describe("getAllReports controller", () => {
       vi.mocked(prisma.report.findMany).mockResolvedValue([]);
       vi.mocked(prisma.report.count).mockResolvedValue(0);
 
-      await getAllReports(mockRequest, mockResponse);
+      await getAllReports(mockRequest, mockResponse, mockNext);
 
       expect(prisma.report.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: {} })
@@ -286,7 +286,7 @@ describe("getAllReports controller", () => {
       vi.mocked(prisma.report.findMany).mockResolvedValue(mockReports);
       vi.mocked(prisma.report.count).mockResolvedValue(2);
 
-      await getAllReports(mockRequest, mockResponse);
+      await getAllReports(mockRequest, mockResponse, mockNext);
 
       expect(prisma.report.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -309,7 +309,7 @@ describe("getAllReports controller", () => {
       vi.mocked(prisma.report.findMany).mockResolvedValue([]);
       vi.mocked(prisma.report.count).mockResolvedValue(25);
 
-      await getAllReports(mockRequest, mockResponse);
+      await getAllReports(mockRequest, mockResponse, mockNext);
 
       expect(prisma.report.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -336,7 +336,7 @@ describe("getAllReports controller", () => {
       vi.mocked(prisma.report.findMany).mockResolvedValue(mockReports);
       vi.mocked(prisma.report.count).mockResolvedValue(2);
 
-      await getAllReports(mockRequest, mockResponse);
+      await getAllReports(mockRequest, mockResponse, mockNext);
 
       expect(prisma.report.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -358,7 +358,7 @@ describe("getAllReports controller", () => {
       vi.mocked(prisma.report.findMany).mockResolvedValue([]);
       vi.mocked(prisma.report.count).mockResolvedValue(100);
 
-      await getAllReports(mockRequest, mockResponse);
+      await getAllReports(mockRequest, mockResponse, mockNext);
 
       expect(prisma.report.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -385,7 +385,7 @@ describe("getAllReports controller", () => {
       vi.mocked(prisma.report.findMany).mockResolvedValue(mockReports);
       vi.mocked(prisma.report.count).mockResolvedValue(25);
 
-      await getAllReports(mockRequest, mockResponse);
+      await getAllReports(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.json).toHaveBeenCalledWith({
         data: mockReports,
@@ -406,7 +406,7 @@ describe("getAllReports controller", () => {
       vi.mocked(prisma.report.findMany).mockResolvedValue([]);
       vi.mocked(prisma.report.count).mockResolvedValue(25);
 
-      await getAllReports(mockRequest, mockResponse);
+      await getAllReports(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.json).toHaveBeenCalledWith({
         data: [],
@@ -427,7 +427,7 @@ describe("getAllReports controller", () => {
       vi.mocked(prisma.report.findMany).mockResolvedValue([]);
       vi.mocked(prisma.report.count).mockResolvedValue(30);
 
-      await getAllReports(mockRequest, mockResponse);
+      await getAllReports(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.json).toHaveBeenCalledWith({
         data: [],
@@ -452,7 +452,7 @@ describe("getAllReports controller", () => {
       vi.mocked(prisma.report.findMany).mockResolvedValue([]);
       vi.mocked(prisma.report.count).mockResolvedValue(12);
 
-      await getAllReports(mockRequest, mockResponse);
+      await getAllReports(mockRequest, mockResponse, mockNext);
 
       expect(prisma.report.findMany).toHaveBeenCalledWith({
         where: { status: "PENDING" },
@@ -478,44 +478,15 @@ describe("getAllReports controller", () => {
     });
   });
 
-  describe("Error Cases - Authorization", () => {
-    it("should call handleError when checkAdminAuth fails (unauthorized user)", async () => {
-      mockRequest.user = createAuthenticatedUser({
-        id: "non-admin-id",
-        role: "STUDENT" as Role,
-      });
-
-      await getAllReports(mockRequest, mockResponse);
-
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthorizationError),
-        mockResponse
-      );
-      expect(prisma.report.findMany).not.toHaveBeenCalled();
-      expect(prisma.report.count).not.toHaveBeenCalled();
-      expect(mockResponse.status).not.toHaveBeenCalled();
-    });
-
-    it("should call handleError when user is not authenticated", async () => {
-      // Setup: No user
-      mockRequest.user = undefined;
-
-      await getAllReports(mockRequest, mockResponse);
-
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
-      expect(prisma.report.findMany).not.toHaveBeenCalled();
-    });
-  });
-
   describe("Error Cases - Validation", () => {
     it("should call handleError for invalid page parameter (non-numeric)", async () => {
       // Setup
       mockRequest.user = mockAdminUser;
       mockRequest.query = { page: "invalid" };
 
-      await getAllReports(mockRequest, mockResponse);
+      await getAllReports(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
       expect(prisma.report.findMany).not.toHaveBeenCalled();
     });
 
@@ -524,9 +495,9 @@ describe("getAllReports controller", () => {
       mockRequest.user = mockAdminUser;
       mockRequest.query = { page: "0" };
 
-      await getAllReports(mockRequest, mockResponse);
+      await getAllReports(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
       expect(prisma.report.findMany).not.toHaveBeenCalled();
     });
 
@@ -535,9 +506,9 @@ describe("getAllReports controller", () => {
       mockRequest.user = mockAdminUser;
       mockRequest.query = { page: "-1" };
 
-      await getAllReports(mockRequest, mockResponse);
+      await getAllReports(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
       expect(prisma.report.findMany).not.toHaveBeenCalled();
     });
 
@@ -546,9 +517,9 @@ describe("getAllReports controller", () => {
       mockRequest.user = mockAdminUser;
       mockRequest.query = { limit: "abc" };
 
-      await getAllReports(mockRequest, mockResponse);
+      await getAllReports(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
       expect(prisma.report.findMany).not.toHaveBeenCalled();
     });
 
@@ -557,9 +528,9 @@ describe("getAllReports controller", () => {
       mockRequest.user = mockAdminUser;
       mockRequest.query = { limit: "101" };
 
-      await getAllReports(mockRequest, mockResponse);
+      await getAllReports(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
       expect(prisma.report.findMany).not.toHaveBeenCalled();
     });
 
@@ -568,9 +539,9 @@ describe("getAllReports controller", () => {
       mockRequest.user = mockAdminUser;
       mockRequest.query = { status: "INVALID_STATUS" };
 
-      await getAllReports(mockRequest, mockResponse);
+      await getAllReports(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
       expect(prisma.report.findMany).not.toHaveBeenCalled();
     });
 
@@ -579,9 +550,9 @@ describe("getAllReports controller", () => {
       mockRequest.user = mockAdminUser;
       mockRequest.query = { commentId: "not-a-number" };
 
-      await getAllReports(mockRequest, mockResponse);
+      await getAllReports(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
       expect(prisma.report.findMany).not.toHaveBeenCalled();
     });
 
@@ -590,9 +561,9 @@ describe("getAllReports controller", () => {
       mockRequest.user = mockAdminUser;
       mockRequest.query = { postId: "not-a-uuid" };
 
-      await getAllReports(mockRequest, mockResponse);
+      await getAllReports(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
       expect(prisma.report.findMany).not.toHaveBeenCalled();
     });
   });
@@ -605,10 +576,10 @@ describe("getAllReports controller", () => {
       vi.mocked(prisma.report.findMany).mockRejectedValue(dbError);
       vi.mocked(prisma.report.count).mockResolvedValue(0);
 
-      await getAllReports(mockRequest, mockResponse);
+      await getAllReports(mockRequest, mockResponse, mockNext);
 
       expect(prisma.report.findMany).toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(dbError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
 
@@ -619,10 +590,10 @@ describe("getAllReports controller", () => {
       vi.mocked(prisma.report.findMany).mockResolvedValue(mockReports);
       vi.mocked(prisma.report.count).mockRejectedValue(dbError);
 
-      await getAllReports(mockRequest, mockResponse);
+      await getAllReports(mockRequest, mockResponse, mockNext);
 
       expect(prisma.report.count).toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(dbError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
 
@@ -633,9 +604,9 @@ describe("getAllReports controller", () => {
       vi.mocked(prisma.report.findMany).mockRejectedValue(dbError);
       vi.mocked(prisma.report.count).mockRejectedValue(dbError);
 
-      await getAllReports(mockRequest, mockResponse);
+      await getAllReports(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
   });

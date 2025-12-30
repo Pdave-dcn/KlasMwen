@@ -1,7 +1,5 @@
 import { getReportReasons } from "../../../src/controllers/report/report.public.controller.js";
 import prisma from "../../../src/core/config/db.js";
-import { handleError } from "../../../src/core/error";
-
 import { createMockRequest, createMockResponse } from "./shared/mocks";
 
 import type { Request, Response } from "express";
@@ -52,6 +50,7 @@ vi.mock("../../../src/core/config/db.js", () => ({
 describe("getReportReasons controller", () => {
   let mockRequest: Request;
   let mockResponse: Response;
+  let mockNext: any;
 
   // --- Mock Data Factories ---
   const createMockReportReason = (overrides = {}) => ({
@@ -88,6 +87,7 @@ describe("getReportReasons controller", () => {
   // --- Setup/Teardown Hooks (Crucial for isolation) ---
   beforeEach(() => {
     mockRequest = createMockRequest();
+    mockNext = vi.fn();
     mockResponse = createMockResponse();
     vi.clearAllMocks();
   });
@@ -102,7 +102,7 @@ describe("getReportReasons controller", () => {
         mockReportReasons
       );
 
-      await getReportReasons(mockRequest, mockResponse);
+      await getReportReasons(mockRequest, mockResponse, mockNext);
 
       // Verify the correct Prisma query was executed
       expect(prisma.reportReason.findMany).toHaveBeenCalledWith(
@@ -119,19 +119,19 @@ describe("getReportReasons controller", () => {
         data: mockReportReasons,
       });
       // Verify error handler was not called
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
     it("should return empty array when no active report reasons exist", async () => {
       vi.mocked(prisma.reportReason.findMany).mockResolvedValue([]);
 
-      await getReportReasons(mockRequest, mockResponse);
+      await getReportReasons(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
         data: [],
       });
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
     it("should return single report reason when only one exists", async () => {
@@ -139,7 +139,7 @@ describe("getReportReasons controller", () => {
 
       vi.mocked(prisma.reportReason.findMany).mockResolvedValue(singleReason);
 
-      await getReportReasons(mockRequest, mockResponse);
+      await getReportReasons(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -165,7 +165,7 @@ describe("getReportReasons controller", () => {
         reasonsWithNullDesc
       );
 
-      await getReportReasons(mockRequest, mockResponse);
+      await getReportReasons(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -184,7 +184,7 @@ describe("getReportReasons controller", () => {
         unorderedReasons
       );
 
-      await getReportReasons(mockRequest, mockResponse);
+      await getReportReasons(mockRequest, mockResponse, mockNext);
 
       // Assertion that the database call included the correct orderBy parameter
       expect(prisma.reportReason.findMany).toHaveBeenCalledWith(
@@ -203,10 +203,10 @@ describe("getReportReasons controller", () => {
       // Mock the promise to be rejected
       vi.mocked(prisma.reportReason.findMany).mockRejectedValue(dbError);
 
-      await getReportReasons(mockRequest, mockResponse);
+      await getReportReasons(mockRequest, mockResponse, mockNext);
 
       // Verify handleError is called with the error and response object
-      expect(handleError).toHaveBeenCalledWith(dbError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
       // Verify no successful response methods were called
       expect(mockResponse.status).not.toHaveBeenCalled();
       expect(mockResponse.json).not.toHaveBeenCalled();
@@ -219,9 +219,9 @@ describe("getReportReasons controller", () => {
         unexpectedError
       );
 
-      await getReportReasons(mockRequest, mockResponse);
+      await getReportReasons(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(unexpectedError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(unexpectedError);
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
 
@@ -230,9 +230,9 @@ describe("getReportReasons controller", () => {
 
       vi.mocked(prisma.reportReason.findMany).mockRejectedValue(timeoutError);
 
-      await getReportReasons(mockRequest, mockResponse);
+      await getReportReasons(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(timeoutError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(timeoutError);
     });
 
     it("should call handleError when Prisma throws validation error", async () => {
@@ -242,9 +242,9 @@ describe("getReportReasons controller", () => {
         validationError
       );
 
-      await getReportReasons(mockRequest, mockResponse);
+      await getReportReasons(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(validationError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(validationError);
     });
   });
 
@@ -254,7 +254,7 @@ describe("getReportReasons controller", () => {
         mockReportReasons
       );
 
-      await getReportReasons(mockRequest, mockResponse);
+      await getReportReasons(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -267,7 +267,7 @@ describe("getReportReasons controller", () => {
         mockReportReasons
       );
 
-      await getReportReasons(mockRequest, mockResponse);
+      await getReportReasons(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.json).toHaveBeenCalledWith({
         data: expect.arrayContaining([
@@ -291,7 +291,7 @@ describe("getReportReasons controller", () => {
         }),
       ]);
 
-      await getReportReasons(mockRequest, mockResponse);
+      await getReportReasons(mockRequest, mockResponse, mockNext);
 
       const callArgs = vi.mocked(mockResponse.json).mock.calls[0][0];
       expect(callArgs.data[0]).toHaveProperty("id");
@@ -314,7 +314,7 @@ describe("getReportReasons controller", () => {
         reasonWithLongDesc
       );
 
-      await getReportReasons(mockRequest, mockResponse);
+      await getReportReasons(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -338,7 +338,7 @@ describe("getReportReasons controller", () => {
         specialCharsReasons
       );
 
-      await getReportReasons(mockRequest, mockResponse);
+      await getReportReasons(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -356,7 +356,7 @@ describe("getReportReasons controller", () => {
 
       vi.mocked(prisma.reportReason.findMany).mockResolvedValue(unicodeReasons);
 
-      await getReportReasons(mockRequest, mockResponse);
+      await getReportReasons(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -375,7 +375,7 @@ describe("getReportReasons controller", () => {
 
       vi.mocked(prisma.reportReason.findMany).mockResolvedValue(manyReasons);
 
-      await getReportReasons(mockRequest, mockResponse);
+      await getReportReasons(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       const callArgs = vi.mocked(mockResponse.json).mock.calls[0][0];
@@ -394,7 +394,7 @@ describe("getReportReasons controller", () => {
         emptyDescReasons
       );
 
-      await getReportReasons(mockRequest, mockResponse);
+      await getReportReasons(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -407,7 +407,7 @@ describe("getReportReasons controller", () => {
         mockReportReasons
       );
 
-      await getReportReasons(mockRequest, mockResponse);
+      await getReportReasons(mockRequest, mockResponse, mockNext);
 
       // Verify the `where: { active: true }` filter is applied
       expect(prisma.reportReason.findMany).toHaveBeenCalledWith(
@@ -422,7 +422,7 @@ describe("getReportReasons controller", () => {
     it("should call repository with correct fixed query parameters", async () => {
       vi.mocked(prisma.reportReason.findMany).mockResolvedValue([]);
 
-      await getReportReasons(mockRequest, mockResponse);
+      await getReportReasons(mockRequest, mockResponse, mockNext);
 
       expect(prisma.reportReason.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -442,7 +442,7 @@ describe("getReportReasons controller", () => {
 
       vi.mocked(prisma.reportReason.findMany).mockResolvedValue([]);
 
-      await getReportReasons(mockRequest, mockResponse);
+      await getReportReasons(mockRequest, mockResponse, mockNext);
 
       // Should always call with same fixed parameters regardless of request
       expect(prisma.reportReason.findMany).toHaveBeenCalledWith(

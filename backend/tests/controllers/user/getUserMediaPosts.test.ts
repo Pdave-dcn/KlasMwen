@@ -1,8 +1,6 @@
 import { getUserMediaPosts } from "../../../src/controllers/user/user.content.controller";
 import prisma from "../../../src/core/config/db.js";
 import { UserNotFoundError } from "../../../src/core/error/custom/user.error.js";
-import { handleError } from "../../../src/core/error/index.js";
-
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createMockRequest,
@@ -135,10 +133,12 @@ const mockMediaPosts = [
 describe("getUserMediaPosts controller", () => {
   let mockReq: Request;
   let mockRes: Response;
+  let mockNext: any;
 
   beforeEach(() => {
     mockReq = createMockRequest();
     mockRes = createMockResponse();
+    mockNext = vi.fn();
     vi.clearAllMocks();
   });
 
@@ -158,7 +158,7 @@ describe("getUserMediaPosts controller", () => {
       vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
       vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
-      await getUserMediaPosts(mockReq, mockRes);
+      await getUserMediaPosts(mockReq, mockRes, mockNext);
 
       expect(prisma.post.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -198,7 +198,7 @@ describe("getUserMediaPosts controller", () => {
       vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
       vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
-      await getUserMediaPosts(mockReq, mockRes);
+      await getUserMediaPosts(mockReq, mockRes, mockNext);
 
       expect(prisma.post.findMany).toHaveBeenCalled();
 
@@ -215,7 +215,7 @@ describe("getUserMediaPosts controller", () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
       vi.mocked(prisma.post.findMany).mockResolvedValue([]);
 
-      await getUserMediaPosts(mockReq, mockRes);
+      await getUserMediaPosts(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
 
@@ -234,16 +234,13 @@ describe("getUserMediaPosts controller", () => {
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
 
-      await getUserMediaPosts(mockReq, mockRes);
+      await getUserMediaPosts(mockReq, mockRes, mockNext);
 
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: { id: nonExistentUserId },
         select: { id: true },
       });
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(UserNotFoundError),
-        mockRes
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(UserNotFoundError));
       expect(prisma.post.findMany).not.toHaveBeenCalled();
     });
 
@@ -251,9 +248,9 @@ describe("getUserMediaPosts controller", () => {
       mockReq.params = { id: "invalid-uuid" };
       mockReq.query = {};
 
-      await getUserMediaPosts(mockReq, mockRes);
+      await getUserMediaPosts(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.post.findMany).not.toHaveBeenCalled();
     });
 
@@ -261,9 +258,9 @@ describe("getUserMediaPosts controller", () => {
       mockReq.params = { id: mockUser.id };
       mockReq.query = { limit: "invalid" };
 
-      await getUserMediaPosts(mockReq, mockRes);
+      await getUserMediaPosts(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.post.findMany).not.toHaveBeenCalled();
     });
 
@@ -271,9 +268,9 @@ describe("getUserMediaPosts controller", () => {
       mockReq.params = { id: mockUser.id };
       mockReq.query = { cursor: "invalid-uuid" };
 
-      await getUserMediaPosts(mockReq, mockRes);
+      await getUserMediaPosts(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.post.findMany).not.toHaveBeenCalled();
     });
 
@@ -281,9 +278,9 @@ describe("getUserMediaPosts controller", () => {
       mockReq.params = { id: mockUser.id };
       mockReq.query = { limit: "-5" };
 
-      await getUserMediaPosts(mockReq, mockRes);
+      await getUserMediaPosts(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.post.findMany).not.toHaveBeenCalled();
     });
 
@@ -291,9 +288,9 @@ describe("getUserMediaPosts controller", () => {
       mockReq.params = { id: mockUser.id };
       mockReq.query = { limit: "0" };
 
-      await getUserMediaPosts(mockReq, mockRes);
+      await getUserMediaPosts(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.post.findMany).not.toHaveBeenCalled();
     });
 
@@ -304,9 +301,9 @@ describe("getUserMediaPosts controller", () => {
       const dbError = new Error("Database connection failed");
       vi.mocked(prisma.user.findUnique).mockRejectedValue(dbError);
 
-      await getUserMediaPosts(mockReq, mockRes);
+      await getUserMediaPosts(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
       expect(prisma.post.findMany).not.toHaveBeenCalled();
     });
 
@@ -319,18 +316,18 @@ describe("getUserMediaPosts controller", () => {
       const dbError = new Error("Posts query failed");
       vi.mocked(prisma.post.findMany).mockRejectedValue(dbError);
 
-      await getUserMediaPosts(mockReq, mockRes);
+      await getUserMediaPosts(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
     });
 
     it("should handle missing user ID parameter", async () => {
       mockReq.params = {};
       mockReq.query = {};
 
-      await getUserMediaPosts(mockReq, mockRes);
+      await getUserMediaPosts(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.post.findMany).not.toHaveBeenCalled();
     });
   });

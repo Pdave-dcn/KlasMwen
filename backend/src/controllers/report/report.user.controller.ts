@@ -1,15 +1,18 @@
 import { createLogger } from "../../core/config/logger.js";
-import { handleError } from "../../core/error/index.js";
 import ReportService from "../../features/report/service/ReportService.js";
-import { ensureAuthenticated } from "../../utils/auth.util.js";
 import createActionLogger from "../../utils/logger.util.js";
 import { ReportCreationDataSchema } from "../../zodSchemas/report.zod.js";
 
-import type { Request, Response } from "express";
+import type { AuthenticatedRequest } from "../../types/AuthRequest.js";
+import type { Request, Response, NextFunction } from "express";
 
 const controllerLogger = createLogger({ module: "ReportController" });
 
-export const createReport = async (req: Request, res: Response) => {
+export const createReport = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "createReport",
@@ -20,9 +23,8 @@ export const createReport = async (req: Request, res: Response) => {
     actionLogger.info("Report creation attempt started");
     const startTime = Date.now();
 
-    const user = ensureAuthenticated(req);
+    const { user } = req as AuthenticatedRequest;
     const validatedData = ReportCreationDataSchema.parse(req.body);
-    actionLogger.info("User authenticated and report data validated");
 
     actionLogger.debug("Processing report creation");
     const serviceStarttime = Date.now();
@@ -47,6 +49,6 @@ export const createReport = async (req: Request, res: Response) => {
 
     return res.status(201).json({ message: "Report successfully created" });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };

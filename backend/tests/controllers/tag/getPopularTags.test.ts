@@ -2,8 +2,6 @@ import { Request, Response } from "express";
 
 import { getPopularTags } from "../../../src/controllers/tag.controller";
 import prisma from "../../../src/core/config/db";
-import { handleError } from "../../../src/core/error";
-
 import { createMockRequest, createMockResponse } from "./shared/mocks";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -42,8 +40,6 @@ vi.mock("../../../src/core/config/db.js", () => ({
   },
 }));
 
-vi.mock("../../../src/core/error/index.js");
-
 const MOCK_POPULAR_TAGS = [
   // Highest usage
   { id: 1, name: "react", _count: { postTags: 50 } },
@@ -72,14 +68,16 @@ const EXPECTED_FORMATTED_TAGS_10 = MOCK_POPULAR_TAGS.slice(0, 10).map(
 describe("getPopularTags controller", () => {
   let mockRequest: Request;
   let mockResponse: Response;
+  let mockNext: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    mockNext = vi.fn();
     mockRequest = createMockRequest();
     mockResponse = createMockResponse();
 
     vi.mocked(prisma.tag.findMany).mockClear();
-    vi.mocked(handleError).mockClear();
   });
 
   it("should call prisma.tag.findMany with correct parameters to fetch the top 10 tags", async () => {
@@ -88,7 +86,7 @@ describe("getPopularTags controller", () => {
       MOCK_POPULAR_TAGS.slice(0, 10)
     );
 
-    await getPopularTags(mockRequest, mockResponse);
+    await getPopularTags(mockRequest, mockResponse, mockNext);
 
     expect(prisma.tag.findMany).toHaveBeenCalledWith({
       orderBy: {
@@ -115,7 +113,7 @@ describe("getPopularTags controller", () => {
       MOCK_POPULAR_TAGS.slice(0, 10)
     );
 
-    await getPopularTags(mockRequest, mockResponse);
+    await getPopularTags(mockRequest, mockResponse, mockNext);
 
     expect(mockResponse.status).toHaveBeenCalledWith(200);
     expect(mockResponse.json).toHaveBeenCalledWith({
@@ -136,7 +134,7 @@ describe("getPopularTags controller", () => {
 
     vi.mocked(prisma.tag.findMany).mockResolvedValue(lessThan10);
 
-    await getPopularTags(mockRequest, mockResponse);
+    await getPopularTags(mockRequest, mockResponse, mockNext);
 
     expect(prisma.tag.findMany).toHaveBeenCalled();
     expect(mockResponse.status).toHaveBeenCalledWith(200);
@@ -147,7 +145,7 @@ describe("getPopularTags controller", () => {
   it("should return an empty array if no tags are found", async () => {
     vi.mocked(prisma.tag.findMany).mockResolvedValue([]);
 
-    await getPopularTags(mockRequest, mockResponse);
+    await getPopularTags(mockRequest, mockResponse, mockNext);
 
     expect(prisma.tag.findMany).toHaveBeenCalled();
     expect(mockResponse.status).toHaveBeenCalledWith(200);
@@ -161,7 +159,7 @@ describe("getPopularTags controller", () => {
 
     vi.mocked(prisma.tag.findMany).mockResolvedValue(tagWithZeroUsage);
 
-    await getPopularTags(mockRequest, mockResponse);
+    await getPopularTags(mockRequest, mockResponse, mockNext);
 
     expect(mockResponse.status).toHaveBeenCalledWith(200);
     expect(mockResponse.json).toHaveBeenCalledWith({
@@ -173,9 +171,9 @@ describe("getPopularTags controller", () => {
     const mockError = new Error("Prisma connection failure");
     vi.mocked(prisma.tag.findMany).mockRejectedValue(mockError);
 
-    await getPopularTags(mockRequest, mockResponse);
+    await getPopularTags(mockRequest, mockResponse, mockNext);
 
-    expect(handleError).toHaveBeenCalledWith(mockError, mockResponse);
+    expect(mockNext).toHaveBeenCalledWith(mockError);
     expect(mockResponse.status).not.toHaveBeenCalledWith(200); // Ensures successful response isn't called
   });
 });

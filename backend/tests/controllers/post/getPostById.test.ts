@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 
 import { getPostById } from "../../../src/controllers/post/post.fetch.controller";
 import prisma from "../../../src/core/config/db";
-import { handleError } from "../../../src/core/error";
 import { PostNotFoundError } from "../../../src/core/error/custom/post.error";
 
 import { createAuthenticatedUser } from "./shared/helpers";
@@ -61,10 +60,12 @@ vi.mock("../../../src/core/config/db.js", () => ({
 describe("getPostById", () => {
   let mockReq: Request;
   let mockRes: Response;
+  let mockNext: any;
 
   beforeEach(() => {
     mockReq = createMockRequest();
     mockRes = createMockResponse();
+    mockNext = vi.fn();
     vi.clearAllMocks();
   });
 
@@ -97,9 +98,9 @@ describe("getPostById", () => {
     // For "isBookmark" state in each post
     vi.mocked(prisma.bookmark.findUnique).mockResolvedValue(null);
 
-    await getPostById(mockReq, mockRes);
+    await getPostById(mockReq, mockRes, mockNext);
 
-    expect(handleError).not.toHaveBeenCalled();
+    expect(mockNext).not.toHaveBeenCalled();
     expect(prisma.post.findUnique).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: "60676309-9958-4a6a-b4bc-463199dab4ee" },
@@ -116,11 +117,8 @@ describe("getPostById", () => {
 
     vi.mocked(prisma.post.findUnique).mockResolvedValue(null);
 
-    await getPostById(mockReq, mockRes);
+    await getPostById(mockReq, mockRes, mockNext);
 
-    expect(handleError).toHaveBeenCalledWith(
-      expect.any(PostNotFoundError),
-      mockRes
-    );
+    expect(mockNext).toHaveBeenCalledWith(expect.any(PostNotFoundError));
   });
 });

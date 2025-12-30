@@ -16,6 +16,14 @@ const createMockResponse = () => {
   return res;
 };
 
+// Mock Request object
+const createMockRequest = () => {
+  const req = {
+    logContext: {},
+  } as any;
+  return req;
+};
+
 vi.mock("../../../src/core/config/logger.js", () => ({
   createLogger: vi.fn(() => ({
     child: vi.fn(() => ({
@@ -49,9 +57,11 @@ const consoleMock = {
 
 describe("Error Handler", () => {
   let mockRes: Response;
+  let mockReq: any;
 
   beforeEach(() => {
     mockRes = createMockResponse();
+    mockReq = createMockRequest();
     vi.spyOn(console, "error").mockImplementation(consoleMock.error);
   });
 
@@ -74,7 +84,7 @@ describe("Error Handler", () => {
           name: "A",
         });
       } catch (error) {
-        const result = handleError(error, mockRes);
+        const result = handleError(error, mockReq, mockRes);
 
         expect(mockRes.status).toHaveBeenCalledWith(400);
         expect(mockRes.json).toHaveBeenCalledWith({
@@ -102,7 +112,7 @@ describe("Error Handler", () => {
       const zodSchema = z.object({
         user: z.object({
           profile: z.object({
-            email: z.string().email(),
+            email: z.email(),
           }),
         }),
       });
@@ -116,7 +126,7 @@ describe("Error Handler", () => {
           },
         });
       } catch (error) {
-        handleError(error, mockRes);
+        handleError(error, mockReq, mockRes);
 
         expect(mockRes.status).toHaveBeenCalledWith(400);
         expect(mockRes.json).toHaveBeenCalledWith({
@@ -145,7 +155,7 @@ describe("Error Handler", () => {
         }
       );
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(409);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -166,7 +176,7 @@ describe("Error Handler", () => {
         }
       );
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(409);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -184,7 +194,7 @@ describe("Error Handler", () => {
         }
       );
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(404);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -204,7 +214,7 @@ describe("Error Handler", () => {
         }
       );
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -224,7 +234,7 @@ describe("Error Handler", () => {
         }
       );
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -245,7 +255,7 @@ describe("Error Handler", () => {
         }
       );
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -265,7 +275,7 @@ describe("Error Handler", () => {
         }
       );
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -282,7 +292,7 @@ describe("Error Handler", () => {
         },
       });
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -302,7 +312,7 @@ describe("Error Handler", () => {
         }
       );
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -319,7 +329,7 @@ describe("Error Handler", () => {
         }
       );
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(503);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -336,7 +346,7 @@ describe("Error Handler", () => {
         }
       );
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(409);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -353,7 +363,7 @@ describe("Error Handler", () => {
         }
       );
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "Database authentication failed:",
@@ -374,7 +384,7 @@ describe("Error Handler", () => {
         }
       );
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "Database server unreachable:",
@@ -395,7 +405,7 @@ describe("Error Handler", () => {
         }
       );
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "Database does not exist:",
@@ -413,7 +423,7 @@ describe("Error Handler", () => {
         clientVersion: "5.0.0",
       });
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "Unhandled Prisma Error [P9999]:",
@@ -433,7 +443,7 @@ describe("Error Handler", () => {
         { clientVersion: "5.0.0" }
       );
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "Prisma Validation Error:",
@@ -451,7 +461,7 @@ describe("Error Handler", () => {
         "5.0.0"
       );
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "Prisma Initialization Error:",
@@ -469,7 +479,7 @@ describe("Error Handler", () => {
         { clientVersion: "5.0.0" }
       );
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "Prisma Unknown Error:",
@@ -487,7 +497,7 @@ describe("Error Handler", () => {
         "5.0.0"
       );
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "Prisma Rust Panic Error:",
@@ -505,7 +515,7 @@ describe("Error Handler", () => {
       const error = new MulterError("LIMIT_FILE_SIZE", "avatar");
       error.field = "avatar";
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "Multer Error:",
@@ -522,7 +532,7 @@ describe("Error Handler", () => {
     it("should handle LIMIT_FILE_SIZE error without field information", () => {
       const error = new MulterError("LIMIT_FILE_SIZE");
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "Multer Error:",
@@ -538,7 +548,7 @@ describe("Error Handler", () => {
     it("should handle LIMIT_FILE_COUNT error", () => {
       const error = new MulterError("LIMIT_FILE_COUNT");
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "Multer Error:",
@@ -554,7 +564,7 @@ describe("Error Handler", () => {
     it("should handle LIMIT_PART_COUNT error", () => {
       const error = new MulterError("LIMIT_PART_COUNT");
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "Multer Error:",
@@ -570,7 +580,7 @@ describe("Error Handler", () => {
     it("should handle LIMIT_FIELD_KEY error", () => {
       const error = new MulterError("LIMIT_FIELD_KEY");
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "Multer Error:",
@@ -587,7 +597,7 @@ describe("Error Handler", () => {
       const error = new MulterError("LIMIT_FIELD_VALUE", "description");
       error.field = "description";
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "Multer Error:",
@@ -603,7 +613,7 @@ describe("Error Handler", () => {
     it("should handle LIMIT_FIELD_VALUE error without field information", () => {
       const error = new MulterError("LIMIT_FIELD_VALUE");
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "Multer Error:",
@@ -619,7 +629,7 @@ describe("Error Handler", () => {
     it("should handle LIMIT_FIELD_COUNT error", () => {
       const error = new MulterError("LIMIT_FIELD_COUNT");
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "Multer Error:",
@@ -636,7 +646,7 @@ describe("Error Handler", () => {
       const error = new MulterError("LIMIT_UNEXPECTED_FILE", "wrongField");
       error.field = "wrongField";
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "Multer Error:",
@@ -653,7 +663,7 @@ describe("Error Handler", () => {
     it("should handle LIMIT_UNEXPECTED_FILE error without field information", () => {
       const error = new MulterError("LIMIT_UNEXPECTED_FILE");
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "Multer Error:",
@@ -669,7 +679,7 @@ describe("Error Handler", () => {
     it("should handle MISSING_FIELD_NAME error", () => {
       const error = new MulterError("MISSING_FIELD_NAME");
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "Multer Error:",
@@ -685,7 +695,7 @@ describe("Error Handler", () => {
     it("should handle unknown Multer error codes", () => {
       const error = new MulterError("UNKNOWN_ERROR_CODE" as any);
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "Multer Error:",
@@ -708,7 +718,7 @@ describe("Error Handler", () => {
       const error = new Error("Token expired");
       error.name = "TokenExpiredError";
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "JWT Error:",
@@ -724,7 +734,7 @@ describe("Error Handler", () => {
       const error = new Error("Invalid token");
       error.name = "JsonWebTokenError";
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "JWT Error:",
@@ -740,7 +750,7 @@ describe("Error Handler", () => {
       const error = new Error("Token not active");
       error.name = "NotBeforeError";
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "JWT Error:",
@@ -757,7 +767,7 @@ describe("Error Handler", () => {
     it("should handle bcrypt errors", () => {
       const error = new Error("bcrypt comparison failed");
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "Bcrypt Error:",
@@ -774,7 +784,7 @@ describe("Error Handler", () => {
     it("should handle ECONNREFUSED errors", () => {
       const error = new Error("Connection failed: ECONNREFUSED");
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "Generic Error [Error]:",
@@ -789,7 +799,7 @@ describe("Error Handler", () => {
     it("should handle ETIMEDOUT errors", () => {
       const error = new Error("Request ETIMEDOUT");
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "Generic Error [Error]:",
@@ -804,7 +814,7 @@ describe("Error Handler", () => {
     it("should handle generic Error objects", () => {
       const error = new Error("Something went wrong");
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "Generic Error [Error]:",
@@ -819,7 +829,7 @@ describe("Error Handler", () => {
     it("should handle string errors", () => {
       const error = "String error message";
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith(
         "String Error:",
@@ -834,7 +844,7 @@ describe("Error Handler", () => {
     it("should handle completely unknown errors", () => {
       const error = { someProperty: "someValue" };
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith("Unknown Error:", error);
       expect(mockRes.status).toHaveBeenCalledWith(500);
@@ -844,7 +854,7 @@ describe("Error Handler", () => {
     });
 
     it("should handle null/undefined errors", () => {
-      handleError(null, mockRes);
+      handleError(null, mockReq, mockRes);
 
       expect(consoleMock.error).toHaveBeenCalledWith("Unknown Error:", null);
       expect(mockRes.status).toHaveBeenCalledWith(500);
@@ -861,7 +871,7 @@ describe("Error Handler", () => {
       try {
         zodSchema.parse("invalid-email");
       } catch (error) {
-        handleError(error, mockRes);
+        handleError(error, mockReq, mockRes);
         expect(mockRes.status).toHaveBeenCalledWith(400);
         expect(mockRes.json).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -881,7 +891,7 @@ describe("Error Handler", () => {
         }
       );
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(409);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -893,7 +903,7 @@ describe("Error Handler", () => {
     it("should prioritize Multer errors over generic errors", () => {
       const error = new MulterError("LIMIT_FILE_SIZE");
 
-      handleError(error, mockRes);
+      handleError(error, mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(413);
       expect(mockRes.json).toHaveBeenCalledWith(

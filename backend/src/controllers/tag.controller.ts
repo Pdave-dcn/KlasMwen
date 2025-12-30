@@ -1,14 +1,13 @@
 import { createLogger } from "../core/config/logger.js";
-import { handleError } from "../core/error/index.js";
 import TagService from "../features/tag/service/TagService.js";
 import createActionLogger from "../utils/logger.util.js";
 import { CreateTagSchema, TagIdParamSchema } from "../zodSchemas/tag.zod.js";
 
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction} from "express";
 
 const controllerLogger = createLogger({ module: "TagController" });
 
-const createTag = async (req: Request, res: Response) => {
+const createTag = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(controllerLogger, "createTag", req);
 
   try {
@@ -38,11 +37,11 @@ const createTag = async (req: Request, res: Response) => {
       data: newTag,
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const getTagForEdit = async (req: Request, res: Response) => {
+const getTagForEdit = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "getTagForEdit",
@@ -74,11 +73,11 @@ const getTagForEdit = async (req: Request, res: Response) => {
 
     return res.status(200).json({ data: tag });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const getAllTags = async (req: Request, res: Response) => {
+const getAllTags = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(controllerLogger, "getAllTags", req);
 
   try {
@@ -102,11 +101,11 @@ const getAllTags = async (req: Request, res: Response) => {
 
     return res.status(200).json({ data: tags });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const getPopularTags = async (req: Request, res: Response) => {
+const getPopularTags = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "getPopularTags",
@@ -133,11 +132,11 @@ const getPopularTags = async (req: Request, res: Response) => {
 
     return res.status(200).json({ data: tags });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const updateTag = async (req: Request, res: Response) => {
+const updateTag = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(controllerLogger, "updateTag", req);
 
   try {
@@ -169,11 +168,11 @@ const updateTag = async (req: Request, res: Response) => {
       data: updatedTag,
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const deleteTag = async (req: Request, res: Response) => {
+const deleteTag = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(controllerLogger, "deleteTag", req);
 
   try {
@@ -202,7 +201,7 @@ const deleteTag = async (req: Request, res: Response) => {
       message: "Tag deleted successfully",
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 

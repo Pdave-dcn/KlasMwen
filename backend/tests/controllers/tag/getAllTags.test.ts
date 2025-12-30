@@ -2,8 +2,6 @@ import { Request, Response } from "express";
 
 import { getAllTags } from "../../../src/controllers/tag.controller";
 import prisma from "../../../src/core/config/db";
-import { handleError } from "../../../src/core/error";
-
 import { createMockRequest, createMockResponse } from "./shared/mocks";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -47,11 +45,10 @@ vi.mock("../../../src/core/config/db.js", () => ({
   },
 }));
 
-vi.mock("../../../src/core/error/index.js");
-
 describe("getAllTags controller", () => {
   let mockRequest: Request;
   let mockResponse: Response;
+  let mockNext: any;
 
   const mockTags = [
     { id: 1, name: "javascript" },
@@ -62,6 +59,8 @@ describe("getAllTags controller", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
+    mockNext = vi.fn();
+
     mockRequest = createMockRequest();
     mockResponse = createMockResponse();
   });
@@ -70,7 +69,7 @@ describe("getAllTags controller", () => {
     it("should return tags", async () => {
       vi.mocked(prisma.tag.findMany).mockResolvedValue(mockTags);
 
-      await getAllTags(mockRequest, mockResponse);
+      await getAllTags(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -81,7 +80,7 @@ describe("getAllTags controller", () => {
     it("should handle empty tag list", async () => {
       vi.mocked(prisma.tag.findMany).mockResolvedValue([]);
 
-      await getAllTags(mockRequest, mockResponse);
+      await getAllTags(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.json).toHaveBeenCalledWith({
         data: [],
@@ -93,12 +92,9 @@ describe("getAllTags controller", () => {
         new Error("Database connection failed")
       );
 
-      await getAllTags(mockRequest, mockResponse);
+      await getAllTags(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        new Error("Database connection failed"),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(new Error("Database connection failed"));
     });
   });
 });

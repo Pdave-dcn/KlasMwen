@@ -2,8 +2,6 @@ import { Request, Response } from "express";
 
 import { createComment } from "../../../src/controllers/comment.controller";
 import prisma from "../../../src/core/config/db";
-import { handleError } from "../../../src/core/error";
-import { AuthenticationError } from "../../../src/core/error/custom/auth.error";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   CommentNotFoundError,
@@ -17,6 +15,7 @@ import {
   createMockRequest,
   createMockResponse,
 } from "./shared/mocks";
+import { ZodError } from "zod";
 
 vi.mock("../../../src/core/config/logger.js", () => ({
   createLogger: vi.fn(() => ({
@@ -67,6 +66,7 @@ vi.mock("../../../src/core/config/db.js", () => ({
 describe("createComment controller", () => {
   let mockRequest: Request;
   let mockResponse: Response;
+  let mockNext: any;
 
   const mockPostId = "6b2efb09-e634-41d9-b2eb-d4972fabb729";
   const mockOtherPostId = "84e43802-23f1-4c7f-8713-85b1ac168dfa";
@@ -75,6 +75,7 @@ describe("createComment controller", () => {
 
   beforeEach(() => {
     mockRequest = createMockRequest();
+    mockNext = vi.fn();
     mockResponse = createMockResponse();
     vi.clearAllMocks();
   });
@@ -104,9 +105,9 @@ describe("createComment controller", () => {
         hidden: false,
       });
 
-      await createComment(mockRequest, mockResponse);
+      await createComment(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
 
       expect(prisma.comment.create).toHaveBeenCalled();
       expect(mockResponse.status).toHaveBeenCalledWith(201);
@@ -153,7 +154,7 @@ describe("createComment controller", () => {
         hidden: false,
       });
 
-      await createComment(mockRequest, mockResponse);
+      await createComment(mockRequest, mockResponse, mockNext);
 
       expect(prisma.comment.create).toHaveBeenCalled();
 
@@ -176,12 +177,9 @@ describe("createComment controller", () => {
 
       vi.mocked(prisma.post.findUnique).mockResolvedValue(null);
 
-      await createComment(mockRequest, mockResponse);
+      await createComment(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(PostNotFoundError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(PostNotFoundError));
       expect(prisma.comment.create).not.toHaveBeenCalled();
     });
 
@@ -199,12 +197,9 @@ describe("createComment controller", () => {
 
       vi.mocked(prisma.comment.findUnique).mockResolvedValue(null);
 
-      await createComment(mockRequest, mockResponse);
+      await createComment(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(CommentNotFoundError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(CommentNotFoundError));
       expect(prisma.comment.create).not.toHaveBeenCalled();
     });
 
@@ -228,11 +223,10 @@ describe("createComment controller", () => {
         hidden: false,
       });
 
-      await createComment(mockRequest, mockResponse);
+      await createComment(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(CommentPostMismatchError),
-        mockResponse
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.any(CommentPostMismatchError)
       );
       expect(prisma.comment.create).not.toHaveBeenCalled();
     });
@@ -245,9 +239,9 @@ describe("createComment controller", () => {
       const error = new Error("Database connection failed");
       vi.mocked(prisma.post.findUnique).mockRejectedValue(error);
 
-      await createComment(mockRequest, mockResponse);
+      await createComment(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(error, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(error);
       expect(mockResponse.status).not.toHaveBeenCalled();
       expect(mockResponse.json).not.toHaveBeenCalled();
     });
@@ -259,13 +253,10 @@ describe("createComment controller", () => {
       mockRequest.params = { id: "invalid-uuid" }; // Invalid UUID format
       mockRequest.body = { content: "Test comment" };
 
-      await createComment(mockRequest, mockResponse);
+      await createComment(mockRequest, mockResponse, mockNext);
 
       // Should be caught by PostIdParamSchema.parse() and handled by handleError
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(Error), // ZodError from schema validation
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
       expect(prisma.post.findUnique).not.toHaveBeenCalled();
     });
 
@@ -274,13 +265,10 @@ describe("createComment controller", () => {
       mockRequest.params = { id: mockPostId };
       mockRequest.body = { content: "" }; // Empty content (assuming schema validates this)
 
-      await createComment(mockRequest, mockResponse);
+      await createComment(mockRequest, mockResponse, mockNext);
 
       // Should be caught by CreateCommentSchema.parse() and handled by handleError
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(Error), // ZodError from schema validation
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
       expect(prisma.post.findUnique).not.toHaveBeenCalled();
     });
 
@@ -291,12 +279,9 @@ describe("createComment controller", () => {
         content: "a".repeat(10000), // Assuming there's a max length validation
       };
 
-      await createComment(mockRequest, mockResponse);
+      await createComment(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(Error), // ZodError from schema validation
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
       expect(prisma.post.findUnique).not.toHaveBeenCalled();
     });
 
@@ -308,11 +293,10 @@ describe("createComment controller", () => {
         parentId: "invalid-parent-id", // Should be number, not string
       };
 
-      await createComment(mockRequest, mockResponse);
+      await createComment(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(Error), // ZodError from schema validation
-        mockResponse
+      expect(mockNext).toHaveBeenCalledWith(
+        expect.any(ZodError) // ZodError from schema validation
       );
       expect(prisma.post.findUnique).not.toHaveBeenCalled();
     });
@@ -330,9 +314,9 @@ describe("createComment controller", () => {
 
       vi.mocked(prisma.comment.findUnique).mockResolvedValue(null);
 
-      await createComment(mockRequest, mockResponse);
+      await createComment(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
     });
 
     it("should handle negative parentId", async () => {
@@ -346,9 +330,9 @@ describe("createComment controller", () => {
 
       vi.mocked(prisma.comment.findUnique).mockResolvedValue(null);
 
-      await createComment(mockRequest, mockResponse);
+      await createComment(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
     });
 
     it("should handle special characters in content", async () => {
@@ -374,7 +358,7 @@ describe("createComment controller", () => {
         hidden: false,
       });
 
-      await createComment(mockRequest, mockResponse);
+      await createComment(mockRequest, mockResponse, mockNext);
 
       expect(prisma.comment.create).toHaveBeenCalledWith({
         data: {
@@ -392,9 +376,9 @@ describe("createComment controller", () => {
       mockRequest.params = { id: mockPostId };
       mockRequest.body = { content: "   \n\t   " };
 
-      await createComment(mockRequest, mockResponse);
+      await createComment(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
     });
   });
 
@@ -421,7 +405,7 @@ describe("createComment controller", () => {
 
       vi.mocked(prisma.comment.create).mockResolvedValue(mockCreatedComment);
 
-      await createComment(mockRequest, mockResponse);
+      await createComment(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(201);
       expect(mockResponse.json).toHaveBeenCalledWith({

@@ -6,7 +6,6 @@ import { Request, Response } from "express";
 
 import { downloadResource } from "../../../src/controllers/post/post.fetch.controller";
 import prisma from "../../../src/core/config/db";
-import { handleError } from "../../../src/core/error";
 import { PostNotFoundError } from "../../../src/core/error/custom/post.error";
 
 import { createAuthenticatedUser } from "./shared/helpers";
@@ -75,10 +74,12 @@ describe("downloadResource controller", () => {
 
   let mockReq: Request;
   let mockRes: Response;
+  let mockNext: any;
 
   beforeEach(() => {
     mockReq = createMockRequest();
     mockRes = createMockResponse();
+    mockNext = vi.fn();
     vi.clearAllMocks();
   });
 
@@ -103,7 +104,7 @@ describe("downloadResource controller", () => {
         },
       });
 
-      await downloadResource(mockReq, mockRes);
+      await downloadResource(mockReq, mockRes, mockNext);
 
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         "Content-Disposition",
@@ -135,7 +136,7 @@ describe("downloadResource controller", () => {
         },
       });
 
-      await downloadResource(mockReq, mockRes);
+      await downloadResource(mockReq, mockRes, mockNext);
 
       expect(mockRes.setHeader).not.toHaveBeenCalledWith(
         "Content-Length",
@@ -170,7 +171,7 @@ describe("downloadResource controller", () => {
         headers: { "content-type": "application/pdf" },
       });
 
-      await downloadResource(mockReq, mockRes);
+      await downloadResource(mockReq, mockRes, mockNext);
 
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         "Content-Disposition",
@@ -201,7 +202,7 @@ describe("downloadResource controller", () => {
         headers: { "content-type": "application/octet-stream" },
       });
 
-      await downloadResource(mockReq, mockRes);
+      await downloadResource(mockReq, mockRes, mockNext);
 
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         "Content-Type",
@@ -215,9 +216,9 @@ describe("downloadResource controller", () => {
       mockReq.user = createAuthenticatedUser();
       mockReq.params = { id: "invalid-id" };
 
-      await downloadResource(mockReq, mockRes);
+      await downloadResource(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
     });
 
     it("should call handleError when resource not found", async () => {
@@ -226,12 +227,9 @@ describe("downloadResource controller", () => {
 
       vi.mocked(prisma.post.findUnique).mockResolvedValue(null);
 
-      await downloadResource(mockReq, mockRes);
+      await downloadResource(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(PostNotFoundError),
-        mockRes
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(PostNotFoundError));
     });
 
     it("should call handleError when resource has no fileUrl", async () => {
@@ -245,9 +243,9 @@ describe("downloadResource controller", () => {
 
       vi.mocked(prisma.post.findUnique).mockResolvedValue(resourceWithoutUrl);
 
-      await downloadResource(mockReq, mockRes);
+      await downloadResource(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockRes);
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
     });
 
     it("should call handleError when resource has empty fileUrl", async () => {
@@ -261,9 +259,9 @@ describe("downloadResource controller", () => {
 
       vi.mocked(prisma.post.findUnique).mockResolvedValue(resourceWithEmptyUrl);
 
-      await downloadResource(mockReq, mockRes);
+      await downloadResource(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
     });
   });
 
@@ -289,7 +287,7 @@ describe("downloadResource controller", () => {
         headers: { "content-type": "application/pdf" },
       });
 
-      await downloadResource(mockReq, mockRes);
+      await downloadResource(mockReq, mockRes, mockNext);
 
       // Wait for error handler to be called
       await new Promise((resolve) => setTimeout(resolve, 10));
@@ -321,7 +319,7 @@ describe("downloadResource controller", () => {
         headers: { "content-type": "application/pdf" },
       });
 
-      await downloadResource(mockReq, mockRes);
+      await downloadResource(mockReq, mockRes, mockNext);
 
       // Simulate user closing connection
       closeHandler!();
@@ -352,7 +350,7 @@ describe("downloadResource controller", () => {
         headers: { "content-type": "application/pdf" },
       });
 
-      await downloadResource(mockReq, mockRes);
+      await downloadResource(mockReq, mockRes, mockNext);
 
       // Simulate user closing connection after response ended
       closeHandler!();
@@ -370,9 +368,9 @@ describe("downloadResource controller", () => {
 
       vi.mocked(prisma.post.findUnique).mockRejectedValue(dbError);
 
-      await downloadResource(mockReq, mockRes);
+      await downloadResource(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
     });
 
     it("should handle axios errors", async () => {
@@ -384,9 +382,9 @@ describe("downloadResource controller", () => {
       vi.mocked(prisma.post.findUnique).mockResolvedValue(mockResourcePost);
       vi.mocked(axios).mockRejectedValue(axiosError);
 
-      await downloadResource(mockReq, mockRes);
+      await downloadResource(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(axiosError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(axiosError);
     });
 
     it("should handle timeout errors", async () => {
@@ -398,9 +396,9 @@ describe("downloadResource controller", () => {
       vi.mocked(prisma.post.findUnique).mockResolvedValue(mockResourcePost);
       vi.mocked(axios).mockRejectedValue(timeoutError);
 
-      await downloadResource(mockReq, mockRes);
+      await downloadResource(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(timeoutError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(timeoutError);
     });
 
     it("should not send error response if headers already sent", async () => {
@@ -424,7 +422,7 @@ describe("downloadResource controller", () => {
         headers: { "content-type": "application/pdf" },
       });
 
-      await downloadResource(mockReq, mockRes);
+      await downloadResource(mockReq, mockRes, mockNext);
 
       // Wait for error handler
       await new Promise((resolve) => setTimeout(resolve, 10));
@@ -458,7 +456,7 @@ describe("downloadResource controller", () => {
         headers: { "content-type": "image/png" },
       });
 
-      await downloadResource(mockReq, mockRes);
+      await downloadResource(mockReq, mockRes, mockNext);
 
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         "Content-Type",
@@ -493,7 +491,7 @@ describe("downloadResource controller", () => {
         },
       });
 
-      await downloadResource(mockReq, mockRes);
+      await downloadResource(mockReq, mockRes, mockNext);
 
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         "Content-Type",
@@ -525,7 +523,7 @@ describe("downloadResource controller", () => {
         headers: { "content-type": docResource.mimeType },
       });
 
-      await downloadResource(mockReq, mockRes);
+      await downloadResource(mockReq, mockRes, mockNext);
 
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         "Content-Disposition",

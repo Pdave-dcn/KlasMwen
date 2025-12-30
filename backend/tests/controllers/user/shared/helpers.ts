@@ -5,13 +5,14 @@ import { handleError } from "../../../../src/core/error/index.js";
 
 import { createMockRequest, createMockResponse } from "./mocks";
 
-import type { Request, Response } from "express";
-import { expect } from "vitest";
+import type { Request, Response, NextFunction } from "express";
+import { expect, vi } from "vitest";
 
 type Controller = (
   req: Request,
-  res: Response
-) => Promise<Response<any, Record<string, any>> | undefined>;
+  res: Response,
+  next: NextFunction
+) => Promise<void | Response<any, Record<string, any>>>;
 
 async function expectValidationError(
   controller: Controller,
@@ -20,11 +21,11 @@ async function expectValidationError(
 ): Promise<void> {
   const req = createMockRequest(reqOverrides);
   const res = createMockResponse();
+  const next = vi.fn();
 
-  await controller(req, res);
+  await controller(req, res, next);
 
-  expect(handleError).toHaveBeenCalled();
-
+  expect(next).toHaveBeenCalled();
   if (shouldCheckPrisma) {
     expect(prisma.user.findUnique).not.toHaveBeenCalled();
   }

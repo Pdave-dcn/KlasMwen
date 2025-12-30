@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 
 import { updatePost } from "../../../src/controllers/post/post.update.controller";
 import prisma from "../../../src/core/config/db";
-import { handleError } from "../../../src/core/error";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   AuthenticationError,
@@ -77,10 +76,12 @@ describe("updatePost controller", () => {
 
   let mockReq: Request;
   let mockRes: Response;
+  let mockNext: any;
 
   beforeEach(() => {
     mockReq = createMockRequest();
     mockRes = createMockResponse();
+    mockNext = vi.fn();
     vi.clearAllMocks();
   });
 
@@ -133,9 +134,9 @@ describe("updatePost controller", () => {
         return await callback(tx as any);
       });
 
-      await updatePost(mockReq, mockRes);
+      await updatePost(mockReq, mockRes, mockNext);
 
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
       expect(prisma.post.findUnique).toHaveBeenCalled();
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
@@ -186,9 +187,9 @@ describe("updatePost controller", () => {
         return await callback(tx as any);
       });
 
-      await updatePost(mockReq, mockRes);
+      await updatePost(mockReq, mockRes, mockNext);
 
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith({
         message: "Post updated successfully",
@@ -232,7 +233,7 @@ describe("updatePost controller", () => {
         return result;
       });
 
-      await updatePost(mockReq, mockRes);
+      await updatePost(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -274,7 +275,7 @@ describe("updatePost controller", () => {
         return result;
       });
 
-      await updatePost(mockReq, mockRes);
+      await updatePost(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
     });
@@ -295,12 +296,9 @@ describe("updatePost controller", () => {
 
       vi.mocked(prisma.post.findUnique).mockResolvedValue(null);
 
-      await updatePost(mockReq, mockRes);
+      await updatePost(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(PostNotFoundError),
-        mockRes
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(PostNotFoundError));
     });
   });
 
@@ -314,9 +312,9 @@ describe("updatePost controller", () => {
         tagIds: [1, 2],
       };
 
-      await updatePost(mockReq, mockRes);
+      await updatePost(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
     });
 
     it("should call handleError when type is invalid", async () => {
@@ -329,9 +327,9 @@ describe("updatePost controller", () => {
         tagIds: [1, 2],
       };
 
-      await updatePost(mockReq, mockRes);
+      await updatePost(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
     });
 
     it("should call handleError when postId param is invalid", async () => {
@@ -339,9 +337,9 @@ describe("updatePost controller", () => {
       mockReq.params = { id: "invalid-uuid" };
       mockReq.body = mockRequestData;
 
-      await updatePost(mockReq, mockRes);
+      await updatePost(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
     });
 
     it("should call handleError when tagIds contains invalid values", async () => {
@@ -354,9 +352,9 @@ describe("updatePost controller", () => {
         tagIds: ["invalid", "tags"],
       };
 
-      await updatePost(mockReq, mockRes);
+      await updatePost(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
     });
   });
 
@@ -369,9 +367,9 @@ describe("updatePost controller", () => {
       const mockError = new Error("Database lookup error");
       vi.mocked(prisma.post.findUnique).mockRejectedValue(mockError);
 
-      await updatePost(mockReq, mockRes);
+      await updatePost(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(mockError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(mockError);
     });
 
     it("should call handleError if transaction fails", async () => {
@@ -384,9 +382,9 @@ describe("updatePost controller", () => {
       vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPostInDb as any);
       vi.mocked(prisma.$transaction).mockRejectedValue(mockError);
 
-      await updatePost(mockReq, mockRes);
+      await updatePost(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(mockError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(mockError);
     });
 
     it("should call handleError if post.update fails within transaction", async () => {
@@ -411,9 +409,9 @@ describe("updatePost controller", () => {
         return await callback(tx as any);
       });
 
-      await updatePost(mockReq, mockRes);
+      await updatePost(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(mockError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(mockError);
     });
 
     it("should call handleError if postTag.deleteMany fails within transaction", async () => {
@@ -438,9 +436,9 @@ describe("updatePost controller", () => {
         return await callback(tx as any);
       });
 
-      await updatePost(mockReq, mockRes);
+      await updatePost(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(mockError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(mockError);
     });
 
     it("should call handleError if postTag.createMany fails within transaction", async () => {
@@ -465,9 +463,9 @@ describe("updatePost controller", () => {
         return await callback(tx as any);
       });
 
-      await updatePost(mockReq, mockRes);
+      await updatePost(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(mockError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(mockError);
     });
   });
 
@@ -494,12 +492,9 @@ describe("updatePost controller", () => {
         return await callback(tx as any);
       });
 
-      await updatePost(mockReq, mockRes);
+      await updatePost(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(PostUpdateFailedError),
-        mockRes
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(PostUpdateFailedError));
     });
   });
 
@@ -527,7 +522,7 @@ describe("updatePost controller", () => {
         return await callback(tx as any);
       });
 
-      await updatePost(mockReq, mockRes);
+      await updatePost(mockReq, mockRes, mockNext);
 
       expect(prisma.$transaction).toHaveBeenCalledTimes(1);
       expect(transactionCallback).toHaveBeenCalledTimes(1);
@@ -568,7 +563,7 @@ describe("updatePost controller", () => {
         return await callback(tx as any);
       });
 
-      await updatePost(mockReq, mockRes);
+      await updatePost(mockReq, mockRes, mockNext);
 
       // Verify operations happened in correct order: update, deleteMany, createMany, findUnique
       expect(operationOrder).toEqual([

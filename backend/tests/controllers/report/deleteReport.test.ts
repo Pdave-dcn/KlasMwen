@@ -2,7 +2,6 @@ import { ZodError } from "zod";
 
 import { deleteReport } from "../../../src/controllers/report/report.moderator.controller.js";
 import prisma from "../../../src/core/config/db.js";
-import { handleError } from "../../../src/core/error";
 import { AuthorizationError } from "../../../src/core/error/custom/auth.error";
 import { ReportNotFoundError } from "../../../src/core/error/custom/report.error";
 
@@ -55,6 +54,7 @@ vi.mock("../../../src/core/config/db.js", () => ({
 describe("deleteReport controller", () => {
   let mockRequest: Request;
   let mockResponse: Response;
+  let mockNext: any;
   const mockAdminUser = createAuthenticatedUser({ role: "ADMIN" });
   const mockReportId = 99;
 
@@ -80,6 +80,7 @@ describe("deleteReport controller", () => {
 
   beforeEach(() => {
     mockRequest = createMockRequest();
+    mockNext = vi.fn();
     mockResponse = createMockResponse();
     vi.clearAllMocks();
   });
@@ -100,7 +101,7 @@ describe("deleteReport controller", () => {
         id: mockReportId,
       } as any);
 
-      await deleteReport(mockRequest, mockResponse);
+      await deleteReport(mockRequest, mockResponse, mockNext);
 
       expect(prisma.report.delete).toHaveBeenCalledWith({
         where: { id: mockReportId },
@@ -110,40 +111,19 @@ describe("deleteReport controller", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "Report deleted successfully",
       });
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
     });
   });
 
   // --- Error Cases ---
   describe("Error Cases", () => {
-    it("should call handleError when checkAdminAuth fails (unauthorized user)", async () => {
-      // Setup
-      mockRequest.user = createAuthenticatedUser({ role: "STUDENT" as Role });
-      mockRequest.params = { id: String(mockReportId) };
-
-      vi.mocked(prisma.report.findUnique).mockResolvedValue({
-        id: mockReportId,
-      } as any);
-
-      await deleteReport(mockRequest, mockResponse);
-
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthorizationError),
-        mockResponse
-      );
-      expect(prisma.report.delete).not.toHaveBeenCalled();
-    });
-
     it("should call handleError when ID validation fails (invalid format)", async () => {
       // Setup
       mockRequest.user = mockAdminUser;
       mockRequest.params = { id: "invalid-id-string" };
-      await deleteReport(mockRequest, mockResponse);
+      await deleteReport(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
       expect(prisma.report.delete).not.toHaveBeenCalled();
     });
 
@@ -155,14 +135,11 @@ describe("deleteReport controller", () => {
       vi.mocked(prisma.report.findUnique).mockResolvedValue(null);
 
       // Execute
-      await deleteReport(mockRequest, mockResponse);
+      await deleteReport(mockRequest, mockResponse, mockNext);
 
       // Assertions
       expect(prisma.report.delete).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ReportNotFoundError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ReportNotFoundError));
     });
 
     it("should call handleError for unexpected database errors", async () => {
@@ -179,11 +156,11 @@ describe("deleteReport controller", () => {
       vi.mocked(prisma.report.delete).mockRejectedValue(dbError);
 
       // Execute
-      await deleteReport(mockRequest, mockResponse);
+      await deleteReport(mockRequest, mockResponse, mockNext);
 
       // Assertions
       expect(prisma.report.delete).toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(dbError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
   });

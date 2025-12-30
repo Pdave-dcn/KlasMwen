@@ -1,9 +1,6 @@
 import { updateUserProfile } from "../../../src/controllers/user/user.profile.controller";
 import prisma from "../../../src/core/config/db.js";
-import { AuthenticationError } from "../../../src/core/error/custom/auth.error.js";
 import { UserNotFoundError } from "../../../src/core/error/custom/user.error.js";
-import { handleError } from "../../../src/core/error/index.js";
-
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createAuthenticatedUser,
@@ -73,10 +70,12 @@ vi.mock("../../../src/core/error/index.js", () => ({
 describe("updateUserProfile controller", () => {
   let mockReq: Request;
   let mockRes: Response;
+  let mockNext: any;
 
   beforeEach(() => {
     mockReq = createMockRequest();
     mockRes = createMockResponse();
+    mockNext = vi.fn();
     vi.clearAllMocks();
   });
 
@@ -102,7 +101,7 @@ describe("updateUserProfile controller", () => {
 
       (prisma.user.update as any).mockResolvedValue(updatedUser);
 
-      await updateUserProfile(mockReq, mockRes);
+      await updateUserProfile(mockReq, mockRes, mockNext);
 
       expect(prisma.user.update).toHaveBeenCalled();
       expect(mockRes.json).toHaveBeenCalledWith(
@@ -128,7 +127,7 @@ describe("updateUserProfile controller", () => {
 
       (prisma.user.update as any).mockResolvedValue(updatedUser);
 
-      await updateUserProfile(mockReq, mockRes);
+      await updateUserProfile(mockReq, mockRes, mockNext);
 
       expect(prisma.user.update).toHaveBeenCalled();
       expect(mockRes.json).toHaveBeenCalledWith(
@@ -155,9 +154,9 @@ describe("updateUserProfile controller", () => {
 
       (prisma.user.update as any).mockResolvedValue(updatedUser);
 
-      await updateUserProfile(mockReq, mockRes);
+      await updateUserProfile(mockReq, mockRes, mockNext);
 
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
       expect(prisma.user.update).toHaveBeenCalled();
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -244,12 +243,9 @@ describe("updateUserProfile controller", () => {
 
       (prisma.user.findUnique as any).mockResolvedValue(null);
 
-      await updateUserProfile(mockReq, mockRes);
+      await updateUserProfile(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(UserNotFoundError),
-        mockRes
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(UserNotFoundError));
     });
 
     it("should handle database connection errors during update", async () => {
@@ -261,9 +257,9 @@ describe("updateUserProfile controller", () => {
       const dbError = new Error("Database connection failed");
       (prisma.user.update as any).mockRejectedValue(dbError);
 
-      await updateUserProfile(mockReq, mockRes);
+      await updateUserProfile(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
     });
   });
 });

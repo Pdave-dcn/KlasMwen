@@ -1,5 +1,4 @@
 import { createLogger } from "../../core/config/logger.js";
-import { handleError } from "../../core/error/index.js";
 import CommentService from "../../features/comments/service/CommentService.js";
 import PostService from "../../features/posts/service/PostService.js";
 import UserService from "../../features/user/service/UserService.js";
@@ -11,11 +10,11 @@ import {
 import { UserIdParamSchema } from "../../zodSchemas/user.zod.js";
 
 import type { AuthenticatedRequest } from "../../types/AuthRequest.js";
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction} from "express";
 
 const controllerLogger = createLogger({ module: "UserController" });
 
-const getMyPosts = async (req: Request, res: Response) => {
+const getMyPosts = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(controllerLogger, "getMyPosts", req);
 
   try {
@@ -55,11 +54,11 @@ const getMyPosts = async (req: Request, res: Response) => {
       pagination: result.pagination,
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const getPostsLikedByMe = async (req: Request, res: Response) => {
+const getPostsLikedByMe = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "getPostsLikedByMe",
@@ -102,11 +101,11 @@ const getPostsLikedByMe = async (req: Request, res: Response) => {
       pagination: result.pagination,
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const getUserPosts = async (req: Request, res: Response) => {
+const getUserPosts = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "getUserPosts",
@@ -153,11 +152,11 @@ const getUserPosts = async (req: Request, res: Response) => {
       pagination: result.pagination,
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const getUserComments = async (req: Request, res: Response) => {
+const getUserComments = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "getUserComments",
@@ -204,11 +203,11 @@ const getUserComments = async (req: Request, res: Response) => {
       pagination: result.pagination,
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const getUserMediaPosts = async (req: Request, res: Response) => {
+const getUserMediaPosts = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "getUserMediaPosts",
@@ -254,7 +253,7 @@ const getUserMediaPosts = async (req: Request, res: Response) => {
       pagination: result.pagination,
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 

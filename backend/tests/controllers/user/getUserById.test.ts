@@ -4,8 +4,6 @@ import { Request, Response } from "express";
 import { getUserById } from "../../../src/controllers/user/user.profile.controller";
 import prisma from "../../../src/core/config/db";
 import { UserNotFoundError } from "../../../src/core/error/custom/user.error";
-import { handleError } from "../../../src/core/error/index";
-
 import { expectValidationError } from "./shared/helpers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -64,10 +62,12 @@ vi.mock("../../../src/core/error/index.js", () => ({
 describe("getUserById controller", () => {
   let mockReq: Request;
   let mockRes: Response;
+  let mockNext: any;
 
   beforeEach(() => {
     mockReq = createMockRequest();
     mockRes = createMockResponse();
+    mockNext = vi.fn();
     vi.clearAllMocks();
   });
 
@@ -79,7 +79,7 @@ describe("getUserById controller", () => {
       mockReq.params = { id: mockUser.id };
       (prisma.user.findUnique as any).mockResolvedValue(mockUser);
 
-      await getUserById(mockReq, mockRes);
+      await getUserById(mockReq, mockRes, mockNext);
 
       expect(prisma.user.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({ where: { id: mockUser.id } })
@@ -91,16 +91,13 @@ describe("getUserById controller", () => {
       mockReq.params = { id: mockUser.id };
       (prisma.user.findUnique as any).mockResolvedValue(null);
 
-      await getUserById(mockReq, mockRes);
+      await getUserById(mockReq, mockRes, mockNext);
 
       expect(prisma.user.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({ where: { id: mockUser.id } })
       );
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(UserNotFoundError),
-        mockRes
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(UserNotFoundError));
     });
   });
 
@@ -130,9 +127,9 @@ describe("getUserById controller", () => {
       const dbError = new Error("Database connection failed");
       (prisma.user.findUnique as any).mockRejectedValue(dbError);
 
-      await getUserById(mockReq, mockRes);
+      await getUserById(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
     });
 
     it("should handle Prisma known request errors", async () => {
@@ -143,9 +140,9 @@ describe("getUserById controller", () => {
       );
       (prisma.user.findUnique as any).mockRejectedValue(prismaError);
 
-      await getUserById(mockReq, mockRes);
+      await getUserById(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(prismaError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(prismaError);
     });
   });
 });

@@ -1,10 +1,8 @@
 import prisma from "../../core/config/db.js";
 import { createLogger } from "../../core/config/logger.js";
-import { handleError } from "../../core/error/index.js";
 import CommentService from "../../features/comments/service/CommentService.js";
 import { PostService } from "../../features/posts/service/PostService.js";
 import ReportService from "../../features/report/service/ReportService.js";
-import { checkModeratorAuth } from "../../utils/auth.util.js";
 import createActionLogger from "../../utils/logger.util.js";
 import {
   ReportIdParamSchema,
@@ -13,11 +11,15 @@ import {
   ToggleVisibilitySchema,
 } from "../../zodSchemas/report.zod.js";
 
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 
 const controllerLogger = createLogger({ module: "ReportController" });
 
-const getAllReports = async (req: Request, res: Response) => {
+const getAllReports = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "getAllReports",
@@ -27,8 +29,6 @@ const getAllReports = async (req: Request, res: Response) => {
   try {
     actionLogger.info("Fetching all reports");
     const startTime = Date.now();
-
-    checkModeratorAuth(req.user);
 
     const validatedQuery = ReportQuerySchema.parse(req.query);
 
@@ -46,8 +46,6 @@ const getAllReports = async (req: Request, res: Response) => {
       page: validatedQuery.page,
       limit: validatedQuery.limit,
     };
-
-    actionLogger.info("User authorized and filters extracted");
 
     actionLogger.debug("Processing reports fetching with filters");
     const serviceStarttime = Date.now();
@@ -70,11 +68,15 @@ const getAllReports = async (req: Request, res: Response) => {
 
     return res.status(200).json(result);
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const getReportById = async (req: Request, res: Response) => {
+const getReportById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "getReportById",
@@ -85,9 +87,7 @@ const getReportById = async (req: Request, res: Response) => {
     actionLogger.info("Fetching report by ID");
     const startTime = Date.now();
 
-    checkModeratorAuth(req.user);
     const { id: reportId } = ReportIdParamSchema.parse(req.params);
-    actionLogger.info("User authorized and report ID parsed");
 
     actionLogger.debug("Processing report fetch");
     const serviceStarttime = Date.now();
@@ -107,11 +107,15 @@ const getReportById = async (req: Request, res: Response) => {
 
     return res.status(200).json({ data: report });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const updateReportStatus = async (req: Request, res: Response) => {
+const updateReportStatus = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "updateReportStatus",
@@ -122,10 +126,8 @@ const updateReportStatus = async (req: Request, res: Response) => {
     actionLogger.info("Report status update attempt started");
     const startTime = Date.now();
 
-    checkModeratorAuth(req.user);
     const { id: reportId } = ReportIdParamSchema.parse(req.params);
     const validatedData = ReportStatusUpdateSchema.parse(req.body);
-    actionLogger.info("User authorized, report ID and data validated");
 
     actionLogger.debug("Processing report status update");
     const serviceStarttime = Date.now();
@@ -152,11 +154,15 @@ const updateReportStatus = async (req: Request, res: Response) => {
       data: updatedReport,
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const deleteReport = async (req: Request, res: Response) => {
+const deleteReport = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "deleteReport",
@@ -167,9 +173,7 @@ const deleteReport = async (req: Request, res: Response) => {
     actionLogger.info("Report deletion attempt started");
     const startTime = Date.now();
 
-    checkModeratorAuth(req.user);
     const { id: reportId } = ReportIdParamSchema.parse(req.params);
-    actionLogger.info("User authorized and report ID parsed");
 
     actionLogger.debug("Processing report deletion");
     const serviceStarttime = Date.now();
@@ -192,11 +196,15 @@ const deleteReport = async (req: Request, res: Response) => {
       message: "Report deleted successfully",
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const toggleVisibility = async (req: Request, res: Response) => {
+const toggleVisibility = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "toggleVisibility",
@@ -207,11 +215,9 @@ const toggleVisibility = async (req: Request, res: Response) => {
     actionLogger.info("Moderator requested visibility toggle");
     const startTime = Date.now();
 
-    checkModeratorAuth(req.user);
     const { resourceType, resourceId, hidden } = ToggleVisibilitySchema.parse(
       req.body
     );
-    actionLogger.info("User authorized and data validated");
 
     actionLogger.debug("Starting database operation");
     if (resourceType === "post") {
@@ -239,11 +245,15 @@ const toggleVisibility = async (req: Request, res: Response) => {
       message: `Successfully ${hidden ? "hid" : "unhid"} ${resourceType}`,
     });
   } catch (error) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const getReportStats = async (req: Request, res: Response) => {
+const getReportStats = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "getReportStats",
@@ -253,9 +263,6 @@ const getReportStats = async (req: Request, res: Response) => {
   try {
     actionLogger.info("Fetching report statistics");
     const startTime = Date.now();
-
-    checkModeratorAuth(req.user);
-    actionLogger.info("User authorized");
 
     actionLogger.debug("Processing report stats fetching");
     const serviceStarttime = Date.now();
@@ -275,7 +282,7 @@ const getReportStats = async (req: Request, res: Response) => {
 
     return res.status(200).json({ data: stats });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 

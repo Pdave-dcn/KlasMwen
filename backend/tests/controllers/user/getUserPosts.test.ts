@@ -3,8 +3,6 @@ import { Prisma } from "@prisma/client";
 import { getUserPosts } from "../../../src/controllers/user/user.content.controller";
 import prisma from "../../../src/core/config/db.js";
 import { UserNotFoundError } from "../../../src/core/error/custom/user.error.js";
-import { handleError } from "../../../src/core/error/index.js";
-
 import { expectValidationError } from "./shared/helpers.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -116,10 +114,12 @@ const mockPosts = [
 describe("getUserPosts controller", () => {
   let mockReq: Request;
   let mockRes: Response;
+  let mockNext: any;
 
   beforeEach(() => {
     mockReq = createMockRequest();
     mockRes = createMockResponse();
+    mockNext = vi.fn();
     vi.clearAllMocks();
   });
 
@@ -140,9 +140,9 @@ describe("getUserPosts controller", () => {
       vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
       vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
-      await getUserPosts(mockReq, mockRes);
+      await getUserPosts(mockReq, mockRes, mockNext);
 
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: { id: mockUser.id },
         select: { id: true },
@@ -168,7 +168,7 @@ describe("getUserPosts controller", () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
       vi.mocked(prisma.post.findMany).mockResolvedValue([]);
 
-      await getUserPosts(mockReq, mockRes);
+      await getUserPosts(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -217,16 +217,13 @@ describe("getUserPosts controller", () => {
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
 
-      await getUserPosts(mockReq, mockRes);
+      await getUserPosts(mockReq, mockRes, mockNext);
 
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: { id: mockUser.id },
         select: { id: true },
       });
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(UserNotFoundError),
-        mockRes
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(UserNotFoundError));
       expect(prisma.post.findMany).not.toHaveBeenCalled();
     });
   });
@@ -239,9 +236,9 @@ describe("getUserPosts controller", () => {
       const dbError = new Error("Database connection failed");
       vi.mocked(prisma.user.findUnique).mockRejectedValue(dbError);
 
-      await getUserPosts(mockReq, mockRes);
+      await getUserPosts(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
       expect(prisma.post.findMany).not.toHaveBeenCalled();
     });
 
@@ -253,9 +250,9 @@ describe("getUserPosts controller", () => {
       const dbError = new Error("Posts query failed");
       vi.mocked(prisma.post.findMany).mockRejectedValue(dbError);
 
-      await getUserPosts(mockReq, mockRes);
+      await getUserPosts(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
     });
 
     it("should handle Prisma known request errors", async () => {
@@ -269,9 +266,9 @@ describe("getUserPosts controller", () => {
       );
       vi.mocked(prisma.post.findMany).mockRejectedValue(prismaError);
 
-      await getUserPosts(mockReq, mockRes);
+      await getUserPosts(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(prismaError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(prismaError);
     });
 
     it("should handle database timeout errors", async () => {
@@ -282,9 +279,9 @@ describe("getUserPosts controller", () => {
       const timeoutError = new Error("Query timeout");
       vi.mocked(prisma.post.findMany).mockRejectedValue(timeoutError);
 
-      await getUserPosts(mockReq, mockRes);
+      await getUserPosts(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(timeoutError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(timeoutError);
     });
   });
 });

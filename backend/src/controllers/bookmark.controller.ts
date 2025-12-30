@@ -1,17 +1,16 @@
 import prisma from "../core/config/db.js";
 import { createLogger } from "../core/config/logger.js";
-import { handleError } from "../core/error/index.js";
 import PostService from "../features/posts/service/PostService.js";
 import createActionLogger from "../utils/logger.util.js";
 import { uuidPaginationSchema } from "../utils/pagination.util.js";
 import { PostIdParamSchema } from "../zodSchemas/post.zod.js";
 
 import type { AuthenticatedRequest } from "../types/AuthRequest.js";
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction} from "express";
 
 const controllerLogger = createLogger({ module: "BookmarkController" });
 
-const getBookmarks = async (req: Request, res: Response) => {
+const getBookmarks = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "getBookmarks",
@@ -52,11 +51,11 @@ const getBookmarks = async (req: Request, res: Response) => {
       pagination: result.pagination,
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const createBookmark = async (req: Request, res: Response) => {
+const createBookmark = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "createBookmark",
@@ -95,11 +94,11 @@ const createBookmark = async (req: Request, res: Response) => {
       message: "Post bookmarked successfully",
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const deleteBookmark = async (req: Request, res: Response) => {
+const deleteBookmark = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "deleteBookmark",
@@ -148,7 +147,7 @@ const deleteBookmark = async (req: Request, res: Response) => {
       message: "Bookmark removed successfully",
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 

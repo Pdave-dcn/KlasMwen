@@ -3,7 +3,6 @@ import { Request, Response } from "express";
 
 import { getPostForEdit } from "../../../src/controllers/post/post.fetch.controller";
 import prisma from "../../../src/core/config/db";
-import { handleError } from "../../../src/core/error";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   AuthenticationError,
@@ -66,10 +65,12 @@ vi.mock("../../../src/core/config/db.js", () => ({
 describe("getPostForEdit", () => {
   let mockReq: Request;
   let mockRes: Response;
+  let mockNext: any;
 
   beforeEach(() => {
     mockReq = createMockRequest();
     mockRes = createMockResponse();
+    mockNext = vi.fn();
     vi.clearAllMocks();
   });
 
@@ -112,10 +113,10 @@ describe("getPostForEdit", () => {
 
     vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPost);
 
-    await getPostForEdit(mockReq, mockRes);
+    await getPostForEdit(mockReq, mockRes, mockNext);
 
     expect(prisma.post.findUnique).toHaveBeenCalled();
-    expect(handleError).not.toHaveBeenCalled();
+    expect(mockNext).not.toHaveBeenCalled();
     expect(mockRes.status).toHaveBeenCalledWith(200);
     expect(mockRes.json).toHaveBeenCalledWith({
       data: mockEditResponse,
@@ -128,12 +129,9 @@ describe("getPostForEdit", () => {
 
     vi.mocked(prisma.post.findUnique).mockResolvedValue(null);
 
-    await getPostForEdit(mockReq, mockRes);
+    await getPostForEdit(mockReq, mockRes, mockNext);
 
-    expect(handleError).toHaveBeenCalledWith(
-      expect.any(PostNotFoundError),
-      mockRes
-    );
+    expect(mockNext).toHaveBeenCalledWith(expect.any(PostNotFoundError));
   });
 
   it("should call handleError with AuthorizationError if the user is not the author", async () => {
@@ -142,12 +140,9 @@ describe("getPostForEdit", () => {
 
     vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPost);
 
-    await getPostForEdit(mockReq, mockRes);
+    await getPostForEdit(mockReq, mockRes, mockNext);
 
-    expect(handleError).toHaveBeenCalledWith(
-      expect.any(AuthorizationError),
-      mockRes
-    );
+    expect(mockNext).toHaveBeenCalledWith(expect.any(AuthorizationError));
   });
 
   it("should call handleError if a database query fails", async () => {
@@ -158,8 +153,8 @@ describe("getPostForEdit", () => {
 
     vi.mocked(prisma.post.findUnique).mockRejectedValue(mockError);
 
-    await getPostForEdit(mockReq, mockRes);
+    await getPostForEdit(mockReq, mockRes, mockNext);
 
-    expect(handleError).toHaveBeenCalledWith(mockError, mockRes);
+    expect(mockNext).toHaveBeenCalledWith(mockError);
   });
 });

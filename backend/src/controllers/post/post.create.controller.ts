@@ -1,15 +1,14 @@
 import { createLogger } from "../../core/config/logger.js";
-import { handleError } from "../../core/error/index.js";
 import handleRequestValidation from "../../features/posts/requestPostParser.js";
 import PostService from "../../features/posts/service/PostService.js";
 import createActionLogger from "../../utils/logger.util.js";
 
 import type { AuthenticatedRequest } from "../../types/AuthRequest.js";
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction} from "express";
 
 const controllerLogger = createLogger({ module: "PostController" });
 
-const createPost = async (req: Request, res: Response) => {
+const createPost = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(controllerLogger, "createPost", req);
 
   try {
@@ -51,7 +50,7 @@ const createPost = async (req: Request, res: Response) => {
       data: result,
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 

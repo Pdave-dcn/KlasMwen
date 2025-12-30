@@ -1,13 +1,12 @@
 import { createLogger } from "../../core/config/logger.js";
-import { handleError } from "../../core/error/index.js";
 import ReportService from "../../features/report/service/ReportService.js";
 import createActionLogger from "../../utils/logger.util.js";
 
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction} from "express";
 
 const controllerLogger = createLogger({ module: "ReportController" });
 
-export const getReportReasons = async (req: Request, res: Response) => {
+export const getReportReasons = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "getReportReasons",
@@ -36,6 +35,6 @@ export const getReportReasons = async (req: Request, res: Response) => {
 
     return res.status(200).json({ data: reportReasons });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };

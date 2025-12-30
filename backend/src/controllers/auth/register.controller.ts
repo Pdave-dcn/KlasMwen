@@ -1,11 +1,10 @@
 import { getCookieConfig } from "../../core/config/cookie.js";
 import { createLogger } from "../../core/config/logger.js";
-import { handleError } from "../../core/error/index.js";
 import UserService from "../../features/user/service/UserService.js";
 import createActionLogger from "../../utils/logger.util.js";
 import RegisterUserSchema from "../../zodSchemas/register.zod.js";
 
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 
 const controllerLogger = createLogger({ module: "AuthController" });
 
@@ -13,7 +12,11 @@ const controllerLogger = createLogger({ module: "AuthController" });
  * Controller for user registration
  * Handles request validation and response formatting
  */
-const registerUser = async (req: Request, res: Response) => {
+const registerUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "registerUser",
@@ -24,14 +27,7 @@ const registerUser = async (req: Request, res: Response) => {
     actionLogger.info("User registration attempt started");
     const startTime = Date.now();
 
-    // Validate request body
-    actionLogger.debug("Validating request body");
     const validatedData = RegisterUserSchema.parse(req.body);
-
-    const emailDomain = validatedData.email.split("@")[1];
-    actionLogger.info(
-      `Registration data validated (username: ${validatedData.username}, emailDomain: ${emailDomain})`
-    );
 
     // Call service layer
     const { user, token } = await UserService.registerUser(validatedData);
@@ -56,7 +52,7 @@ const registerUser = async (req: Request, res: Response) => {
       user,
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 

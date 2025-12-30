@@ -2,8 +2,6 @@ import { Request, Response } from "express";
 
 import { getAllPosts } from "../../../src/controllers/post/post.fetch.controller";
 import prisma from "../../../src/core/config/db";
-import { handleError } from "../../../src/core/error";
-
 import { createAuthenticatedUser } from "./shared/helpers";
 import { createMockRequest, createMockResponse } from "./shared/mocks";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -60,10 +58,12 @@ vi.mock("../../../src/core/config/db.js", () => ({
 describe("getAllPosts", () => {
   let mockReq: Request;
   let mockRes: Response;
+  let mockNext: any;
 
   beforeEach(() => {
     mockReq = createMockRequest();
     mockRes = createMockResponse();
+    mockNext = vi.fn();
     vi.clearAllMocks();
   });
 
@@ -97,9 +97,9 @@ describe("getAllPosts", () => {
     vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
     vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
-    await getAllPosts(mockReq, mockRes);
+    await getAllPosts(mockReq, mockRes, mockNext);
 
-    expect(handleError).not.toHaveBeenCalled();
+    expect(mockNext).not.toHaveBeenCalled();
     expect(prisma.post.findMany).toHaveBeenCalled();
     expect(mockRes.status).toHaveBeenCalledWith(200);
     expect(mockRes.json).toHaveBeenCalledWith(
@@ -141,9 +141,9 @@ describe("getAllPosts", () => {
     vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
     vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
-    await getAllPosts(mockReq, mockRes);
+    await getAllPosts(mockReq, mockRes, mockNext);
 
-    expect(handleError).not.toHaveBeenCalled();
+    expect(mockNext).not.toHaveBeenCalled();
     expect(prisma.post.findMany).toHaveBeenCalled();
 
     expect(mockRes.status).toHaveBeenCalledWith(200);
@@ -164,8 +164,8 @@ describe("getAllPosts", () => {
 
     vi.mocked(prisma.post.findMany).mockRejectedValue(mockError);
 
-    await getAllPosts(mockReq, mockRes);
+    await getAllPosts(mockReq, mockRes, mockNext);
 
-    expect(handleError).toHaveBeenCalledWith(mockError, mockRes);
+    expect(mockNext).toHaveBeenCalledWith(mockError);
   });
 });

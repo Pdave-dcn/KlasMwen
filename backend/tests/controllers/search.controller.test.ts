@@ -4,8 +4,6 @@ import { it, expect, describe, vi, beforeEach } from "vitest";
 
 import { searchPosts } from "../../src/controllers/search.controller.js";
 import prisma from "../../src/core/config/db.js";
-import { handleError } from "../../src/core/error/index";
-
 vi.mock("../../src/core/config/logger.js", () => ({
   createLogger: vi.fn(() => ({
     child: vi.fn(() => ({
@@ -61,6 +59,7 @@ const createAuthenticatedUser = (overrides = {}) => ({
 describe("Search Controller", () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
+  let mockNext: any;
 
   const mockPostId = "550e8400-e29b-41d4-a716-446655440000";
   const mockPostId2 = "b2c3d4e5-f678-9012-3456-7890abcdef12";
@@ -70,6 +69,8 @@ describe("Search Controller", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    mockNext = vi.fn();
 
     mockResponse = {
       status: vi.fn(() => mockResponse as Response),
@@ -87,9 +88,13 @@ describe("Search Controller", () => {
         user: undefined,
       };
 
-      await searchPosts(mockRequest as Request, mockResponse as Response);
+      await searchPosts(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.post.findMany).not.toHaveBeenCalled();
       expect(prisma.post.count).not.toHaveBeenCalled();
     });
@@ -106,9 +111,13 @@ describe("Search Controller", () => {
       (prisma.post.findMany as any).mockResolvedValue([]);
       (prisma.post.count as any).mockResolvedValue(0);
 
-      await searchPosts(mockRequest as Request, mockResponse as Response);
+      await searchPosts(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
       expect(prisma.post.findMany).toHaveBeenCalled();
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
@@ -168,7 +177,11 @@ describe("Search Controller", () => {
       (prisma.post.findMany as any).mockResolvedValue([...mockPosts]);
       (prisma.post.count as any).mockResolvedValue(2);
 
-      await searchPosts(mockRequest as Request, mockResponse as Response);
+      await searchPosts(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       expect(prisma.post.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -221,9 +234,13 @@ describe("Search Controller", () => {
         vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
         vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
-        await searchPosts(mockRequest as Request, mockResponse as Response);
+        await searchPosts(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
 
-        expect(handleError).not.toHaveBeenCalled();
+        expect(mockNext).not.toHaveBeenCalled();
         expect(prisma.post.findMany).toHaveBeenCalled();
       });
 
@@ -241,9 +258,13 @@ describe("Search Controller", () => {
         vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
         vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
-        await searchPosts(mockRequest as Request, mockResponse as Response);
+        await searchPosts(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
 
-        expect(handleError).not.toHaveBeenCalled();
+        expect(mockNext).not.toHaveBeenCalled();
         expect(prisma.post.findMany).toHaveBeenCalled();
       });
 
@@ -261,7 +282,11 @@ describe("Search Controller", () => {
         vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
         vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
-        await searchPosts(mockRequest as Request, mockResponse as Response);
+        await searchPosts(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
 
         // Should filter out invalid IDs and proceed
         expect(mockResponse.status).toHaveBeenCalledWith(200);
@@ -276,9 +301,13 @@ describe("Search Controller", () => {
           user: createAuthenticatedUser(),
         };
 
-        await searchPosts(mockRequest as Request, mockResponse as Response);
+        await searchPosts(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
 
-        expect(handleError).toHaveBeenCalled();
+        expect(mockNext).toHaveBeenCalled();
         expect(prisma.post.findMany).not.toHaveBeenCalled();
       });
 
@@ -292,9 +321,13 @@ describe("Search Controller", () => {
           user: createAuthenticatedUser(),
         };
 
-        await searchPosts(mockRequest as Request, mockResponse as Response);
+        await searchPosts(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
 
-        expect(handleError).toHaveBeenCalled();
+        expect(mockNext).toHaveBeenCalled();
         expect(prisma.post.findMany).not.toHaveBeenCalled();
       });
 
@@ -307,9 +340,13 @@ describe("Search Controller", () => {
           user: createAuthenticatedUser(),
         };
 
-        await searchPosts(mockRequest as Request, mockResponse as Response);
+        await searchPosts(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
 
-        expect(handleError).toHaveBeenCalled();
+        expect(mockNext).toHaveBeenCalled();
         expect(prisma.post.findMany).not.toHaveBeenCalled();
       });
     });
@@ -347,7 +384,11 @@ describe("Search Controller", () => {
         (prisma.post.findMany as any).mockResolvedValue(mockPosts);
         (prisma.post.count as any).mockResolvedValue(10);
 
-        await searchPosts(mockRequest as Request, mockResponse as Response);
+        await searchPosts(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
 
         expect(mockResponse.json).toHaveBeenCalledWith({
           data: expect.any(Array),
@@ -391,9 +432,13 @@ describe("Search Controller", () => {
         (prisma.post.findMany as any).mockResolvedValue(mockPosts);
         (prisma.post.count as any).mockResolvedValue(5);
 
-        await searchPosts(mockRequest as Request, mockResponse as Response);
+        await searchPosts(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
 
-        expect(handleError).not.toHaveBeenCalled();
+        expect(mockNext).not.toHaveBeenCalled();
         expect(mockResponse.json).toHaveBeenCalledWith({
           data: expect.any(Array),
           pagination: {
@@ -420,9 +465,13 @@ describe("Search Controller", () => {
         (prisma.post.findMany as any).mockResolvedValue([]);
         (prisma.post.count as any).mockResolvedValue(5);
 
-        await searchPosts(mockRequest as Request, mockResponse as Response);
+        await searchPosts(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
 
-        expect(handleError).not.toHaveBeenCalled();
+        expect(mockNext).not.toHaveBeenCalled();
         expect(prisma.post.findMany).toHaveBeenCalledWith(
           expect.objectContaining({
             cursor: { id: cursor },
@@ -443,9 +492,13 @@ describe("Search Controller", () => {
         };
 
         await expect(
-          searchPosts(mockRequest as Request, mockResponse as Response)
+          searchPosts(
+            mockRequest as Request,
+            mockResponse as Response,
+            mockNext
+          )
         ).resolves.not.toThrow();
-        expect(handleError).not.toHaveBeenCalled();
+        expect(mockNext).not.toHaveBeenCalled();
         expect(mockResponse.status).toHaveBeenCalledWith(200);
       });
 
@@ -462,7 +515,11 @@ describe("Search Controller", () => {
         (prisma.post.findMany as any).mockResolvedValue([]);
         (prisma.post.count as any).mockResolvedValue(0);
 
-        await searchPosts(mockRequest as Request, mockResponse as Response);
+        await searchPosts(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
 
         expect(prisma.post.findMany).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -487,9 +544,13 @@ describe("Search Controller", () => {
 
         (prisma.post.findMany as any).mockRejectedValue(mockError);
 
-        await searchPosts(mockRequest as Request, mockResponse as Response);
+        await searchPosts(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
 
-        expect(handleError).toHaveBeenCalledWith(mockError, mockResponse);
+        expect(mockNext).toHaveBeenCalledWith(mockError);
       });
 
       it("should call handleError when count query fails", async () => {
@@ -507,9 +568,13 @@ describe("Search Controller", () => {
         (prisma.post.findMany as any).mockResolvedValue([]);
         (prisma.post.count as any).mockRejectedValue(mockError);
 
-        await searchPosts(mockRequest as Request, mockResponse as Response);
+        await searchPosts(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
 
-        expect(handleError).toHaveBeenCalledWith(mockError, mockResponse);
+        expect(mockNext).toHaveBeenCalledWith(mockError);
       });
     });
 
@@ -528,7 +593,11 @@ describe("Search Controller", () => {
         (prisma.post.findMany as any).mockResolvedValue([]);
         (prisma.post.count as any).mockResolvedValue(0);
 
-        await searchPosts(mockRequest as Request, mockResponse as Response);
+        await searchPosts(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
 
         expect(mockResponse.status).toHaveBeenCalledWith(200);
         expect(mockResponse.json).toHaveBeenCalledWith({
@@ -561,7 +630,11 @@ describe("Search Controller", () => {
         vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
         vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
-        await searchPosts(mockRequest as Request, mockResponse as Response);
+        await searchPosts(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
 
         // Changed from exact match to just checking it was called
         expect(prisma.post.findMany).toHaveBeenCalled();
@@ -583,7 +656,11 @@ describe("Search Controller", () => {
         (prisma.post.findMany as any).mockResolvedValue([]);
         (prisma.post.count as any).mockResolvedValue(0);
 
-        await searchPosts(mockRequest as Request, mockResponse as Response);
+        await searchPosts(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
 
         expect(mockResponse.json).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -608,7 +685,11 @@ describe("Search Controller", () => {
         (prisma.post.findMany as any).mockResolvedValue([]);
         (prisma.post.count as any).mockResolvedValue(0);
 
-        await searchPosts(mockRequest as Request, mockResponse as Response);
+        await searchPosts(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
 
         // Should not throw error and should sanitize the search term
         expect(prisma.post.findMany).toHaveBeenCalled();
@@ -644,7 +725,11 @@ describe("Search Controller", () => {
         (prisma.post.findMany as any).mockResolvedValue([mockPost]);
         (prisma.post.count as any).mockResolvedValue(1);
 
-        await searchPosts(mockRequest as Request, mockResponse as Response);
+        await searchPosts(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
 
         expect(mockResponse.status).toHaveBeenCalledWith(200);
         expect(mockResponse.json).toHaveBeenCalledWith(
@@ -689,9 +774,13 @@ describe("Search Controller", () => {
         (prisma.post.findMany as any).mockResolvedValue([mockPost]);
         (prisma.post.count as any).mockResolvedValue(1);
 
-        await searchPosts(mockRequest as Request, mockResponse as Response);
+        await searchPosts(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
 
-        expect(handleError).not.toHaveBeenCalled();
+        expect(mockNext).not.toHaveBeenCalled();
         expect(mockResponse.status).toHaveBeenCalledWith(200);
         expect(mockResponse.json).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -720,9 +809,13 @@ describe("Search Controller", () => {
         vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
         vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
-        await searchPosts(mockRequest as Request, mockResponse as Response);
+        await searchPosts(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
 
-        expect(handleError).not.toHaveBeenCalled();
+        expect(mockNext).not.toHaveBeenCalled();
         expect(prisma.post.findMany).toHaveBeenCalled();
         expect(mockResponse.status).toHaveBeenCalledWith(200);
       });
@@ -743,7 +836,11 @@ describe("Search Controller", () => {
         vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
         vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
-        await searchPosts(mockRequest as Request, mockResponse as Response);
+        await searchPosts(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
 
         // Should sanitize the % and _ characters
         expect(prisma.post.findMany).toHaveBeenCalled();
@@ -787,7 +884,11 @@ describe("Search Controller", () => {
       vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
       vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
-      await searchPosts(mockRequest as Request, mockResponse as Response);
+      await searchPosts(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith(
@@ -813,7 +914,11 @@ describe("Search Controller", () => {
       vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
       vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
-      await searchPosts(mockRequest as Request, mockResponse as Response);
+      await searchPosts(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       expect(prisma.post.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -849,7 +954,11 @@ describe("Search Controller", () => {
       vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
       vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
-      await searchPosts(mockRequest as Request, mockResponse as Response);
+      await searchPosts(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       // Should only include positive IDs (1 and 3)
       expect(mockResponse.status).toHaveBeenCalledWith(200);
@@ -869,7 +978,11 @@ describe("Search Controller", () => {
       vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
       vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
-      await searchPosts(mockRequest as Request, mockResponse as Response);
+      await searchPosts(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       // Should only include positive IDs (1 and 2)
       expect(mockResponse.status).toHaveBeenCalledWith(200);
@@ -890,7 +1003,11 @@ describe("Search Controller", () => {
       vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
       vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
-      await searchPosts(mockRequest as Request, mockResponse as Response);
+      await searchPosts(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       // Should proceed with search term only
       expect(mockResponse.status).toHaveBeenCalledWith(200);
@@ -910,7 +1027,11 @@ describe("Search Controller", () => {
       vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
       vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
-      await searchPosts(mockRequest as Request, mockResponse as Response);
+      await searchPosts(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       // Should trim and parse correctly
       expect(mockResponse.status).toHaveBeenCalledWith(200);
@@ -935,7 +1056,11 @@ describe("Search Controller", () => {
       vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
       vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
-      await searchPosts(mockRequest as Request, mockResponse as Response);
+      await searchPosts(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       // Should use AND condition with OR for search terms and tag filter
       expect(prisma.post.findMany).toHaveBeenCalledWith(
@@ -991,7 +1116,11 @@ describe("Search Controller", () => {
       vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
       vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
-      await searchPosts(mockRequest as Request, mockResponse as Response);
+      await searchPosts(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith(

@@ -2,8 +2,6 @@ import { ZodError } from "zod";
 
 import { createReport } from "../../../src/controllers/report/report.user.controller.js";
 import prisma from "../../../src/core/config/db.js";
-import { handleError } from "../../../src/core/error";
-import { AuthenticationError } from "../../../src/core/error/custom/auth.error";
 import { CommentNotFoundError } from "../../../src/core/error/custom/comment.error";
 import { PostNotFoundError } from "../../../src/core/error/custom/post.error";
 import { assertPermission } from "../../../src/core/security/rbac";
@@ -84,6 +82,7 @@ vi.mock("../../../src/features/report/helpers/autoHideContent", () => ({
 describe("createReport controller", () => {
   let mockRequest: Request;
   let mockResponse: Response;
+  let mockNext: any;
 
   const mockUserId = "910da3f7-f419-4929-b775-6e26ba17f248";
   const mockPostId = "6b2efb09-e634-41d9-b2eb-d4972fabb729";
@@ -114,6 +113,7 @@ describe("createReport controller", () => {
 
   beforeEach(() => {
     mockRequest = createMockRequest();
+    mockNext = vi.fn();
     mockResponse = createMockResponse();
     vi.clearAllMocks();
 
@@ -155,7 +155,7 @@ describe("createReport controller", () => {
         commentId: null,
       });
 
-      await createReport(mockRequest, mockResponse);
+      await createReport(mockRequest, mockResponse, mockNext);
 
       expect(PostService.verifyPostExists).toHaveBeenCalledWith(mockPostId);
       expect(autoHideContent).toHaveBeenCalledWith({
@@ -166,7 +166,7 @@ describe("createReport controller", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "Report successfully created",
       });
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
     it("should create a comment report successfully", async () => {
@@ -198,7 +198,7 @@ describe("createReport controller", () => {
         commentId: mockCommentId,
       });
 
-      await createReport(mockRequest, mockResponse);
+      await createReport(mockRequest, mockResponse, mockNext);
 
       expect(CommentService.commentExists).toHaveBeenCalledWith(mockCommentId);
       expect(autoHideContent).toHaveBeenCalledWith({
@@ -209,7 +209,7 @@ describe("createReport controller", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "Report successfully created",
       });
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
     it("should handle autoHideContent being called asynchronously", async () => {
@@ -249,7 +249,7 @@ describe("createReport controller", () => {
         autoHideResolved = true;
       });
 
-      await createReport(mockRequest, mockResponse);
+      await createReport(mockRequest, mockResponse, mockNext);
 
       // Response should be sent before autoHideContent completes
       expect(mockResponse.status).toHaveBeenCalledWith(201);
@@ -262,23 +262,6 @@ describe("createReport controller", () => {
   });
 
   describe("Error Cases", () => {
-    it("should call handleError with AuthenticationError when user is not authenticated", async () => {
-      mockRequest.user = undefined;
-      mockRequest.body = {
-        postId: mockPostId,
-        reasonId: mockReasonId,
-      };
-
-      await createReport(mockRequest, mockResponse);
-
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthenticationError),
-        mockResponse
-      );
-      expect(PostService.verifyPostExists).not.toHaveBeenCalled();
-      expect(mockResponse.status).not.toHaveBeenCalled();
-    });
-
     it("should call handleError when post does not exist", async () => {
       mockRequest.user = createAuthenticatedUser({ id: mockUserId });
       mockRequest.body = {
@@ -290,12 +273,9 @@ describe("createReport controller", () => {
         new PostNotFoundError(mockPostId)
       );
 
-      await createReport(mockRequest, mockResponse);
+      await createReport(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(PostNotFoundError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(PostNotFoundError));
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
 
@@ -310,12 +290,9 @@ describe("createReport controller", () => {
         new CommentNotFoundError(mockCommentId)
       );
 
-      await createReport(mockRequest, mockResponse);
+      await createReport(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(CommentNotFoundError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(CommentNotFoundError));
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
 
@@ -329,9 +306,9 @@ describe("createReport controller", () => {
       const dbError = new Error("Database connection failed");
       vi.mocked(PostService.verifyPostExists).mockRejectedValue(dbError);
 
-      await createReport(mockRequest, mockResponse);
+      await createReport(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
       expect(mockResponse.status).not.toHaveBeenCalled();
       expect(mockResponse.json).not.toHaveBeenCalled();
     });
@@ -345,9 +322,9 @@ describe("createReport controller", () => {
         // missing reasonId
       };
 
-      await createReport(mockRequest, mockResponse);
+      await createReport(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
       expect(PostService.verifyPostExists).not.toHaveBeenCalled();
     });
 
@@ -358,9 +335,9 @@ describe("createReport controller", () => {
         // missing both postId and commentId
       };
 
-      await createReport(mockRequest, mockResponse);
+      await createReport(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
       expect(PostService.verifyPostExists).not.toHaveBeenCalled();
       expect(CommentService.commentExists).not.toHaveBeenCalled();
     });
@@ -373,13 +350,10 @@ describe("createReport controller", () => {
         reasonId: mockReasonId,
       };
 
-      await createReport(mockRequest, mockResponse);
+      await createReport(mockRequest, mockResponse, mockNext);
 
       // Should fail validation if schema doesn't allow both
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
 
     it("should handle invalid postId format", async () => {
@@ -389,12 +363,9 @@ describe("createReport controller", () => {
         reasonId: mockReasonId,
       };
 
-      await createReport(mockRequest, mockResponse);
+      await createReport(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
       expect(PostService.verifyPostExists).not.toHaveBeenCalled();
     });
 
@@ -405,9 +376,9 @@ describe("createReport controller", () => {
         reasonId: mockReasonId,
       };
 
-      await createReport(mockRequest, mockResponse);
+      await createReport(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
       expect(CommentService.commentExists).not.toHaveBeenCalled();
     });
 
@@ -418,9 +389,9 @@ describe("createReport controller", () => {
         reasonId: "not-a-number",
       };
 
-      await createReport(mockRequest, mockResponse);
+      await createReport(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
       expect(PostService.verifyPostExists).not.toHaveBeenCalled();
     });
 
@@ -431,9 +402,9 @@ describe("createReport controller", () => {
         reasonId: -1,
       };
 
-      await createReport(mockRequest, mockResponse);
+      await createReport(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
     });
 
     it("should handle zero reasonId", async () => {
@@ -443,9 +414,9 @@ describe("createReport controller", () => {
         reasonId: 0,
       };
 
-      await createReport(mockRequest, mockResponse);
+      await createReport(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
     });
 
     it("should handle negative commentId", async () => {
@@ -455,43 +426,13 @@ describe("createReport controller", () => {
         reasonId: mockReasonId,
       };
 
-      await createReport(mockRequest, mockResponse);
+      await createReport(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
     });
   });
 
   describe("Edge Cases", () => {
-    it("should handle null user object", async () => {
-      mockRequest.user = null as any;
-      mockRequest.body = {
-        postId: mockPostId,
-        reasonId: mockReasonId,
-      };
-
-      await createReport(mockRequest, mockResponse);
-
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthenticationError),
-        mockResponse
-      );
-    });
-
-    it("should handle user object with missing required fields", async () => {
-      mockRequest.user = {
-        username: "testUser",
-        // missing id field
-      } as any;
-      mockRequest.body = {
-        postId: mockPostId,
-        reasonId: mockReasonId,
-      };
-
-      await createReport(mockRequest, mockResponse);
-
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
-    });
-
     it("should handle extra fields in request body", async () => {
       mockRequest.user = createAuthenticatedUser({ id: mockUserId });
       mockRequest.body = {
@@ -524,7 +465,7 @@ describe("createReport controller", () => {
         commentId: null,
       });
 
-      await createReport(mockRequest, mockResponse);
+      await createReport(mockRequest, mockResponse, mockNext);
 
       // Should succeed if Zod schema strips extra fields
       expect(mockResponse.status).toHaveBeenCalledWith(201);
@@ -560,7 +501,7 @@ describe("createReport controller", () => {
         commentId: null,
       });
 
-      await createReport(mockRequest, mockResponse);
+      await createReport(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(201);
     });
@@ -599,7 +540,7 @@ describe("createReport controller", () => {
         commentId: null,
       });
 
-      await createReport(mockRequest, mockResponse);
+      await createReport(mockRequest, mockResponse, mockNext);
 
       // Should succeed as long as user.id exists
       expect(mockResponse.status).toHaveBeenCalledWith(201);
@@ -636,7 +577,7 @@ describe("createReport controller", () => {
         commentId: null,
       });
 
-      await createReport(mockRequest, mockResponse);
+      await createReport(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(201);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -672,7 +613,7 @@ describe("createReport controller", () => {
         commentId: null,
       });
 
-      await createReport(mockRequest, mockResponse);
+      await createReport(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(201);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -711,7 +652,7 @@ describe("createReport controller", () => {
         commentId: null,
       });
 
-      await createReport(mockRequest, mockResponse);
+      await createReport(mockRequest, mockResponse, mockNext);
 
       expect(PostService.verifyPostExists).toHaveBeenCalledWith(mockPostId);
       expect(PostService.verifyPostExists).toHaveBeenCalledTimes(1);
@@ -745,7 +686,7 @@ describe("createReport controller", () => {
         commentId: mockCommentId,
       });
 
-      await createReport(mockRequest, mockResponse);
+      await createReport(mockRequest, mockResponse, mockNext);
 
       expect(CommentService.commentExists).toHaveBeenCalledWith(mockCommentId);
       expect(CommentService.commentExists).toHaveBeenCalledTimes(1);
@@ -780,9 +721,9 @@ describe("createReport controller", () => {
         commentId: null,
       });
 
-      await createReport(mockRequest, mockResponse);
+      await createReport(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
       expect(autoHideContent).toHaveBeenCalledWith({
         resourceType: "post",
         resourceId: mockPostId,
@@ -818,9 +759,9 @@ describe("createReport controller", () => {
         commentId: mockCommentId,
       });
 
-      await createReport(mockRequest, mockResponse);
+      await createReport(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
       expect(autoHideContent).toHaveBeenCalledWith({
         resourceType: "comment",
         resourceId: mockCommentId,

@@ -9,7 +9,7 @@ import type {
 
 export const errorMiddleware: ErrorRequestHandler = (
   err: unknown,
-  _req: Request,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -17,5 +17,5 @@ export const errorMiddleware: ErrorRequestHandler = (
     return next(err);
   }
 
-  handleError(err, res);
+  handleError(err, req, res);
 };

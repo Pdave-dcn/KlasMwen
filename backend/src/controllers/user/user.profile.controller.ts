@@ -1,5 +1,4 @@
 import { createLogger } from "../../core/config/logger.js";
-import { handleError } from "../../core/error/index.js";
 import UserService from "../../features/user/service/UserService.js";
 import createActionLogger from "../../utils/logger.util.js";
 import {
@@ -8,11 +7,11 @@ import {
 } from "../../zodSchemas/user.zod.js";
 
 import type { AuthenticatedRequest } from "../../types/AuthRequest.js";
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction} from "express";
 
 const controllerLogger = createLogger({ module: "UserController" });
 
-const getActiveUser = async (req: Request, res: Response) => {
+const getActiveUser = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "getActiveUser",
@@ -48,11 +47,11 @@ const getActiveUser = async (req: Request, res: Response) => {
       data: user,
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const getUserById = async (req: Request, res: Response) => {
+const getUserById = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(controllerLogger, "getUserById", req);
 
   try {
@@ -84,11 +83,11 @@ const getUserById = async (req: Request, res: Response) => {
       data: user,
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const updateUserProfile = async (req: Request, res: Response) => {
+const updateUserProfile = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "updateUserProfile",
@@ -128,7 +127,7 @@ const updateUserProfile = async (req: Request, res: Response) => {
       user: updatedUser,
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 

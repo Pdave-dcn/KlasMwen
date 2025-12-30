@@ -5,8 +5,6 @@ import { registerUser } from "../../../src/controllers/auth/register.controller.
 import prisma from "../../../src/core/config/db.js";
 import env from "../../../src/core/config/env.js";
 import { AvatarServiceError } from "../../../src/core/error/custom/avatar.error.js";
-import { handleError } from "../../../src/core/error/index.js";
-
 import type { Request, Response } from "express";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -45,17 +43,19 @@ vi.mock("jsonwebtoken");
 
 const mockedBcrypt = vi.mocked(bcrypt);
 const mockedJwt = vi.mocked(jwt);
-const mockedHandleError = vi.mocked(handleError);
 
 describe("Register User Controller", () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
+  let mockNext: any;
   let jsonSpy: ReturnType<typeof vi.fn>;
   let statusSpy: ReturnType<typeof vi.fn>;
   let cookieSpy: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    mockNext = vi.fn();
     vi.spyOn(console, "error").mockImplementation(() => {});
 
     // Setup response spies
@@ -126,7 +126,11 @@ describe("Register User Controller", () => {
     });
 
     it("should register a new user with all steps working correctly", async () => {
-      await registerUser(mockRequest as Request, mockResponse as Response);
+      await registerUser(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       // Verify password was hashed
       expect(mockedBcrypt.hash).toHaveBeenCalledWith("Password123!", 12);
@@ -190,13 +194,17 @@ describe("Register User Controller", () => {
       });
 
       // Verify no errors
-      expect(mockedHandleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
     it("should set secure cookie in production environment", async () => {
       vi.spyOn(env, "NODE_ENV", "get").mockReturnValue("production");
 
-      await registerUser(mockRequest as Request, mockResponse as Response);
+      await registerUser(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       expect(cookieSpy).toHaveBeenCalledWith("token", generatedToken, {
         httpOnly: true,
@@ -214,7 +222,11 @@ describe("Register User Controller", () => {
         password: "SecurePass456!",
       };
 
-      await registerUser(mockRequest as Request, mockResponse as Response);
+      await registerUser(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       expect(prisma.user.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -226,7 +238,7 @@ describe("Register User Controller", () => {
       );
 
       expect(statusSpy).toHaveBeenCalledWith(201);
-      expect(mockedHandleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
     });
   });
 
@@ -238,9 +250,13 @@ describe("Register User Controller", () => {
         // username missing
       };
 
-      await registerUser(mockRequest as Request, mockResponse as Response);
+      await registerUser(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
-      expect(mockedHandleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(statusSpy).not.toHaveBeenCalledWith(201);
       expect(jsonSpy).not.toHaveBeenCalled();
     });
@@ -252,9 +268,13 @@ describe("Register User Controller", () => {
         // email missing
       };
 
-      await registerUser(mockRequest as Request, mockResponse as Response);
+      await registerUser(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
-      expect(mockedHandleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(statusSpy).not.toHaveBeenCalledWith(201);
     });
 
@@ -265,9 +285,13 @@ describe("Register User Controller", () => {
         // password missing
       };
 
-      await registerUser(mockRequest as Request, mockResponse as Response);
+      await registerUser(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
-      expect(mockedHandleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(statusSpy).not.toHaveBeenCalledWith(201);
     });
 
@@ -278,18 +302,26 @@ describe("Register User Controller", () => {
         password: "Password123!",
       };
 
-      await registerUser(mockRequest as Request, mockResponse as Response);
+      await registerUser(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
-      expect(mockedHandleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(statusSpy).not.toHaveBeenCalledWith(201);
     });
 
     it("should handle empty request body", async () => {
       mockRequest.body = {};
 
-      await registerUser(mockRequest as Request, mockResponse as Response);
+      await registerUser(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
-      expect(mockedHandleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(statusSpy).not.toHaveBeenCalledWith(201);
     });
   });
@@ -305,9 +337,13 @@ describe("Register User Controller", () => {
       const hashError = new Error("Bcrypt hashing failed");
       mockedBcrypt.hash.mockRejectedValue(hashError);
 
-      await registerUser(mockRequest as Request, mockResponse as Response);
+      await registerUser(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
-      expect(mockedHandleError).toHaveBeenCalledWith(hashError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(hashError);
       expect(statusSpy).not.toHaveBeenCalledWith(201);
       expect(cookieSpy).not.toHaveBeenCalled();
     });
@@ -315,7 +351,11 @@ describe("Register User Controller", () => {
     it("should not create user if password hashing fails", async () => {
       mockedBcrypt.hash.mockRejectedValue(new Error("Hash failed"));
 
-      await registerUser(mockRequest as Request, mockResponse as Response);
+      await registerUser(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       expect(prisma.user.create).not.toHaveBeenCalled();
       expect(mockedJwt.sign).not.toHaveBeenCalled();
@@ -330,9 +370,13 @@ describe("Register User Controller", () => {
     it("should handle no avatars available", async () => {
       vi.mocked(prisma.avatar.findMany).mockResolvedValue([]);
 
-      await registerUser(mockRequest as Request, mockResponse as Response);
+      await registerUser(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
-      expect(mockedHandleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.user.create).not.toHaveBeenCalled();
       expect(statusSpy).not.toHaveBeenCalledWith(201);
     });
@@ -341,12 +385,13 @@ describe("Register User Controller", () => {
       const dbError = new Error("Database connection failed");
       vi.mocked(prisma.avatar.findMany).mockRejectedValue(dbError);
 
-      await registerUser(mockRequest as Request, mockResponse as Response);
-
-      expect(mockedHandleError).toHaveBeenCalledWith(
-        expect.any(AvatarServiceError),
-        mockResponse
+      await registerUser(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
       );
+
+      expect(mockNext).toHaveBeenCalledWith(expect.any(AvatarServiceError));
       expect(prisma.user.create).not.toHaveBeenCalled();
     });
   });
@@ -364,12 +409,13 @@ describe("Register User Controller", () => {
       duplicateError.name = "PrismaClientKnownRequestError";
       vi.mocked(prisma.user.create).mockRejectedValue(duplicateError);
 
-      await registerUser(mockRequest as Request, mockResponse as Response);
-
-      expect(mockedHandleError).toHaveBeenCalledWith(
-        duplicateError,
-        mockResponse
+      await registerUser(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
       );
+
+      expect(mockNext).toHaveBeenCalledWith(duplicateError);
       expect(statusSpy).not.toHaveBeenCalledWith(201);
       expect(cookieSpy).not.toHaveBeenCalled();
     });
@@ -379,12 +425,13 @@ describe("Register User Controller", () => {
       duplicateError.name = "PrismaClientKnownRequestError";
       vi.mocked(prisma.user.create).mockRejectedValue(duplicateError);
 
-      await registerUser(mockRequest as Request, mockResponse as Response);
-
-      expect(mockedHandleError).toHaveBeenCalledWith(
-        duplicateError,
-        mockResponse
+      await registerUser(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
       );
+
+      expect(mockNext).toHaveBeenCalledWith(duplicateError);
       expect(statusSpy).not.toHaveBeenCalledWith(201);
     });
 
@@ -392,9 +439,13 @@ describe("Register User Controller", () => {
       const dbError = new Error("Database connection timeout");
       vi.mocked(prisma.user.create).mockRejectedValue(dbError);
 
-      await registerUser(mockRequest as Request, mockResponse as Response);
+      await registerUser(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
-      expect(mockedHandleError).toHaveBeenCalledWith(dbError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
       expect(mockedJwt.sign).not.toHaveBeenCalled();
     });
 
@@ -403,7 +454,11 @@ describe("Register User Controller", () => {
         new Error("Creation failed")
       );
 
-      await registerUser(mockRequest as Request, mockResponse as Response);
+      await registerUser(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       expect(mockedJwt.sign).not.toHaveBeenCalled();
       expect(cookieSpy).not.toHaveBeenCalled();
@@ -434,9 +489,13 @@ describe("Register User Controller", () => {
         throw jwtError;
       });
 
-      await registerUser(mockRequest as Request, mockResponse as Response);
+      await registerUser(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
-      expect(mockedHandleError).toHaveBeenCalledWith(jwtError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(jwtError);
       expect(statusSpy).not.toHaveBeenCalledWith(201);
     });
 
@@ -445,7 +504,11 @@ describe("Register User Controller", () => {
         throw new Error("Token generation failed");
       });
 
-      await registerUser(mockRequest as Request, mockResponse as Response);
+      await registerUser(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       expect(cookieSpy).not.toHaveBeenCalled();
       expect(jsonSpy).not.toHaveBeenCalled();
@@ -479,10 +542,14 @@ describe("Register User Controller", () => {
         createdAt: new Date(),
       });
 
-      await registerUser(mockRequest as Request, mockResponse as Response);
+      await registerUser(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       expect(statusSpy).toHaveBeenCalledWith(201);
-      expect(mockedHandleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
     it("should handle email with subdomain", async () => {
@@ -503,10 +570,14 @@ describe("Register User Controller", () => {
         createdAt: new Date(),
       });
 
-      await registerUser(mockRequest as Request, mockResponse as Response);
+      await registerUser(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       expect(statusSpy).toHaveBeenCalledWith(201);
-      expect(mockedHandleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
     it("should handle very long but valid inputs", async () => {
@@ -527,10 +598,14 @@ describe("Register User Controller", () => {
         createdAt: new Date(),
       });
 
-      await registerUser(mockRequest as Request, mockResponse as Response);
+      await registerUser(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       expect(statusSpy).toHaveBeenCalledWith(201);
-      expect(mockedHandleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
     });
   });
 });

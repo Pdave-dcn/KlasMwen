@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 
 import { deletePost } from "../../../src/controllers/post/post.delete.controller";
 import prisma from "../../../src/core/config/db";
-import { handleError } from "../../../src/core/error";
 import { AuthorizationError } from "../../../src/core/error/custom/auth.error";
 import { PostNotFoundError } from "../../../src/core/error/custom/post.error";
 import CloudinaryService from "../../../src/features/media/CloudinaryService";
@@ -77,10 +76,12 @@ describe("deletePost", () => {
 
   let mockReq: Request;
   let mockRes: Response;
+  let mockNext: any;
 
   beforeEach(() => {
     mockReq = createMockRequest();
     mockRes = createMockResponse();
+    mockNext = vi.fn();
     vi.clearAllMocks();
   });
 
@@ -92,7 +93,7 @@ describe("deletePost", () => {
       vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPostInDb as any);
       vi.mocked(prisma.post.delete).mockResolvedValue(mockPostInDb as any);
 
-      await deletePost(mockReq, mockRes);
+      await deletePost(mockReq, mockRes, mockNext);
 
       expect(prisma.post.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -120,7 +121,7 @@ describe("deletePost", () => {
         mockResourcePostInDb as any
       );
 
-      await deletePost(mockReq, mockRes);
+      await deletePost(mockReq, mockRes, mockNext);
 
       expect(CloudinaryService.extractPublicId).toHaveBeenCalledWith(
         mockResourcePostInDb.fileUrl
@@ -138,12 +139,9 @@ describe("deletePost", () => {
 
       vi.mocked(prisma.post.findUnique).mockResolvedValue(null);
 
-      await deletePost(mockReq, mockRes);
+      await deletePost(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(PostNotFoundError),
-        mockRes
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(PostNotFoundError));
       expect(prisma.post.delete).not.toHaveBeenCalled();
     });
   });
@@ -152,9 +150,9 @@ describe("deletePost", () => {
     it("should return 401 if the user is not authenticated", async () => {
       mockReq.params = { id: mockPostId };
 
-      await deletePost(mockReq, mockRes);
+      await deletePost(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.post.delete).not.toHaveBeenCalled();
     });
 
@@ -164,12 +162,9 @@ describe("deletePost", () => {
 
       vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPostInDb as any);
 
-      await deletePost(mockReq, mockRes);
+      await deletePost(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthorizationError),
-        mockRes
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(AuthorizationError));
       expect(prisma.post.delete).not.toHaveBeenCalled();
     });
 
@@ -180,7 +175,7 @@ describe("deletePost", () => {
       vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPostInDb as any);
       vi.mocked(prisma.post.delete).mockResolvedValue(mockPostInDb as any);
 
-      await deletePost(mockReq, mockRes);
+      await deletePost(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -200,7 +195,7 @@ describe("deletePost", () => {
         mockResourcePostInDb as any
       );
 
-      await deletePost(mockReq, mockRes);
+      await deletePost(mockReq, mockRes, mockNext);
 
       expect(CloudinaryService.delete).toHaveBeenCalledWith("publicId", "raw");
       expect(mockRes.status).toHaveBeenCalledWith(200);
@@ -226,7 +221,7 @@ describe("deletePost", () => {
         resourcePostNoFile as any
       );
 
-      await deletePost(mockReq, mockRes);
+      await deletePost(mockReq, mockRes, mockNext);
 
       expect(CloudinaryService.extractPublicId).not.toHaveBeenCalled();
       expect(CloudinaryService.delete).not.toHaveBeenCalled();
@@ -247,7 +242,7 @@ describe("deletePost", () => {
       vi.mocked(prisma.post.findUnique).mockResolvedValue(textPost as any);
       vi.mocked(prisma.post.delete).mockResolvedValue(textPost as any);
 
-      await deletePost(mockReq, mockRes);
+      await deletePost(mockReq, mockRes, mockNext);
 
       expect(CloudinaryService.extractPublicId).not.toHaveBeenCalled();
       expect(CloudinaryService.delete).not.toHaveBeenCalled();
@@ -266,7 +261,7 @@ describe("deletePost", () => {
         mockResourcePostInDb as any
       );
 
-      await deletePost(mockReq, mockRes);
+      await deletePost(mockReq, mockRes, mockNext);
 
       expect(CloudinaryService.extractPublicId).toHaveBeenCalledWith(
         mockResourcePostInDb.fileUrl
@@ -288,7 +283,7 @@ describe("deletePost", () => {
         mockResourcePostInDb as any
       );
 
-      await deletePost(mockReq, mockRes);
+      await deletePost(mockReq, mockRes, mockNext);
 
       expect(CloudinaryService.delete).not.toHaveBeenCalled();
       expect(prisma.post.delete).toHaveBeenCalled();
@@ -310,7 +305,7 @@ describe("deletePost", () => {
         mockResourcePostInDb as any
       );
 
-      await deletePost(mockReq, mockRes);
+      await deletePost(mockReq, mockRes, mockNext);
 
       expect(CloudinaryService.delete).toHaveBeenCalledWith("publicId", "raw");
       expect(prisma.post.delete).toHaveBeenCalled();
@@ -333,7 +328,7 @@ describe("deletePost", () => {
         mockResourcePostInDb as any
       );
 
-      await deletePost(mockReq, mockRes);
+      await deletePost(mockReq, mockRes, mockNext);
 
       expect(prisma.post.delete).toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(200);
@@ -348,9 +343,9 @@ describe("deletePost", () => {
       const mockError = new Error("Database connection error");
       vi.mocked(prisma.post.findUnique).mockRejectedValue(mockError);
 
-      await deletePost(mockReq, mockRes);
+      await deletePost(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(mockError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(mockError);
       expect(prisma.post.delete).not.toHaveBeenCalled();
     });
 
@@ -363,18 +358,18 @@ describe("deletePost", () => {
       vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPostInDb as any);
       vi.mocked(prisma.post.delete).mockRejectedValue(mockError);
 
-      await deletePost(mockReq, mockRes);
+      await deletePost(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(mockError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(mockError);
     });
 
     it("should call handleError if PostIdParamSchema validation fails", async () => {
       mockReq.user = createAuthenticatedUser({ id: mockUserId });
       mockReq.params = { id: "invalid-uuid" };
 
-      await deletePost(mockReq, mockRes);
+      await deletePost(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.post.findUnique).not.toHaveBeenCalled();
     });
 
@@ -382,9 +377,9 @@ describe("deletePost", () => {
       mockReq.user = createAuthenticatedUser({ id: mockUserId });
       mockReq.params = {};
 
-      await deletePost(mockReq, mockRes);
+      await deletePost(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.post.findUnique).not.toHaveBeenCalled();
     });
   });
@@ -409,7 +404,7 @@ describe("deletePost", () => {
         postWithoutFileName as any
       );
 
-      await deletePost(mockReq, mockRes);
+      await deletePost(mockReq, mockRes, mockNext);
 
       expect(CloudinaryService.delete).toHaveBeenCalledWith("publicId", "raw");
       expect(mockRes.status).toHaveBeenCalledWith(200);
@@ -433,7 +428,7 @@ describe("deletePost", () => {
         postWithEmptyFileUrl as any
       );
 
-      await deletePost(mockReq, mockRes);
+      await deletePost(mockReq, mockRes, mockNext);
 
       expect(CloudinaryService.extractPublicId).not.toHaveBeenCalled();
       expect(CloudinaryService.delete).not.toHaveBeenCalled();
@@ -462,7 +457,7 @@ describe("deletePost", () => {
         );
         vi.mocked(prisma.post.delete).mockResolvedValue(post as any);
 
-        await deletePost(mockReq, mockRes);
+        await deletePost(mockReq, mockRes, mockNext);
 
         if (type === "RESOURCE") {
           expect(CloudinaryService.extractPublicId).toHaveBeenCalled();
@@ -482,9 +477,9 @@ describe("deletePost", () => {
       vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPostInDb as any);
       vi.mocked(prisma.post.delete).mockRejectedValue(concurrencyError);
 
-      await deletePost(mockReq, mockRes);
+      await deletePost(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(concurrencyError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(concurrencyError);
     });
   });
 
@@ -496,12 +491,9 @@ describe("deletePost", () => {
 
       vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPostInDb as any);
 
-      await deletePost(mockReq, mockRes);
+      await deletePost(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthorizationError),
-        mockRes
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(AuthorizationError));
       expect(prisma.post.delete).not.toHaveBeenCalled();
       expect(CloudinaryService.delete).not.toHaveBeenCalled();
     });

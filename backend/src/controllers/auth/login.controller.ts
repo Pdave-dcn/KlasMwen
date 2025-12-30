@@ -4,7 +4,6 @@ import passport from "passport";
 
 import { getCookieConfig } from "../../core/config/cookie.js";
 import { createLogger } from "../../core/config/logger.js";
-import { handleError } from "../../core/error/index.js";
 import UserService from "../../features/user/service/UserService.js";
 import createActionLogger from "../../utils/logger.util.js";
 
@@ -71,14 +70,6 @@ const handleAuthenticationResult = (
     }
 
     // Process successful login through service layer
-    actionLogger.info(
-      {
-        userId: user.id,
-        username: user.username,
-        role: user.role,
-      },
-      "User authentication successful, processing login"
-    );
 
     const { user: userData, token } = UserService.processLogin(user);
 
@@ -102,7 +93,7 @@ const handleAuthenticationResult = (
       user: userData,
     });
   } catch (error) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
@@ -120,22 +111,6 @@ export const loginUser = (
   try {
     actionLogger.info("User login attempt started");
     const startTime = Date.now();
-
-    const requestBody = req.body;
-    const emailDomain = requestBody?.email
-      ? requestBody.email.split("@")[1]
-      : "unknown";
-    const username = requestBody?.username ?? "unknown";
-
-    actionLogger.debug(
-      {
-        hasEmail: !!requestBody?.email,
-        hasPassword: !!requestBody?.password,
-        emailDomain,
-        username,
-      },
-      "Login request received with credentials"
-    );
 
     actionLogger.debug("Initiating passport authentication");
 
@@ -170,6 +145,6 @@ export const loginUser = (
       }
     )(req, res, next);
   } catch (error: unknown) {
-    handleError(error, res);
+    return next(error);
   }
 };

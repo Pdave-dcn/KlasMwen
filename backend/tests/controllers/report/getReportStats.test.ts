@@ -1,8 +1,6 @@
 import { getReportStats } from "../../../src/controllers/report/report.moderator.controller.js";
 import prisma from "../../../src/core/config/db.js";
 import { AuthorizationError } from "../../../src/core/error/custom/auth.error";
-import { handleError } from "../../../src/core/error/index.js";
-
 import { createAuthenticatedUser } from "./shared/helpers";
 import { createMockRequest, createMockResponse } from "./shared/mocks";
 
@@ -58,10 +56,12 @@ vi.mock("../../../src/core/config/db.js", () => ({
 describe("getReportStats controller", () => {
   let mockRequest: Request;
   let mockResponse: Response;
+  let mockNext: any;
   const mockAdminUser = createAuthenticatedUser({ role: "ADMIN" });
 
   beforeEach(() => {
     mockRequest = createMockRequest();
+    mockNext = vi.fn();
     mockResponse = createMockResponse();
     vi.clearAllMocks();
   });
@@ -84,7 +84,7 @@ describe("getReportStats controller", () => {
       vi.mocked(prisma.post.count).mockResolvedValue(5); // hidden posts
       vi.mocked(prisma.comment.count).mockResolvedValue(8); // hidden comments
 
-      await getReportStats(mockRequest, mockResponse);
+      await getReportStats(mockRequest, mockResponse, mockNext);
 
       // Verify all count queries were called
       expect(prisma.report.count).toHaveBeenCalledTimes(4);
@@ -117,7 +117,7 @@ describe("getReportStats controller", () => {
           hiddenContent: 13, // 5 posts + 8 comments
         },
       });
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
     it("should return zero counts when no reports or hidden content exist", async () => {
@@ -128,7 +128,7 @@ describe("getReportStats controller", () => {
       vi.mocked(prisma.post.count).mockResolvedValue(0);
       vi.mocked(prisma.comment.count).mockResolvedValue(0);
 
-      await getReportStats(mockRequest, mockResponse);
+      await getReportStats(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -149,7 +149,7 @@ describe("getReportStats controller", () => {
       vi.mocked(prisma.post.count).mockResolvedValue(12); // hidden posts
       vi.mocked(prisma.comment.count).mockResolvedValue(25); // hidden comments
 
-      await getReportStats(mockRequest, mockResponse);
+      await getReportStats(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.json).toHaveBeenCalledWith({
         data: expect.objectContaining({
@@ -165,7 +165,7 @@ describe("getReportStats controller", () => {
       vi.mocked(prisma.post.count).mockResolvedValue(10);
       vi.mocked(prisma.comment.count).mockResolvedValue(0);
 
-      await getReportStats(mockRequest, mockResponse);
+      await getReportStats(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.json).toHaveBeenCalledWith({
         data: expect.objectContaining({
@@ -181,7 +181,7 @@ describe("getReportStats controller", () => {
       vi.mocked(prisma.post.count).mockResolvedValue(0);
       vi.mocked(prisma.comment.count).mockResolvedValue(7);
 
-      await getReportStats(mockRequest, mockResponse);
+      await getReportStats(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.json).toHaveBeenCalledWith({
         data: expect.objectContaining({
@@ -202,7 +202,7 @@ describe("getReportStats controller", () => {
       vi.mocked(prisma.post.count).mockResolvedValue(250);
       vi.mocked(prisma.comment.count).mockResolvedValue(480);
 
-      await getReportStats(mockRequest, mockResponse);
+      await getReportStats(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.json).toHaveBeenCalledWith({
         data: {
@@ -216,50 +216,6 @@ describe("getReportStats controller", () => {
     });
   });
 
-  describe("Error Cases - Authorization", () => {
-    it("should call handleError when user is not an admin", async () => {
-      mockRequest.user = createAuthenticatedUser({
-        id: "student-id",
-        role: "STUDENT" as Role,
-      });
-
-      await getReportStats(mockRequest, mockResponse);
-
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthorizationError),
-        mockResponse
-      );
-      expect(prisma.report.count).not.toHaveBeenCalled();
-      expect(prisma.post.count).not.toHaveBeenCalled();
-      expect(prisma.comment.count).not.toHaveBeenCalled();
-      expect(mockResponse.status).not.toHaveBeenCalled();
-    });
-
-    it("should call handleError when user is not authenticated", async () => {
-      mockRequest.user = undefined;
-
-      await getReportStats(mockRequest, mockResponse);
-
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
-      expect(prisma.report.count).not.toHaveBeenCalled();
-    });
-
-    it("should call handleError when user is a teacher (not admin)", async () => {
-      mockRequest.user = createAuthenticatedUser({
-        id: "teacher-id",
-        role: "TEACHER" as Role,
-      });
-
-      await getReportStats(mockRequest, mockResponse);
-
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthorizationError),
-        mockResponse
-      );
-      expect(prisma.report.count).not.toHaveBeenCalled();
-    });
-  });
-
   describe("Error Cases - Database", () => {
     it("should call handleError when report.count (total) fails", async () => {
       mockRequest.user = mockAdminUser;
@@ -267,9 +223,9 @@ describe("getReportStats controller", () => {
 
       vi.mocked(prisma.report.count).mockRejectedValueOnce(dbError);
 
-      await getReportStats(mockRequest, mockResponse);
+      await getReportStats(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
 
@@ -281,9 +237,9 @@ describe("getReportStats controller", () => {
         .mockResolvedValueOnce(100) // total succeeds
         .mockRejectedValueOnce(dbError); // pending fails
 
-      await getReportStats(mockRequest, mockResponse);
+      await getReportStats(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
 
@@ -294,9 +250,9 @@ describe("getReportStats controller", () => {
       vi.mocked(prisma.report.count).mockResolvedValue(100);
       vi.mocked(prisma.post.count).mockRejectedValue(dbError);
 
-      await getReportStats(mockRequest, mockResponse);
+      await getReportStats(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
 
@@ -308,9 +264,9 @@ describe("getReportStats controller", () => {
       vi.mocked(prisma.post.count).mockResolvedValue(5);
       vi.mocked(prisma.comment.count).mockRejectedValue(dbError);
 
-      await getReportStats(mockRequest, mockResponse);
+      await getReportStats(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
 
@@ -322,9 +278,9 @@ describe("getReportStats controller", () => {
       vi.mocked(prisma.post.count).mockRejectedValue(dbError);
       vi.mocked(prisma.comment.count).mockRejectedValue(dbError);
 
-      await getReportStats(mockRequest, mockResponse);
+      await getReportStats(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
 
@@ -334,9 +290,9 @@ describe("getReportStats controller", () => {
 
       vi.mocked(prisma.report.count).mockRejectedValue(unexpectedError);
 
-      await getReportStats(mockRequest, mockResponse);
+      await getReportStats(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(unexpectedError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(unexpectedError);
     });
   });
 
@@ -354,7 +310,7 @@ describe("getReportStats controller", () => {
       vi.mocked(prisma.post.count).mockResolvedValue(0);
       vi.mocked(prisma.comment.count).mockResolvedValue(0);
 
-      await getReportStats(mockRequest, mockResponse);
+      await getReportStats(mockRequest, mockResponse, mockNext);
 
       // Should still return the counts as-is
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -375,7 +331,7 @@ describe("getReportStats controller", () => {
       vi.mocked(prisma.post.count).mockResolvedValue(999999);
       vi.mocked(prisma.comment.count).mockResolvedValue(999999);
 
-      await getReportStats(mockRequest, mockResponse);
+      await getReportStats(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.json).toHaveBeenCalledWith({
         data: expect.objectContaining({

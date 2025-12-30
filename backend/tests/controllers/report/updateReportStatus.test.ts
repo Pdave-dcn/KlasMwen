@@ -2,7 +2,6 @@ import { ZodError } from "zod";
 
 import { updateReportStatus } from "../../../src/controllers/report/report.moderator.controller.js";
 import prisma from "../../../src/core/config/db.js";
-import { handleError } from "../../../src/core/error";
 import { AuthorizationError } from "../../../src/core/error/custom/auth.error";
 import { ReportNotFoundError } from "../../../src/core/error/custom/report.error";
 
@@ -56,6 +55,7 @@ vi.mock("../../../src/core/config/db.js", () => ({
 describe("updateReportStatus controller", () => {
   let mockRequest: Request;
   let mockResponse: Response;
+  let mockNext: any;
   const mockAdminUser = createAuthenticatedUser({ role: "ADMIN" });
   const mockReportId = 42;
   const mockUpdateData = {
@@ -87,6 +87,7 @@ describe("updateReportStatus controller", () => {
 
   beforeEach(() => {
     mockRequest = createMockRequest();
+    mockNext = vi.fn();
     mockResponse = createMockResponse();
     vi.clearAllMocks();
   });
@@ -107,7 +108,7 @@ describe("updateReportStatus controller", () => {
       } as any);
       vi.mocked(prisma.report.update).mockResolvedValue(mockUpdatedReport);
 
-      await updateReportStatus(mockRequest, mockResponse);
+      await updateReportStatus(mockRequest, mockResponse, mockNext);
 
       expect(prisma.report.update).toHaveBeenCalledWith({
         where: { id: mockReportId },
@@ -120,33 +121,19 @@ describe("updateReportStatus controller", () => {
         message: "Report status updated successfully",
         data: mockUpdatedReport,
       });
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
     });
   });
 
   describe("Error Cases", () => {
-    it("should call handleError when checkAdminAuth fails (unauthorized user)", async () => {
-      mockRequest.user = createAuthenticatedUser({ role: "STUDENT" as Role });
-
-      await updateReportStatus(mockRequest, mockResponse);
-
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthorizationError),
-        mockResponse
-      );
-    });
-
     it("should call handleError when URL parameter validation fails (ZodError for ID)", async () => {
       // Setup
       mockRequest.user = mockAdminUser;
       mockRequest.params = { id: "not-a-number" };
 
-      await updateReportStatus(mockRequest, mockResponse);
+      await updateReportStatus(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
 
     it("should call handleError when request body validation fails (ZodError for Status)", async () => {
@@ -155,13 +142,10 @@ describe("updateReportStatus controller", () => {
       mockRequest.params = { id: String(mockReportId) };
       mockRequest.body = { status: "INVALID_STATUS" };
       // Execute
-      await updateReportStatus(mockRequest, mockResponse);
+      await updateReportStatus(mockRequest, mockResponse, mockNext);
 
       expect(prisma.report.update).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
 
     it("should call handleError when the report is not found (ReportNotFoundError)", async () => {
@@ -172,13 +156,10 @@ describe("updateReportStatus controller", () => {
 
       vi.mocked(prisma.report.findUnique).mockResolvedValue(null);
 
-      await updateReportStatus(mockRequest, mockResponse);
+      await updateReportStatus(mockRequest, mockResponse, mockNext);
 
       expect(prisma.report.update).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ReportNotFoundError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ReportNotFoundError));
     });
 
     it("should call handleError for unexpected database errors", async () => {
@@ -195,10 +176,10 @@ describe("updateReportStatus controller", () => {
 
       vi.mocked(prisma.report.update).mockRejectedValue(dbError);
 
-      await updateReportStatus(mockRequest, mockResponse);
+      await updateReportStatus(mockRequest, mockResponse, mockNext);
 
       expect(prisma.report.update).toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(dbError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
   });

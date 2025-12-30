@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 
+import env from "../../core/config/env.js";
 import { createLogger } from "../../core/config/logger.js";
 import createActionLogger from "../../utils/logger.util.js";
 
@@ -14,7 +15,6 @@ export const verifyAuth = (req: Request, res: Response, next: NextFunction) => {
     actionLogger.info("User authentication verification attempt started");
     const startTime = Date.now();
 
-    actionLogger.debug("Retrieving token");
     const token = req.cookies.token;
 
     if (!token) {
@@ -24,14 +24,7 @@ export const verifyAuth = (req: Request, res: Response, next: NextFunction) => {
       });
     }
 
-    actionLogger.debug("Retrieving jwt secret");
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      actionLogger.error("JWT_SECRET not defined in environment variables");
-      return res.status(500).json({
-        message: "Server configuration error",
-      });
-    }
+    const jwtSecret = env.JWT_SECRET;
 
     actionLogger.debug("Token verification");
     const payload = jwt.verify(token, jwtSecret) as JwtPayload;

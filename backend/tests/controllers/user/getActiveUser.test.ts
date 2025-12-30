@@ -3,7 +3,6 @@ import { Request, Response } from "express";
 
 import { getActiveUser } from "../../../src/controllers/user/user.profile.controller";
 import prisma from "../../../src/core/config/db";
-import { handleError } from "../../../src/core/error";
 import { UserNotFoundError } from "../../../src/core/error/custom/user.error";
 
 import { expectValidationError } from "./shared/helpers";
@@ -70,10 +69,12 @@ vi.mock("../../../src/core/error/index.js", () => ({
 describe("getActiveUser controller", () => {
   let mockReq: Request;
   let mockRes: Response;
+  let mockNext: any;
 
   beforeEach(() => {
     mockReq = createMockRequest();
     mockRes = createMockResponse();
+    mockNext = vi.fn();
     vi.clearAllMocks();
   });
 
@@ -91,7 +92,7 @@ describe("getActiveUser controller", () => {
       };
       vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
 
-      await getActiveUser(mockReq, mockRes);
+      await getActiveUser(mockReq, mockRes, mockNext);
 
       expect(prisma.user.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({ where: { id: mockUser.id } })
@@ -120,7 +121,7 @@ describe("getActiveUser controller", () => {
       };
       vi.mocked(prisma.user.findUnique).mockResolvedValue(userWithoutAvatar);
 
-      await getActiveUser(mockReq, mockRes);
+      await getActiveUser(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -140,7 +141,7 @@ describe("getActiveUser controller", () => {
       };
       vi.mocked(prisma.user.findUnique).mockResolvedValue(userWithoutBio);
 
-      await getActiveUser(mockReq, mockRes);
+      await getActiveUser(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -159,7 +160,7 @@ describe("getActiveUser controller", () => {
       };
       vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
 
-      await getActiveUser(mockReq, mockRes);
+      await getActiveUser(mockReq, mockRes, mockNext);
 
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: { id: mockUser.id },
@@ -196,15 +197,12 @@ describe("getActiveUser controller", () => {
       };
       vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
 
-      await getActiveUser(mockReq, mockRes);
+      await getActiveUser(mockReq, mockRes, mockNext);
 
       expect(prisma.user.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({ where: { id: mockUser.id } })
       );
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(UserNotFoundError),
-        mockRes
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(UserNotFoundError));
     });
 
     it("should handle case where user was deleted after authentication", async () => {
@@ -217,12 +215,9 @@ describe("getActiveUser controller", () => {
       };
       vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
 
-      await getActiveUser(mockReq, mockRes);
+      await getActiveUser(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(UserNotFoundError),
-        mockRes
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(UserNotFoundError));
     });
   });
 
@@ -237,9 +232,9 @@ describe("getActiveUser controller", () => {
       const dbError = new Error("Database connection failed");
       vi.mocked(prisma.user.findUnique).mockRejectedValue(dbError);
 
-      await getActiveUser(mockReq, mockRes);
+      await getActiveUser(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
     });
 
     it("should handle Prisma known request errors", async () => {
@@ -255,9 +250,9 @@ describe("getActiveUser controller", () => {
       );
       vi.mocked(prisma.user.findUnique).mockRejectedValue(prismaError);
 
-      await getActiveUser(mockReq, mockRes);
+      await getActiveUser(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(prismaError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(prismaError);
     });
 
     it("should handle database timeout errors", async () => {
@@ -270,9 +265,9 @@ describe("getActiveUser controller", () => {
       const timeoutError = new Error("Database query timeout");
       vi.mocked(prisma.user.findUnique).mockRejectedValue(timeoutError);
 
-      await getActiveUser(mockReq, mockRes);
+      await getActiveUser(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(timeoutError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(timeoutError);
     });
   });
 
@@ -286,7 +281,7 @@ describe("getActiveUser controller", () => {
       };
       vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
 
-      await getActiveUser(mockReq, mockRes);
+      await getActiveUser(mockReq, mockRes, mockNext);
 
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -317,7 +312,7 @@ describe("getActiveUser controller", () => {
         userWithSensitiveData
       );
 
-      await getActiveUser(mockReq, mockRes);
+      await getActiveUser(mockReq, mockRes, mockNext);
 
       const responseCall = vi.mocked(mockRes.json).mock.calls[0][0];
       expect(responseCall.data).not.toHaveProperty("password");
@@ -337,7 +332,7 @@ describe("getActiveUser controller", () => {
       };
       vi.mocked(prisma.user.findUnique).mockResolvedValue(adminUser);
 
-      await getActiveUser(mockReq, mockRes);
+      await getActiveUser(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -360,7 +355,7 @@ describe("getActiveUser controller", () => {
       };
       vi.mocked(prisma.user.findUnique).mockResolvedValue(userWithLongBio);
 
-      await getActiveUser(mockReq, mockRes);
+      await getActiveUser(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -383,7 +378,7 @@ describe("getActiveUser controller", () => {
       };
       vi.mocked(prisma.user.findUnique).mockResolvedValue(userWithSpecialChars);
 
-      await getActiveUser(mockReq, mockRes);
+      await getActiveUser(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith({

@@ -3,7 +3,6 @@ import { ZodError } from "zod";
 
 import { deleteTag } from "../../../src/controllers/tag.controller";
 import prisma from "../../../src/core/config/db";
-import { handleError } from "../../../src/core/error";
 import { AuthorizationError } from "../../../src/core/error/custom/auth.error";
 import { TagNotFoundError } from "../../../src/core/error/custom/tag.error";
 
@@ -51,16 +50,17 @@ vi.mock("../../../src/core/config/db.js", () => ({
   },
 }));
 
-vi.mock("../../../src/core/error/index.js");
-
 describe("deleteTag controller", () => {
   let mockRequest: Request;
   let mockResponse: Response;
+  let mockNext: any;
 
   const mockUserId = "c3d4e5f6-7890-1234-5678-90abcdef1234";
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    mockNext = vi.fn();
 
     mockRequest = createMockRequest();
     mockResponse = createMockResponse();
@@ -85,7 +85,7 @@ describe("deleteTag controller", () => {
         name: "deleted",
       });
 
-      await deleteTag(mockRequest, mockResponse);
+      await deleteTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -119,7 +119,7 @@ describe("deleteTag controller", () => {
         name: "deleted tag",
       });
 
-      await deleteTag(mockRequest, mockResponse);
+      await deleteTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -143,7 +143,7 @@ describe("deleteTag controller", () => {
 
       vi.mocked(prisma.tag.findUnique).mockResolvedValue(null);
 
-      await deleteTag(mockRequest, mockResponse);
+      await deleteTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -151,10 +151,7 @@ describe("deleteTag controller", () => {
         })
       );
       expect(prisma.tag.delete).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(TagNotFoundError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(TagNotFoundError));
     });
 
     it("should call handleError for invalid tag ID format (non-numeric)", async () => {
@@ -164,14 +161,11 @@ describe("deleteTag controller", () => {
       });
       mockRequest.params = { id: "invalid" };
 
-      await deleteTag(mockRequest, mockResponse);
+      await deleteTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
       expect(prisma.tag.delete).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
 
     it("should call handleError for missing tag ID parameter", async () => {
@@ -181,14 +175,11 @@ describe("deleteTag controller", () => {
       });
       mockRequest.params = {};
 
-      await deleteTag(mockRequest, mockResponse);
+      await deleteTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
       expect(prisma.tag.delete).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
 
     it("should call handleError for negative tag ID", async () => {
@@ -198,13 +189,10 @@ describe("deleteTag controller", () => {
       });
       mockRequest.params = { id: "-1" };
 
-      await deleteTag(mockRequest, mockResponse);
+      await deleteTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.delete).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
 
     it("should call handleError for zero tag ID", async () => {
@@ -214,13 +202,10 @@ describe("deleteTag controller", () => {
       });
       mockRequest.params = { id: "0" };
 
-      await deleteTag(mockRequest, mockResponse);
+      await deleteTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.delete).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
 
     it("should call handleError for floating point tag ID", async () => {
@@ -230,14 +215,11 @@ describe("deleteTag controller", () => {
       });
       mockRequest.params = { id: "1.5" };
 
-      await deleteTag(mockRequest, mockResponse);
+      await deleteTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
       expect(prisma.tag.delete).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
   });
 
@@ -257,9 +239,9 @@ describe("deleteTag controller", () => {
       const mockError = new Error("Database delete failed");
       vi.mocked(prisma.tag.delete).mockRejectedValue(mockError);
 
-      await deleteTag(mockRequest, mockResponse);
+      await deleteTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(mockError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(mockError);
     });
 
     it("should handle database connection error", async () => {
@@ -277,9 +259,9 @@ describe("deleteTag controller", () => {
       const mockError = new Error("Connection to database failed");
       vi.mocked(prisma.tag.delete).mockRejectedValue(mockError);
 
-      await deleteTag(mockRequest, mockResponse);
+      await deleteTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(mockError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(mockError);
     });
 
     it("should handle foreign key constraint error", async () => {
@@ -297,9 +279,9 @@ describe("deleteTag controller", () => {
       const mockError = new Error("Foreign key constraint failed");
       vi.mocked(prisma.tag.delete).mockRejectedValue(mockError);
 
-      await deleteTag(mockRequest, mockResponse);
+      await deleteTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(mockError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(mockError);
     });
 
     it("should handle timeout error during deletion", async () => {
@@ -317,9 +299,9 @@ describe("deleteTag controller", () => {
       const mockError = new Error("Query timeout");
       vi.mocked(prisma.tag.delete).mockRejectedValue(mockError);
 
-      await deleteTag(mockRequest, mockResponse);
+      await deleteTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(mockError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(mockError);
     });
 
     it("should handle error during tag existence check", async () => {
@@ -332,10 +314,10 @@ describe("deleteTag controller", () => {
       const mockError = new Error("Database query failed");
       vi.mocked(prisma.tag.findUnique).mockRejectedValue(mockError);
 
-      await deleteTag(mockRequest, mockResponse);
+      await deleteTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.delete).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(mockError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(mockError);
     });
   });
 
@@ -360,7 +342,7 @@ describe("deleteTag controller", () => {
         name: "large id tag",
       });
 
-      await deleteTag(mockRequest, mockResponse);
+      await deleteTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.delete).toHaveBeenCalledWith({
         where: { id: 999999999 },
@@ -381,7 +363,7 @@ describe("deleteTag controller", () => {
         name: "tag",
       });
 
-      await deleteTag(mockRequest, mockResponse);
+      await deleteTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.delete).toHaveBeenCalledWith({
         where: { id: 1 },
@@ -392,7 +374,7 @@ describe("deleteTag controller", () => {
     it("should handle tag ID with whitespace", async () => {
       mockRequest.params = { id: " 1 " };
 
-      await deleteTag(mockRequest, mockResponse);
+      await deleteTag(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
@@ -400,25 +382,19 @@ describe("deleteTag controller", () => {
     it("should handle empty string tag ID", async () => {
       mockRequest.params = { id: "" };
 
-      await deleteTag(mockRequest, mockResponse);
+      await deleteTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.delete).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
 
     it("should handle special characters in tag ID", async () => {
       mockRequest.params = { id: "1@#$" };
 
-      await deleteTag(mockRequest, mockResponse);
+      await deleteTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.delete).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
   });
 });

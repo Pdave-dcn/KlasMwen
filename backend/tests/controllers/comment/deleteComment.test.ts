@@ -3,7 +3,6 @@ import { Request, Response } from "express";
 
 import { deleteComment } from "../../../src/controllers/comment.controller";
 import prisma from "../../../src/core/config/db";
-import { handleError } from "../../../src/core/error";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   AuthenticationError,
@@ -63,6 +62,7 @@ vi.mock("../../../src/core/config/db.js", () => ({
 describe("deleteComment controller", () => {
   let mockRequest: Request;
   let mockResponse: Response;
+  let mockNext: any;
 
   const mockPostId = "6b2efb09-e634-41d9-b2eb-d4972fabb729";
   const mockUserId1 = "910da3f7-f419-4929-b775-6e26ba17f248";
@@ -70,6 +70,7 @@ describe("deleteComment controller", () => {
 
   beforeEach(() => {
     mockRequest = createMockRequest();
+    mockNext = vi.fn();
     mockResponse = createMockResponse();
     vi.clearAllMocks();
   });
@@ -95,7 +96,7 @@ describe("deleteComment controller", () => {
       });
       vi.mocked(prisma.comment.delete).mockResolvedValue({} as any);
 
-      await deleteComment(mockRequest, mockResponse);
+      await deleteComment(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -125,7 +126,7 @@ describe("deleteComment controller", () => {
       });
       vi.mocked(prisma.comment.delete).mockResolvedValue({} as any);
 
-      await deleteComment(mockRequest, mockResponse);
+      await deleteComment(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -144,12 +145,9 @@ describe("deleteComment controller", () => {
 
       vi.mocked(prisma.comment.findUnique).mockResolvedValue(null);
 
-      await deleteComment(mockRequest, mockResponse);
+      await deleteComment(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(CommentNotFoundError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(CommentNotFoundError));
       expect(prisma.comment.delete).not.toHaveBeenCalled();
     });
 
@@ -168,12 +166,9 @@ describe("deleteComment controller", () => {
         hidden: false,
       });
 
-      await deleteComment(mockRequest, mockResponse);
+      await deleteComment(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthorizationError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(AuthorizationError));
       expect(prisma.comment.delete).not.toHaveBeenCalled();
     });
 
@@ -184,9 +179,9 @@ describe("deleteComment controller", () => {
       const error = new Error("Database deletion failed");
       vi.mocked(prisma.comment.findUnique).mockRejectedValue(error);
 
-      await deleteComment(mockRequest, mockResponse);
+      await deleteComment(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(error, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(error);
       expect(mockResponse.status).not.toHaveBeenCalled();
       expect(mockResponse.json).not.toHaveBeenCalled();
     });

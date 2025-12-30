@@ -3,8 +3,6 @@ import { ZodError } from "zod";
 
 import { createTag } from "../../../src/controllers/tag.controller";
 import prisma from "../../../src/core/config/db";
-import { handleError } from "../../../src/core/error";
-import { AuthorizationError } from "../../../src/core/error/custom/auth.error";
 
 import { createAuthenticatedUser } from "./shared/helpers";
 import { createMockRequest, createMockResponse } from "./shared/mocks";
@@ -50,16 +48,17 @@ vi.mock("../../../src/core/config/db.js", () => ({
   },
 }));
 
-vi.mock("../../../src/core/error/index.js");
-
 describe("createTag controller", () => {
   let mockRequest: Request;
   let mockResponse: Response;
+  let mockNext: any;
 
   const mockUserId = "c3d4e5f6-7890-1234-5678-90abcdef1234";
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    mockNext = vi.fn();
 
     mockRequest = createMockRequest();
     mockResponse = createMockResponse();
@@ -76,99 +75,99 @@ describe("createTag controller", () => {
     it("should handle missing name field", async () => {
       mockRequest.body = {};
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.tag.create).not.toHaveBeenCalled();
     });
 
     it("should handle invalid field in request body", async () => {
       mockRequest.body = { invalidField: "test" };
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.tag.create).not.toHaveBeenCalled();
     });
 
     it("should handle name with wrong type (number)", async () => {
       mockRequest.body = { name: 123 };
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.tag.create).not.toHaveBeenCalled();
     });
 
     it("should handle name with wrong type (boolean)", async () => {
       mockRequest.body = { name: true };
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.tag.create).not.toHaveBeenCalled();
     });
 
     it("should handle name with wrong type (object)", async () => {
       mockRequest.body = { name: { value: "test" } };
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.tag.create).not.toHaveBeenCalled();
     });
 
     it("should handle name with wrong type (array)", async () => {
       mockRequest.body = { name: ["javascript"] };
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.tag.create).not.toHaveBeenCalled();
     });
 
     it("should handle name with wrong type (null)", async () => {
       mockRequest.body = { name: null };
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.tag.create).not.toHaveBeenCalled();
     });
 
     it("should handle empty string name", async () => {
       mockRequest.body = { name: "" };
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.tag.create).not.toHaveBeenCalled();
     });
 
     it("should handle whitespace-only name", async () => {
       mockRequest.body = { name: "   " };
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.tag.create).not.toHaveBeenCalled();
     });
 
     it("should handle name with only tabs and newlines", async () => {
       mockRequest.body = { name: "\t\n\r" };
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.tag.create).not.toHaveBeenCalled();
     });
 
     it("should handle multiple fields including name", async () => {
       mockRequest.body = { name: "JavaScript", extraField: "test" };
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.tag.create).not.toHaveBeenCalled();
     });
   });
@@ -189,7 +188,7 @@ describe("createTag controller", () => {
         name: "javascript",
       });
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -207,7 +206,7 @@ describe("createTag controller", () => {
         name: "javascript",
       });
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -224,7 +223,7 @@ describe("createTag controller", () => {
         name: "javascript",
       });
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -241,7 +240,7 @@ describe("createTag controller", () => {
         name: "javascript",
       });
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -258,7 +257,7 @@ describe("createTag controller", () => {
         name: "javascript",
       });
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -275,7 +274,7 @@ describe("createTag controller", () => {
         name: "react native",
       });
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -292,7 +291,7 @@ describe("createTag controller", () => {
         name: "javascript react",
       });
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -309,7 +308,7 @@ describe("createTag controller", () => {
         name: "javascript react",
       });
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -326,12 +325,9 @@ describe("createTag controller", () => {
         name: "vue3",
       });
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
 
     it("should handle unicode characters in tag name", async () => {
@@ -342,7 +338,7 @@ describe("createTag controller", () => {
         name: "日本語",
       });
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -359,12 +355,9 @@ describe("createTag controller", () => {
         name: "react⚛️",
       });
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
   });
 
@@ -386,7 +379,7 @@ describe("createTag controller", () => {
 
       vi.mocked(prisma.tag.create).mockResolvedValue(mockTag);
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -406,7 +399,7 @@ describe("createTag controller", () => {
       const mockTag = { id: 5, name: "typescript" };
       vi.mocked(prisma.tag.create).mockResolvedValue(mockTag);
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "New tag created successfully",
@@ -420,7 +413,7 @@ describe("createTag controller", () => {
       const mockTag = { id: 999, name: "react" };
       vi.mocked(prisma.tag.create).mockResolvedValue(mockTag);
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "New tag created successfully",
@@ -440,7 +433,7 @@ describe("createTag controller", () => {
           name: tags[i].toLowerCase(),
         });
 
-        await createTag(mockRequest, mockResponse);
+        await createTag(mockRequest, mockResponse, mockNext);
 
         expect(mockResponse.status).toHaveBeenCalledWith(201);
       }
@@ -461,9 +454,9 @@ describe("createTag controller", () => {
 
       vi.mocked(prisma.tag.create).mockRejectedValue(mockError);
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(mockError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(mockError);
     });
   });
 
@@ -478,10 +471,10 @@ describe("createTag controller", () => {
     it("should handle very long tag name", async () => {
       mockRequest.body = { name: "a".repeat(1000) };
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
       // Should be handled by schema validation
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
     });
 
     it("should handle single character tag name", async () => {
@@ -492,12 +485,9 @@ describe("createTag controller", () => {
         name: "a",
       });
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
 
     it("should handle tag name with only special characters", async () => {
@@ -508,12 +498,9 @@ describe("createTag controller", () => {
         name: "+++",
       });
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
 
     it("should handle tag name with mixed unicode and ascii", async () => {
@@ -524,7 +511,7 @@ describe("createTag controller", () => {
         name: "react日本語",
       });
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(201);
     });
@@ -537,12 +524,9 @@ describe("createTag controller", () => {
         name: "-javascript-",
       });
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
 
     it("should handle tag name that looks like SQL injection", async () => {
@@ -553,12 +537,9 @@ describe("createTag controller", () => {
         name: "'; drop table tags; --",
       });
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
 
     it("should handle tag name with escaped characters", async () => {
@@ -569,12 +550,9 @@ describe("createTag controller", () => {
         name: 'javascript\\"react',
       });
 
-      await createTag(mockRequest, mockResponse);
+      await createTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
   });
 });

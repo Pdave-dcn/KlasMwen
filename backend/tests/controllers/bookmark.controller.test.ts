@@ -9,8 +9,6 @@ import {
 import prisma from "../../src/core/config/db.js";
 import { AuthenticationError } from "../../src/core/error/custom/auth.error.js";
 import { PostNotFoundError } from "../../src/core/error/custom/post.error.js";
-import { handleError } from "../../src/core/error/index.js";
-
 import type { Post, Bookmark } from "@prisma/client";
 
 vi.mock("../../src/core/config/db.js", () => ({
@@ -57,11 +55,10 @@ vi.mock("../../src/core/config/logger.js", () => ({
   },
 }));
 
-vi.mock("../../src/core/error/index.js");
-
 describe("Bookmark controller", () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
+  let mockNext: any;
   const mockPostId = "550e8400-e29b-41d4-a716-446655440000";
   const mockUserId2 = "d4e5f678-9012-3456-7890-abcdef123456";
   const mockUserId = "c3d4e5f6-7890-1234-5678-90abcdef1234";
@@ -69,6 +66,8 @@ describe("Bookmark controller", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    mockNext = vi.fn();
     mockResponse = {
       status: vi.fn(() => mockResponse as Response),
       json: vi.fn(),
@@ -112,9 +111,9 @@ describe("Bookmark controller", () => {
       vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPost);
       vi.mocked(prisma.bookmark.create).mockResolvedValue(mockCreatedBookmark);
 
-      await createBookmark(mockRequest as Request, mockResponse as Response);
+      await createBookmark(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
       expect(prisma.post.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: mockPostId },
@@ -143,7 +142,7 @@ describe("Bookmark controller", () => {
 
       vi.mocked(prisma.post.findUnique).mockResolvedValue(null);
 
-      await createBookmark(mockRequest as Request, mockResponse as Response);
+      await createBookmark(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(prisma.post.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -151,10 +150,7 @@ describe("Bookmark controller", () => {
         })
       );
       expect(prisma.bookmark.create).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(PostNotFoundError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(PostNotFoundError));
     });
 
     it("should call handleError with validation error for invalid post ID", async () => {
@@ -169,9 +165,9 @@ describe("Bookmark controller", () => {
         params: { id: "invalid-uuid" },
       };
 
-      await createBookmark(mockRequest as Request, mockResponse as Response);
+      await createBookmark(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.post.findUnique).not.toHaveBeenCalled();
     });
 
@@ -206,9 +202,9 @@ describe("Bookmark controller", () => {
       vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPost);
       vi.mocked(prisma.bookmark.create).mockRejectedValue(dbError);
 
-      await createBookmark(mockRequest as Request, mockResponse as Response);
+      await createBookmark(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
     });
   });
 
@@ -236,9 +232,9 @@ describe("Bookmark controller", () => {
       );
       vi.mocked(prisma.bookmark.delete).mockResolvedValue(mockExistingBookmark);
 
-      await deleteBookmark(mockRequest as Request, mockResponse as Response);
+      await deleteBookmark(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
       expect(prisma.bookmark.findUnique).toHaveBeenCalledWith({
         where: { userId_postId: { userId: mockUserId, postId: mockPostId } },
       });
@@ -265,7 +261,7 @@ describe("Bookmark controller", () => {
 
       vi.mocked(prisma.bookmark.findUnique).mockResolvedValue(null);
 
-      await deleteBookmark(mockRequest as Request, mockResponse as Response);
+      await deleteBookmark(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(prisma.bookmark.findUnique).toHaveBeenCalledWith({
         where: { userId_postId: { userId: mockUserId, postId: mockPostId } },
@@ -289,9 +285,9 @@ describe("Bookmark controller", () => {
         params: { id: "invalid-uuid" },
       };
 
-      await deleteBookmark(mockRequest as Request, mockResponse as Response);
+      await deleteBookmark(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.bookmark.findUnique).not.toHaveBeenCalled();
     });
 
@@ -319,9 +315,9 @@ describe("Bookmark controller", () => {
       );
       vi.mocked(prisma.bookmark.delete).mockRejectedValue(dbError);
 
-      await deleteBookmark(mockRequest as Request, mockResponse as Response);
+      await deleteBookmark(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
     });
   });
 
@@ -406,7 +402,7 @@ describe("Bookmark controller", () => {
       // For setup "isLiked" state in each post
       vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
-      await getBookmarks(mockRequest as Request, mockResponse as Response);
+      await getBookmarks(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(prisma.bookmark.findMany).toHaveBeenCalledWith({
         where: { userId: mockUserId },
@@ -465,7 +461,7 @@ describe("Bookmark controller", () => {
         mockBookmarksWithPosts
       );
 
-      await getBookmarks(mockRequest as Request, mockResponse as Response);
+      await getBookmarks(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(prisma.bookmark.findMany).toHaveBeenCalledWith({
         where: { userId: mockUserId },
@@ -518,9 +514,9 @@ describe("Bookmark controller", () => {
       // For setup "isLiked" state in each post
       vi.mocked(prisma.like.findMany).mockResolvedValue([]);
 
-      await getBookmarks(mockRequest as Request, mockResponse as Response);
+      await getBookmarks(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
       expect(prisma.bookmark.findMany).toHaveBeenCalledWith({
         where: { userId: mockUserId },
         orderBy: { createdAt: "desc" },
@@ -573,7 +569,7 @@ describe("Bookmark controller", () => {
         mockBookmarksWithPosts
       );
 
-      await getBookmarks(mockRequest as Request, mockResponse as Response);
+      await getBookmarks(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockResponse.json).toHaveBeenCalledWith({
         data: expect.arrayContaining([
@@ -597,9 +593,9 @@ describe("Bookmark controller", () => {
         },
       };
 
-      await getBookmarks(mockRequest as Request, mockResponse as Response);
+      await getBookmarks(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.bookmark.findMany).not.toHaveBeenCalled();
     });
 
@@ -614,9 +610,9 @@ describe("Bookmark controller", () => {
         },
       };
 
-      await getBookmarks(mockRequest as Request, mockResponse as Response);
+      await getBookmarks(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.bookmark.findMany).not.toHaveBeenCalled();
     });
 
@@ -634,9 +630,9 @@ describe("Bookmark controller", () => {
       const dbError = new Error("Database connection failed");
       vi.mocked(prisma.bookmark.findMany).mockRejectedValue(dbError);
 
-      await getBookmarks(mockRequest as Request, mockResponse as Response);
+      await getBookmarks(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
     });
 
     it("should return empty array when user has no bookmarks", async () => {
@@ -652,7 +648,7 @@ describe("Bookmark controller", () => {
 
       vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
 
-      await getBookmarks(mockRequest as Request, mockResponse as Response);
+      await getBookmarks(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({

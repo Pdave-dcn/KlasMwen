@@ -1,6 +1,5 @@
 import prisma from "../core/config/db.js";
 import { createLogger } from "../core/config/logger.js";
-import { handleError } from "../core/error/index.js";
 import createActionLogger from "../utils/logger.util.js";
 import {
   buildPaginatedQuery,
@@ -12,11 +11,11 @@ import {
   AvatarIdParamSchema,
 } from "../zodSchemas/avatar.zod.js";
 
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction} from "express";
 
 const controllerLogger = createLogger({ module: "avatarController" });
 
-const getAvailableAvatars = async (req: Request, res: Response) => {
+const getAvailableAvatars = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(controllerLogger, "getAvatars", req);
 
   try {
@@ -57,11 +56,11 @@ const getAvailableAvatars = async (req: Request, res: Response) => {
 
     return res.status(200).json(result);
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const getAvatars = async (req: Request, res: Response) => {
+const getAvatars = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(controllerLogger, "getAvatars", req);
 
   try {
@@ -102,11 +101,11 @@ const getAvatars = async (req: Request, res: Response) => {
 
     return res.status(200).json(result);
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const addAvatar = async (req: Request, res: Response) => {
+const addAvatar = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(controllerLogger, "addAvatar", req);
   try {
     actionLogger.info("Avatar addition attempt started");
@@ -152,11 +151,11 @@ const addAvatar = async (req: Request, res: Response) => {
       data: createdAvatars,
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const deleteAvatar = async (req: Request, res: Response) => {
+const deleteAvatar = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "deleteAvatar",
@@ -200,7 +199,7 @@ const deleteAvatar = async (req: Request, res: Response) => {
       message: "Avatar deleted successfully",
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 

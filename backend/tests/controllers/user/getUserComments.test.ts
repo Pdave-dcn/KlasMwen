@@ -1,7 +1,6 @@
 import { getUserComments } from "../../../src/controllers/user/user.content.controller";
 import prisma from "../../../src/core/config/db.js";
 import { UserNotFoundError } from "../../../src/core/error/custom/user.error.js";
-import { handleError } from "../../../src/core/error/index.js";
 import { CommentWithRelations } from "../../../src/features/comments/service/types";
 
 import { expectValidationError } from "./shared/helpers.js";
@@ -125,10 +124,12 @@ const mockUserComments: CommentWithRelations[] = [
 describe("getUserComments Controller", () => {
   let mockReq: Request;
   let mockRes: Response;
+  let mockNext: any;
 
   beforeEach(() => {
     mockReq = createMockRequest();
     mockRes = createMockResponse();
+    mockNext = vi.fn();
     vi.clearAllMocks();
   });
 
@@ -144,7 +145,7 @@ describe("getUserComments Controller", () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
       vi.mocked(prisma.comment.findMany).mockResolvedValue(mockUserComments);
 
-      await getUserComments(mockReq, mockRes);
+      await getUserComments(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith(
@@ -190,7 +191,7 @@ describe("getUserComments Controller", () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
       vi.mocked(prisma.comment.findMany).mockResolvedValue([]);
 
-      await getUserComments(mockReq, mockRes);
+      await getUserComments(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -209,7 +210,7 @@ describe("getUserComments Controller", () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
       vi.mocked(prisma.comment.findMany).mockResolvedValue(mockUserComments);
 
-      await getUserComments(mockReq, mockRes);
+      await getUserComments(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith(
@@ -259,17 +260,14 @@ describe("getUserComments Controller", () => {
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
 
-      await getUserComments(mockReq, mockRes);
+      await getUserComments(mockReq, mockRes, mockNext);
 
       expect(prisma.user.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: "834dff96-5ac6-4392-b9c0-1db5c3ccf767" },
         })
       );
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(UserNotFoundError),
-        mockRes
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(UserNotFoundError));
     });
 
     it("should not call comment service when user doesn't exist", async () => {
@@ -277,7 +275,7 @@ describe("getUserComments Controller", () => {
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
 
-      await getUserComments(mockReq, mockRes);
+      await getUserComments(mockReq, mockRes, mockNext);
 
       expect(prisma.comment.findMany).not.toHaveBeenCalled();
     });
@@ -290,9 +288,9 @@ describe("getUserComments Controller", () => {
       const dbError = new Error("Database connection failed");
       vi.mocked(prisma.user.findUnique).mockRejectedValue(dbError);
 
-      await getUserComments(mockReq, mockRes);
+      await getUserComments(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
     });
 
     it("should handle database connection errors during comments lookup", async () => {
@@ -303,9 +301,9 @@ describe("getUserComments Controller", () => {
       const dbError = new Error("Database connection failed");
       vi.mocked(prisma.comment.findMany).mockRejectedValue(dbError);
 
-      await getUserComments(mockReq, mockRes);
+      await getUserComments(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
     });
   });
 
@@ -316,7 +314,7 @@ describe("getUserComments Controller", () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
       vi.mocked(prisma.comment.findMany).mockResolvedValue(mockUserComments);
 
-      await getUserComments(mockReq, mockRes);
+      await getUserComments(mockReq, mockRes, mockNext);
 
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -337,7 +335,7 @@ describe("getUserComments Controller", () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
       vi.mocked(prisma.comment.findMany).mockResolvedValue(mockUserComments);
 
-      await getUserComments(mockReq, mockRes);
+      await getUserComments(mockReq, mockRes, mockNext);
 
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -362,7 +360,7 @@ describe("getUserComments Controller", () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
       vi.mocked(prisma.comment.findMany).mockResolvedValue(mockUserComments);
 
-      await getUserComments(mockReq, mockRes);
+      await getUserComments(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
       const responseCall = vi.mocked(mockRes.json).mock.calls[0][0];
@@ -386,7 +384,7 @@ describe("getUserComments Controller", () => {
 
       vi.mocked(prisma.comment.findMany).mockResolvedValue([longComment]);
 
-      await getUserComments(mockReq, mockRes);
+      await getUserComments(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
 

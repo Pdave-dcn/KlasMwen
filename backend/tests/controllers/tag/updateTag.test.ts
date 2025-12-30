@@ -3,7 +3,6 @@ import { ZodError } from "zod";
 
 import { updateTag } from "../../../src/controllers/tag.controller";
 import prisma from "../../../src/core/config/db";
-import { handleError } from "../../../src/core/error";
 import { AuthorizationError } from "../../../src/core/error/custom/auth.error";
 import { TagNotFoundError } from "../../../src/core/error/custom/tag.error";
 
@@ -51,16 +50,17 @@ vi.mock("../../../src/core/config/db.js", () => ({
   },
 }));
 
-vi.mock("../../../src/core/error/index.js");
-
 describe("updateTag controller", () => {
   let mockRequest: Request;
   let mockResponse: Response;
+  let mockNext: any;
 
   const mockUserId = "c3d4e5f6-7890-1234-5678-90abcdef1234";
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    mockNext = vi.fn();
 
     mockRequest = createMockRequest();
     mockResponse = createMockResponse();
@@ -78,79 +78,61 @@ describe("updateTag controller", () => {
     it("should call handleError when tag ID is missing", async () => {
       mockRequest.params = {};
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
       expect(prisma.tag.update).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
 
     it("should call handleError for invalid tag ID (non-numeric)", async () => {
       mockRequest.params = { id: "abc" };
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
       expect(prisma.tag.update).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
 
     it("should call handleError for invalid tag ID (decimal)", async () => {
       mockRequest.params = { id: "1.5" };
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
       expect(prisma.tag.update).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
 
     it("should call handleError for negative tag ID", async () => {
       mockRequest.params = { id: "-5" };
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
       expect(prisma.tag.update).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
 
     it("should call handleError for zero tag ID", async () => {
       mockRequest.params = { id: "0" };
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
       expect(prisma.tag.update).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
 
     it("should call handleError for tag ID with special characters", async () => {
       mockRequest.params = { id: "123abc" };
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
       expect(prisma.tag.update).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
 
     it("should handle tag ID with leading zeros", async () => {
@@ -166,7 +148,7 @@ describe("updateTag controller", () => {
         name: "typescript",
       });
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -189,7 +171,7 @@ describe("updateTag controller", () => {
         name: "typescript",
       });
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -202,27 +184,21 @@ describe("updateTag controller", () => {
     it("should call handleError for empty string tag ID", async () => {
       mockRequest.params = { id: "" };
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
       expect(prisma.tag.update).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
 
     it("should call handleError for whitespace-only tag ID", async () => {
       mockRequest.params = { id: "   " };
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
       expect(prisma.tag.update).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
   });
 
@@ -240,7 +216,7 @@ describe("updateTag controller", () => {
 
       vi.mocked(prisma.tag.findUnique).mockResolvedValue(null);
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -248,10 +224,7 @@ describe("updateTag controller", () => {
         })
       );
       expect(prisma.tag.update).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(TagNotFoundError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(TagNotFoundError));
     });
 
     it("should proceed with update if tag exists", async () => {
@@ -267,7 +240,7 @@ describe("updateTag controller", () => {
         name: "typescript",
       });
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -296,45 +269,45 @@ describe("updateTag controller", () => {
     it("should handle invalid request body (missing name)", async () => {
       mockRequest.body = {};
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.tag.update).not.toHaveBeenCalled();
     });
 
     it("should handle invalid request body (invalid field)", async () => {
       mockRequest.body = { invalidField: "test" };
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.tag.update).not.toHaveBeenCalled();
     });
 
     it("should handle invalid request body (wrong type)", async () => {
       mockRequest.body = { name: 123 };
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.tag.update).not.toHaveBeenCalled();
     });
 
     it("should handle empty name string", async () => {
       mockRequest.body = { name: "" };
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.tag.update).not.toHaveBeenCalled();
     });
 
     it("should handle whitespace-only name", async () => {
       mockRequest.body = { name: "   " };
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.tag.update).not.toHaveBeenCalled();
     });
 
@@ -346,7 +319,7 @@ describe("updateTag controller", () => {
         name: "typescript",
       });
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -365,7 +338,7 @@ describe("updateTag controller", () => {
         name: "javascript",
       });
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -399,7 +372,7 @@ describe("updateTag controller", () => {
         name: "typescript",
       });
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -429,7 +402,7 @@ describe("updateTag controller", () => {
 
       vi.mocked(prisma.tag.update).mockResolvedValue(updatedTag);
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "Tag updated successfully",
@@ -445,7 +418,7 @@ describe("updateTag controller", () => {
         name: "javascript",
       });
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -471,9 +444,9 @@ describe("updateTag controller", () => {
       const mockError = new Error("Database connection failed");
       vi.mocked(prisma.tag.findUnique).mockRejectedValue(mockError);
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(mockError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(mockError);
       expect(prisma.tag.update).not.toHaveBeenCalled();
     });
 
@@ -486,9 +459,9 @@ describe("updateTag controller", () => {
       const mockError = new Error("Database update failed");
       vi.mocked(prisma.tag.update).mockRejectedValue(mockError);
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(mockError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(mockError);
     });
 
     it("should handle unique constraint violation", async () => {
@@ -501,9 +474,9 @@ describe("updateTag controller", () => {
       (mockError as any).code = "P2002";
       vi.mocked(prisma.tag.update).mockRejectedValue(mockError);
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(mockError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(mockError);
     });
 
     it("should handle timeout error", async () => {
@@ -515,9 +488,9 @@ describe("updateTag controller", () => {
       const mockError = new Error("Query timeout");
       vi.mocked(prisma.tag.update).mockRejectedValue(mockError);
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(mockError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(mockError);
     });
   });
 
@@ -533,10 +506,10 @@ describe("updateTag controller", () => {
       mockRequest.params = { id: "1" };
       mockRequest.body = { name: "a".repeat(1000) };
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
       // Should be handled by schema validation or handleError
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
     });
 
     it("should handle special characters in tag name", async () => {
@@ -553,12 +526,9 @@ describe("updateTag controller", () => {
         name: "c++",
       });
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
     });
 
     it("should handle unicode characters in tag name", async () => {
@@ -575,7 +545,7 @@ describe("updateTag controller", () => {
         name: "日本語",
       });
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
@@ -594,7 +564,7 @@ describe("updateTag controller", () => {
         name: "typescript",
       });
 
-      await updateTag(mockRequest, mockResponse);
+      await updateTag(mockRequest, mockResponse, mockNext);
 
       expect(prisma.tag.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({

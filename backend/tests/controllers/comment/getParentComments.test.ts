@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 
 import { getParentComments } from "../../../src/controllers/comment.controller";
 import prisma from "../../../src/core/config/db";
-import { handleError } from "../../../src/core/error";
 import { PostNotFoundError } from "../../../src/core/error/custom/post.error";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -62,11 +61,13 @@ vi.mock("../../../src/core/config/db.js", () => ({
 describe("getParentComments controller", () => {
   let mockRequest: Request;
   let mockResponse: Response;
+  let mockNext: any;
 
   const mockPostId = "6b2efb09-e634-41d9-b2eb-d4972fabb729";
 
   beforeEach(() => {
     mockRequest = createMockRequest();
+    mockNext = vi.fn();
     mockResponse = createMockResponse();
     vi.clearAllMocks();
   });
@@ -87,7 +88,7 @@ describe("getParentComments controller", () => {
       vi.mocked(prisma.comment.findMany).mockResolvedValue(mockComments);
       vi.mocked(prisma.comment.count).mockResolvedValue(15);
 
-      await getParentComments(mockRequest, mockResponse);
+      await getParentComments(mockRequest, mockResponse, mockNext);
 
       expect(prisma.post.findUnique).toHaveBeenCalled();
       expect(prisma.comment.findMany).toHaveBeenCalled();
@@ -116,7 +117,7 @@ describe("getParentComments controller", () => {
       vi.mocked(prisma.comment.findMany).mockResolvedValue(mockComments);
       vi.mocked(prisma.comment.count).mockResolvedValue(3);
 
-      await getParentComments(mockRequest, mockResponse);
+      await getParentComments(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -139,7 +140,7 @@ describe("getParentComments controller", () => {
       vi.mocked(prisma.comment.findMany).mockResolvedValue([]);
       vi.mocked(prisma.comment.count).mockResolvedValue(0);
 
-      await getParentComments(mockRequest, mockResponse);
+      await getParentComments(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -162,7 +163,7 @@ describe("getParentComments controller", () => {
       vi.mocked(prisma.comment.findMany).mockResolvedValue(mockComments);
       vi.mocked(prisma.comment.count).mockResolvedValue(100);
 
-      await getParentComments(mockRequest, mockResponse);
+      await getParentComments(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -185,7 +186,7 @@ describe("getParentComments controller", () => {
       vi.mocked(prisma.comment.findMany).mockResolvedValue(mockComments);
       vi.mocked(prisma.comment.count).mockResolvedValue(10);
 
-      await getParentComments(mockRequest, mockResponse);
+      await getParentComments(mockRequest, mockResponse, mockNext);
 
       expect(prisma.post.findUnique).toHaveBeenCalledWith({
         where: { id: mockPostId },
@@ -215,7 +216,7 @@ describe("getParentComments controller", () => {
 
       vi.mocked(prisma.post.findUnique).mockResolvedValue(null);
 
-      await getParentComments(mockRequest, mockResponse);
+      await getParentComments(mockRequest, mockResponse, mockNext);
 
       expect(prisma.post.findUnique).toHaveBeenCalledWith({
         where: { id: nonExistentPostId },
@@ -223,18 +224,15 @@ describe("getParentComments controller", () => {
       });
       expect(prisma.comment.findMany).not.toHaveBeenCalled();
       expect(prisma.comment.count).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(PostNotFoundError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(PostNotFoundError));
     });
 
     it("should handle invalid post ID parameter", async () => {
       mockRequest.params = {}; // Missing id parameter
 
-      await getParentComments(mockRequest, mockResponse);
+      await getParentComments(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.post.findUnique).not.toHaveBeenCalled();
     });
 
@@ -245,9 +243,9 @@ describe("getParentComments controller", () => {
       const dbError = new Error("Database connection failed");
       vi.mocked(prisma.post.findUnique).mockRejectedValue(dbError);
 
-      await getParentComments(mockRequest, mockResponse);
+      await getParentComments(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
     });
 
     it("should handle database error when fetching comments", async () => {
@@ -261,9 +259,9 @@ describe("getParentComments controller", () => {
       const dbError = new Error("Failed to fetch comments");
       vi.mocked(prisma.comment.findMany).mockRejectedValue(dbError);
 
-      await getParentComments(mockRequest, mockResponse);
+      await getParentComments(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
     });
   });
 
@@ -278,7 +276,7 @@ describe("getParentComments controller", () => {
       vi.mocked(prisma.comment.findMany).mockResolvedValue([]);
       vi.mocked(prisma.comment.count).mockResolvedValue(0);
 
-      await getParentComments(mockRequest, mockResponse);
+      await getParentComments(mockRequest, mockResponse, mockNext);
 
       expect(prisma.comment.findMany).toHaveBeenCalled();
       expect(mockResponse.status).toHaveBeenCalledWith(200);
@@ -294,7 +292,7 @@ describe("getParentComments controller", () => {
       vi.mocked(prisma.comment.findMany).mockResolvedValue(mockComments);
       vi.mocked(prisma.comment.count).mockResolvedValue(5);
 
-      await getParentComments(mockRequest, mockResponse);
+      await getParentComments(mockRequest, mockResponse, mockNext);
 
       expect(prisma.comment.findMany).toHaveBeenCalled();
       expect(mockResponse.status).toHaveBeenCalledWith(200);
@@ -312,7 +310,7 @@ describe("getParentComments controller", () => {
       vi.mocked(prisma.comment.findMany).mockResolvedValue(paginatedComments);
       vi.mocked(prisma.comment.count).mockResolvedValue(15);
 
-      await getParentComments(mockRequest, mockResponse);
+      await getParentComments(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -333,9 +331,9 @@ describe("getParentComments controller", () => {
         createMockPost({ id: mockPostId })
       );
 
-      await getParentComments(mockRequest, mockResponse);
+      await getParentComments(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
     });
 
     it("should handle limit exceeding maximum allowed", async () => {
@@ -346,9 +344,9 @@ describe("getParentComments controller", () => {
         createMockPost({ id: mockPostId })
       );
 
-      await getParentComments(mockRequest, mockResponse);
+      await getParentComments(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
     });
   });
 
@@ -363,7 +361,7 @@ describe("getParentComments controller", () => {
       vi.mocked(prisma.comment.findMany).mockResolvedValue([]);
       vi.mocked(prisma.comment.count).mockResolvedValue(0);
 
-      await getParentComments(mockRequest, mockResponse);
+      await getParentComments(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -388,7 +386,7 @@ describe("getParentComments controller", () => {
       vi.mocked(prisma.comment.findMany).mockResolvedValue(twoComments);
       vi.mocked(prisma.comment.count).mockResolvedValue(2);
 
-      await getParentComments(mockRequest, mockResponse);
+      await getParentComments(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -411,7 +409,7 @@ describe("getParentComments controller", () => {
       vi.mocked(prisma.comment.findMany).mockResolvedValue(mockComments);
       vi.mocked(prisma.comment.count).mockResolvedValue(3);
 
-      await getParentComments(mockRequest, mockResponse);
+      await getParentComments(mockRequest, mockResponse, mockNext);
 
       expect(prisma.comment.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -435,7 +433,7 @@ describe("getParentComments controller", () => {
       vi.mocked(prisma.comment.findMany).mockResolvedValue(mockComments);
       vi.mocked(prisma.comment.count).mockResolvedValue(10);
 
-      await getParentComments(mockRequest, mockResponse);
+      await getParentComments(mockRequest, mockResponse, mockNext);
 
       expect(prisma.comment.count).toHaveBeenCalledWith({
         where: { postId: mockPostId },
@@ -467,7 +465,7 @@ describe("getParentComments controller", () => {
       vi.mocked(prisma.comment.findMany).mockResolvedValue(mockComments);
       vi.mocked(prisma.comment.count).mockResolvedValue(20);
 
-      await getParentComments(mockRequest, mockResponse);
+      await getParentComments(mockRequest, mockResponse, mockNext);
 
       expect(prisma.comment.findMany).toHaveBeenCalled();
       expect(mockResponse.status).toHaveBeenCalledWith(200);

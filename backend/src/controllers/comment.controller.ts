@@ -1,5 +1,4 @@
 import { createLogger } from "../core/config/logger.js";
-import { handleError } from "../core/error/index.js";
 import CommentService from "../features/comments/service/CommentService.js";
 import createActionLogger from "../utils/logger.util.js";
 import { createPaginationSchema } from "../utils/pagination.util.js";
@@ -10,11 +9,11 @@ import {
 import { PostIdParamSchema } from "../zodSchemas/post.zod.js";
 
 import type { AuthenticatedRequest } from "../types/AuthRequest.js";
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction} from "express";
 
 const controllerLogger = createLogger({ module: "CommentController" });
 
-const createComment = async (req: Request, res: Response) => {
+const createComment = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "createComment",
@@ -61,11 +60,11 @@ const createComment = async (req: Request, res: Response) => {
       data: newComment,
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const getParentComments = async (req: Request, res: Response) => {
+const getParentComments = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "getParentComments",
@@ -108,11 +107,11 @@ const getParentComments = async (req: Request, res: Response) => {
       pagination: result.pagination,
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const getReplies = async (req: Request, res: Response) => {
+const getReplies = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(controllerLogger, "getReplies", req);
 
   try {
@@ -151,11 +150,11 @@ const getReplies = async (req: Request, res: Response) => {
       pagination: result.pagination,
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 
-const deleteComment = async (req: Request, res: Response) => {
+const deleteComment = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "deleteComment",
@@ -186,7 +185,7 @@ const deleteComment = async (req: Request, res: Response) => {
 
     return res.status(200).json({ message: "Comment deleted successfully" });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 

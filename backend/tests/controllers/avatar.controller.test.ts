@@ -10,8 +10,6 @@ import {
 } from "../../src/controllers/avatar.controller.js";
 import prisma from "../../src/core/config/db.js";
 import { AuthorizationError } from "../../src/core/error/custom/auth.error.js";
-import { handleError } from "../../src/core/error/index.js";
-
 vi.mock("../../src/core/config/db.js", () => ({
   default: {
     avatar: {
@@ -23,8 +21,6 @@ vi.mock("../../src/core/config/db.js", () => ({
     },
   },
 }));
-
-vi.mock("../../src/core/error/index.js");
 
 vi.mock("../../src/core/config/logger.js", () => ({
   createLogger: vi.fn(() => ({
@@ -56,11 +52,14 @@ vi.mock("../../src/core/config/logger.js", () => ({
 describe("Avatar Controllers", () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
+  let mockNext: any;
 
   const mockUserId = "c3d4e5f6-7890-1234-5678-90abcdef1234";
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    mockNext = vi.fn();
 
     mockResponse = {
       status: vi.fn().mockReturnThis(),
@@ -89,9 +88,13 @@ describe("Avatar Controllers", () => {
 
       vi.mocked(prisma.avatar.create).mockResolvedValue(mockAvatarResult);
 
-      await addAvatar(mockRequest as Request, mockResponse as Response);
+      await addAvatar(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
       expect(mockResponse.status).toHaveBeenCalledWith(201);
     });
 
@@ -118,7 +121,11 @@ describe("Avatar Controllers", () => {
 
       vi.mocked(prisma.avatar.create).mockResolvedValue(mockAvatarResult);
 
-      await addAvatar(mockRequest as Request, mockResponse as Response);
+      await addAvatar(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       expect(prisma.avatar.create).toHaveBeenCalledWith({
         data: {
@@ -161,7 +168,11 @@ describe("Avatar Controllers", () => {
         mockCreateManyResult
       );
 
-      await addAvatar(mockRequest as Request, mockResponse as Response);
+      await addAvatar(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       expect(prisma.avatar.createMany).toHaveBeenCalledWith({
         data: [
@@ -206,7 +217,11 @@ describe("Avatar Controllers", () => {
         mockCreateManyResult
       );
 
-      await addAvatar(mockRequest as Request, mockResponse as Response);
+      await addAvatar(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       expect(prisma.avatar.createMany).toHaveBeenCalledWith({
         data: [
@@ -234,10 +249,14 @@ describe("Avatar Controllers", () => {
         params: {},
       };
 
-      await addAvatar(mockRequest as Request, mockResponse as Response);
+      await addAvatar(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       expect(prisma.avatar.create).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
     });
 
     it("should handle validation errors for empty array", async () => {
@@ -252,10 +271,14 @@ describe("Avatar Controllers", () => {
         params: {},
       };
 
-      await addAvatar(mockRequest as Request, mockResponse as Response);
+      await addAvatar(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       expect(prisma.avatar.createMany).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
     });
 
     it("should handle validation errors for invalid array item", async () => {
@@ -273,10 +296,14 @@ describe("Avatar Controllers", () => {
         params: {},
       };
 
-      await addAvatar(mockRequest as Request, mockResponse as Response);
+      await addAvatar(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       expect(prisma.avatar.createMany).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
     });
 
     it("should handle database errors during single avatar creation", async () => {
@@ -294,9 +321,13 @@ describe("Avatar Controllers", () => {
       const dbError = new Error("Database connection failed");
       vi.mocked(prisma.avatar.create).mockRejectedValue(dbError);
 
-      await addAvatar(mockRequest as Request, mockResponse as Response);
+      await addAvatar(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
     });
 
     it("should handle database errors during multiple avatar creation", async () => {
@@ -317,9 +348,13 @@ describe("Avatar Controllers", () => {
       const dbError = new Error("Database constraint violation");
       vi.mocked(prisma.avatar.createMany).mockRejectedValue(dbError);
 
-      await addAvatar(mockRequest as Request, mockResponse as Response);
+      await addAvatar(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
     });
 
     it("should use createMany for single item array", async () => {
@@ -339,9 +374,13 @@ describe("Avatar Controllers", () => {
         mockCreateManyResult
       );
 
-      await addAvatar(mockRequest as Request, mockResponse as Response);
+      await addAvatar(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
       expect(prisma.avatar.createMany).toHaveBeenCalledWith({
         data: [
           {
@@ -372,7 +411,8 @@ describe("Avatar Controllers", () => {
 
       await getAvailableAvatars(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        mockNext
       );
 
       expect(prisma.avatar.findMany).toHaveBeenCalledWith(
@@ -409,7 +449,8 @@ describe("Avatar Controllers", () => {
 
       await getAvailableAvatars(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        mockNext
       );
 
       expect(prisma.avatar.findMany).toHaveBeenCalledWith(
@@ -440,7 +481,8 @@ describe("Avatar Controllers", () => {
 
       await getAvailableAvatars(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        mockNext
       );
 
       expect(mockResponse.json).toHaveBeenCalledWith(
@@ -464,7 +506,8 @@ describe("Avatar Controllers", () => {
 
       await getAvailableAvatars(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        mockNext
       );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
@@ -490,10 +533,11 @@ describe("Avatar Controllers", () => {
 
       await getAvailableAvatars(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        mockNext
       );
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
     });
 
     it("should handle invalid pagination parameters", async () => {
@@ -504,10 +548,11 @@ describe("Avatar Controllers", () => {
 
       await getAvailableAvatars(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        mockNext
       );
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
       expect(prisma.avatar.findMany).not.toHaveBeenCalled();
     });
   });
@@ -533,7 +578,11 @@ describe("Avatar Controllers", () => {
 
       vi.mocked(prisma.avatar.findMany).mockResolvedValue(mockAvatars);
 
-      await getAvatars(mockRequest as Request, mockResponse as Response);
+      await getAvatars(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       // Should query ALL avatars (no where filter unlike getAvailableAvatars)
       expect(prisma.avatar.findMany).toHaveBeenCalledWith(
@@ -572,9 +621,13 @@ describe("Avatar Controllers", () => {
       const dbError = new Error("Database timeout");
       vi.mocked(prisma.avatar.findMany).mockRejectedValue(dbError);
 
-      await getAvatars(mockRequest as Request, mockResponse as Response);
+      await getAvatars(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
     });
   });
 
@@ -599,7 +652,11 @@ describe("Avatar Controllers", () => {
       vi.mocked(prisma.avatar.findUnique).mockResolvedValue(mockAvatar);
       vi.mocked(prisma.avatar.delete).mockResolvedValue(mockAvatar);
 
-      await deleteAvatar(mockRequest as Request, mockResponse as Response);
+      await deleteAvatar(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       expect(prisma.avatar.findUnique).toHaveBeenCalledWith({
         where: { id: 1 },
@@ -624,11 +681,15 @@ describe("Avatar Controllers", () => {
         },
       };
 
-      await deleteAvatar(mockRequest as Request, mockResponse as Response);
+      await deleteAvatar(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       expect(prisma.avatar.findUnique).not.toHaveBeenCalled();
       expect(prisma.avatar.delete).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
     });
 
     it("should call handleError for decimal ID numbers", async () => {
@@ -642,7 +703,11 @@ describe("Avatar Controllers", () => {
         },
       };
 
-      await deleteAvatar(mockRequest as Request, mockResponse as Response);
+      await deleteAvatar(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       expect(prisma.avatar.findUnique).toHaveBeenCalled();
     });
@@ -660,7 +725,11 @@ describe("Avatar Controllers", () => {
 
       vi.mocked(prisma.avatar.findUnique).mockResolvedValue(null);
 
-      await deleteAvatar(mockRequest as Request, mockResponse as Response);
+      await deleteAvatar(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       expect(prisma.avatar.findUnique).toHaveBeenCalledWith({
         where: { id: 999 },
@@ -686,9 +755,13 @@ describe("Avatar Controllers", () => {
       const dbError = new Error("Database connection failed");
       vi.mocked(prisma.avatar.findUnique).mockRejectedValue(dbError);
 
-      await deleteAvatar(mockRequest as Request, mockResponse as Response);
+      await deleteAvatar(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
     });
 
     it("should handle database errors during delete operation", async () => {
@@ -713,9 +786,13 @@ describe("Avatar Controllers", () => {
       const dbError = new Error("Foreign key constraint violation");
       vi.mocked(prisma.avatar.delete).mockRejectedValue(dbError);
 
-      await deleteAvatar(mockRequest as Request, mockResponse as Response);
+      await deleteAvatar(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
     });
 
     // Edge cases
@@ -739,7 +816,11 @@ describe("Avatar Controllers", () => {
       vi.mocked(prisma.avatar.findUnique).mockResolvedValue(mockAvatar);
       vi.mocked(prisma.avatar.delete).mockResolvedValue(mockAvatar);
 
-      await deleteAvatar(mockRequest as Request, mockResponse as Response);
+      await deleteAvatar(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
       expect(prisma.avatar.findUnique).toHaveBeenCalledWith({
         where: { id: 42 },
@@ -770,9 +851,13 @@ describe("Avatar Controllers", () => {
       vi.mocked(prisma.avatar.findUnique).mockResolvedValue(mockAvatar);
       vi.mocked(prisma.avatar.delete).mockResolvedValue(mockAvatar);
 
-      await deleteAvatar(mockRequest as Request, mockResponse as Response);
+      await deleteAvatar(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
 
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
       // Verify that the string "123" is properly converted to number 123
       expect(prisma.avatar.findUnique).toHaveBeenCalledWith({
         where: { id: 123 },

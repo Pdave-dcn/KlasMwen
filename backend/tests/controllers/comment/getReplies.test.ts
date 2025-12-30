@@ -3,8 +3,6 @@ import { ZodError } from "zod";
 
 import { getReplies } from "../../../src/controllers/comment.controller";
 import prisma from "../../../src/core/config/db";
-import { handleError } from "../../../src/core/error";
-
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createMockRequest,
@@ -70,9 +68,11 @@ const mockParentComment = {
 describe("getReplies controller", () => {
   let mockRequest: Request;
   let mockResponse: Response;
+  let mockNext: any;
 
   beforeEach(() => {
     mockRequest = createMockRequest();
+    mockNext = vi.fn();
     mockResponse = createMockResponse();
     vi.clearAllMocks();
 
@@ -90,7 +90,7 @@ describe("getReplies controller", () => {
 
       vi.mocked(prisma.comment.findMany).mockResolvedValue(mockReplies);
 
-      await getReplies(mockRequest, mockResponse);
+      await getReplies(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -135,7 +135,7 @@ describe("getReplies controller", () => {
 
       vi.mocked(prisma.comment.findMany).mockResolvedValue(mockReplies2);
 
-      await getReplies(mockRequest, mockResponse);
+      await getReplies(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -157,7 +157,7 @@ describe("getReplies controller", () => {
 
       vi.mocked(prisma.comment.findMany).mockResolvedValue([]);
 
-      await getReplies(mockRequest, mockResponse);
+      await getReplies(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -175,12 +175,9 @@ describe("getReplies controller", () => {
       mockRequest.params = { id: "abc" };
       mockRequest.query = {};
 
-      await getReplies(mockRequest, mockResponse);
+      await getReplies(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
       expect(prisma.comment.findMany).not.toHaveBeenCalled();
     });
   });
@@ -192,7 +189,7 @@ describe("getReplies controller", () => {
 
       vi.mocked(prisma.comment.findMany).mockResolvedValue([mockReplies[0]]);
 
-      await getReplies(mockRequest, mockResponse);
+      await getReplies(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(prisma.comment.findMany).toHaveBeenCalledWith(
@@ -209,7 +206,7 @@ describe("getReplies controller", () => {
       vi.mocked(prisma.comment.findMany).mockResolvedValue([]);
       vi.mocked(prisma.comment.count).mockResolvedValue(0);
 
-      await getReplies(mockRequest, mockResponse);
+      await getReplies(mockRequest, mockResponse, mockNext);
 
       expect(prisma.comment.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -224,7 +221,7 @@ describe("getReplies controller", () => {
 
       vi.mocked(prisma.comment.findMany).mockResolvedValue([]);
 
-      await getReplies(mockRequest, mockResponse);
+      await getReplies(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -243,7 +240,7 @@ describe("getReplies controller", () => {
       vi.mocked(prisma.comment.findMany).mockResolvedValue([]);
       vi.mocked(prisma.comment.count).mockResolvedValue(5);
 
-      await getReplies(mockRequest, mockResponse);
+      await getReplies(mockRequest, mockResponse, mockNext);
 
       expect(prisma.comment.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -275,7 +272,7 @@ describe("getReplies controller", () => {
       vi.mocked(prisma.comment.findMany).mockResolvedValue([]);
       vi.mocked(prisma.comment.count).mockResolvedValue(5);
 
-      await getReplies(mockRequest, mockResponse);
+      await getReplies(mockRequest, mockResponse, mockNext);
 
       expect(prisma.comment.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -291,36 +288,36 @@ describe("getReplies controller", () => {
       mockRequest.params = { id: "1" };
       mockRequest.query = { limit: "invalid" };
 
-      await getReplies(mockRequest, mockResponse);
+      await getReplies(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
     });
 
     it("should handle zero limit", async () => {
       mockRequest.params = { id: "1" };
       mockRequest.query = { limit: "0" };
 
-      await getReplies(mockRequest, mockResponse);
+      await getReplies(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
     });
 
     it("should handle negative limit", async () => {
       mockRequest.params = { id: "1" };
       mockRequest.query = { limit: "-5" };
 
-      await getReplies(mockRequest, mockResponse);
+      await getReplies(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
     });
 
     it("should handle invalid cursor parameter", async () => {
       mockRequest.params = { id: "1" };
       mockRequest.query = { cursor: "not-a-number" };
 
-      await getReplies(mockRequest, mockResponse);
+      await getReplies(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
     });
   });
 
@@ -340,7 +337,7 @@ describe("getReplies controller", () => {
         largeResultSet as any
       );
 
-      await getReplies(mockRequest, mockResponse);
+      await getReplies(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith(
@@ -371,7 +368,7 @@ describe("getReplies controller", () => {
 
       vi.mocked(prisma.comment.findMany).mockResolvedValue([]);
 
-      await getReplies(mockRequest, mockResponse);
+      await getReplies(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.json).toHaveBeenCalledWith({
         data: [],

@@ -4,7 +4,6 @@ import { createPost } from "../../../src/controllers/post/post.create.controller
 import prisma from "../../../src/core/config/db.js";
 import { AuthenticationError } from "../../../src/core/error/custom/auth.error.js";
 import { PostCreationFailedError } from "../../../src/core/error/custom/post.error.js";
-import { handleError } from "../../../src/core/error/index.js";
 import CloudinaryService from "../../../src/features/media/CloudinaryService.js";
 import handleRequestValidation from "../../../src/features/posts/requestPostParser.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -61,10 +60,12 @@ vi.mock("../../../src/core/error/index.js", () => ({
 describe("createPost controller", () => {
   let mockReq: Request;
   let mockRes: Response;
+  let mockNext: any;
 
   beforeEach(() => {
     mockReq = createMockRequest();
     mockRes = createMockResponse();
+    mockNext = vi.fn();
     vi.clearAllMocks();
   });
 
@@ -134,7 +135,7 @@ describe("createPost controller", () => {
     });
     vi.mocked(prisma.$transaction).mockResolvedValue(mockPostResult);
 
-    await createPost(mockReq, mockRes);
+    await createPost(mockReq, mockRes, mockNext);
 
     expect(handleRequestValidation).toHaveBeenCalledWith(
       mockReq,
@@ -171,7 +172,7 @@ describe("createPost controller", () => {
     });
     vi.mocked(prisma.$transaction).mockResolvedValue(null);
 
-    await createPost(mockReq, mockRes);
+    await createPost(mockReq, mockRes, mockNext);
 
     expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function));
 
@@ -179,10 +180,7 @@ describe("createPost controller", () => {
       mockUploadedFileInfo.publicId,
       "raw"
     );
-    expect(handleError).toHaveBeenCalledWith(
-      expect.any(PostCreationFailedError),
-      mockRes
-    );
+    expect(mockNext).toHaveBeenCalledWith(expect.any(PostCreationFailedError));
   });
 
   it("should call handleError if validation fails", async () => {
@@ -192,9 +190,9 @@ describe("createPost controller", () => {
 
     vi.mocked(handleRequestValidation).mockRejectedValue(mockValidationError);
 
-    await createPost(mockReq, mockRes);
+    await createPost(mockReq, mockRes, mockNext);
 
-    expect(handleError).toHaveBeenCalledWith(mockValidationError, mockRes);
+    expect(mockNext).toHaveBeenCalledWith(mockValidationError);
   });
 
   describe("File cleanup on post creation failure", () => {
@@ -216,13 +214,10 @@ describe("createPost controller", () => {
       });
       vi.mocked(prisma.$transaction).mockResolvedValue(null);
 
-      await createPost(mockReq, mockRes);
+      await createPost(mockReq, mockRes, mockNext);
 
       expect(CloudinaryService.delete).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(PostCreationFailedError),
-        mockRes
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(PostCreationFailedError));
     });
 
     it("should continue with error response even if file cleanup fails", async () => {
@@ -250,17 +245,14 @@ describe("createPost controller", () => {
         new Error("Cloudinary deletion failed")
       );
 
-      await createPost(mockReq, mockRes);
+      await createPost(mockReq, mockRes, mockNext);
 
       expect(CloudinaryService.delete).toHaveBeenCalledWith(
         mockUploadedFileInfo.publicId,
         "raw"
       );
       // Should still call handleError with PostCreationFailedError even if cleanup fails
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(PostCreationFailedError),
-        mockRes
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(PostCreationFailedError));
     });
   });
 
@@ -312,7 +304,7 @@ describe("createPost controller", () => {
       });
       vi.mocked(prisma.$transaction).mockResolvedValue(mockPostResult);
 
-      await createPost(mockReq, mockRes);
+      await createPost(mockReq, mockRes, mockNext);
 
       expect(handleRequestValidation).toHaveBeenCalledWith(
         mockReq,
@@ -380,7 +372,7 @@ describe("createPost controller", () => {
       });
       vi.mocked(prisma.$transaction).mockResolvedValue(mockPostResult);
 
-      await createPost(mockReq, mockRes);
+      await createPost(mockReq, mockRes, mockNext);
 
       expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function));
 
@@ -429,7 +421,7 @@ describe("createPost controller", () => {
       });
       vi.mocked(prisma.$transaction).mockResolvedValue(mockPostResult);
 
-      await createPost(mockReq, mockRes);
+      await createPost(mockReq, mockRes, mockNext);
 
       expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function));
 
@@ -484,7 +476,7 @@ describe("createPost controller", () => {
       });
       vi.mocked(prisma.$transaction).mockResolvedValue(mockPostResult);
 
-      await createPost(mockReq, mockRes);
+      await createPost(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(201);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -517,9 +509,9 @@ describe("createPost controller", () => {
       });
       vi.mocked(prisma.$transaction).mockRejectedValue(dbError);
 
-      await createPost(mockReq, mockRes);
+      await createPost(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
     });
 
     it("should handle non-Error objects thrown during validation", async () => {
@@ -529,9 +521,9 @@ describe("createPost controller", () => {
 
       vi.mocked(handleRequestValidation).mockRejectedValue(unexpectedError);
 
-      await createPost(mockReq, mockRes);
+      await createPost(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(unexpectedError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(unexpectedError);
     });
 
     it("should handle errors in the transformation step", async () => {
@@ -557,9 +549,9 @@ describe("createPost controller", () => {
       });
       vi.mocked(prisma.$transaction).mockResolvedValue(malformedPostResult);
 
-      await createPost(mockReq, mockRes);
+      await createPost(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
     });
   });
 
@@ -614,7 +606,7 @@ describe("createPost controller", () => {
       });
       vi.mocked(prisma.$transaction).mockResolvedValue(mockPostResult);
 
-      await createPost(mockReq, mockRes);
+      await createPost(mockReq, mockRes, mockNext);
 
       expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function));
 
@@ -651,17 +643,14 @@ describe("createPost controller", () => {
       vi.mocked(prisma.$transaction).mockResolvedValue(null);
       vi.mocked(CloudinaryService.delete).mockResolvedValue();
 
-      await createPost(mockReq, mockRes);
+      await createPost(mockReq, mockRes, mockNext);
 
       expect(CloudinaryService.delete).toHaveBeenCalledWith(
         "failed_file_id",
         "raw"
       );
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(PostCreationFailedError),
-        mockRes
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(PostCreationFailedError));
     });
   });
 
@@ -708,7 +697,7 @@ describe("createPost controller", () => {
       });
       vi.mocked(prisma.$transaction).mockResolvedValue(mockPostResult);
 
-      await createPost(mockReq, mockRes);
+      await createPost(mockReq, mockRes, mockNext);
 
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({

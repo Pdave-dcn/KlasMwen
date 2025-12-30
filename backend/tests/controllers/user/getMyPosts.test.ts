@@ -3,8 +3,6 @@ import { Prisma } from "@prisma/client";
 import { getMyPosts } from "../../../src/controllers/user/user.content.controller";
 import prisma from "../../../src/core/config/db.js";
 import { AuthenticationError } from "../../../src/core/error/custom/auth.error.js";
-import { handleError } from "../../../src/core/error/index.js";
-
 import { createAuthenticatedUser } from "./shared/helpers.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -74,10 +72,12 @@ vi.mock("../../../src/core/error/index.js", () => ({
 describe("getMyPosts controller", () => {
   let mockReq: Request;
   let mockRes: Response;
+  let mockNext: any;
 
   beforeEach(() => {
     mockReq = createMockRequest();
     mockRes = createMockResponse();
+    mockNext = vi.fn();
     vi.clearAllMocks();
   });
 
@@ -112,7 +112,7 @@ describe("getMyPosts controller", () => {
       mockReq.user = createAuthenticatedUser();
       mockReq.query = { postLimit: "10", postCursor: undefined };
 
-      await getMyPosts(mockReq, mockRes);
+      await getMyPosts(mockReq, mockRes, mockNext);
 
       expect(prisma.post.findMany).toHaveBeenCalledTimes(1);
 
@@ -143,7 +143,7 @@ describe("getMyPosts controller", () => {
       mockReq.user = createAuthenticatedUser();
       mockReq.query = { postLimit: "10", postCursor: undefined };
 
-      await getMyPosts(mockReq, mockRes);
+      await getMyPosts(mockReq, mockRes, mockNext);
 
       expect(mockRes.json).toHaveBeenCalledWith({
         data: [],
@@ -166,9 +166,9 @@ describe("getMyPosts controller", () => {
       (prisma.post.findMany as any).mockRejectedValue(dbError);
       (prisma.post.count as any).mockResolvedValue(0);
 
-      await getMyPosts(mockReq, mockRes);
+      await getMyPosts(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(dbError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
     });
 
     it("should handle Prisma known request errors", async () => {
@@ -182,9 +182,9 @@ describe("getMyPosts controller", () => {
       (prisma.post.findMany as any).mockRejectedValue(prismaError);
       (prisma.post.count as any).mockResolvedValue(0);
 
-      await getMyPosts(mockReq, mockRes);
+      await getMyPosts(mockReq, mockRes, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(prismaError, mockRes);
+      expect(mockNext).toHaveBeenCalledWith(prismaError);
     });
   });
 });

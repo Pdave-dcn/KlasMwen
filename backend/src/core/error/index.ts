@@ -40,19 +40,19 @@ import type { Request, Response } from "express";
  *
  * @param {unknown} error - The error caught in the try-catch block. Can be any type of error
  *                          or thrown value (Error, PrismaClientError, ZodError, MulterError, etc.)
- * @param {Response} res - Express Response object used to send the error response back to the client.
- *                         Must contain a reference to the Request object for logging context.
+ * @param {Request} req - Express Request object used for logging context
+ * @param {Response} res - Express Response object used to send the error response back to the client
  *
  * @returns {Response} Express Response object with appropriate status code and error message JSON
  *
  * @example
- * // Usage in a controller
- * try {
- *   const user = await createUser(userData);
- *   return res.status(201).json(user);
- * } catch (error) {
- *   return handleError(error, res);
- * }
+ * // Usage in error middleware
+ * export const errorMiddleware: ErrorRequestHandler = (err, req, res, next) => {
+ *   if (res.headersSent) {
+ *     return next(err);
+ *   }
+ *   handleError(err, req, res);
+ * };
  *
  * @see {@link BaseCustomError} for custom application errors
  * @see {@link ValidationErrorHandler} for Zod validation error handling
@@ -61,11 +61,12 @@ import type { Request, Response } from "express";
  * @see {@link FileUploadErrorHandler} for Multer error handling
  * @see {@link GenericErrorHandler} for fallback error handling
  */
-export const handleError = (error: unknown, res: Response): Response => {
-  const req = res.req as
-    | (Request & { logContext?: Record<string, unknown> })
-    | undefined;
-  const contextLogger = logger.child(req?.logContext ?? {});
+export const handleError = (
+  error: unknown,
+  req: Request & { logContext?: Record<string, unknown> },
+  res: Response
+): Response => {
+  const contextLogger = logger.child(req.logContext ?? {});
 
   const errorType =
     error instanceof Error ? error.constructor.name : typeof error;
@@ -91,7 +92,10 @@ export const handleError = (error: unknown, res: Response): Response => {
     `Request failed with error (${errorType})`
   );
 
-  let errorResponse;
+  let errorResponse: {
+    status: number;
+    response: { message: string; errors?: unknown };
+  };
 
   // Handle all custom errors
   if (error instanceof BaseCustomError) {

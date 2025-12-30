@@ -1,17 +1,16 @@
 /* eslint-disable max-lines-per-function*/
 import prisma from "../core/config/db.js";
 import { createLogger } from "../core/config/logger.js";
-import { handleError } from "../core/error/index.js";
 import PostService from "../features/posts/service/PostService.js";
 import createActionLogger from "../utils/logger.util.js";
 import { PostIdParamSchema } from "../zodSchemas/post.zod.js";
 
 import type { AuthenticatedRequest } from "../types/AuthRequest.js";
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction} from "express";
 
 const controllerLogger = createLogger({ module: "reactionController" });
 
-const toggleLike = async (req: Request, res: Response) => {
+const toggleLike = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(controllerLogger, "toggleLike", req);
 
   try {
@@ -83,7 +82,7 @@ const toggleLike = async (req: Request, res: Response) => {
       message: "Post liked successfully",
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 

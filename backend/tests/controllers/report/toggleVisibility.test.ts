@@ -2,7 +2,6 @@ import { ZodError } from "zod";
 
 import { toggleVisibility } from "../../../src/controllers/report/report.moderator.controller.js";
 import prisma from "../../../src/core/config/db.js";
-import { handleError } from "../../../src/core/error";
 import { AuthorizationError } from "../../../src/core/error/custom/auth.error";
 import CommentService from "../../../src/features/comments/service/CommentService";
 import PostService from "../../../src/features/posts/service/PostService";
@@ -61,6 +60,7 @@ const mockCommentService = vi.mocked(CommentService);
 describe("toggleVisibility controller", () => {
   let mockRequest: Request;
   let mockResponse: Response;
+  let mockNext: any;
 
   const mockUserId = "910da3f7-f419-4929-b775-6e26ba17f248";
   const mockPostId = "6b2efb09-e634-41d9-b2eb-d4972fabb729";
@@ -74,6 +74,7 @@ describe("toggleVisibility controller", () => {
 
   beforeEach(() => {
     mockRequest = createMockRequest();
+    mockNext = vi.fn();
     mockResponse = createMockResponse();
     vi.clearAllMocks();
 
@@ -112,7 +113,7 @@ describe("toggleVisibility controller", () => {
         id: mockPostId,
       } as any);
 
-      await toggleVisibility(mockRequest, mockResponse);
+      await toggleVisibility(mockRequest, mockResponse, mockNext);
 
       expect(mockPostService.verifyPostExists).toHaveBeenCalledWith(
         mockPostData.resourceId
@@ -130,7 +131,7 @@ describe("toggleVisibility controller", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "Successfully hid post",
       });
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
     it("should successfully unhide a 'comment', check existence, and return 200", async () => {
@@ -145,7 +146,7 @@ describe("toggleVisibility controller", () => {
 
       vi.mocked(prisma.comment.update).mockResolvedValue({ id: 456 } as any);
 
-      await toggleVisibility(mockRequest, mockResponse);
+      await toggleVisibility(mockRequest, mockResponse, mockNext);
 
       expect(mockPostService.verifyPostExists).not.toHaveBeenCalled();
       expect(mockCommentService.commentExists).toHaveBeenCalledWith(
@@ -163,37 +164,20 @@ describe("toggleVisibility controller", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "Successfully unhid comment",
       });
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
     });
   });
 
   // --- Error Cases ---
   describe("Error Cases", () => {
-    it("should call handleError when checkAdminAuth fails (unauthorized user)", async () => {
-      // Setup
-      mockRequest.user = createAuthenticatedUser({ role: "STUDENT" as Role });
-
-      await toggleVisibility(mockRequest, mockResponse);
-
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthorizationError),
-        mockResponse
-      );
-      expect(mockPostService.verifyPostExists).not.toHaveBeenCalled();
-      expect(prisma.post.update).not.toHaveBeenCalled();
-    });
-
     it("should call handleError when request body validation fails (ZodError)", async () => {
       // Setup
       mockRequest.user = mockAdminUser;
       mockRequest.body = { resourceType: "invalid", resourceId: 1 };
 
-      await toggleVisibility(mockRequest, mockResponse);
+      await toggleVisibility(mockRequest, mockResponse, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(ZodError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
       expect(mockPostService.verifyPostExists).not.toHaveBeenCalled();
       expect(prisma.post.update).not.toHaveBeenCalled();
     });
@@ -213,14 +197,14 @@ describe("toggleVisibility controller", () => {
       mockPostService.verifyPostExists.mockRejectedValue(notFoundError);
 
       // Execute
-      await toggleVisibility(mockRequest, mockResponse);
+      await toggleVisibility(mockRequest, mockResponse, mockNext);
 
       // Assertions
       expect(mockPostService.verifyPostExists).toHaveBeenCalledWith(
         mockPostData.resourceId
       );
       expect(prisma.post.update).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(notFoundError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(notFoundError);
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
 
@@ -239,14 +223,14 @@ describe("toggleVisibility controller", () => {
       mockCommentService.commentExists.mockRejectedValue(notFoundError);
 
       // Execute
-      await toggleVisibility(mockRequest, mockResponse);
+      await toggleVisibility(mockRequest, mockResponse, mockNext);
 
       // Assertions
       expect(mockCommentService.commentExists).toHaveBeenCalledWith(
         mockCommentData.resourceId
       );
       expect(prisma.comment.update).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(notFoundError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(notFoundError);
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
 
@@ -265,12 +249,12 @@ describe("toggleVisibility controller", () => {
       vi.mocked(prisma.post.update).mockRejectedValue(dbError);
 
       // Execute
-      await toggleVisibility(mockRequest, mockResponse);
+      await toggleVisibility(mockRequest, mockResponse, mockNext);
 
       // Assertions
       expect(mockPostService.verifyPostExists).toHaveBeenCalled(); // Existence check passed
       expect(prisma.post.update).toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(dbError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
 
@@ -289,12 +273,12 @@ describe("toggleVisibility controller", () => {
       vi.mocked(prisma.comment.update).mockRejectedValue(dbError);
 
       // Execute
-      await toggleVisibility(mockRequest, mockResponse);
+      await toggleVisibility(mockRequest, mockResponse, mockNext);
 
       // Assertions
       expect(mockCommentService.commentExists).toHaveBeenCalled(); // Existence check passed
       expect(prisma.comment.update).toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(dbError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(dbError);
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
   });

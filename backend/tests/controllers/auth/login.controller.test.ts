@@ -3,8 +3,6 @@ import passport from "passport";
 
 import { loginUser } from "../../../src/controllers/auth/login.controller.js";
 import env from "../../../src/core/config/env.js";
-import { handleError } from "../../../src/core/error/index.js";
-
 import type { NextFunction, Request, Response } from "express";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -33,7 +31,6 @@ vi.mock("../../../src/core/config/logger.js", () => ({
 
 const mockedPassport = vi.mocked(passport);
 const mockedJwt = vi.mocked(jwt);
-const mockedHandleError = vi.mocked(handleError);
 
 describe("Login Controller", () => {
   let mockRequest: Partial<Request>;
@@ -149,7 +146,6 @@ describe("Login Controller", () => {
 
       // Verify no errors
       expect(mockNext).not.toHaveBeenCalled();
-      expect(mockedHandleError).not.toHaveBeenCalled();
     });
 
     it("should set secure cookie in production environment", () => {
@@ -418,7 +414,7 @@ describe("Login Controller", () => {
 
       loginUser(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(mockedHandleError).toHaveBeenCalledWith(jwtError, mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(jwtError);
       expect(cookieSpy).not.toHaveBeenCalled();
     });
 

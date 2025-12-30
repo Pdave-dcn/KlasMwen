@@ -1,15 +1,14 @@
 import { createLogger } from "../core/config/logger.js";
-import { handleError } from "../core/error/index.js";
 import PostService from "../features/posts/service/PostService.js";
 import createActionLogger from "../utils/logger.util.js";
 import { SearchPostsSchema } from "../zodSchemas/search.zod.js";
 
 import type { AuthenticatedRequest } from "../types/AuthRequest.js";
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction} from "express";
 
 const controllerLogger = createLogger({ module: "SearchController" });
 
-const searchPosts = async (req: Request, res: Response) => {
+const searchPosts = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(controllerLogger, "searchPosts", req);
 
   try {
@@ -70,7 +69,7 @@ const searchPosts = async (req: Request, res: Response) => {
       },
     });
   } catch (error: unknown) {
-    return handleError(error, res);
+    return next(error);
   }
 };
 

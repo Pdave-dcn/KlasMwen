@@ -6,7 +6,6 @@ import { toggleLike } from "../../src/controllers/reaction.controller";
 import prisma from "../../src/core/config/db.js";
 import { AuthenticationError } from "../../src/core/error/custom/auth.error";
 import { PostNotFoundError } from "../../src/core/error/custom/post.error";
-import { handleError } from "../../src/core/error/index";
 import { PostIdParamSchema } from "../../src/zodSchemas/post.zod.js";
 
 vi.mock("../../src/core/config/db.js", () => ({
@@ -59,12 +58,15 @@ vi.mock("../../src/core/config/logger.js", () => ({
 describe("Reaction controller", () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
+  let mockNext: any;
 
   const mockPostId = "a1b2c3d4-e5f6-7890-1234-567890abcdef";
   const mockUserId = "c3d4e5f6-7890-1234-5678-90abcdef1234";
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    mockNext = vi.fn();
 
     mockResponse = {
       status: vi.fn(() => mockResponse as Response),
@@ -102,7 +104,7 @@ describe("Reaction controller", () => {
         mimeType: null,
       } as Post);
 
-      await toggleLike(mockRequest as Request, mockResponse as Response);
+      await toggleLike(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(PostIdParamSchema.parse).toHaveBeenCalledWith({ id: mockPostId });
       expect(mockResponse.status).toHaveBeenCalledWith(200);
@@ -141,7 +143,7 @@ describe("Reaction controller", () => {
         postId: mockPostId,
       } as Like);
 
-      await toggleLike(mockRequest as Request, mockResponse as Response);
+      await toggleLike(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(PostIdParamSchema.parse).toHaveBeenCalledWith({ id: mockPostId });
       expect(mockResponse.status).toHaveBeenCalledWith(200);
@@ -163,13 +165,10 @@ describe("Reaction controller", () => {
 
       vi.mocked(prisma.post.findUnique).mockResolvedValue(null);
 
-      await toggleLike(mockRequest as Request, mockResponse as Response);
+      await toggleLike(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(PostIdParamSchema.parse).toHaveBeenCalledWith({ id: mockPostId });
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(PostNotFoundError),
-        mockResponse
-      );
+      expect(mockNext).toHaveBeenCalledWith(expect.any(PostNotFoundError));
     });
 
     it("should throw an error and call handleError if the post ID is invalid", async () => {
@@ -187,10 +186,10 @@ describe("Reaction controller", () => {
         throw new Error("Invalid UUID format");
       });
 
-      await toggleLike(mockRequest as Request, mockResponse as Response);
+      await toggleLike(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(PostIdParamSchema.parse).toHaveBeenCalledWith({ id: 1 });
-      expect(handleError).toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
     });
 
     it("should handle database errors when creating a like", async () => {
@@ -223,9 +222,9 @@ describe("Reaction controller", () => {
         new Error("Database connection failed")
       );
 
-      await toggleLike(mockRequest as Request, mockResponse as Response);
+      await toggleLike(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
       expect(prisma.like.create).toHaveBeenCalledWith({
         data: { userId: mockUserId, postId: mockPostId },
       });
@@ -265,9 +264,9 @@ describe("Reaction controller", () => {
         new Error("Database connection failed")
       );
 
-      await toggleLike(mockRequest as Request, mockResponse as Response);
+      await toggleLike(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
       expect(prisma.like.delete).toHaveBeenCalledWith({
         where: { userId_postId: { userId: mockUserId, postId: mockPostId } },
       });
@@ -288,9 +287,9 @@ describe("Reaction controller", () => {
         new Error("Database connection failed")
       );
 
-      await toggleLike(mockRequest as Request, mockResponse as Response);
+      await toggleLike(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
       expect(PostIdParamSchema.parse).toHaveBeenCalledWith({ id: mockPostId });
     });
 
@@ -323,9 +322,9 @@ describe("Reaction controller", () => {
         new Error("Like query failed")
       );
 
-      await toggleLike(mockRequest as Request, mockResponse as Response);
+      await toggleLike(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
       expect(PostIdParamSchema.parse).toHaveBeenCalledWith({ id: mockPostId });
     });
   });

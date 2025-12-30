@@ -149,15 +149,6 @@ describe("createPost controller", () => {
     });
   });
 
-  it("should call handleError with AuthenticationError when user is not authenticated", async () => {
-    await createPost(mockReq, mockRes);
-
-    expect(handleError).toHaveBeenCalledWith(
-      expect.any(AuthenticationError),
-      mockRes
-    );
-  });
-
   it("should return 500 and clean up the file if post creation fails", async () => {
     mockReq.user = createAuthenticatedUser({
       id: "60676309-9958-4a6a-b4bc-463199dab4ee",

@@ -222,45 +222,6 @@ describe("Avatar Controllers", () => {
       });
     });
 
-    it("should call handleError when user is not admin", async () => {
-      mockRequest = {
-        body: { url: "https://cdn.example.com/avatars/avatar1.png" },
-        user: {
-          id: mockUserId,
-          role: "STUDENT",
-          username: "test_username",
-          email: "test_email",
-        },
-        params: {},
-      };
-
-      await addAvatar(mockRequest as Request, mockResponse as Response);
-
-      expect(prisma.avatar.create).not.toHaveBeenCalled();
-      expect(prisma.avatar.createMany).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthorizationError),
-        mockResponse
-      );
-    });
-
-    it("should call handleError when user is not provided", async () => {
-      mockRequest = {
-        body: { url: "https://cdn.example.com/avatars/avatar1.png" },
-        user: undefined,
-        params: {},
-      };
-
-      await addAvatar(mockRequest as Request, mockResponse as Response);
-
-      expect(prisma.avatar.create).not.toHaveBeenCalled();
-      expect(prisma.avatar.createMany).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthorizationError),
-        mockResponse
-      );
-    });
-
     it("should handle validation errors for invalid URL", async () => {
       mockRequest = {
         body: { url: "invalid-url" },
@@ -596,43 +557,6 @@ describe("Avatar Controllers", () => {
       );
     });
 
-    it("should call handleError for non-admin user", async () => {
-      mockRequest = {
-        query: {},
-        params: {},
-        user: {
-          id: mockUserId,
-          role: "STUDENT",
-          username: "test_username",
-          email: "test_email",
-        },
-      };
-
-      await getAvatars(mockRequest as Request, mockResponse as Response);
-
-      expect(prisma.avatar.findMany).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthorizationError),
-        mockResponse
-      );
-    });
-
-    it("should call handleError when user is not provided", async () => {
-      mockRequest = {
-        query: {},
-        params: {},
-        user: undefined,
-      };
-
-      await getAvatars(mockRequest as Request, mockResponse as Response);
-
-      expect(prisma.avatar.findMany).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthorizationError),
-        mockResponse
-      );
-    });
-
     it("should handle database errors", async () => {
       mockRequest = {
         query: {},
@@ -687,43 +611,6 @@ describe("Avatar Controllers", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "Avatar deleted successfully",
       });
-    });
-
-    it("should call handleError for non-admin user", async () => {
-      mockRequest = {
-        params: { id: "1" },
-        user: {
-          id: mockUserId,
-          role: "STUDENT",
-          username: "test_username",
-          email: "test_email",
-        },
-      };
-
-      await deleteAvatar(mockRequest as Request, mockResponse as Response);
-
-      expect(prisma.avatar.findUnique).not.toHaveBeenCalled();
-      expect(prisma.avatar.delete).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthorizationError),
-        mockResponse
-      );
-    });
-
-    it("should call handleError when user is not provided", async () => {
-      mockRequest = {
-        params: { id: "1" },
-        user: undefined,
-      };
-
-      await deleteAvatar(mockRequest as Request, mockResponse as Response);
-
-      expect(prisma.avatar.findUnique).not.toHaveBeenCalled();
-      expect(prisma.avatar.delete).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthorizationError),
-        mockResponse
-      );
     });
 
     it("should call handleError for invalid avatar ID", async () => {

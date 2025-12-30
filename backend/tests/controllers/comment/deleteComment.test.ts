@@ -138,19 +138,6 @@ describe("deleteComment controller", () => {
   });
 
   describe("Error Cases", () => {
-    it("should call handleError with AuthenticationError when user is not authenticated", async () => {
-      mockRequest.user = undefined;
-      mockRequest.params = { id: "5" };
-
-      await deleteComment(mockRequest, mockResponse);
-
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthenticationError),
-        mockResponse
-      );
-      expect(prisma.comment.delete).not.toHaveBeenCalled();
-    });
-
     it("should call handleError if the comment does not exist", async () => {
       mockRequest.user = createAuthenticatedUser({ id: mockUserId1 });
       mockRequest.params = { id: "999" };

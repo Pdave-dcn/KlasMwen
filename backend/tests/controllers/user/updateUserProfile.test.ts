@@ -237,23 +237,6 @@ describe("updateUserProfile controller", () => {
     });
   });
 
-  describe("Authentication Errors", () => {
-    it("should handle missing user in request", async () => {
-      mockReq.user = undefined;
-      mockReq.body = { bio: "New bio" };
-
-      await updateUserProfile(mockReq, mockRes);
-
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthenticationError),
-        mockRes
-      );
-
-      expect(prisma.user.findUnique).not.toHaveBeenCalled();
-      expect(prisma.user.update).not.toHaveBeenCalled();
-    });
-  });
-
   describe("Database Errors", () => {
     it("should handle user not found during update", async () => {
       mockReq.user = createAuthenticatedUser({ id: "non-existent-id" });

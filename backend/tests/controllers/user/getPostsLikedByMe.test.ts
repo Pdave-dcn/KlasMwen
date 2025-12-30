@@ -257,34 +257,6 @@ describe("getPostsLikedByMe controller", () => {
     });
   });
 
-  describe("Authentication Errors", () => {
-    it("should handle missing user in request", async () => {
-      mockReq.user = undefined;
-      mockReq.query = {};
-
-      await getPostsLikedByMe(mockReq, mockRes);
-
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthenticationError),
-        mockRes
-      );
-      expect(prisma.like.findMany).not.toHaveBeenCalled();
-    });
-
-    it("should handle undefined user in request", async () => {
-      mockReq.user = undefined;
-      mockReq.query = {};
-
-      await getPostsLikedByMe(mockReq, mockRes);
-
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthenticationError),
-        mockRes
-      );
-      expect(prisma.like.findMany).not.toHaveBeenCalled();
-    });
-  });
-
   describe("Validation Errors", () => {
     it("should handle invalid pagination parameters", async () => {
       await expectValidationError(

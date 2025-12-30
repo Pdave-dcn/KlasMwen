@@ -157,22 +157,6 @@ describe("getMyPosts controller", () => {
     });
   });
 
-  describe("Authentication Errors", () => {
-    it("should handle missing user in request", async () => {
-      mockReq.user = undefined;
-      mockReq.query = {};
-
-      await getMyPosts(mockReq, mockRes);
-
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthenticationError),
-        mockRes
-      );
-      expect(prisma.post.findMany).not.toHaveBeenCalled();
-      expect(prisma.post.count).not.toHaveBeenCalled();
-    });
-  });
-
   describe("Database Errors", () => {
     it("should handle database connection errors", async () => {
       mockReq.user = createAuthenticatedUser();

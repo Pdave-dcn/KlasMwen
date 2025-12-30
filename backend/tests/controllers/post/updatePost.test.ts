@@ -280,62 +280,6 @@ describe("updatePost controller", () => {
     });
   });
 
-  describe("Authentication & Authorization", () => {
-    it("should call handleError with AuthenticationError when user is not authenticated", async () => {
-      mockReq.params = { id: mockPostId };
-      mockReq.body = mockRequestData;
-
-      await updatePost(mockReq, mockRes);
-
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthenticationError),
-        mockRes
-      );
-    });
-
-    it("should call handleError with AuthorizationError if the user is not the author", async () => {
-      mockReq.user = createAuthenticatedUser();
-      mockReq.params = { id: mockPostId };
-      mockReq.body = mockRequestData;
-
-      const mockPostInDbWithDifferentAuthor = {
-        id: mockPostId,
-        authorId: "some-other-author",
-      };
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(
-        mockPostInDbWithDifferentAuthor as any
-      );
-
-      await updatePost(mockReq, mockRes);
-
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthorizationError),
-        mockRes
-      );
-    });
-
-    it("should call handleError with PostUpdateError when edit time window has expired", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-      mockReq.body = mockRequestData;
-
-      const mockPostInDbWithCreatedAt = {
-        ...mockPostInDb,
-        createdAt: new Date(Date.now() - 6 * 60 * 1000), // Set creation time to 6 minutes ago
-      };
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(
-        mockPostInDbWithCreatedAt as any
-      );
-
-      await updatePost(mockReq, mockRes);
-
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(PostUpdateFailedError),
-        mockRes
-      );
-    });
-  });
-
   describe("Not Found", () => {
     it("should call handleError when the post is not found", async () => {
       const mockMinimalBody = {

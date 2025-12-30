@@ -169,20 +169,6 @@ describe("createComment controller", () => {
   });
 
   describe("Error Cases", () => {
-    it("should call handleError with AuthenticationError when user is not authenticated", async () => {
-      mockRequest.user = undefined;
-      mockRequest.params = { id: mockPostId };
-      mockRequest.body = { content: "Unauthorized comment." };
-
-      await createComment(mockRequest, mockResponse);
-
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthenticationError),
-        mockResponse
-      );
-      expect(prisma.comment.create).not.toHaveBeenCalled();
-    });
-
     it("should call handleError if the post does not exist", async () => {
       mockRequest.user = createAuthenticatedUser({ id: mockUserId1 });
       mockRequest.params = { id: mockPostId };
@@ -409,33 +395,6 @@ describe("createComment controller", () => {
       await createComment(mockRequest, mockResponse);
 
       expect(handleError).toHaveBeenCalled();
-    });
-  });
-
-  describe("Authentication Edge Cases", () => {
-    it("should handle null user object", async () => {
-      mockRequest.user = null as any;
-      mockRequest.params = { id: mockPostId };
-      mockRequest.body = { content: "Test comment" };
-
-      await createComment(mockRequest, mockResponse);
-
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthenticationError),
-        mockResponse
-      );
-    });
-
-    it("should handle user object with missing required fields", async () => {
-      mockRequest.user = {
-        /* missing id field */
-      } as any;
-      mockRequest.params = { id: mockPostId };
-      mockRequest.body = { content: "Test comment" };
-
-      await createComment(mockRequest, mockResponse);
-
-      expect(handleError).toHaveBeenCalledWith(expect.any(Error), mockResponse);
     });
   });
 

@@ -1,5 +1,6 @@
 import type { Post } from "@prisma/client";
 import type { Request, Response } from "express";
+import { vi } from "vitest";
 
 const mockComments = [
   {

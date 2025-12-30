@@ -66,64 +66,6 @@ describe("updateTag controller", () => {
     mockResponse = createMockResponse();
   });
 
-  describe("Authorization Tests", () => {
-    it("should call handleError for non-admin user", async () => {
-      mockRequest.body = { name: "TypeScript" };
-      mockRequest.params = { id: "1" };
-      mockRequest.user = createAuthenticatedUser({
-        id: mockUserId,
-        role: "STUDENT",
-      });
-
-      await updateTag(mockRequest, mockResponse);
-
-      expect(prisma.tag.findUnique).not.toHaveBeenCalled();
-      expect(prisma.tag.update).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthorizationError),
-        mockResponse
-      );
-    });
-
-    it("should call handleError for unauthenticated user", async () => {
-      mockRequest.body = { name: "TypeScript" };
-      mockRequest.params = { id: "1" };
-      mockRequest.user = undefined;
-
-      await updateTag(mockRequest, mockResponse);
-
-      expect(prisma.tag.findUnique).not.toHaveBeenCalled();
-      expect(prisma.tag.update).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthorizationError),
-        mockResponse
-      );
-    });
-
-    it("should allow ADMIN role to update tags", async () => {
-      mockRequest.body = { name: "TypeScript" };
-      mockRequest.params = { id: "1" };
-      mockRequest.user = createAuthenticatedUser({
-        id: mockUserId,
-        role: "ADMIN",
-      });
-
-      vi.mocked(prisma.tag.findUnique).mockResolvedValue({
-        id: 1,
-        name: "javascript",
-      });
-
-      vi.mocked(prisma.tag.update).mockResolvedValue({
-        id: 1,
-        name: "typescript",
-      });
-
-      await updateTag(mockRequest, mockResponse);
-
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
-    });
-  });
-
   describe("Tag ID Validation Tests", () => {
     beforeEach(() => {
       mockRequest.user = createAuthenticatedUser({

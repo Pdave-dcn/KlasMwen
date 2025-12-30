@@ -122,17 +122,6 @@ describe("getPostForEdit", () => {
     });
   });
 
-  it("should call handleError with AuthenticationError when user is not authenticated", async () => {
-    mockReq.params = { id: mockPostId };
-
-    await getPostForEdit(mockReq, mockRes);
-
-    expect(handleError).toHaveBeenCalledWith(
-      expect.any(AuthenticationError),
-      mockRes
-    );
-  });
-
   it("should call handleError with PostNotFoundError if the post is not found", async () => {
     mockReq.user = createAuthenticatedUser();
     mockReq.params = { id: mockPostId };

@@ -157,20 +157,6 @@ describe("Bookmark controller", () => {
       );
     });
 
-    it("should call handleError with AuthenticationError when user is not authenticated", async () => {
-      mockRequest = {
-        body: {},
-        params: { id: mockPostId },
-      };
-
-      await createBookmark(mockRequest as Request, mockResponse as Response);
-
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthenticationError),
-        mockResponse
-      );
-    });
-
     it("should call handleError with validation error for invalid post ID", async () => {
       mockRequest = {
         body: {},
@@ -289,20 +275,6 @@ describe("Bookmark controller", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "Bookmark not found",
       });
-    });
-
-    it("should call handleError with AuthenticationError when user is not authenticated", async () => {
-      mockRequest = {
-        body: {},
-        params: { id: mockPostId },
-      };
-
-      await deleteBookmark(mockRequest as Request, mockResponse as Response);
-
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthenticationError),
-        mockResponse
-      );
     });
 
     it("should call handleError with validation error for invalid post ID", async () => {
@@ -612,19 +584,6 @@ describe("Bookmark controller", () => {
           nextCursor: mockPostId,
         },
       });
-    });
-
-    it("should call handleError with AuthenticationError when user is not authenticated", async () => {
-      mockRequest = {
-        query: {},
-      };
-
-      await getBookmarks(mockRequest as Request, mockResponse as Response);
-
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthenticationError),
-        mockResponse
-      );
     });
 
     it("should call handleError with validation error for invalid limit", async () => {

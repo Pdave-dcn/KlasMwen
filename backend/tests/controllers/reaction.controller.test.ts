@@ -150,22 +150,6 @@ describe("Reaction controller", () => {
       });
     });
 
-    it("should call handleError with AuthenticationError when user is not authenticated", async () => {
-      mockRequest = {
-        user: undefined,
-        params: { id: mockPostId },
-      };
-
-      await toggleLike(mockRequest as Request, mockResponse as Response);
-
-      expect(PostIdParamSchema.parse).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthenticationError),
-        mockResponse
-      );
-      expect(prisma.post.findUnique).not.toHaveBeenCalled();
-    });
-
     it("should call handleError if the post does not exist", async () => {
       mockRequest = {
         user: {

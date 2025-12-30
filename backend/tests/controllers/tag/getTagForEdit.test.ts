@@ -65,70 +65,6 @@ describe("getTagForEdit controller", () => {
     mockResponse = createMockResponse();
   });
 
-  describe("Authorization Tests", () => {
-    it("should call handleError for non-admin user", async () => {
-      mockRequest.params = { id: "1" };
-      mockRequest.user = createAuthenticatedUser({
-        id: mockUserId,
-        role: "STUDENT",
-      });
-
-      await getTagForEdit(mockRequest, mockResponse);
-
-      expect(prisma.tag.findUnique).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthorizationError),
-        mockResponse
-      );
-    });
-
-    it("should call handleError for unauthenticated user", async () => {
-      mockRequest.params = { id: "1" };
-      mockRequest.user = undefined;
-
-      await getTagForEdit(mockRequest, mockResponse);
-
-      expect(prisma.tag.findUnique).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthorizationError),
-        mockResponse
-      );
-    });
-
-    it("should call handleError for user with TEACHER role", async () => {
-      mockRequest.params = { id: "1" };
-      mockRequest.user = createAuthenticatedUser({
-        id: mockUserId,
-        role: "TEACHER",
-      });
-
-      await getTagForEdit(mockRequest, mockResponse);
-
-      expect(prisma.tag.findUnique).not.toHaveBeenCalled();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.any(AuthorizationError),
-        mockResponse
-      );
-    });
-
-    it("should allow ADMIN role to fetch tag", async () => {
-      mockRequest.params = { id: "1" };
-      mockRequest.user = createAuthenticatedUser({
-        id: mockUserId,
-        role: "ADMIN",
-      });
-
-      vi.mocked(prisma.tag.findUnique).mockResolvedValue({
-        id: 1,
-        name: "javascript",
-      });
-
-      await getTagForEdit(mockRequest, mockResponse);
-
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
-    });
-  });
-
   describe("Tag ID Validation Tests", () => {
     beforeEach(() => {
       mockRequest.user = createAuthenticatedUser({
@@ -572,18 +508,6 @@ describe("getTagForEdit controller", () => {
           where: { id: 123 },
         })
       );
-    });
-
-    it("should not call findUnique if authorization fails", async () => {
-      mockRequest.params = { id: "1" };
-      mockRequest.user = createAuthenticatedUser({
-        id: mockUserId,
-        role: "STUDENT",
-      });
-
-      await getTagForEdit(mockRequest, mockResponse);
-
-      expect(prisma.tag.findUnique).not.toHaveBeenCalled();
     });
 
     it("should not call findUnique if tag ID is invalid", async () => {

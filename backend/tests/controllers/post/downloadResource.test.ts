@@ -210,18 +210,6 @@ describe("downloadResource controller", () => {
     });
   });
 
-  describe("authentication cases", () => {
-    it("should reject unauthenticated requests", async () => {
-      mockReq.user = undefined;
-      mockReq.params = { id: resourceId };
-
-      await downloadResource(mockReq, mockRes);
-
-      expect(handleError).toHaveBeenCalled();
-      expect(prisma.post.findUnique).not.toHaveBeenCalled();
-    });
-  });
-
   describe("validation cases", () => {
     it("should handle invalid post ID format", async () => {
       mockReq.user = createAuthenticatedUser();

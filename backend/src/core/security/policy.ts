@@ -66,4 +66,21 @@ export const POLICY: PolicyMap = {
       report: (u, c) => u.id !== getAuthorId(c),
     },
   },
+
+  GUEST: {
+    posts: {
+      create: true,
+      read: true,
+      update: isOwner,
+      delete: isOwner,
+      report: (u, p) => u.id !== getAuthorId(p),
+    },
+    comments: {
+      create: true,
+      read: true,
+      update: isOwner,
+      delete: isOwner,
+      report: (u, c) => u.id !== getAuthorId(c),
+    },
+  },
 };

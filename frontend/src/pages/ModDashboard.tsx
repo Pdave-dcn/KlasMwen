@@ -1,5 +1,9 @@
+/* eslint-disable complexity */
 import { useState, useEffect } from "react";
 
+import { Lock } from "lucide-react";
+
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DashboardSkeleton } from "@/features/dashboards/modDashboard/components/DashboardSkeleton";
 import { EmptyReportsState } from "@/features/dashboards/modDashboard/components/EmptyReportState";
 import { Pagination } from "@/features/dashboards/modDashboard/components/Pagination";
@@ -13,12 +17,15 @@ import { useModalState } from "@/features/dashboards/modDashboard/hooks/useModal
 import { usePagination } from "@/features/dashboards/modDashboard/hooks/usePagination";
 import { useReportManagement } from "@/features/dashboards/modDashboard/hooks/useReportManagement";
 import { useReportReasonsQuery, useReportsQuery } from "@/queries/report.query";
+import { useAuthStore } from "@/stores/auth.store";
 import type { Report, ReportsQueryParams } from "@/zodSchemas/report.zod";
 
 const ITEMS_PER_PAGE = 10;
 
 const ModDashboard = () => {
   const [filters, setFilters] = useState<ReportsQueryParams>({});
+
+  const { isGuest } = useAuthStore();
 
   // Modal state management
   const reportModal = useModalState<Report>();
@@ -97,6 +104,20 @@ const ModDashboard = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-6 py-8">
+        {/* Guest User Notice */}
+        {isGuest && (
+          <Alert className="mb-6 border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
+            <Lock className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+            <AlertDescription className="text-amber-800 dark:text-amber-300 ml-2">
+              <span className="font-semibold">Guest Mode – Demo Access:</span>{" "}
+              You are viewing the reports dashboard as a guest for demonstration
+              purposes. In a real environment, this section is restricted to
+              moderators and administrators. All editing and administrative
+              actions are disabled.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Statistics Cards */}
         <ReportStatsCards />
 

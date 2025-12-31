@@ -139,7 +139,7 @@ const MobileTabBar = ({ onCreateClick }: { onCreateClick: () => void }) => {
               <Menu className="h-6 w-6 mb-0.5" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" side="top" className="w-56 mb-2">
-              <RequireRole allowed={["ADMIN", "MODERATOR"]}>
+              <RequireRole allowed={["ADMIN", "MODERATOR", "GUEST"]}>
                 <DropdownMenuItem onClick={() => navigate("/mod/dashboard")}>
                   <Shield className="mr-2 h-4 w-4" />
                   <span>Moderation</span>

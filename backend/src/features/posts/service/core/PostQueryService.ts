@@ -182,7 +182,7 @@ export class PostQueryService {
       throw new PostNotFoundError(postId);
     }
 
-    const transformedPost = PostTransformer.transformPost(post as RawPost);
+    const transformedPost = PostTransformer.transformPost(post);
     return PostEnricher.enrichSinglePost(transformedPost, currentUserId);
   }
 

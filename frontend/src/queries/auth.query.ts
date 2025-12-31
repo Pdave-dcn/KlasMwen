@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { useMutation } from "@tanstack/react-query";
 
-import { signIn, signUp } from "@/api/auth.api";
+import { loginAsGuest, signIn, signUp } from "@/api/auth.api";
 import {
   handleAuthError,
   type AuthError,
@@ -28,6 +28,19 @@ export const useAuthMutation = (
     },
     onError: (error: AxiosError<AuthError>) => {
       handleAuthError(error, setError);
+    },
+  });
+};
+
+export const useGuestAuthMutation = () => {
+  const navigate = useNavigate();
+
+  return useMutation({
+    mutationFn: loginAsGuest,
+    onSuccess: (data) => {
+      useAuthStore.getState().login(data.user);
+
+      void navigate("/home");
     },
   });
 };

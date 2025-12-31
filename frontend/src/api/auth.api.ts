@@ -48,4 +48,17 @@ const logOut = async () => {
   return res.data;
 };
 
-export { signIn, signUp, logOut };
+const loginAsGuest = async () => {
+  try {
+    const res = await api.post("/auth/guest");
+
+    const validatedData = AuthResponseSchema.parse(res.data);
+
+    return validatedData;
+  } catch (error) {
+    handleZodValidationError(error, "loginAsGuest");
+    throw error;
+  }
+};
+
+export { signIn, signUp, logOut, loginAsGuest };

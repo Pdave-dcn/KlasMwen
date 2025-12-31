@@ -49,7 +49,7 @@ router.use(requireAuth);
  *       '500':
  *         description: Internal server error
  */
-router.get("/reasons", requireRole("MODERATOR", "ADMIN"), getReportReasons);
+router.get("/reasons", getReportReasons);
 
 /**
  * @openapi
@@ -107,7 +107,11 @@ router.get("/reasons", requireRole("MODERATOR", "ADMIN"), getReportReasons);
  *       '500':
  *         description: Internal server error
  */
-router.get("/stats", requireRole("MODERATOR", "ADMIN"), getReportStats);
+router.get(
+  "/stats",
+  requireRole("MODERATOR", "ADMIN", "GUEST"),
+  getReportStats
+);
 
 /**
  * @openapi
@@ -208,10 +212,8 @@ router.get("/stats", requireRole("MODERATOR", "ADMIN"), getReportStats);
  *       '500':
  *         description: Internal server error
  */
-router.get("/", requireRole("MODERATOR", "ADMIN"), getAllReports);
+router.get("/", requireRole("MODERATOR", "ADMIN", "GUEST"), getAllReports);
 router.post("/", reportCreationLimiter, createReport);
-
-router.use(requireRole("MODERATOR", "ADMIN"));
 
 /**
  * @openapi
@@ -340,8 +342,9 @@ router.use(requireRole("MODERATOR", "ADMIN"));
  *       '500':
  *         description: Internal server error
  */
-router.get("/:id", getReportById);
+router.get("/:id", requireRole("MODERATOR", "ADMIN", "GUEST"), getReportById);
 
+router.use(requireRole("MODERATOR", "ADMIN"));
 router.use(reportModerationLimiter);
 
 router.put("/:id", updateReportStatus);

@@ -1,5 +1,6 @@
 import express from "express";
 
+import { loginGuest } from "../controllers/auth/guest.controller.js";
 import { loginUser } from "../controllers/auth/login.controller.js";
 import { registerUser } from "../controllers/auth/register.controller.js";
 import { verifyAuth } from "../controllers/auth/verification.controller.js";
@@ -226,5 +227,7 @@ router.post("/logout", (_req, res) => {
   res.clearCookie("token", getClearCookieConfig());
   return res.status(200).json({ message: "Logout successful" });
 });
+
+router.post("/guest", authLimiter, loginGuest);
 
 export default router;

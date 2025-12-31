@@ -1,6 +1,7 @@
 import { CheckCircle, XCircle, Eye, EyeOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/stores/auth.store";
 import type { ReportStatusEnum } from "@/zodSchemas/report.zod";
 
 export const ReportActions = ({
@@ -16,12 +17,14 @@ export const ReportActions = ({
   onDismiss: (status: ReportStatusEnum) => void;
   onToggleHidden: () => void;
 }) => {
+  const { isGuest } = useAuthStore();
+
   return (
     <div className="flex gap-2 border-t pt-4">
       <Button
         onClick={() => onMarkReviewed("REVIEWED")}
         className="flex-1"
-        disabled={localStatus === "REVIEWED"}
+        disabled={localStatus === "REVIEWED" || isGuest}
       >
         <CheckCircle className="mr-2 h-4 w-4" />
         Mark Reviewed
@@ -30,12 +33,12 @@ export const ReportActions = ({
         onClick={() => onDismiss("DISMISSED")}
         variant="outline"
         className="flex-1"
-        disabled={localStatus === "DISMISSED"}
+        disabled={localStatus === "DISMISSED" || isGuest}
       >
         <XCircle className="mr-2 h-4 w-4" />
         Dismiss
       </Button>
-      <Button onClick={onToggleHidden} variant="outline">
+      <Button onClick={onToggleHidden} variant="outline" disabled={isGuest}>
         {localIsHidden ? (
           <>
             <Eye className="mr-2 h-4 w-4" />

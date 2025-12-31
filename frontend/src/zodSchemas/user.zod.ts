@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const RoleSchema = z.enum(["STUDENT", "MODERATOR", "ADMIN"]);
+const RoleSchema = z.enum(["STUDENT", "MODERATOR", "ADMIN", "GUEST"]);
 
 const AvatarSchema = z.object({
   id: z.number().int(),

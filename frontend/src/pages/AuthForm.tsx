@@ -4,7 +4,15 @@ import { useForm, type FieldErrors } from "react-hook-form";
 import { Link } from "react-router-dom";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Mail, User, Lock, ArrowRight } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  User,
+  Lock,
+  ArrowRight,
+  UserCircle,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,13 +26,15 @@ import {
 import AuthField from "@/features/auth/components/AuthFormField";
 import AuthFooter from "@/features/auth/components/AuthFormFooter";
 import AuthHeader from "@/features/auth/components/AuthFormHeader";
-import { useAuthMutation } from "@/queries/auth.query";
+import { useAuthMutation, useGuestAuthMutation } from "@/queries/auth.query";
 import type { FormData, FormType, RegisterData } from "@/types/form.type";
 import { RegisterSchema, SignInSchema } from "@/zodSchemas/auth.zod";
 
 const AuthForm = ({ defaultMode = "signin" }: { defaultMode?: FormType }) => {
   const [currentForm, setCurrentForm] = useState<FormType>(defaultMode);
   const [showPassword, setShowPassword] = useState(false);
+
+  const guestMutation = useGuestAuthMutation();
 
   const schema = currentForm === "signin" ? SignInSchema : RegisterSchema;
   const { register, handleSubmit, formState, reset, setError } =
@@ -124,9 +134,31 @@ const AuthForm = ({ defaultMode = "signin" }: { defaultMode?: FormType }) => {
                     {currentForm === "signin" ? "Sign In" : "Create Account"}
                     <ArrowRight className="w-4 h-4" />
                   </div>
-                )}{" "}
+                )}
               </Button>
             </form>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or
+                </span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-11 text-base font-medium cursor-pointer"
+              onClick={() => guestMutation.mutate()}
+              disabled={guestMutation.isPending}
+            >
+              <UserCircle className="w-5 h-5 mr-2" />
+              Continue as Guest
+            </Button>
           </CardContent>
 
           <CardFooter className="flex justify-center">

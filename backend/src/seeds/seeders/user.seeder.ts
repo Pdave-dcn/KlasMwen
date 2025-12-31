@@ -27,7 +27,11 @@ const seedUsers = async (userCount = 10, avatars: Avatar[]) => {
   try {
     const users = [];
 
-    // Create admin user first
+    //
+    // ──────────────────────────────────────────────
+    //   1. ADMIN USER
+    // ──────────────────────────────────────────────
+    //
     const adminPassword = env.ADMIN_PASSWORD;
     const adminHashedPassword = await bcrypt.hash(adminPassword, 12);
     const adminAvatar = getRandomAvatar(avatars);
@@ -54,14 +58,62 @@ const seedUsers = async (userCount = 10, avatars: Avatar[]) => {
 
     users.push(adminUser);
 
+    //
+    // ──────────────────────────────────────────────
+    //   2. GUEST USER
+    // ──────────────────────────────────────────────
+    //
+    const existingGuest = await prisma.user.findUnique({
+      where: { email: env.GUEST_EMAIL },
+    });
+
+    if (!existingGuest) {
+      const guestPassword = env.GUEST_PASSWORD;
+      const guestHashedPassword = await bcrypt.hash(guestPassword, 12);
+      const guestAvatar = getRandomAvatar(avatars);
+
+      const guestUser = await prisma.user.create({
+        data: {
+          username: env.GUEST_USERNAME,
+          email: env.GUEST_EMAIL,
+          password: guestHashedPassword,
+          avatarId: guestAvatar.id,
+          bio: "Guest User — temporary demo account",
+          role: "GUEST",
+        },
+      });
+
+      logger.info(
+        {
+          email: guestUser.email,
+          password: guestPassword,
+          role: "GUEST",
+        },
+        "Guest user created"
+      );
+
+      users.push(guestUser);
+    } else {
+      logger.info(
+        {
+          email: existingGuest.email,
+        },
+        "Guest user already exists. Skipping."
+      );
+      users.push(existingGuest);
+    }
+
+    //
+    // ──────────────────────────────────────────────
+    //   3. GENERATE REGULAR SEED USERS
+    // ──────────────────────────────────────────────
+    //
     for (let i = 0; i < userCount; i++) {
       const password = faker.internet.password();
       const avatar = getRandomAvatar(avatars);
 
-      // hash password
       const hashedPassword = await bcrypt.hash(password, 12);
 
-      // create user
       const user = await prisma.user.create({
         data: {
           username: faker.internet.username(),
@@ -72,7 +124,7 @@ const seedUsers = async (userCount = 10, avatars: Avatar[]) => {
         },
       });
 
-      // Log credentials only for first 3 regular users (after admin)
+      // Log only first 3 regular users
       if (i < 3) {
         logger.info(
           {
@@ -86,12 +138,18 @@ const seedUsers = async (userCount = 10, avatars: Avatar[]) => {
       users.push(user);
     }
 
+    //
+    // ──────────────────────────────────────────────
+    //   4. METRICS
+    // ──────────────────────────────────────────────
+    //
     const metrics = calculateMetrics(userCreationStartTime, users.length);
 
     const userStats = {
       totalUsers: users.length,
       regularUsers: userCount,
       adminUsers: 1,
+      guestUsers: 1,
       averageUserCreationTime: metrics.averageTime,
       userCreationDuration: metrics.duration,
     };

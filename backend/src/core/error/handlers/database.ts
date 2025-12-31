@@ -1,15 +1,9 @@
 /* eslint-disable max-lines-per-function */
 /* eslint-disable complexity */
-import type {
-  PrismaClientInitializationError,
-  PrismaClientKnownRequestError,
-  PrismaClientRustPanicError,
-  PrismaClientUnknownRequestError,
-  PrismaClientValidationError,
-} from "@prisma/client/runtime/library";
+import type { Prisma } from "@prisma/client";
 
 class DatabaseErrorHandler {
-  static handlePrismaKnownError(error: PrismaClientKnownRequestError) {
+  static handlePrismaKnownError(error: Prisma.PrismaClientKnownRequestError) {
     switch (error.code) {
       // Unique constraint violation
       case "P2002": {
@@ -174,7 +168,9 @@ class DatabaseErrorHandler {
   }
 
   // Handle Prisma Client Validation Errors
-  static handlePrismaValidationError(error: PrismaClientValidationError) {
+  static handlePrismaValidationError(
+    error: Prisma.PrismaClientValidationError
+  ) {
     console.error("Prisma Validation Error:", error.message);
     return {
       status: 400,
@@ -186,7 +182,7 @@ class DatabaseErrorHandler {
 
   // Handle Prisma Client Initialization Errors
   static handlePrismaInitializationError(
-    error: PrismaClientInitializationError
+    error: Prisma.PrismaClientInitializationError
   ) {
     console.error("Prisma Initialization Error:", error.message);
     return {
@@ -198,7 +194,9 @@ class DatabaseErrorHandler {
   }
 
   // Handle Prisma Client Unknown Request Errors
-  static handlePrismaUnknownError(error: PrismaClientUnknownRequestError) {
+  static handlePrismaUnknownError(
+    error: Prisma.PrismaClientUnknownRequestError
+  ) {
     console.error("Prisma Unknown Error:", error.message);
     return {
       status: 500,
@@ -209,7 +207,7 @@ class DatabaseErrorHandler {
   }
 
   // Handle Prisma Client Rust Panic Errors
-  static handlePrismaRustPanicError(error: PrismaClientRustPanicError) {
+  static handlePrismaRustPanicError(error: Prisma.PrismaClientRustPanicError) {
     console.error("Prisma Rust Panic Error:", error.message);
     return {
       status: 500,

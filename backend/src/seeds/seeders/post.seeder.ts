@@ -51,7 +51,10 @@ const seedPosts = async (users: User[], tags: Tag[], postsPerUser = 5) => {
 
     // Create posts in randomized order
     for (const [index, { user, type }] of shuffledTasks.entries()) {
-      userPostStats.get(user.id)![type]++;
+      const userStats = userPostStats.get(user.id);
+      if (userStats) {
+        userStats[type]++;
+      }
       postTypeStats[type]++;
 
       // Base post data

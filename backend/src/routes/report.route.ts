@@ -49,7 +49,7 @@ router.use(requireAuth);
  *       '500':
  *         description: Internal server error
  */
-router.get("/reasons", requireRole("MODERATOR", "ADMIN"), getReportReasons);
+router.get("/reasons", getReportReasons);
 
 /**
  * @openapi

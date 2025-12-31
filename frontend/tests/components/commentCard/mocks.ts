@@ -1,10 +1,13 @@
-import { useRepliesQuery } from "@/queries/comment.query";
+import { vi } from "vitest";
+import { useParentCommentsQuery } from "@/queries/comment.query";
 
-export const mockReplies = [
+export const mockComments = [
   {
     id: 1,
-    content: "This is the first reply",
+    content: "This is the first comment",
+    parentId: null,
     createdAt: "2024-01-01 10:00:00",
+    totalReplies: 2,
     author: {
       id: "user1",
       username: "john_doe",
@@ -16,8 +19,10 @@ export const mockReplies = [
   },
   {
     id: 2,
-    content: "This is the second reply",
-    createdAt: "2024-01-01 11:00:00",
+    content: "This is the second comment",
+    parentId: null,
+    createdAt: "2024-01-01T11:00:00.000Z",
+    totalReplies: 0,
     author: {
       id: "user2",
       username: "jane_smith",
@@ -32,8 +37,9 @@ export const mockReplies = [
 export const mockQueryData = {
   pages: [
     {
-      data: mockReplies,
+      data: mockComments,
       pagination: {
+        totalComments: 2,
         hasMore: false,
         nextCursor: null,
       },
@@ -46,8 +52,9 @@ export const mockQueryData = {
 export const mockQueryDataWithMore = {
   pages: [
     {
-      data: mockReplies,
+      data: mockComments,
       pagination: {
+        totalComments: 5,
         hasMore: true,
         nextCursor: 2,
       },
@@ -57,16 +64,16 @@ export const mockQueryDataWithMore = {
   pageParams: [2],
 };
 
-type RepliesQueryReturn = ReturnType<typeof useRepliesQuery>;
+type ParentCommentQueryReturn = ReturnType<typeof useParentCommentsQuery>;
 
 export const mockQueryStates = (
-  mockUseRepliesQuery: ReturnType<typeof vi.fn>,
-  overrides: Partial<RepliesQueryReturn> = {}
+  mockUseParentCommentQuery: ReturnType<typeof vi.fn>,
+  overrides: Partial<ParentCommentQueryReturn> = {}
 ) => {
-  mockUseRepliesQuery.mockReturnValue({
+  mockUseParentCommentQuery.mockReturnValue({
     data: undefined,
     isLoading: true,
     error: null,
     ...overrides,
-  } as unknown as RepliesQueryReturn);
+  } as unknown as ParentCommentQueryReturn);
 };

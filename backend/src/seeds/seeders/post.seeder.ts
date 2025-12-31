@@ -15,7 +15,7 @@ import type { Tag, User } from "@prisma/client";
 const logger = createLogger({ module: "PostSeeder" });
 
 /**
- * Create posts for users
+ * Create posts for users with randomized order
  * @param {Array} users - Array of user objects
  * @param {Array} tags - Array of tag objects
  * @param {number} postsPerUser - Number of posts to create per user
@@ -29,77 +29,92 @@ const seedPosts = async (users: User[], tags: Tag[], postsPerUser = 5) => {
     let totalPostsCreated = 0;
     const postTypeStats = { QUESTION: 0, NOTE: 0, RESOURCE: 0 };
     const postTypes = ["QUESTION", "NOTE", "RESOURCE"] as const;
+    const userPostStats = new Map(
+      users.map((user) => [user.id, { QUESTION: 0, NOTE: 0, RESOURCE: 0 }])
+    );
 
-    for (const [userIndex, user] of users.entries()) {
-      const userPostsStartTime = Date.now();
-      const userPostStats = { QUESTION: 0, NOTE: 0, RESOURCE: 0 };
+    // Generate all post creation tasks upfront
+    const postCreationTasks = users.flatMap((user) =>
+      Array.from({ length: postsPerUser }, () => ({
+        user,
+        type: faker.helpers.arrayElement(postTypes),
+      }))
+    );
 
-      logger.debug(
-        { userId: user.id, username: user.username, userIndex: userIndex + 1 },
-        "Starting post creation for user"
-      );
+    // Shuffle the tasks to randomize creation order
+    const shuffledTasks = faker.helpers.shuffle(postCreationTasks);
 
-      for (let i = 0; i < postsPerUser; i++) {
-        const randomType = faker.helpers.arrayElement(postTypes);
-        userPostStats[randomType]++;
-        postTypeStats[randomType]++;
+    logger.debug(
+      { totalTasks: shuffledTasks.length },
+      "Post creation tasks shuffled"
+    );
 
-        // Base post data
-        const postData = {
-          title:
-            randomType === "QUESTION"
-              ? `${faker.lorem.sentence().replace(/\.$/, "")}??`
-              : faker.lorem.sentence(),
-          content:
-            randomType === "RESOURCE"
-              ? null
-              : randomType === "QUESTION"
-              ? faker.lorem.paragraphs()
-              : faker.lorem.paragraphs({ min: 7, max: 10 }),
-          authorId: user.id,
-          type: randomType,
-        };
+    // Create posts in randomized order
+    for (const [index, { user, type }] of shuffledTasks.entries()) {
+      userPostStats.get(user.id)![type]++;
+      postTypeStats[type]++;
 
-        if (randomType === "RESOURCE") {
-          Object.assign(postData, generateResourceData());
-        }
+      // Base post data
+      const postData = {
+        title:
+          type === "QUESTION"
+            ? `${faker.lorem.sentence().replace(/\.$/, "")}??`
+            : faker.lorem.sentence(),
+        content:
+          type === "RESOURCE"
+            ? null
+            : type === "QUESTION"
+            ? faker.lorem.paragraphs()
+            : faker.lorem.paragraphs({ min: 7, max: 10 }),
+        authorId: user.id,
+        type,
+        hidden: faker.datatype.boolean({ probability: 0.15 }) ? true : false,
+      };
 
-        const post = await prisma.post.create({ data: postData });
-
-        const randomTags = getRandomTags(tags);
-        await prisma.postTag.createMany({
-          data: randomTags.map((tag) => ({
-            postId: post.id,
-            tagId: tag.id,
-          })),
-        });
-
-        totalPostsCreated++;
-
-        // Progress log every 10 posts
-        if (totalPostsCreated % 10 === 0) {
-          logger.debug(
-            {
-              totalPostsCreated,
-              postId: post.id,
-              type: randomType,
-              userId: user.id,
-            },
-            `Progress: created ${totalPostsCreated} posts`
-          );
-        }
+      if (type === "RESOURCE") {
+        Object.assign(postData, generateResourceData());
       }
 
-      const userPostsDuration = Date.now() - userPostsStartTime;
+      const post = await prisma.post.create({ data: postData });
+
+      const randomTags = getRandomTags(tags);
+      await prisma.postTag.createMany({
+        data: randomTags.map((tag) => ({
+          postId: post.id,
+          tagId: tag.id,
+        })),
+      });
+
+      totalPostsCreated++;
+
+      // Progress log every 10 posts
+      if (totalPostsCreated % 10 === 0) {
+        logger.debug(
+          {
+            totalPostsCreated,
+            postId: post.id,
+            type,
+            userId: user.id,
+            progress: `${(((index + 1) / shuffledTasks.length) * 100).toFixed(
+              1
+            )}%`,
+          },
+          `Progress: created ${totalPostsCreated} posts`
+        );
+      }
+    }
+
+    // Log per-user statistics
+    for (const user of users) {
+      const stats = userPostStats.get(user.id);
       logger.info(
         {
           userId: user.id,
           username: user.username,
           postsCreated: postsPerUser,
-          distribution: userPostStats,
-          userPostsDuration,
+          distribution: stats,
         },
-        "Completed post creation for user"
+        "Post creation summary for user"
       );
     }
 

@@ -1,4 +1,4 @@
-import { getPrisma } from "../../lib/prisma";
+import { getPrisma } from "../../lib/prisma.js";
 
 const prisma = getPrisma();
 

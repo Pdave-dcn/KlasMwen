@@ -1,4 +1,4 @@
-import { handleError } from "../core/error";
+import { handleError } from "../core/error/index.js";
 
 import type {
   Request,

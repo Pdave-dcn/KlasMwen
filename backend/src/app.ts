@@ -4,6 +4,7 @@ import express from "express";
 import passport from "passport";
 
 import { corsOptions } from "./core/config/cors.js";
+import env from "./core/config/env.js";
 import initializePassport from "./core/config/passport.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
 import { httpLogger } from "./middleware/httpLogger.middleware.js";
@@ -11,6 +12,10 @@ import router from "./routes/index.js";
 import setupSwagger from "./swagger/index.js";
 
 const app = express();
+
+if (env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
 
 app.use(cookieParser());
 

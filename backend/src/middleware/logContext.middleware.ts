@@ -25,7 +25,7 @@ import type { Request, Response, NextFunction } from "express";
  * @example
  * // In your router setup
  * import express from 'express';
- * import attachLogContext from './middleware/attachLogContext';
+ * import attachLogContext from './middleware/attachLogContext.js';
  *
  * const userRouter = express.Router();
  * userRouter.use(attachLogContext('users'));  // All user routes get module: 'users'

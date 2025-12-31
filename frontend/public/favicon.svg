@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 800 800" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+    <g id="SVGRepo_iconCarrier" transform="matrix(12.5,0,0,12.5,0,0)">
+        <g>
+            <path d="M32,2C15.432,2 2,15.432 2,32C2,48.568 15.432,62 32,62C48.568,62 62,48.568 62,32C62,15.432 48.568,2 32,2M38.016,46.508L29.077,33.842L26.155,36.803L26.155,46.508L20.192,46.508L20.192,17.492L26.155,17.492L26.155,29.447L37.366,17.492L45.202,17.492L33.293,29.426L45.811,46.508L38.016,46.508" style="fill:rgb(30,157,241);fill-rule:nonzero;"/>
+            <g transform="matrix(0.08,0,0,0.08,0,0)">
+                <path d="M475.2,581.35L363.462,423.025L326.937,460.037L326.937,581.35L252.4,581.35L252.4,218.65L326.937,218.65L326.937,368.088L467.075,218.65L565.025,218.65L416.162,367.825L572.638,581.35L475.2,581.35Z" style="fill:rgb(235,235,235);"/>
+            </g>
+        </g>
+    </g>
+</svg>

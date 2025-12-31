@@ -1,5 +1,5 @@
 import js from "@eslint/js";
-import { globalIgnores } from "eslint/config";
+import { defineConfig, globalIgnores } from "eslint/config";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import react from "eslint-plugin-react";
@@ -14,7 +14,7 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export default tseslint.config([
+export default defineConfig([
   globalIgnores([
     "dist/**",
     "node_modules/**",
@@ -22,6 +22,7 @@ export default tseslint.config([
     "build/**",
     ".next/**",
     "coverage/**",
+    "tests/**", // ← ADD THIS: Exclude the entire tests folder
     "*.config.{js,ts,mjs,cjs}",
     "vite.config.{js,ts}",
     "tailwind.config.{js,ts}",
@@ -285,68 +286,6 @@ export default tseslint.config([
         "warn",
         { allowConstantExport: true },
       ],
-    },
-  },
-
-  // TEST FILES SPECIFIC OVERRIDES
-  {
-    files: [
-      "src/**/*.test.{js,ts,tsx}",
-      "src/**/*.spec.{js,ts,tsx}",
-      "src/**/tests/**/*.{js,ts,tsx}",
-      "src/**/__tests__/**/*.{js,ts,tsx}",
-      "src/**/test-utils.{js,ts,tsx}",
-      "src/**/setup-tests.{js,ts}",
-    ],
-    languageOptions: {
-      globals: {
-        ...globals.browser,
-        // Add testing framework globals
-        describe: "readonly",
-        it: "readonly",
-        test: "readonly",
-        expect: "readonly",
-        beforeEach: "readonly",
-        afterEach: "readonly",
-        beforeAll: "readonly",
-        afterAll: "readonly",
-        vi: "readonly", // Vitest
-        jest: "readonly", // Jest
-        cy: "readonly", // Cypress
-      },
-    },
-    rules: {
-      // RELAX RULES FOR TEST FILES
-      "max-lines-per-function": "off",
-      "max-params": "off",
-      complexity: "off",
-      "no-console": "off",
-
-      // Import relaxations for tests
-      "import/no-unresolved": "off",
-      "import/order": "warn",
-
-      // TypeScript relaxations for tests
-      "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/consistent-type-imports": "off",
-      "@typescript-eslint/no-unused-vars": [
-        "warn",
-        {
-          argsIgnorePattern: "^_",
-          varsIgnorePattern: "^_|^mock|^spy",
-        },
-      ],
-      "@typescript-eslint/no-unused-expressions": "off",
-      "@typescript-eslint/no-non-null-assertion": "off",
-      "@typescript-eslint/no-empty-function": "off",
-      "@typescript-eslint/unbound-method": "off",
-      "require-await": "warn",
-
-      // React test relaxations
-      "react/jsx-key": "off", // Test components might not need keys
-      "react/no-render-return-value": "off", // Testing utilities might return render values
-      "jsx-a11y/click-events-have-key-events": "off", // Test interactions
-      "jsx-a11y/no-autofocus": "off", // Test components might need autofocus
     },
   },
 

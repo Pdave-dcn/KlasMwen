@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import type { useSinglePostQuery } from "@/queries/post.query";
 
 export const mockPost = {

@@ -12,6 +12,7 @@ export const mockPost = {
   fileSize: null,
   isBookmarked: true,
   isLiked: false,
+  isMock: true,
   author: {
     id: "author1",
     username: "testUser",
@@ -41,6 +42,7 @@ export const mockPost2 = {
   fileSize: 10000,
   isBookmarked: true,
   isLiked: false,
+  isMock: true,
   author: {
     id: "author12",
     username: "testUser",

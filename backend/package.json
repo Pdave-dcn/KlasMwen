@@ -16,7 +16,9 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "db:seed": "npx prisma db seed",
-    "db:seed:admin": "tsx src/seeds/admin.ts"
+    "db:seed:admin": "tsx src/seeds/admin.ts",
+    "start:prod:seed": "npx prisma migrate deploy && npx prisma db seed && node dist/index.js",
+    "start:prod": "npx prisma migrate deploy && node dist/index.js"
   },
   "keywords": [],
   "author": "",

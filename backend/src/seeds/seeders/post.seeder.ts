@@ -68,6 +68,7 @@ const seedPosts = async (users: User[], tags: Tag[], postsPerUser = 5) => {
             : faker.lorem.paragraphs({ min: 7, max: 10 }),
         authorId: user.id,
         type,
+        isMock: true,
         hidden: faker.datatype.boolean({ probability: 0.15 }) ? true : false,
       };
 

@@ -11,7 +11,7 @@
     "start:backend": "npm --workspace backend run dev",
     "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
     "db:seed": "npm --workspace backend run db:seed",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "lint-staged": {
     "backend/**/*.{js,ts}": "npm run lint --workspace backend",

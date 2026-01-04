@@ -1,4 +1,4 @@
-import { getAuthorId, isOwner } from "./helpers.js";
+import { getAuthorId, isOwner, isReceiver } from "./helpers.js";
 
 import type { Registry } from "./types.js";
 import type { Role } from "@prisma/client";
@@ -31,6 +31,11 @@ export const POLICY: PolicyMap = {
       delete: true,
       report: (u, c) => u.id !== getAuthorId(c),
     },
+    notifications: {
+      read: true,
+      update: true,
+      delete: true,
+    },
   },
 
   MODERATOR: {
@@ -48,6 +53,11 @@ export const POLICY: PolicyMap = {
       delete: true,
       report: (u, c) => u.id !== getAuthorId(c),
     },
+    notifications: {
+      read: isReceiver,
+      update: isReceiver,
+      delete: isReceiver,
+    },
   },
 
   STUDENT: {
@@ -64,6 +74,11 @@ export const POLICY: PolicyMap = {
       update: isOwner,
       delete: isOwner,
       report: (u, c) => u.id !== getAuthorId(c),
+    },
+    notifications: {
+      read: isReceiver,
+      update: isReceiver,
+      delete: isReceiver,
     },
   },
 };

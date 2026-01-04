@@ -3,6 +3,11 @@ type Resource = {
   authorId?: string;
 };
 
+type NotificationResource = {
+  user?: { id: string };
+  userId?: string;
+};
+
 /**
  * Extracts the author's unique identifier from a given resource object.
  *
@@ -25,6 +30,30 @@ const getAuthorId = <TResource extends Resource>(
 ): string | undefined => {
   if (!resource) return undefined;
   return resource.author?.id ?? resource.authorId ?? undefined;
+};
+
+/**
+ * Extracts the user's unique identifier from a notification resource object.
+ *
+ * It checks for the user ID in two common formats:
+ * 1. A nested object structure: `resource.user.id`.
+ * 2. A flat field: `resource.userId`.
+ * The function returns the first valid ID found.
+ *
+ * @template TResource - A type that extends the base NotificationResource structure.
+ * @param {TResource} resource - The resource object (e.g., Notification) to check for a user ID.
+ * @returns {string | undefined} The extracted user ID, or `undefined` if neither field exists or is valid.
+ *
+ * @example
+ * getUserId({ user: { id: "u1" } }) => "u1"
+ * getUserId({ userId: "u1" }) => "u1"
+ * getUserId({ type: "LIKE" }) => undefined
+ */
+const getUserId = <TResource extends NotificationResource>(
+  resource: TResource
+): string | undefined => {
+  if (!resource) return undefined;
+  return resource.user?.id ?? resource.userId ?? undefined;
 };
 
 /**
@@ -53,4 +82,30 @@ const isOwner = <TResource extends Resource>(
   resource: TResource
 ) => user.id === getAuthorId(resource);
 
-export { getAuthorId, isOwner };
+/**
+ * Checks if a given user is the receiver (owner) of a notification resource.
+ *
+ * This function compares the user's ID (`user.id`) with the user ID
+ * extracted from the notification resource using `getUserId`.
+ *
+ * @template TResource - A type that extends the base NotificationResource structure.
+ * @param {{ id: string }} user - The user object, which must contain an `id` property.
+ * @param {TResource} resource - The notification resource object to check for ownership.
+ * @returns {boolean} `true` if the user's ID matches the resource's user ID, otherwise `false`.
+ *
+ * @example
+ * // user is the receiver
+ * const user = { id: 'u1' };
+ * const notification = { userId: 'u1' };
+ * isReceiver(user, notification); // true
+ *
+ * // user is not the receiver
+ * const notification2 = { user: { id: 'u2' } };
+ * isReceiver(user, notification2); // false
+ */
+const isReceiver = <TResource extends NotificationResource>(
+  user: Express.User,
+  resource: TResource
+) => user.id === getUserId(resource);
+
+export { getAuthorId, getUserId, isOwner, isReceiver };

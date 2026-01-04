@@ -27,6 +27,14 @@ enum ReportStatus {
   DISMISSED
 }
 
+// Notification types for user alerts
+enum NotificationType {
+  COMMENT_ON_POST
+  REPLY_TO_COMMENT
+  LIKE
+  REPORT_UPDATE
+}
+
 // Represents a user account with authentication and profile information
 model User {
   id        String   @id @default(uuid())
@@ -40,12 +48,14 @@ model User {
   Avatar   Avatar? @relation(fields: [avatarId], references: [id])
   avatarId Int?    @map("avatar_id")
 
-  posts               Post[]
-  comments            Comment[]
-  likes               Like[]
-  bookmarks           Bookmark[]
-  mentionedInComments Comment[]  @relation("mentionedUser")
-  reports             Report[]
+  posts                 Post[]
+  comments              Comment[]
+  likes                 Like[]
+  bookmarks             Bookmark[]
+  mentionedInComments   Comment[]      @relation("mentionedUser")
+  reports               Report[]
+  notifications         Notification[] @relation("notificationActor")
+  notificationsReceived Notification[] @relation("notificationReceiver")
 
   @@map("users")
 }
@@ -80,11 +90,12 @@ model Post {
   fileSize Int?    @map("file_size")
   mimeType String? @map("mime_type")
 
-  comments  Comment[]
-  likes     Like[]
-  postTags  PostTag[]
-  bookmarks Bookmark[]
-  reports   Report[]
+  comments      Comment[]
+  likes         Like[]
+  postTags      PostTag[]
+  bookmarks     Bookmark[]
+  reports       Report[]
+  notifications Notification[]
 
   @@map("posts")
 }
@@ -108,8 +119,9 @@ model Comment {
   mentionedUser   User?   @relation("mentionedUser", fields: [mentionedUserId], references: [id])
   mentionedUserId String? @map("mentioned_user_id")
 
-  Comment Comment[] @relation("commentReplies")
-  reports Report[]
+  Comment       Comment[]      @relation("commentReplies")
+  reports       Report[]
+  notifications Notification[]
 
   @@map("comments")
 }
@@ -188,4 +200,28 @@ model Report {
   reasonId Int          @map("reason_id")
 
   @@map("reports")
+}
+
+model Notification {
+  id   Int              @id @default(autoincrement())
+  type NotificationType
+  read Boolean          @default(false)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Receiver (who gets notified)
+  user   User   @relation("notificationReceiver", fields: [userId], references: [id], onDelete: Cascade)
+  userId String @map("user_id")
+
+  // Actor (who triggered it)
+  actor   User   @relation("notificationActor", fields: [actorId], references: [id])
+  actorId String @map("actor_id")
+
+  // Context (related post or comment)
+  post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String?  @map("post_id")
+  comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  commentId Int?     @map("comment_id")
+
+  @@map("notifications")
 }

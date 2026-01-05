@@ -38,7 +38,7 @@ class NotificationQueryService {
     );
 
     return {
-      notifications: data,
+      data,
       pagination,
       unreadCount,
     };

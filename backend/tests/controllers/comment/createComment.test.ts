@@ -60,6 +60,9 @@ vi.mock("../../../src/core/config/db.js", () => ({
       count: vi.fn(),
       delete: vi.fn(),
     },
+    notification: {
+      create: vi.fn(),
+    },
   },
 }));
 

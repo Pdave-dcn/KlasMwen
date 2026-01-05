@@ -8,6 +8,7 @@ import seedBookmarks from "./seeders/bookmark.seeder.js";
 import cleanupDatabase from "./seeders/cleanup.seeder.js";
 import seedComments from "./seeders/comment.seeder.js";
 import seedLikes from "./seeders/like.seeder.js";
+import seedNotifications from "./seeders/notification.seeder.js";
 import seedPosts from "./seeders/post.seeder.js";
 import seedReports from "./seeders/report.seeder.js";
 import seedReportReasons from "./seeders/reportReason.seeder.js";
@@ -56,6 +57,18 @@ const main = async () => {
     const allComments = await prisma.comment.findMany();
     const reportStats = await seedReports(users, posts, allComments, reasons);
 
+    // Phase 11: Create notifications
+    const allLikes = await prisma.like.findMany();
+    const allReports = await prisma.report.findMany();
+
+    const notificationStats = await seedNotifications(
+      users,
+      posts,
+      allComments,
+      allLikes,
+      allReports
+    );
+
     const totalSeedingDuration = Date.now() - seedingStartTime;
 
     logger.info(
@@ -78,6 +91,7 @@ const main = async () => {
             postReports: reportStats.postReportsCount,
             commentReports: reportStats.commentReportsCount,
           },
+          notificationStats,
         },
         phases: {
           cleanupDuration: cleanupStats.cleanupDuration,

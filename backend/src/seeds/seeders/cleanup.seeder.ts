@@ -43,6 +43,9 @@ const cleanupDatabase = async () => {
     logger.debug("Deleting existing reports");
     const reportsDeleteCount = await prisma.report.deleteMany();
 
+    logger.debug("Deleting existing notifications");
+    const notificationsDeleteCount = await prisma.notification.deleteMany();
+
     const cleanupDuration = Date.now() - cleanupStartTime;
     const cleanupStats = {
       postTagsDeleted: postTagDeleteCount.count,
@@ -55,6 +58,7 @@ const cleanupDatabase = async () => {
       avatarsDeleted: avatarDeleteCount.count,
       bookmarksDeleted: bookmarkDeleteCount.count,
       reportsDeleted: reportsDeleteCount.count,
+      notificationsDeleted: notificationsDeleteCount.count,
       cleanupDuration,
     };
 

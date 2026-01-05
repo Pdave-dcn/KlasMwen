@@ -1,52 +1,110 @@
-import {
-  CommentNotFoundError,
-  CommentPostMismatchError,
-} from "../../../../core/error/custom/comment.error.js";
 import { PostNotFoundError } from "../../../../core/error/custom/post.error.js";
 import { assertPermission } from "../../../../core/security/rbac.js";
+import NotificationService from "../../../notification/service/NotificationService.js";
+import { PostValidationService } from "../../../posts/service/core/PostValidationService.js";
 import CommentRepository from "../commentRepository.js";
 
+import CommentValidationService from "./CommentValidationService.js";
+
 import type { CreateCommentData } from "../types.js";
+import type { Application } from "express";
 
 /**
  * CommentCommandService - Write operations only
  */
 class CommentCommandService {
   /**
+   * Determines the final parent ID and mentioned user for nested replies
+   */
+  private static resolveCommentHierarchy(parentComment: {
+    id: number;
+    parentId: number | null;
+    authorId: string;
+  }) {
+    if (parentComment.parentId) {
+      // Reply to a reply - flatten to 2 levels
+      return {
+        finalParentId: parentComment.parentId,
+        mentionedUserId: parentComment.authorId,
+        parentAuthorId: parentComment.authorId,
+      };
+    } else {
+      // Reply to a root comment
+      return {
+        finalParentId: parentComment.id,
+        mentionedUserId: undefined,
+        parentAuthorId: parentComment.authorId,
+      };
+    }
+  }
+
+  /**
+   * Sends appropriate notification based on comment type
+   */
+  private static async sendCommentNotification(
+    data: {
+      isReply: boolean;
+      postAuthorId: string;
+      parentAuthorId?: string;
+      commentAuthorId: string;
+      postId: string;
+      commentId: number;
+    },
+    app?: Application
+  ) {
+    if (data.isReply && data.parentAuthorId) {
+      // Notify parent comment author
+      await NotificationService.createNotification(
+        {
+          type: "REPLY_TO_COMMENT",
+          userId: data.parentAuthorId,
+          actorId: data.commentAuthorId,
+          postId: data.postId,
+          commentId: data.commentId,
+        },
+        app
+      );
+    } else {
+      // Notify post author
+      await NotificationService.createNotification(
+        {
+          type: "COMMENT_ON_POST",
+          userId: data.postAuthorId,
+          actorId: data.commentAuthorId,
+          postId: data.postId,
+          commentId: data.commentId,
+        },
+        app
+      );
+    }
+  }
+
+  /**
    * Create a new comment with validation
    */
-  static async createComment(data: CreateCommentData) {
-    // Validate post exists
-    const postExists = await CommentRepository.postExists(data.postId);
-    if (!postExists) {
+  static async createComment(data: CreateCommentData, app?: Application) {
+    // Verify post exists
+    const post = await PostValidationService.verifyPostExists(data.postId);
+    if (!post) {
       throw new PostNotFoundError(data.postId);
     }
 
+    let finalParentId: number | null = null;
     let mentionedUserId: string | undefined;
-    let finalParentId: number | null = data.parentId ?? null;
+    let parentAuthorId: string | undefined;
 
-    // Handle parent comment logic
+    // Handle parent comment logic if this is a reply
     if (data.parentId) {
-      const parentComment = await CommentRepository.findById(data.parentId);
+      const parentComment =
+        await CommentValidationService.validateParentComment(
+          data.parentId,
+          data.postId
+        );
 
-      if (!parentComment) {
-        throw new CommentNotFoundError(data.parentId);
-      }
-
-      // Validate parent comment belongs to same post
-      if (parentComment.postId !== data.postId) {
-        throw new CommentPostMismatchError(data.parentId, data.postId);
-      }
-
-      // Handle nested replies (flatten to 2 levels)
-      if (parentComment.parentId) {
-        // If replying to a reply, attach to original parent
-        finalParentId = parentComment.parentId;
-        mentionedUserId = parentComment.authorId;
-      } else {
-        // If replying to a parent comment
-        finalParentId = parentComment.id;
-      }
+      const hierarchy = this.resolveCommentHierarchy(parentComment);
+      finalParentId = hierarchy.finalParentId;
+      mentionedUserId = hierarchy.mentionedUserId;
+      parentAuthorId = hierarchy.parentAuthorId;
     }
 
     // Create the comment
@@ -60,6 +118,19 @@ class CommentCommandService {
       }),
     });
 
+    // Send notification
+    await this.sendCommentNotification(
+      {
+        isReply: !!data.parentId,
+        postAuthorId: post.authorId,
+        parentAuthorId,
+        commentAuthorId: data.authorId,
+        postId: data.postId,
+        commentId: newComment.id,
+      },
+      app
+    );
+
     return newComment;
   }
 
@@ -67,11 +138,7 @@ class CommentCommandService {
    * Delete a comment with permission checks
    */
   static async deleteComment(commentId: number, user: Express.User) {
-    const comment = await CommentRepository.findById(commentId);
-
-    if (!comment) {
-      throw new CommentNotFoundError(commentId);
-    }
+    const comment = await CommentValidationService.commentExists(commentId);
 
     assertPermission(user, "comments", "delete", comment);
 

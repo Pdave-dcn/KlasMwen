@@ -3,6 +3,7 @@ import { assertPermission } from "../../../../core/security/rbac.js";
 import NotificationRepository from "../repo/NotificationRepository.js";
 
 import type { CreateNotificationData } from "../types/NotificationTypes.js";
+import type { Application } from "express";
 
 /**
  * NotificationCommandService - Write operations only
@@ -12,13 +13,26 @@ class NotificationCommandService {
    * Create a new notification
    * Prevents users from sending notifications to themselves
    */
-  static async createNotification(data: CreateNotificationData) {
+  static async createNotification(
+    data: CreateNotificationData,
+    app?: Application
+  ) {
     // Don't create notification if user is notifying themselves
     if (data.userId === data.actorId) {
       return null;
     }
 
-    return await NotificationRepository.create(data);
+    const notification = await NotificationRepository.create(data);
+
+    if (app) {
+      const io = app.get("io");
+
+      if (io) {
+        io.to(`user:${data.userId}`).emit("notification:new", notification);
+      }
+    }
+
+    return notification;
   }
 
   /**

@@ -42,6 +42,10 @@ const options: swaggerJSDoc.Options = {
       { name: "Avatars", description: "Operations related to avatars" },
       { name: "Bookmarks", description: "Operations related to bookmarking" },
       { name: "Comments", description: "Operations related to comments" },
+      {
+        name: "Notifications",
+        description: "Operations related to Notifications",
+      },
       { name: "Posts", description: "Operations related to posts" },
       { name: "Reactions", description: "Operations related to reactions" },
       { name: "Search", description: "Operations related to searching" },

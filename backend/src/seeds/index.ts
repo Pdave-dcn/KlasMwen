@@ -59,14 +59,13 @@ const main = async () => {
 
     // Phase 11: Create notifications
     const allLikes = await prisma.like.findMany();
-    const allReports = await prisma.report.findMany();
+    //const allReports = await prisma.report.findMany();
 
     const notificationStats = await seedNotifications(
       users,
       posts,
       allComments,
-      allLikes,
-      allReports
+      allLikes
     );
 
     const totalSeedingDuration = Date.now() - seedingStartTime;

@@ -210,7 +210,7 @@ model Notification {
   createdAt DateTime @default(now()) @map("created_at")
 
   // Receiver (who gets notified)
-  user   User   @relation("notificationReceiver", fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation("notificationReceiver", fields: [userId], references: [id])
   userId String @map("user_id")
 
   // Actor (who triggered it)

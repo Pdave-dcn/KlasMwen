@@ -1,3 +1,5 @@
+import { Bookmark, LogOut, Menu, Monitor, Settings } from "lucide-react";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,9 +9,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@radix-ui/react-dropdown-menu";
-import { Bookmark, LogOut, Menu, Monitor, Settings } from "lucide-react";
-
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 import { THEME_OPTIONS, ThemeMenuItem } from "./ThemeMenuItem";

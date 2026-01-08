@@ -31,7 +31,7 @@ const seedNotifications = async (
   posts: Post[],
   comments: Comment[],
   likes: Like[],
-  reports: Report[]
+  reports?: Report[]
 ) => {
   const seedingStartTime = Date.now();
   logger.info("Starting notification seeding process");
@@ -45,7 +45,7 @@ const seedNotifications = async (
       REPORT_UPDATE: 0,
     };
 
-    // 1. Process LIKES -> Post Authors
+    // 1. Collect LIKE notifications
     for (const like of likes) {
       const post = posts.find((p) => p.id === like.postId);
       if (post && post.authorId !== like.userId) {
@@ -55,13 +55,13 @@ const seedNotifications = async (
           actorId: like.userId,
           postId: post.id,
           read: faker.datatype.boolean({ probability: 0.7 }),
-          createdAt: faker.date.recent({ days: 7 }),
+          createdAt: null, // Will be assigned after shuffle
         });
         typeStats.LIKE++;
       }
     }
 
-    // 2. Process COMMENTS -> Post Authors & Parent Comment Authors
+    // 2. Collect COMMENT notifications
     for (const comment of comments) {
       const post = posts.find((p) => p.id === comment.postId);
 
@@ -76,7 +76,7 @@ const seedNotifications = async (
             postId: comment.postId,
             commentId: comment.id,
             read: faker.datatype.boolean({ probability: 0.4 }),
-            createdAt: comment.createdAt,
+            createdAt: null, // Will be assigned after shuffle
           });
           typeStats.REPLY_TO_COMMENT++;
         }
@@ -89,48 +89,62 @@ const seedNotifications = async (
           postId: post.id,
           commentId: comment.id,
           read: faker.datatype.boolean({ probability: 0.5 }),
-          createdAt: comment.createdAt,
+          createdAt: null, // Will be assigned after shuffle
         });
         typeStats.COMMENT_ON_POST++;
       }
     }
 
-    // 3. Process REPORTS -> Reporters (Simulating a status update)
-    // Only notify for a subset of reports to simulate activity
-    const reportsToNotify = reports.filter(() =>
-      faker.datatype.boolean({ probability: 0.3 })
-    );
-    const systemAdmin = users.find((u) => u.role === "ADMIN") ?? users[0];
+    // 3. Collect REPORT notifications (only if reports are provided)
+    if (reports && reports.length > 0) {
+      const reportsToNotify = reports.filter(() =>
+        faker.datatype.boolean({ probability: 0.3 })
+      );
+      const systemAdmin = users.find((u) => u.role === "ADMIN") ?? users[0];
 
-    for (const report of reportsToNotify) {
-      notificationsToCreate.push({
-        type: NotificationType.REPORT_UPDATE,
-        userId: report.reporterId,
-        actorId: systemAdmin.id,
-        read: faker.datatype.boolean({ probability: 0.2 }),
-        createdAt: faker.date.recent({ days: 2 }),
-      });
-      typeStats.REPORT_UPDATE++;
+      for (const report of reportsToNotify) {
+        notificationsToCreate.push({
+          type: NotificationType.REPORT_UPDATE,
+          userId: report.reporterId,
+          actorId: systemAdmin.id,
+          read: faker.datatype.boolean({ probability: 0.2 }),
+          createdAt: null, // Will be assigned after shuffle
+        });
+        typeStats.REPORT_UPDATE++;
+      }
     }
 
-    logger.info(`Inserting ${notificationsToCreate.length} notifications...`);
+    // Shuffle notifications to simulate realistic chronological ordering
+    const shuffledNotifications = faker.helpers.shuffle(notificationsToCreate);
 
-    // Batch insert
+    // Assign sequential timestamps to shuffled notifications
+    const now = new Date();
+    shuffledNotifications.forEach((notification, index) => {
+      // Spread notifications over the last 7 days
+      const minutesAgo = (index / shuffledNotifications.length) * 7 * 24 * 60;
+      notification.createdAt = new Date(now.getTime() - minutesAgo * 60 * 1000);
+    });
+
+    logger.info(
+      `Inserting ${shuffledNotifications.length} notifications in randomized order...`
+    );
+
+    // Batch insert with shuffled order
     await prisma.notification.createMany({
-      data: notificationsToCreate,
+      data: shuffledNotifications,
       skipDuplicates: true,
     });
 
     const metrics = calculateMetrics(
       seedingStartTime,
-      notificationsToCreate.length
+      shuffledNotifications.length
     );
-    const readCount = notificationsToCreate.filter((n) => n.read).length;
+    const readCount = shuffledNotifications.filter((n) => n.read).length;
 
     const stats: NotificationStats = {
-      totalNotifications: notificationsToCreate.length,
+      totalNotifications: shuffledNotifications.length,
       typeDistribution: typeStats,
-      readRatio: `${((readCount / notificationsToCreate.length) * 100).toFixed(
+      readRatio: `${((readCount / shuffledNotifications.length) * 100).toFixed(
         1
       )}%`,
       seedingDuration: metrics.duration,

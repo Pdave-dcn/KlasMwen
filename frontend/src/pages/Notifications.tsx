@@ -44,7 +44,7 @@ const Notifications = () => {
               Notifications
             </h1>
             {unreadCount > 0 && (
-              <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
+              <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs font-medium text-white">
                 {unreadCount}
               </span>
             )}

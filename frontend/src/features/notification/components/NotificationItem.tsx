@@ -1,3 +1,5 @@
+import { useNavigate } from "react-router-dom";
+
 import { MessageCircle, Reply, Heart, ShieldAlert } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -44,24 +46,36 @@ export const NotificationItem = ({
   notification,
   onMarkAsRead,
 }: NotificationItemProps) => {
+  const navigate = useNavigate();
+
   const {
     icon: Icon,
     className: iconClassName,
     message,
   } = typeConfig[notification.type];
 
-  const handleClick = () => {
+  const handleClick = async () => {
     if (!notification.read) {
       onMarkAsRead(notification.id);
     }
-    // Navigate to the relevant content
+
+    if (notification.postId) {
+      await navigate(`/@user/post/${notification.postId}`);
+    } else if (notification.comment?.postId) {
+      await navigate(`/@user/post/${notification.comment.postId}`);
+    }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = async (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      handleClick();
+      await handleClick();
     }
+  };
+
+  const handleNavigate = async (e: React.MouseEvent, userId: string) => {
+    e.stopPropagation();
+    await navigate(`/profile/${userId}`);
   };
 
   return (
@@ -107,10 +121,7 @@ export const NotificationItem = ({
               <>
                 <button
                   className="font-medium text-foreground hover:underline focus:outline-none focus:underline"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // Navigate to user profile
-                  }}
+                  onClick={(e) => handleNavigate(e, notification.actorId)}
                 >
                   {notification.actor.username}
                 </button>{" "}

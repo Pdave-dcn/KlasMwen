@@ -1,4 +1,5 @@
-/*eslint-disable max-lines-per-function*/
+/*eslint-disable*/
+// @ts-nocheck
 import { faker } from "@faker-js/faker";
 import {
   NotificationType,

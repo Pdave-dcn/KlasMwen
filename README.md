@@ -65,7 +65,7 @@ It empowers students to learn, share, and grow together in a community **built b
 
 ## Screenshots
 
-![Landing Page](./docs/screenshots/desktop-landingpage.png)
+![Landing Page](./docs/screenshots/desktop-landing-page.png)
 
 ![Feed Page](./docs/screenshots/feed.png)
 

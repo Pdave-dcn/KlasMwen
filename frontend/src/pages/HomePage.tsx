@@ -4,11 +4,9 @@ import PostCard from "@/components/cards/post/PostCard";
 import PostCardSkeleton from "@/components/cards/post/PostCardSkeleton";
 import LoadMoreButton from "@/components/LoadMoreButton";
 import { Card, CardContent } from "@/components/ui/card";
-import { usePrefetchNotifications } from "@/hooks/usePrefetchNotifications";
 import { useHomePagePosts } from "@/queries/post.query";
 
 const HomePage = () => {
-  usePrefetchNotifications();
   const {
     data: posts,
     isLoading,

@@ -90,7 +90,7 @@ const Notifications = () => {
                 <SelectItem value="COMMENT_ON_POST">Comments</SelectItem>
                 <SelectItem value="REPLY_TO_COMMENT">Replies</SelectItem>
                 <SelectItem value="LIKE">Likes</SelectItem>
-                <SelectItem value="REPORT_UPDATE">Reports</SelectItem>
+                {/* <SelectItem value="REPORT_UPDATE">Reports</SelectItem> */}
               </SelectContent>
             </Select>
           </div>

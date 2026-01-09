@@ -7,7 +7,7 @@ let socket: ReturnType<typeof io> | null = null;
 export const connectSocket = () => {
   if (socket) return socket;
 
-  socket = io(import.meta.env.VITE_API_BASE_URL, {
+  socket = io(import.meta.env.VITE_SOCKET_URL, {
     withCredentials: true,
     transports: ["websocket"],
   });

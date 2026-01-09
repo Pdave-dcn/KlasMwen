@@ -30,6 +30,7 @@ KlasMwen includes a rich set of features designed to create a safe, collaborativ
 - Markdown support for clean, rich content
 - Tag-based categorization and filtering
 - Bookmarking and reactions (likes)
+- Real-time notifications
 
 ### Resource Sharing
 
@@ -100,6 +101,7 @@ KlasMwen includes a rich set of features designed to create a safe, collaborativ
 - **Axios** – HTTP client
 - **Zustand** – Global state management
 - **Markdown Editor (MDEditor / Markdown Preview)** – Content creation
+- **socket.io-client** – Real-time, bidirectional communication
 
 ### Backend
 
@@ -112,6 +114,7 @@ KlasMwen includes a rich set of features designed to create a safe, collaborativ
 - **Swagger** – API documentation
 - **Zod** – Request/response validation
 - **Express Rate Limit** – Request throttling
+- **socket.io** – Real-time, bidirectional communication
 
 ### Database
 
@@ -193,6 +196,7 @@ Example:
 
 ```env
 VITE_API_BASE_URL="http://localhost:3000/api"
+VITE_SOCKET_URL="http://localhost:3000/"
 ```
 
 ### Installation
@@ -355,9 +359,6 @@ KlasMwen is a monorepo with **frontend**, **backend**, and **PostgreSQL** databa
 KlasMwen is actively evolving, and several impactful features are planned to elevate collaboration, engagement, and accessibility.
 
 ### Upcoming Features
-
-- **Real-Time Notifications**
-  Receive instant alerts for comments, replies, mentions, and moderation updates.
 
 - **Group Chats & Study Circles**
   Create collaborative group spaces for classes, clubs, or focused study groups.

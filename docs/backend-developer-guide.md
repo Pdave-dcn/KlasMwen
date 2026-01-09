@@ -21,7 +21,6 @@ backend/
     ├── routes/      # API routes
     ├── seeds/       # Database seed scripts
     ├── swagger/     # OpenAPI documentation
-    ├── tests/       # Vitest suites
     ├── utils/       # Helpers
     ├── zodSchemas/  # Input validation schemas
     ├── app.ts       # Express initialization
@@ -52,7 +51,6 @@ Client → Middleware → Controller → Service → Repository → Prisma → R
 
 ### Controller Responsibilities
 
-- Executes authentication.
 - Validates inputs using **Zod schemas**.
 - Calls **service methods**.
 - Returns **standardized JSON responses**.
@@ -66,7 +64,17 @@ Client → Middleware → Controller → Service → Repository → Prisma → R
 
 ### Error Handling in Controllers
 
-All controllers wrap logic in `try/catch` blocks using `handleError(error, res)` for uniform error responses.
+Controllers do **not** send error responses directly. Instead:
+
+- Controller logic is wrapped in `try/catch` blocks
+- On failure, the controller calls `next(error)`
+- The error is forwarded to the centralized `errorMiddleware`
+
+This ensures:
+
+- consistent error formatting across the application
+- separation of concerns between controllers and error handling
+- easier maintenance and extensibility of error logic
 
 ---
 
@@ -234,7 +242,162 @@ Enables **traceable, correlated logs** across requests.
 
 ---
 
-## 9. Role-Based Access Control (RBAC)
+## 9. Real-Time Communication & Notifications (Socket.IO)
+
+The backend supports **real-time features** using **Socket.IO**, currently implemented for **user notifications** and designed to scale naturally to future features such as **group chat** and live interactions.
+
+This system follows the same architectural principles as the HTTP layer:
+
+- centralized business logic
+- strict separation of concerns
+- authenticated, user-scoped communication
+
+---
+
+### 1. Design Goals
+
+The real-time layer is built to:
+
+- deliver **instant, user-specific updates** (e.g. notifications)
+- reuse existing **authentication and authorization models** (JWT + cookies)
+- avoid leaking socket logic into controllers
+- remain extensible for future real-time features (e.g. group chat, presence)
+
+Socket.IO is treated as a **transport mechanism**, not a source of business logic.
+
+---
+
+### 2. Socket.IO Initialization
+
+Socket.IO is initialized alongside the HTTP server and shares the same runtime, configuration, and CORS policy.
+
+- Uses the same HTTP server as Express
+- CORS configuration is shared with REST endpoints
+- The `io` instance is attached to the Express app for downstream access
+
+This allows HTTP-driven actions (such as creating a comment) to trigger real-time events without tightly coupling controllers to Socket.IO.
+
+---
+
+### 3. Authentication & Security
+
+All socket connections are **authenticated during the handshake** using a dedicated Socket.IO middleware.
+
+#### Authentication Flow
+
+1. Client establishes a socket connection
+2. JWT is extracted from **httpOnly cookies**
+3. Token is verified using the same JWT secret as REST endpoints
+4. The authenticated user is fetched from the database
+5. The user object is attached to `socket.data.user`
+
+Unauthenticated or invalid connections are rejected before the socket is established.
+
+**Result:** Socket connections are as secure and trusted as HTTP requests.
+
+---
+
+### 4. User-Scoped Rooms
+
+Each authenticated socket joins a **private, user-specific room** on connection:
+
+```text
+user:{userId}
+```
+
+This strategy enables:
+
+- targeted, per-user event delivery
+- multiple simultaneous connections per user (multi-tab, multi-device)
+- clean separation between users without broadcasting sensitive data
+
+Rooms are used as the primary delivery mechanism for notifications.
+
+---
+
+### 5. Notification Types (Current Scope)
+
+The real-time system currently handles **notification delivery** for key user interactions, including:
+
+- post interactions (e.g. comments, replies)
+- reactions (likes, bookmarks)
+- moderation or system-driven events (future expansion)
+
+All notification creation logic remains **centralized in the notification service layer**.
+
+---
+
+### 6. HTTP → Socket Bridge Pattern
+
+Real-time events are emitted as **side effects of successful business operations**, not directly from controllers.
+
+#### Flow Example: Creating a Comment
+
+```text
+HTTP Request
+  ↓
+Controller
+  ↓
+Comment Service
+  ↓
+Notification Service
+  ↓
+Prisma (persist notification)
+  ↓
+Socket.IO emit → user:{targetUserId}
+```
+
+Key principles:
+
+- Controllers remain transport-agnostic
+- Services control _when_ notifications should be sent
+- Socket.IO is accessed via `req.app.get("io")`
+- No socket logic leaks into routing or controllers
+
+---
+
+### 7. Error Handling & Safety
+
+- Socket authentication failures are handled during the handshake
+- Notification emission failures do **not** break HTTP responses
+- Self-notifications are explicitly prevented at the service level
+
+This ensures real-time features enhance UX without compromising system stability.
+
+---
+
+### 8. Extensibility: Future Real-Time Features
+
+This architecture is intentionally designed to support future features such as:
+
+- group chat
+- typing indicators
+- presence (online/offline)
+- live moderation updates
+
+Future real-time modules will follow the same patterns:
+
+- authenticated sockets
+- room-based communication
+- service-driven event emission
+- strict separation between domain logic and transport
+
+---
+
+### Summary
+
+The real-time layer in KlasMwen:
+
+- integrates seamlessly with the existing backend architecture
+- uses secure, authenticated Socket.IO connections
+- delivers targeted, scalable notifications
+- remains flexible for future real-time expansion
+
+Socket.IO is treated as an **infrastructure layer**, while business decisions remain firmly within services.
+
+---
+
+## 10. Role-Based Access Control (RBAC)
 
 The backend implements a **type-safe, flexible RBAC system** using a **registry** and **policy** approach.
 
@@ -266,7 +429,7 @@ await PostRepository.delete(post.id);
 
 ---
 
-## 10. Quick Start / How-To Guides
+## 11. Quick Start / How-To Guides
 
 This section provides a structured approach for adding new features, routes, controllers, and RBAC permissions in the KlasMwen backend.
 
@@ -326,7 +489,7 @@ await PostRepository.delete(post.id);
 
 ---
 
-## 11. Testing Philosophy & Setup
+## 12. Testing Philosophy & Setup
 
 Uses **Vitest** with focus on **controller integration**:
 
@@ -343,7 +506,7 @@ npm run test:ui --workspace backend
 
 ---
 
-## 12. Seeding Strategy
+## 13. Seeding Strategy
 
 Multi-phased, deterministic seeding ensures **realistic data**:
 

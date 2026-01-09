@@ -104,6 +104,35 @@ features/postView/
 
 ---
 
+## Authentication Initialization & Real-Time Communication
+
+This application performs **authentication verification and real-time setup at startup** to keep routing, state, and notifications in sync.
+
+### Authentication Initialization
+
+On app load, `useAuthInitialization`:
+
+1. Waits for Zustand store hydration
+2. Verifies the session via `GET /auth/me`
+3. Updates auth state (`authenticated` / `unauthenticated`)
+4. Redirects users based on route access rules
+
+A `SplashScreen` is rendered while authentication is being resolved.
+
+### Real-Time (Socket.IO)
+
+When authentication succeeds:
+
+- A Socket.IO connection is established
+- Notification listeners are registered
+- The socket lifecycle is bound to auth state
+
+On logout or auth failure, the socket is disconnected and listeners are removed.
+
+This creates a safe, scalable foundation for real-time features such as notifications today and group chat in the future.
+
+---
+
 ## 4. State Management
 
 ### 4.1 Server State (TanStack Query)

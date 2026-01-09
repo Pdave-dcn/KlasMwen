@@ -1,7 +1,10 @@
+import http from "http";
+
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 import passport from "passport";
+import { Server } from "socket.io";
 
 import { corsOptions } from "./core/config/cors.js";
 import env from "./core/config/env.js";
@@ -9,30 +12,40 @@ import initializePassport from "./core/config/passport.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
 import { httpLogger } from "./middleware/httpLogger.middleware.js";
 import router from "./routes/index.js";
+import { socketAuthMiddleware } from "./socket/auth.js";
+import { registerSocketHandlers } from "./socket/index.js";
 import setupSwagger from "./swagger/index.js";
 
 const app = express();
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: corsOptions,
+});
 
 if (env.NODE_ENV === "production") {
   app.set("trust proxy", 1);
 }
 
 app.use(cookieParser());
-
 app.use(cors(corsOptions));
-
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 app.use(passport.initialize());
 initializePassport(passport);
 
+// Make io available to Express routes
+app.set("io", io);
+
+// Socket.IO setup
+io.use(socketAuthMiddleware);
+registerSocketHandlers(io);
+
 setupSwagger(app);
 
 app.use(httpLogger);
-
 app.use("/", router);
-
 app.use(errorMiddleware);
 
-export default app;
+export { app, server, io };

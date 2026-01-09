@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import api from "@/api/api";
+import { connectSocket, disconnectSocket } from "@/lib/socket/socket";
 import { useAuthStore } from "@/stores/auth.store";
 import { AuthVerificationResponseSchema } from "@/zodSchemas/auth.zod";
 
@@ -46,11 +47,13 @@ export const useAuthInitialization = () => {
         if (!isMounted) return;
 
         login(validatedData.user);
+        connectSocket();
         setStatus("authenticated");
       } catch {
         if (!isMounted) return;
 
         logout();
+        disconnectSocket();
         setStatus("unauthenticated");
       }
     };
@@ -59,6 +62,7 @@ export const useAuthInitialization = () => {
 
     return () => {
       isMounted = false;
+      disconnectSocket();
     };
   }, [login, logout, navigate]);
 

@@ -63,7 +63,7 @@ router.get("/reasons", getReportReasons);
  *
  *       **Access:** Admin only
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     responses:
  *       '200':
  *         description: Successfully retrieved report statistics

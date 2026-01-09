@@ -10,8 +10,8 @@ import { useReportModalStore } from "@/stores/reportModal.store";
 
 import { ReportDialog } from "../modals/ReportDialog";
 
-import MobileTabBar from "./MobileTabBar";
-import Sidebar from "./Sidebar";
+import MobileTabBar from "./mobileTabBar/MobileTabBar";
+import Sidebar from "./sidebar/Sidebar";
 
 interface LayoutProps {
   children: React.ReactNode;

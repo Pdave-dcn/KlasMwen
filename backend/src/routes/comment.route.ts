@@ -21,7 +21,7 @@ router.use(requireAuth);
 
 /**
  * @openapi
- * /posts/{id}/comments:
+ * /comments/post/{id}:
  *   get:
  *     summary: Get parent comments for a specific post
  *     description: Fetch paginated parent comments for a given post ID.

@@ -1,9 +1,53 @@
 # KlasMwen — Educational Social App
 
-![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
-![Tests](https://img.shields.io/badge/tests-✓-blue)
+![Build](https://img.shields.io/badge/build-passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-passing-blue)
+![License](https://img.shields.io/github/license/Pdave-dcn/KlasMwen)
+
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14+-4169E1?logo=postgresql&logoColor=white)
+
+![RBAC](https://img.shields.io/badge/Security-RBAC-purple)
+![Validation](https://img.shields.io/badge/Validation-Zod-success)
+![Real--Time](https://img.shields.io/badge/Realtime-Socket.IO-black?logo=socket.io)
+
+[![Live Demo](https://img.shields.io/badge/demo-live-success?logo=netlify)](https://klasmwen.netlify.app/)
 
 **KlasMwen** is an educational social platform designed to connect students, promote knowledge sharing, and support collective growth.
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Screenshots](#screenshots)
+- [Key Features](#key-features)
+- [Live Demo](#live-demo)
+- [Tech Stack](#tech-stack)
+  - [Frontend](#frontend)
+  - [Backend](#backend)
+  - [Database](#database)
+  - [Development & Tooling](#development--tooling)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Clone the Repository](#clone-the-repository)
+  - [Environment Variables](#environment-variables)
+  - [Installation](#installation)
+  - [Seed the Database](#seed-the-database)
+  - [Run the Project](#run-the-project)
+  - [Running Tests](#running-tests)
+- [Architecture Overview](#architecture-overview)
+- [Real-Time Overview](#real-time-overview)
+- [API Documentation](#api-documentation)
+- [Troubleshooting](#troubleshooting)
+- [Scripts](#scripts)
+- [Future Improvements / Roadmap](#future-improvements--roadmap)
+- [AI-Assisted Development & Learning](#ai-assisted-development--learning)
+- [License](#license)
+- [Acknowledgements](#acknowledgements)
+- [Additional Resources](#additional-resources)
 
 ---
 
@@ -19,6 +63,22 @@ It empowers students to learn, share, and grow together in a community **built b
 
 ---
 
+## Screenshots
+
+![Landing Page](./docs/screenshots/desktop-landing-page.png)
+
+![Feed Page](./docs/screenshots/feed.png)
+
+![Profile Page](./docs/screenshots/profile.png)
+
+![Notifications Page](./docs/screenshots/klasmwen-notifications.jpeg)
+
+![Avatar Selection modal](./docs/screenshots/avatar-selection-dark.png)
+
+![Report Dashboard](./docs/screenshots/report-dashboard.png)
+
+---
+
 ## Key Features
 
 KlasMwen includes a rich set of features designed to create a safe, collaborative, and student-friendly learning environment.
@@ -30,6 +90,7 @@ KlasMwen includes a rich set of features designed to create a safe, collaborativ
 - Markdown support for clean, rich content
 - Tag-based categorization and filtering
 - Bookmarking and reactions (likes)
+- Real-time notifications
 
 ### Resource Sharing
 
@@ -70,18 +131,6 @@ KlasMwen includes a rich set of features designed to create a safe, collaborativ
 
 ---
 
-## Screenshots
-
-![Landing Page](./docs/screenshots/desktop-landingpage.png)
-
-![Feed Page](./docs/screenshots/feed.png)
-
-![Profile Page](./docs/screenshots/profile.png)
-
-![Avatar Selection modal](./docs/screenshots/avatar-selection-dark.png)
-
-![Report Dashboard](./docs/screenshots/report-dashboard.png)
-
 ## Live Demo
 
 [https://klasmwen.netlify.app/](https://klasmwen.netlify.app/)
@@ -100,6 +149,7 @@ KlasMwen includes a rich set of features designed to create a safe, collaborativ
 - **Axios** – HTTP client
 - **Zustand** – Global state management
 - **Markdown Editor (MDEditor / Markdown Preview)** – Content creation
+- **socket.io-client** – Real-time, bidirectional communication
 
 ### Backend
 
@@ -112,6 +162,7 @@ KlasMwen includes a rich set of features designed to create a safe, collaborativ
 - **Swagger** – API documentation
 - **Zod** – Request/response validation
 - **Express Rate Limit** – Request throttling
+- **socket.io** – Real-time, bidirectional communication
 
 ### Database
 
@@ -193,6 +244,7 @@ Example:
 
 ```env
 VITE_API_BASE_URL="http://localhost:3000/api"
+VITE_SOCKET_URL="http://localhost:3000/"
 ```
 
 ### Installation
@@ -297,7 +349,13 @@ KlasMwen is a monorepo with **frontend**, **backend**, and **PostgreSQL** databa
 
 > Refer to [Architecture Docs](./docs/architecture.md) for more details.
 
+Authentication state is verified on application startup using `/auth/me` before protected routes or socket connections are initialized.
+
 ---
+
+## Real-Time Overview
+
+KlasMwen uses Socket.IO for authenticated, user-scoped real-time features such as notifications. Socket connections are established only after session verification and are scoped to user-specific rooms. This architecture enables future features like group chats and live collaboration.
 
 ## API Documentation
 
@@ -356,9 +414,6 @@ KlasMwen is actively evolving, and several impactful features are planned to ele
 
 ### Upcoming Features
 
-- **Real-Time Notifications**
-  Receive instant alerts for comments, replies, mentions, and moderation updates.
-
 - **Group Chats & Study Circles**
   Create collaborative group spaces for classes, clubs, or focused study groups.
 
@@ -384,6 +439,42 @@ KlasMwen is actively evolving, and several impactful features are planned to ele
 - Integrations with platforms like Google Classroom or Moodle
 - Mobile app (React Native / Expo)
 
+---
+
+## AI-Assisted Development & Learning
+
+This project was developed with the assistance of AI tools as both a **productivity aid** and a **learning companion**.
+
+As a junior developer, this was my largest and most complex project to date. AI played an important role in helping me **understand new concepts, evaluate design decisions, and improve code quality**, while all architectural choices and final implementations remained my responsibility.
+
+### How AI was used
+
+- Learning and understanding backend architecture patterns (e.g. thin controllers, service layers, CQRS-style separation)
+- Exploring best practices for logging (Pino), error handling, and structured APIs
+- Understanding and implementing OpenAPI / Swagger documentation
+- Receiving suggestions for refactoring files and improving structure and readability
+- Generating initial UI boilerplate (e.g. layouts, components, pages) that was then heavily refactored or rewritten
+- Acting as a “rubber duck” to reason through edge cases and trade-offs
+
+### Engineering decisions made by me
+
+- Choosing which architectural patterns to adopt and applying them consistently
+- Designing business logic, data models, and authorization rules
+- Refactoring or discarding AI-generated code that did not meet project standards
+- Enforcing type safety, validation, and error handling across frontend and backend
+- Integrating real-time features (Socket.IO) into an existing authenticated system
+
+### How correctness and quality were ensured
+
+- End-to-end testing of core user flows
+- Manual testing of authentication, permissions, and real-time notifications
+- Schema validation on both client and server
+- Iterative refactoring as understanding improved throughout the project
+
+This project reflects **growth through iteration** — AI helped accelerate learning, but the architecture, decisions, and final system are the result of hands-on engineering and continuous refinement.
+
+---
+
 ## License
 
 This project is licensed under the terms in the [LICENSE](./LICENSE.md) file.
@@ -392,7 +483,7 @@ This project is licensed under the terms in the [LICENSE](./LICENSE.md) file.
 
 ## Acknowledgements
 
-Thanks to the communities behind **React, Next.js, TailwindCSS, shadcn, Node.js, Express, Prisma, PostgreSQL, Cloudinary, Vitest, ESLint**, and other free and open-source tools.
+Thanks to the communities behind **React, TailwindCSS, shadcn, Node.js, Express, Prisma, PostgreSQL, Cloudinary, Vitest, ESLint**, and other free and open-source tools.
 
 ---
 

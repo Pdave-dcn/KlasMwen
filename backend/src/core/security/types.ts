@@ -1,4 +1,4 @@
-import type { Post, Comment } from "@prisma/client";
+import type { Post, Comment, Notification } from "@prisma/client";
 
 type WithAuthorId<T extends { id: string | number; authorId: string }> = Pick<
   T,
@@ -8,8 +8,17 @@ type WithAuthorId<T extends { id: string | number; authorId: string }> = Pick<
   author?: { id: string };
 };
 
+type WithUserId<T extends { id: string | number; userId: string }> = Pick<
+  T,
+  "id"
+> & {
+  userId?: string;
+  user?: { id: string };
+};
+
 type PostForPolicy = WithAuthorId<Post>;
 type CommentForPolicy = WithAuthorId<Comment>;
+type NotificationForPolicy = WithUserId<Notification>;
 
 const registry = {
   posts: {
@@ -19,6 +28,10 @@ const registry = {
   comments: {
     datatype: {} as CommentForPolicy,
     action: ["create", "read", "update", "delete", "report"],
+  },
+  notifications: {
+    datatype: {} as NotificationForPolicy,
+    action: ["read", "update", "delete"],
   },
 } as const;
 

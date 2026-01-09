@@ -9,11 +9,15 @@ import {
 import { PostIdParamSchema } from "../zodSchemas/post.zod.js";
 
 import type { AuthenticatedRequest } from "../types/AuthRequest.js";
-import type { Request, Response, NextFunction} from "express";
+import type { Request, Response, NextFunction } from "express";
 
 const controllerLogger = createLogger({ module: "CommentController" });
 
-const createComment = async (req: Request, res: Response, next: NextFunction) => {
+const createComment = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "createComment",
@@ -31,12 +35,15 @@ const createComment = async (req: Request, res: Response, next: NextFunction) =>
 
     actionLogger.debug("Processing comment creation");
     const serviceStartTime = Date.now();
-    const newComment = await CommentService.createComment({
-      content,
-      authorId: user.id,
-      postId,
-      parentId,
-    });
+    const newComment = await CommentService.createComment(
+      {
+        content,
+        authorId: user.id,
+        postId,
+        parentId,
+      },
+      req.app
+    );
     if (!newComment) return;
 
     const serviceDuration = Date.now() - serviceStartTime;
@@ -64,7 +71,11 @@ const createComment = async (req: Request, res: Response, next: NextFunction) =>
   }
 };
 
-const getParentComments = async (req: Request, res: Response, next: NextFunction) => {
+const getParentComments = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "getParentComments",
@@ -154,7 +165,11 @@ const getReplies = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-const deleteComment = async (req: Request, res: Response, next: NextFunction) => {
+const deleteComment = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "deleteComment",

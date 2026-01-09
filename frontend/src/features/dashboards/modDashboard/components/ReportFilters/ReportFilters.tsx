@@ -32,7 +32,6 @@ interface ReportFiltersProps {
   onFiltersChange: (filters: ReportsQueryParams) => void;
 }
 
-/* eslint-disable-next-line complexity */
 export const ReportFilters = ({
   filters,
   reportReasons,

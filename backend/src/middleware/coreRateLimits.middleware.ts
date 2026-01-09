@@ -84,6 +84,20 @@ const generalApiLimiter = createRateLimiter({
   message: "API rate limit exceeded. Please slow down.",
 });
 
+const notificationReadLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
+  message: "Too many notification requests. Please slow down.",
+  skipFailedRequests: true, // Don't count errors against limit
+});
+
+const notificationWriteLimiter = createRateLimiter({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 50,
+  message: "Too many notification actions. Please try again later.",
+  skipFailedRequests: true,
+});
+
 export {
   authLimiter,
   registerLimiter,
@@ -93,4 +107,6 @@ export {
   reportCreationLimiter,
   reportModerationLimiter,
   generalApiLimiter,
+  notificationReadLimiter,
+  notificationWriteLimiter,
 };

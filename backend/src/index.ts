@@ -1,4 +1,4 @@
-import app from "./app.js";
+import { server } from "./app.js";
 import { verifyCloudinaryConnection } from "./core/config/cloudinary.js";
 import prisma from "./core/config/db.js";
 import { createLogger } from "./core/config/logger.js";
@@ -16,36 +16,36 @@ const startServer = async () => {
     // Verify Cloudinary connection
     const cloudinaryStartTime = Date.now();
     await verifyCloudinaryConnection();
-    const cloudinaryDuration = Date.now() - cloudinaryStartTime;
-    logger.info({ cloudinaryDuration }, "Cloudinary connection verified");
+    logger.info(
+      { cloudinaryDuration: Date.now() - cloudinaryStartTime },
+      "Cloudinary connection verified"
+    );
 
     // Verify Database connection
     const dbStartTime = Date.now();
     await prisma.$connect();
-    const dbDuration = Date.now() - dbStartTime;
-    logger.info({ dbDuration }, "Database connected successfully");
+    logger.info(
+      { dbDuration: Date.now() - dbStartTime },
+      "Database connected successfully"
+    );
 
-    // Start server
+    // Start HTTP + Socket.IO server
     const serverStartTime = Date.now();
-    app.listen(PORT, () => {
-      const serverDuration = Date.now() - serverStartTime;
-      const totalDuration = Date.now() - startTime;
-
+    server.listen(PORT, () => {
       logger.info(
         {
           port: PORT,
-          serverDuration,
-          totalDuration,
+          serverDuration: Date.now() - serverStartTime,
+          totalDuration: Date.now() - startTime,
         },
         "Server is running successfully"
       );
     });
   } catch (error) {
-    const failureDuration = Date.now() - startTime;
     logger.error(
       {
         error: error instanceof Error ? error.message : String(error),
-        failureDuration,
+        failureDuration: Date.now() - startTime,
       },
       "Server startup failed"
     );
@@ -53,12 +53,4 @@ const startServer = async () => {
   }
 };
 
-startServer().catch((error) => {
-  logger.error(
-    {
-      error: error instanceof Error ? error.message : String(error),
-    },
-    "Failed to start server"
-  );
-  throw new Error("Server startup failed");
-});
+await startServer();

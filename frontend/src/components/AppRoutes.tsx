@@ -6,7 +6,7 @@ import HomePage from "@/pages/HomePage";
 import LandingPage from "@/pages/LandingPage";
 import ModDashboard from "@/pages/ModDashboard";
 import NotFound from "@/pages/NotFound";
-import NotificationsPage from "@/pages/NotificationsPage";
+import Notifications from "@/pages/Notifications";
 import PostView from "@/pages/PostView";
 import Profile from "@/pages/Profile";
 import ProfileEdit from "@/pages/ProfileEdit";
@@ -87,7 +87,7 @@ export const AppRoutes = () => {
         path="/notifications"
         element={
           <ProtectedRoute>
-            <NotificationsPage />
+            <Notifications />
           </ProtectedRoute>
         }
       />

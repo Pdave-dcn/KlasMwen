@@ -84,7 +84,7 @@ backend/
     │   │   ├── logger.ts       # Pino logging configuration
     │   │   └── db.ts           # Prisma client instance
     │   │   └── passport.ts     # Passport initializer
-    │   └── error/             # Centralized error handling system
+    │   └── error/              # Centralized error handling system
     │       ├── index.ts        # Main error handler
     │       ├── handlers/       # Specialized error types (e.g., Validation, Auth)
     │       └── custom/         # Custom error classes (e.g., PostNotFoundError)
@@ -99,9 +99,9 @@ backend/
     ├── routes/                 # API route definitions and module mounting
     ├── seeds/                  # Database seed scripts (e.g., default users, posts)
     ├── swagger/                # Swagger/OpenAPI configuration setup
-    ├── tests/                  # Backend tests (Vitest)
     ├── utils/                  # Helper functions shared across modules
     └── zodSchemas/             # Zod validation schemas for requests/responses
+
 ```
 
 ---
@@ -113,16 +113,20 @@ backend/
 - **Error management:** Centralized under `core/error`, ensuring consistent error handling throughout the application.
 - **Type safety:** TypeScript is used end-to-end for better reliability and maintainability.
 - **Validation:** All input validation is done using **Zod**, ensuring data integrity at runtime.
+- **socket.io** – Real-time, bidirectional communication
 
 ---
 
 ### Request Lifecycle Example
 
 1. **Request Entry** → Incoming request hits a defined route in `routes/`.
-2. **Controller Layer** → The controller handles input extraction and calls the respective feature service.
-3. **Feature Logic** → The service in `features/` performs the necessary business logic (e.g., creating a post, fetching comments).
-4. **Database Access** → Prisma interacts with PostgreSQL for data persistence.
-5. **Response or Error** → Data is returned or errors are handled by `core/errors` middleware.
+2. **Rate Limiting Middleware** → The request is evaluated against rate limits to prevent abuse.
+3. **Authentication Middleware (`requireAuth`)** → JWT is validated and the authenticated user is attached to the request context.
+4. **Authorization Middleware (`requireRole`)** → User roles are checked if the route is restricted to specific roles.
+5. **Controller Layer** → The controller handles input extraction and delegates work to the appropriate feature service.
+6. **Feature Logic** → The service in `features/` performs the necessary business logic (e.g., creating a post, fetching comments).
+7. **Database Access** → Prisma interacts with PostgreSQL for data persistence.
+8. **Response or Error** → On success, data is returned to the client. On failure, the controller calls `next(error)`, forwarding the error to the centralized `errorMiddleware` for handling.
 
 ---
 
@@ -131,12 +135,32 @@ backend/
 ```bash
 Request (POST /api/posts)
    ↓
-Routes → Controller → Post Service → Prisma (DB)
+Routes
+   ↓
+Rate Limiter
+   ↓
+requireAuth (JWT validation)
+   ↓
+requireRole (if role-restricted)
+   ↓
+Controller
+   ↓
+Post Service
+   ↓
+Prisma (DB)
    ↓
 Response (Created Post JSON)
+        or
+Error → next(error) → errorMiddleware
 ```
 
-This design pattern ensures that logic is centralized, errors are predictable, and new features can be added with minimal friction.
+This design pattern ensures that:
+
+- middleware responsibilities are clearly separated
+- authentication and authorization are enforced consistently
+- business logic remains centralized in services
+- errors are predictable and handled in one place
+- new features can be added with minimal friction
 
 ---
 
@@ -168,7 +192,6 @@ frontend/
 │   │   ├── comment.query.ts     # Comment fetching/mutation queries
 │   │   └── post.query.ts        # Post fetching/mutation queries
 │   ├── stores/                  # Zustand stores for global state
-│   ├── tests/                   # Frontend tests (Vitest + Testing Library)
 │   ├── types/                   # Shared TypeScript types and interfaces
 │   ├── utils/                   # Helper functions
 │   ├── zodSchemas/              # Zod validation schemas and inferred types (aligned with backend)
@@ -269,8 +292,6 @@ This approach ensures a clear separation between **presentation**, **data fetchi
 
 ## 7. Scalability and Future Improvements
 
-- **Microservices Ready**: The modular backend structure can evolve into microservices if scaling requires it.
-- **WebSocket Integration**: Future enhancement for real-time interactions (e.g., Q&A, notifications).
 - **AI-Powered Assistance**: Potential integration for automated question answering.
 - **Caching Layer**: Redis could be introduced for session caching or feed performance.
 

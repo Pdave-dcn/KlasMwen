@@ -2,6 +2,7 @@ import { authSchemas } from "./auth.schema.js";
 import { avatarSchemas } from "./avatar.schema.js";
 import { commentSchemas } from "./comment.schema.js";
 import { commonSchemas } from "./common.schema.js";
+import { notificationSchemas } from "./notification.schema.js";
 import { postSchemas } from "./post.schema.js";
 import { reportSchemas } from "./report.schema.js";
 import { searchSchemas } from "./search.schema.js";
@@ -18,4 +19,5 @@ export const allSchemas = {
   ...avatarSchemas,
   ...searchSchemas,
   ...reportSchemas,
+  ...notificationSchemas,
 };

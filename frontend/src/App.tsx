@@ -8,6 +8,7 @@ import { AppRoutes } from "./components/AppRoutes";
 import SplashScreen from "./components/layout/SplashScreen";
 import ScrollManager from "./components/ScrollManager";
 import { useAuthInitialization } from "./hooks/useAuthInitialization";
+import { useInitializeNotifications } from "./hooks/useInitializeNotifications";
 
 const PROTECTED_ROUTES = [
   "/home",
@@ -25,6 +26,9 @@ const App = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const hasCheckedAuth = useRef(false);
+
+  // Only initialize notifications when authenticated
+  useInitializeNotifications(authStatus === "authenticated");
 
   useEffect(() => {
     if (authStatus === "loading") return;

@@ -28,6 +28,9 @@ const cleanupDatabase = async () => {
     logger.debug("Deleting existing posts");
     const postDeleteCount = await prisma.post.deleteMany();
 
+    logger.debug("Deleting existing notifications");
+    const notificationsDeleteCount = await prisma.notification.deleteMany();
+
     logger.debug("Deleting existing users");
     const userDeleteCount = await prisma.user.deleteMany();
 
@@ -55,6 +58,7 @@ const cleanupDatabase = async () => {
       avatarsDeleted: avatarDeleteCount.count,
       bookmarksDeleted: bookmarkDeleteCount.count,
       reportsDeleted: reportsDeleteCount.count,
+      notificationsDeleted: notificationsDeleteCount.count,
       cleanupDuration,
     };
 

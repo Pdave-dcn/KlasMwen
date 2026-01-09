@@ -7,7 +7,7 @@ import userEvent from "@testing-library/user-event";
 
 import Layout from "@/components/layout/Layout";
 
-vi.mock("@/components/layout/Sidebar", () => ({
+vi.mock("@/components/layout/sidebar/Sidebar", () => ({
   default: ({ onCreateClick }: { onCreateClick: () => void }) => (
     <div data-testid="sidebar">
       <button onClick={onCreateClick}>Create Post</button>
@@ -15,7 +15,7 @@ vi.mock("@/components/layout/Sidebar", () => ({
   ),
 }));
 
-vi.mock("@/components/layout/MobileTabBar", () => ({
+vi.mock("@/components/layout/mobileTabBar/MobileTabBar", () => ({
   default: ({ onCreateClick }: { onCreateClick: () => void }) => (
     <div data-testid="mobile-tab-bar">
       <button onClick={onCreateClick}>Mobile Create</button>

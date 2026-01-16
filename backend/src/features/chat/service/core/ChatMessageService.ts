@@ -66,7 +66,7 @@ export class ChatMessageService {
   /**
    * Deletes a message from a chat group.
    * Only the sender, moderators, or owners can delete messages.
-   * @throws {Error} If the message does not exist
+   * @throws {MessageNotFoundError} If the message does not exist
    * @throws {AuthorizationError} If user lacks permissions
    */
   static async deleteMessage(
@@ -75,7 +75,7 @@ export class ChatMessageService {
   ) {
     const message = await ChatRepository.findMessageById(messageId);
     if (!message) {
-      throw new Error(`Message ${messageId} not found`);
+      throw new MessageNotFoundError(messageId);
     }
 
     assertChatPermission(user, "chatMessages", "delete", message);
@@ -85,7 +85,6 @@ export class ChatMessageService {
 
   /**
    * Gets the latest message in a chat group.
-   * Useful for displaying recent activity in group lists.
    */
   static async getLatestMessage(chatGroupId: string) {
     return await ChatRepository.getLatestMessage(chatGroupId);

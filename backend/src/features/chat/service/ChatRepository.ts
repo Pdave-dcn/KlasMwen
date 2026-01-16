@@ -27,7 +27,7 @@ class ChatRepository {
     return await prisma.chatGroup.create({
       data: {
         name: data.name,
-        description: data.description,
+        description: data.description ?? null,
         isPrivate: data.isPrivate ?? false,
         creatorId: data.creatorId,
         members: {

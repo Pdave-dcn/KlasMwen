@@ -12,8 +12,9 @@ import initializePassport from "./core/config/passport.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
 import { httpLogger } from "./middleware/httpLogger.middleware.js";
 import router from "./routes/index.js";
-import { socketAuthMiddleware } from "./socket/auth.js";
-import { registerSocketHandlers } from "./socket/index.js";
+import { socketAuthMiddleware } from "./socket/auth/auth.js";
+import { registerChatSocketHandlers } from "./socket/chat/chat.socket.js";
+import { registerSocketHandlers } from "./socket/global.socket.js";
 import setupSwagger from "./swagger/index.js";
 
 const app = express();
@@ -41,6 +42,10 @@ app.set("io", io);
 // Socket.IO setup
 io.use(socketAuthMiddleware);
 registerSocketHandlers(io);
+
+const chatNamespace = io.of("/chat");
+chatNamespace.use(socketAuthMiddleware);
+registerChatSocketHandlers(chatNamespace);
 
 setupSwagger(app);
 

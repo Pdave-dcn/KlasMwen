@@ -25,7 +25,7 @@ type MemberResource = {
  * getCreatorId({ creatorId: "u1" }) => "u1"
  */
 const getCreatorId = <TResource extends ChatResource>(
-  resource: TResource
+  resource: TResource,
 ): string | undefined => {
   if (!resource) return undefined;
   return resource.creator?.id ?? resource.creatorId ?? undefined;
@@ -43,7 +43,7 @@ const getCreatorId = <TResource extends ChatResource>(
  * getSenderId({ senderId: "u1" }) => "u1"
  */
 const getSenderId = <TResource extends MessageResource>(
-  resource: TResource
+  resource: TResource,
 ): string | undefined => {
   if (!resource) return undefined;
   return resource.sender?.id ?? resource.senderId ?? undefined;
@@ -61,7 +61,7 @@ const getSenderId = <TResource extends MessageResource>(
  * getMemberId({ userId: "u1" }) => "u1"
  */
 const getMemberId = <TResource extends MemberResource>(
-  resource: TResource
+  resource: TResource,
 ): string | undefined => {
   if (!resource) return undefined;
   return resource.user?.id ?? resource.userId ?? undefined;
@@ -77,7 +77,7 @@ const getMemberId = <TResource extends MemberResource>(
  */
 const isCreator = <TResource extends ChatResource>(
   user: Express.User,
-  resource: TResource
+  resource: TResource,
 ) => user.id === getCreatorId(resource);
 
 /**
@@ -89,8 +89,8 @@ const isCreator = <TResource extends ChatResource>(
  * @returns {boolean} `true` if the user is the sender, otherwise `false`.
  */
 const isSender = <TResource extends MessageResource>(
-  user: Express.User,
-  resource: TResource
+  user: Omit<Express.User, "email">,
+  resource: TResource,
 ) => user.id === getSenderId(resource);
 
 /**
@@ -102,8 +102,8 @@ const isSender = <TResource extends MessageResource>(
  * @returns {boolean} `true` if the user matches the member, otherwise `false`.
  */
 const isMemberUser = <TResource extends MemberResource>(
-  user: Express.User,
-  resource: TResource
+  user: Omit<Express.User, "email">,
+  resource: TResource,
 ) => user.id === getMemberId(resource);
 
 /**
@@ -114,8 +114,8 @@ const isMemberUser = <TResource extends MemberResource>(
  * @returns {boolean} `true` if user has one of the specified roles.
  */
 const hasRole = (
-  user: Express.User & { chatRole?: string },
-  roles: string | string[]
+  user: Omit<Express.User, "email"> & { chatRole?: string },
+  roles: string | string[],
 ): boolean => {
   if (!user.chatRole) return false;
   const roleArray = Array.isArray(roles) ? roles : [roles];

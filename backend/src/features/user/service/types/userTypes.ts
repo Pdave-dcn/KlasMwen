@@ -28,6 +28,13 @@ const BaseSelectors = {
     email: true,
     createdAt: true,
   } satisfies Prisma.UserSelect,
+
+  // Minimal fields needed for socket authentication
+  userForSocket: {
+    id: true,
+    username: true,
+    role: true,
+  } satisfies Prisma.UserSelect,
 };
 
 interface RegisterUserData {

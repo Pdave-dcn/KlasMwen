@@ -21,7 +21,7 @@ export class ChatMessageService {
    */
   static async sendMessage(
     data: SendMessageData,
-    user: Express.User & { chatRole?: ChatRole }
+    user: Omit<Express.User, "email"> & { chatRole?: ChatRole },
   ) {
     const group = await ChatRepository.findGroupById(data.chatGroupId);
     if (!group) throw new ChatGroupNotFoundError(data.chatGroupId);
@@ -40,7 +40,7 @@ export class ChatMessageService {
   static async getMessages(
     chatGroupId: string,
     user: Express.User & { chatRole?: ChatRole },
-    pagination?: MessagePaginationCursor
+    pagination?: MessagePaginationCursor,
   ) {
     const group = await ChatRepository.findGroupById(chatGroupId);
     if (!group) throw new ChatGroupNotFoundError(chatGroupId);
@@ -71,7 +71,7 @@ export class ChatMessageService {
    */
   static async deleteMessage(
     messageId: number,
-    user: Express.User & { chatRole?: ChatRole }
+    user: Express.User & { chatRole?: ChatRole },
   ) {
     const message = await ChatRepository.findMessageById(messageId);
     if (!message) {

@@ -17,7 +17,7 @@ import type {
 const serviceLogger = createLogger({ service: "UserService" });
 
 class UserService {
-  // ==================== Authentication Methods ====================
+  // Authentication Methods
 
   /**
    * Hash a password using bcrypt
@@ -55,7 +55,7 @@ class UserService {
         role: userData.role,
       },
       env.JWT_SECRET,
-      { expiresIn: "3d" }
+      { expiresIn: "3d" },
     );
 
     methodLogger.info("JWT token generated successfully");
@@ -93,7 +93,7 @@ class UserService {
         userId: newUser.id,
         role: newUser.role,
       },
-      "User registered successfully"
+      "User registered successfully",
     );
 
     methodLogger.debug("Generating authentication token");
@@ -157,7 +157,7 @@ class UserService {
     };
   }
 
-  // ==================== User Profile Methods ====================
+  // User Profile Methods
 
   /**
    * Verify if user exists
@@ -212,6 +212,31 @@ class UserService {
       bio: user.bio,
       role: user.role,
       avatar: user.Avatar,
+    };
+  }
+
+  /**
+   * Get user for socket authentication
+   * Returns minimal user data needed for socket operations
+   * @throws UserNotFoundError if user does not exist
+   */
+  static async getUserForSocket(userId: string) {
+    const methodLogger = serviceLogger.child({
+      method: "getUserForSocket",
+      userId,
+    });
+
+    const user = await UserRepository.findByIdForSocket(userId);
+
+    if (!user) {
+      methodLogger.warn("User not found for socket authentication");
+      throw new UserNotFoundError(userId);
+    }
+
+    return {
+      id: user.id,
+      username: user.username,
+      role: user.role,
     };
   }
 

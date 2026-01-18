@@ -28,10 +28,10 @@ import type { ChatRole } from "@prisma/client";
  * hasChatPermission(user, "chatMessages", "delete", messageData) // => true/false
  */
 const hasChatPermission = <Res extends keyof ChatRegistry>(
-  user: Express.User & { chatRole?: ChatRole },
+  user: Omit<Express.User, "email"> & { chatRole?: ChatRole },
   resource: Res,
   action: ChatRegistry[Res]["action"][number],
-  data?: ChatRegistry[Res]["datatype"]
+  data?: ChatRegistry[Res]["datatype"],
 ): boolean => {
   // User must have a chat role to access chat resources
   if (!user.chatRole) return false;
@@ -65,17 +65,17 @@ const hasChatPermission = <Res extends keyof ChatRegistry>(
  * assertChatPermission(user, "chatMessages", "send") // passes if member
  */
 const assertChatPermission = <Res extends keyof ChatRegistry>(
-  user: Express.User & { chatRole?: ChatRole },
+  user: Omit<Express.User, "email"> & { chatRole?: ChatRole },
   resource: Res,
   action: ChatRegistry[Res]["action"][number],
-  data?: ChatRegistry[Res]["datatype"]
+  data?: ChatRegistry[Res]["datatype"],
 ): void => {
   if (!hasChatPermission(user, resource, action, data)) {
     const roleInfo = user.chatRole
       ? ` with role ${user.chatRole}`
       : " (no chat role)";
     throw new AuthorizationError(
-      `User ${user.id}${roleInfo} not permitted to ${action} ${resource}`
+      `User ${user.id}${roleInfo} not permitted to ${action} ${resource}`,
     );
   }
 };

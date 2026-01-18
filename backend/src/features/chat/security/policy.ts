@@ -6,8 +6,8 @@ import type { ChatRole } from "@prisma/client";
 type PermissionCheck<K extends keyof ChatRegistry> =
   | boolean
   | ((
-      user: Express.User & { chatRole?: ChatRole },
-      data: ChatRegistry[K]["datatype"]
+      user: Omit<Express.User, "email"> & { chatRole?: ChatRole },
+      data: ChatRegistry[K]["datatype"],
     ) => boolean);
 
 type ChatPolicyMap = {

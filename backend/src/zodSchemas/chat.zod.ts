@@ -59,6 +59,7 @@ const UpdateMemberRoleDataSchema = z.object({
 // Chat Message Schemas
 
 const SendMessageDataSchema = z.object({
+  chatGroupId: z.uuid("Invalid chat group ID format"),
   content: z
     .string()
     .trim()

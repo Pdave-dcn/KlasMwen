@@ -4,61 +4,24 @@ import { z } from "zod";
 
 const ChatRoleSchema = z.enum(["OWNER", "MODERATOR", "MEMBER"]);
 
+const AvatarSchema = z.object({
+  url: z.url(),
+});
+
 const UserBasicSchema = z.object({
-  id: z.string(),
+  id: z.uuid(),
   username: z.string(),
+  avatar: AvatarSchema.nullable(),
 });
 
-const ChatGroupCreatorSchema = UserBasicSchema;
-
-// Chat Group Schemas
-
-const ChatGroupDataSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  description: z.string().nullable(),
-  isPrivate: z.boolean(),
-  createdAt: z.string(),
-  creator: ChatGroupCreatorSchema,
-  memberCount: z.number().int(),
-  userRole: ChatRoleSchema.nullable(),
-});
-
-const ChatGroupsResponseSchema = z.object({
-  data: z.array(ChatGroupDataSchema),
-});
-
-const ChatGroupResponseSchema = z.object({
-  data: ChatGroupDataSchema,
-});
-
-// Chat Member Schemas
-
-const ChatMemberDataSchema = z.object({
-  userId: z.string(),
-  role: ChatRoleSchema,
-  joinedAt: z.string(),
-  mutedUntil: z.string().nullable(),
-  user: z.object({
-    id: z.string(),
-    username: z.string(),
-    email: z.string(),
-  }),
-});
-
-const ChatMembersResponseSchema = z.object({
-  data: z.array(ChatMemberDataSchema),
-});
-
-const ChatMemberResponseSchema = z.object({
-  data: ChatMemberDataSchema,
-});
+const ChatGroupCreatorSchema = UserBasicSchema.omit({ avatar: true });
 
 // Chat Message Schemas
 
 const ChatMessageDataSchema = z.object({
   id: z.number().int(),
   content: z.string(),
+  chatGroupId: z.uuid(),
   createdAt: z.string(),
   sender: UserBasicSchema,
 });
@@ -73,6 +36,51 @@ const ChatMessagesResponseSchema = z.object({
 
 const ChatMessageResponseSchema = z.object({
   data: ChatMessageDataSchema,
+});
+
+// Chat Group Schemas
+
+const ChatGroupDataSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  description: z.string().nullable(),
+  isPrivate: z.boolean(),
+  createdAt: z.string(),
+  creator: ChatGroupCreatorSchema,
+  memberCount: z.number().int().nonnegative(),
+  unreadCount: z.number().int().nonnegative(),
+  userRole: ChatRoleSchema.nullable(),
+  latestMessage: ChatMessageDataSchema,
+});
+
+const ChatGroupsResponseSchema = z.object({
+  data: z.array(ChatGroupDataSchema),
+});
+
+const ChatGroupResponseSchema = z.object({
+  data: ChatGroupDataSchema,
+});
+
+// Chat Member Schemas
+
+const ChatMemberDataSchema = z.object({
+  userId: z.uuid(),
+  role: ChatRoleSchema,
+  joinedAt: z.string(),
+  mutedUntil: z.string().nullable(),
+  user: UserBasicSchema,
+});
+
+const EnrichedChatMemberDataSchema = ChatMemberDataSchema.extend({
+  isOnline: z.boolean(),
+});
+
+const ChatMembersResponseSchema = z.object({
+  data: z.array(ChatMemberDataSchema),
+});
+
+const ChatMemberResponseSchema = z.object({
+  data: ChatMemberDataSchema,
 });
 
 // Request Schemas
@@ -90,7 +98,7 @@ const UpdateChatGroupSchema = z.object({
 });
 
 const AddMemberSchema = z.object({
-  userId: z.string(),
+  userId: z.uuid(),
   role: ChatRoleSchema.optional(),
 });
 
@@ -102,9 +110,11 @@ const SendMessageSchema = z.object({
   content: z.string().min(1).max(1000),
 });
 
+export type ChatAttachedUser = z.infer<typeof UserBasicSchema>;
 export type ChatRole = z.infer<typeof ChatRoleSchema>;
 export type ChatGroup = z.infer<typeof ChatGroupDataSchema>;
 export type ChatMember = z.infer<typeof ChatMemberDataSchema>;
+export type EnrichedChatMember = z.infer<typeof EnrichedChatMemberDataSchema>;
 export type ChatMessage = z.infer<typeof ChatMessageDataSchema>;
 
 export type CreateChatGroupData = z.infer<typeof CreateChatGroupSchema>;
@@ -120,6 +130,7 @@ export {
   ChatGroupResponseSchema,
   ChatMembersResponseSchema,
   ChatMemberResponseSchema,
+  EnrichedChatMemberDataSchema,
   ChatMessagesResponseSchema,
   ChatMessageResponseSchema,
   CreateChatGroupSchema,

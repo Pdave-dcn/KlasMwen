@@ -1,5 +1,4 @@
 import prisma from "../../../core/config/db.js";
-import { processPaginatedResults } from "../../../utils/pagination.util.js";
 
 import {
   BaseSelectors,
@@ -72,7 +71,15 @@ class ChatRepository {
           },
         },
       },
-      select: BaseSelectors.chatGroupWithMembers,
+      select: {
+        ...BaseSelectors.chatGroupWithMembers,
+        members: {
+          where: { userId },
+          select: {
+            lastReadAt: true,
+          },
+        },
+      },
       orderBy: { createdAt: "desc" },
     });
   }
@@ -135,7 +142,7 @@ class ChatRepository {
   static async updateMemberRole(
     userId: string,
     chatGroupId: string,
-    data: UpdateMemberRoleData
+    data: UpdateMemberRoleData,
   ) {
     return await prisma.chatMember.update({
       where: {
@@ -167,6 +174,13 @@ class ChatRepository {
     });
   }
 
+  static async updateLastReadAt(userId: string, chatGroupId: string) {
+    return await prisma.chatMember.update({
+      where: { userId_chatGroupId: { userId, chatGroupId } },
+      data: { lastReadAt: new Date() },
+    });
+  }
+
   // Chat Message Operations
 
   /** Send a message to a chat group */
@@ -184,12 +198,12 @@ class ChatRepository {
   /** Get messages with cursor-based pagination */
   static async getMessages(
     chatGroupId: string,
-    pagination?: MessagePaginationCursor
+    pagination?: MessagePaginationCursor,
   ) {
     const limit = pagination?.limit ?? 50;
     const cursor = pagination?.cursor;
 
-    const messages = await prisma.chatMessage.findMany({
+    return await prisma.chatMessage.findMany({
       where: { chatGroupId },
       select: BaseSelectors.chatMessage,
       orderBy: { createdAt: "desc" },
@@ -199,14 +213,6 @@ class ChatRepository {
         skip: 1,
       }),
     });
-
-    const result = processPaginatedResults(
-      messages,
-      pagination?.limit ?? 10,
-      "id"
-    );
-
-    return result;
   }
 
   /** Find a message by ID */
@@ -216,6 +222,15 @@ class ChatRepository {
       select: {
         ...BaseSelectors.chatMessage,
         chatGroupId: true,
+      },
+    });
+  }
+
+  static async countUnreadMessages(chatGroupId: string, lastReadAt?: Date) {
+    return await prisma.chatMessage.count({
+      where: {
+        chatGroupId,
+        createdAt: lastReadAt ? { gt: lastReadAt } : undefined,
       },
     });
   }

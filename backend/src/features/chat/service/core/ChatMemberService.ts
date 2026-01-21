@@ -5,6 +5,7 @@ import {
 } from "../../../../core/error/custom/chat.error.js";
 import { assertChatPermission } from "../../security/rbac.js";
 import ChatRepository from "../ChatRepository.js";
+import ChatTransformers from "../ChatTransformers.js";
 
 import type { JoinChatGroupData, UpdateMemberRoleData } from "../chatTypes.js";
 import type { ChatRole } from "@prisma/client";
@@ -23,7 +24,7 @@ export class ChatMemberService {
    */
   static async addMember(
     data: JoinChatGroupData,
-    requester?: Express.User & { chatRole?: ChatRole }
+    requester?: Express.User & { chatRole?: ChatRole },
   ) {
     const group = await ChatRepository.findGroupById(data.chatGroupId);
     if (!group) throw new ChatGroupNotFoundError(data.chatGroupId);
@@ -31,7 +32,7 @@ export class ChatMemberService {
     // Check if user is already a member
     const isMember = await ChatRepository.isMember(
       data.userId,
-      data.chatGroupId
+      data.chatGroupId,
     );
     if (isMember) {
       throw new AlreadyMemberError(data.userId, data.chatGroupId);
@@ -44,7 +45,8 @@ export class ChatMemberService {
       }
     }
 
-    return await ChatRepository.addMember(data);
+    const member = await ChatRepository.addMember(data);
+    return ChatTransformers.transformMember(member);
   }
 
   /**
@@ -58,14 +60,14 @@ export class ChatMemberService {
   static async removeMember(
     targetUserId: string,
     chatGroupId: string,
-    requester: Express.User & { chatRole?: ChatRole }
+    requester: Express.User & { chatRole?: ChatRole },
   ) {
     const group = await ChatRepository.findGroupById(chatGroupId);
     if (!group) throw new ChatGroupNotFoundError(chatGroupId);
 
     const membership = await ChatRepository.getMembership(
       targetUserId,
-      chatGroupId
+      chatGroupId,
     );
     if (!membership) {
       throw new ChatMemberNotFoundError(targetUserId, chatGroupId);
@@ -73,7 +75,8 @@ export class ChatMemberService {
 
     assertChatPermission(requester, "chatMembers", "remove", membership);
 
-    return await ChatRepository.removeMember(targetUserId, chatGroupId);
+    const member = await ChatRepository.removeMember(targetUserId, chatGroupId);
+    return ChatTransformers.transformMember(member);
   }
 
   /**
@@ -87,14 +90,14 @@ export class ChatMemberService {
     targetUserId: string,
     chatGroupId: string,
     data: UpdateMemberRoleData,
-    requester: Express.User & { chatRole?: ChatRole }
+    requester: Express.User & { chatRole?: ChatRole },
   ) {
     const group = await ChatRepository.findGroupById(chatGroupId);
     if (!group) throw new ChatGroupNotFoundError(chatGroupId);
 
     const membership = await ChatRepository.getMembership(
       targetUserId,
-      chatGroupId
+      chatGroupId,
     );
     if (!membership) {
       throw new ChatMemberNotFoundError(targetUserId, chatGroupId);
@@ -102,11 +105,12 @@ export class ChatMemberService {
 
     assertChatPermission(requester, "chatMembers", "updateRole", membership);
 
-    return await ChatRepository.updateMemberRole(
+    const member = await ChatRepository.updateMemberRole(
       targetUserId,
       chatGroupId,
-      data
+      data,
     );
+    return ChatTransformers.transformMember(member);
   }
 
   /**
@@ -117,7 +121,8 @@ export class ChatMemberService {
     const group = await ChatRepository.findGroupById(chatGroupId);
     if (!group) throw new ChatGroupNotFoundError(chatGroupId);
 
-    return await ChatRepository.getGroupMembers(chatGroupId);
+    const members = await ChatRepository.getGroupMembers(chatGroupId);
+    return ChatTransformers.transformMembers(members);
   }
 
   /**
@@ -130,7 +135,7 @@ export class ChatMemberService {
       throw new ChatMemberNotFoundError(userId, chatGroupId);
     }
 
-    return membership;
+    return ChatTransformers.transformMember(membership);
   }
 
   /**

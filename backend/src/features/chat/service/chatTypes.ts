@@ -31,7 +31,11 @@ const ChatFragments = {
       select: {
         id: true,
         username: true,
-        email: true,
+        Avatar: {
+          select: {
+            url: true,
+          },
+        },
       },
     },
   } satisfies Prisma.ChatMemberSelect,
@@ -39,11 +43,17 @@ const ChatFragments = {
   chatMessageBase: {
     id: true,
     content: true,
+    chatGroupId: true,
     createdAt: true,
     sender: {
       select: {
         id: true,
         username: true,
+        Avatar: {
+          select: {
+            url: true,
+          },
+        },
       },
     },
   } satisfies Prisma.ChatMessageSelect,
@@ -67,6 +77,11 @@ const BaseSelectors = {
       select: {
         id: true,
         username: true,
+      },
+    },
+    members: {
+      select: {
+        lastReadAt: true,
       },
     },
     _count: {
@@ -125,13 +140,27 @@ type ChatMember = Prisma.ChatMemberGetPayload<{
   select: typeof BaseSelectors.chatMember;
 }>;
 
+type TransformedChatMember = Omit<ChatMember, "user"> & {
+  user: Omit<ChatMember["user"], "Avatar"> & {
+    avatar: ChatMember["user"]["Avatar"];
+  };
+};
+
 type ChatMessage = Prisma.ChatMessageGetPayload<{
   select: typeof BaseSelectors.chatMessage;
 }>;
 
+type TransformedChatMessage = Omit<ChatMessage, "sender"> & {
+  sender: Omit<ChatMessage["sender"], "Avatar"> & {
+    avatar: ChatMessage["sender"]["Avatar"];
+  };
+};
+
 // Enriched types
-type EnrichedChatGroup = Omit<ChatGroupWithMembers, "_count"> & {
+type EnrichedChatGroup = Omit<ChatGroupWithMembers, "_count" | "members"> & {
   memberCount: number;
+  latestMessage: TransformedChatMessage | null;
+  unreadCount: number;
   userRole?: ChatRole | null;
 };
 
@@ -152,7 +181,9 @@ export {
   type ChatGroup,
   type ChatGroupWithMembers,
   type ChatMember,
+  type TransformedChatMember,
   type ChatMessage,
+  type TransformedChatMessage,
   type EnrichedChatGroup,
   type MessagePage,
 };

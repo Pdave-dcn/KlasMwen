@@ -13,37 +13,28 @@ const cleanupDatabase = async () => {
   const cleanupStartTime = Date.now();
 
   try {
-    logger.debug("Deleting existing post tags");
     const postTagDeleteCount = await prisma.postTag.deleteMany();
 
-    logger.debug("Deleting existing avatars");
     const avatarDeleteCount = await prisma.avatar.deleteMany();
 
-    logger.debug("Deleting existing likes");
     const likeDeleteCount = await prisma.like.deleteMany();
 
-    logger.debug("Deleting existing comments");
     const commentDeleteCount = await prisma.comment.deleteMany();
 
-    logger.debug("Deleting existing posts");
     const postDeleteCount = await prisma.post.deleteMany();
 
-    logger.debug("Deleting existing notifications");
     const notificationsDeleteCount = await prisma.notification.deleteMany();
 
-    logger.debug("Deleting existing users");
+    const chatGroupDeleteCount = await prisma.chatGroup.deleteMany();
+
     const userDeleteCount = await prisma.user.deleteMany();
 
-    logger.debug("Deleting existing tags");
     const tagDeleteCount = await prisma.tag.deleteMany();
 
-    logger.debug("Deleting existing bookmarks");
     const bookmarkDeleteCount = await prisma.bookmark.deleteMany();
 
-    logger.debug("Deleting existing report reasons");
     const reportReasonsDeleteCount = await prisma.reportReason.deleteMany();
 
-    logger.debug("Deleting existing reports");
     const reportsDeleteCount = await prisma.report.deleteMany();
 
     const cleanupDuration = Date.now() - cleanupStartTime;
@@ -59,6 +50,7 @@ const cleanupDatabase = async () => {
       bookmarksDeleted: bookmarkDeleteCount.count,
       reportsDeleted: reportsDeleteCount.count,
       notificationsDeleted: notificationsDeleteCount.count,
+      chatGroupsDeleted: chatGroupDeleteCount.count,
       cleanupDuration,
     };
 

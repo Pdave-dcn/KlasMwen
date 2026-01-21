@@ -22,7 +22,7 @@ const seedReports = async (
   users: User[],
   posts: Post[],
   comments: Comment[],
-  reasons: ReportReason[]
+  reasons: ReportReason[],
 ) => {
   try {
     logger.info("Report creation phase started");
@@ -41,7 +41,7 @@ const seedReports = async (
       faker.number.int({
         min: Math.floor(posts.length * 0.05),
         max: Math.floor(posts.length * 0.15),
-      })
+      }),
     );
 
     for (const post of postsToReport) {
@@ -50,7 +50,7 @@ const seedReports = async (
 
       for (let i = 0; i < reportCount; i++) {
         const reporter = faker.helpers.arrayElement(
-          users.filter((u) => u.id !== post.authorId) // Users can't report their own posts
+          users.filter((u) => u.id !== post.authorId), // Users can't report their own posts
         );
         const reason = faker.helpers.arrayElement(reasons);
 
@@ -70,6 +70,7 @@ const seedReports = async (
           postId: post.id,
           commentId: null,
           reasonId: weightedReason?.id ?? reason.id,
+          createdAt: faker.date.recent({ days: 7 }),
           status: faker.helpers.weightedArrayElement([
             { weight: 6, value: "PENDING" },
             { weight: 3, value: "REVIEWED" },
@@ -87,7 +88,7 @@ const seedReports = async (
         postsReported: postsToReport.length,
         postReportsCreated: reportsData.length,
       },
-      "Post reports prepared"
+      "Post reports prepared",
     );
 
     // -------------------------------
@@ -101,7 +102,7 @@ const seedReports = async (
       faker.number.int({
         min: Math.floor(comments.length * 0.03),
         max: Math.floor(comments.length * 0.1),
-      })
+      }),
     );
 
     for (const comment of commentsToReport) {
@@ -110,7 +111,7 @@ const seedReports = async (
 
       for (let i = 0; i < reportCount; i++) {
         const reporter = faker.helpers.arrayElement(
-          users.filter((u) => u.id !== comment.authorId) // Users can't report their own comments
+          users.filter((u) => u.id !== comment.authorId), // Users can't report their own comments
         );
         const reason = faker.helpers.arrayElement(reasons);
 
@@ -130,6 +131,7 @@ const seedReports = async (
           postId: null,
           commentId: comment.id,
           reasonId: weightedReason?.id ?? reason.id,
+          createdAt: faker.date.recent({ days: 7 }),
           status: faker.helpers.weightedArrayElement([
             { weight: 6, value: "PENDING" },
             { weight: 3, value: "REVIEWED" },
@@ -150,7 +152,7 @@ const seedReports = async (
         commentsReported: commentsToReport.length,
         commentReportsCreated: totalCommentReports,
       },
-      "Comment reports prepared"
+      "Comment reports prepared",
     );
 
     // -------------------------------
@@ -166,7 +168,7 @@ const seedReports = async (
       {
         totalReportsCreated: createdReports.length,
       },
-      "Reports created successfully"
+      "Reports created successfully",
     );
 
     // -------------------------------
@@ -174,7 +176,7 @@ const seedReports = async (
     // -------------------------------
     const metrics = calculateMetrics(
       reportCreationStartTime,
-      createdReports.length
+      createdReports.length,
     );
 
     const postReports = createdReports.filter((r) => r.postId !== null);
@@ -204,7 +206,7 @@ const seedReports = async (
       statusDistribution,
       reasonDistribution,
       reportsWithModeratorNotes: createdReports.filter(
-        (r) => r.moderatorNotes !== null
+        (r) => r.moderatorNotes !== null,
       ).length,
     };
 

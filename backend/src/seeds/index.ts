@@ -5,6 +5,7 @@ import SeedingError from "../core/error/custom/seed.error.js";
 
 import seedAvatars from "./seeders/avatar.seeder.js";
 import seedBookmarks from "./seeders/bookmark.seeder.js";
+import seedChats from "./seeders/chat.seeder.js";
 import cleanupDatabase from "./seeders/cleanup.seeder.js";
 import seedComments from "./seeders/comment.seeder.js";
 import seedLikes from "./seeders/like.seeder.js";
@@ -57,7 +58,10 @@ const main = async () => {
     const allComments = await prisma.comment.findMany();
     const reportStats = await seedReports(users, posts, allComments, reasons);
 
-    // Phase 11: Create notifications
+    // Phase 11: Create chat
+    const { chatStats } = await seedChats(users, 8);
+
+    // Phase 12: Create notifications
     const allLikes = await prisma.like.findMany();
     //const allReports = await prisma.report.findMany();
 
@@ -65,7 +69,7 @@ const main = async () => {
       users,
       posts,
       allComments,
-      allLikes
+      allLikes,
     );
 
     const totalSeedingDuration = Date.now() - seedingStartTime;
@@ -90,6 +94,7 @@ const main = async () => {
             postReports: reportStats.postReportsCount,
             commentReports: reportStats.commentReportsCount,
           },
+          chatStats,
           notificationStats,
         },
         phases: {
@@ -106,7 +111,7 @@ const main = async () => {
         },
         totalSeedingDuration,
       },
-      "Database seeding completed successfully"
+      "Database seeding completed successfully",
     );
   } catch (error) {
     const failureDuration = Date.now() - seedingStartTime;
@@ -118,7 +123,7 @@ const main = async () => {
           ...error.toJSON(),
           failureDuration,
         },
-        `Database seeding failed in ${error.phase ?? "unknown"} phase`
+        `Database seeding failed in ${error.phase ?? "unknown"} phase`,
       );
     } else {
       logger.error(
@@ -128,7 +133,7 @@ const main = async () => {
             error instanceof Error ? error.constructor.name : typeof error,
           failureDuration,
         },
-        "Database seeding failed with unexpected error"
+        "Database seeding failed with unexpected error",
       );
     }
 
@@ -138,7 +143,7 @@ const main = async () => {
       {
         failureDuration,
         originalError: errorMessage,
-      }
+      },
     );
   }
 };
@@ -151,7 +156,7 @@ main()
         error: e instanceof Error ? e.message : String(e),
         stack: e instanceof Error ? e.stack : undefined,
       },
-      "Fatal error during seeding process"
+      "Fatal error during seeding process",
     );
     throw new Error("Database seeding failed");
   })

@@ -28,8 +28,11 @@ const sendMessage = async (req: Request, res: Response, next: NextFunction) => {
         senderId: user.id,
         chatGroupId,
       },
-      user
+      user,
     );
+
+    const io = req.app.get("io");
+    io.to(`chat:${chatGroupId}`).emit("chat:new_message", { message });
 
     actionLogger.info(
       {
@@ -37,7 +40,7 @@ const sendMessage = async (req: Request, res: Response, next: NextFunction) => {
         groupId: chatGroupId,
         senderId: user.id,
       },
-      "Message sent successfully"
+      "Message sent successfully",
     );
 
     return res.status(201).json({
@@ -70,7 +73,7 @@ const getMessages = async (req: Request, res: Response, next: NextFunction) => {
         hasMore: result.pagination.hasMore,
         nextCursor: result.pagination.nextCursor,
       },
-      "Messages retrieved successfully"
+      "Messages retrieved successfully",
     );
 
     return res.status(200).json(result);
@@ -82,12 +85,12 @@ const getMessages = async (req: Request, res: Response, next: NextFunction) => {
 const deleteMessage = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "deleteMessage",
-    req
+    req,
   );
 
   try {
@@ -102,7 +105,7 @@ const deleteMessage = async (
         messageId,
         userId: user.id,
       },
-      "Message deleted successfully"
+      "Message deleted successfully",
     );
 
     return res.status(200).json({

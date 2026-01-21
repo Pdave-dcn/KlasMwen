@@ -264,6 +264,7 @@ model ChatMember {
 
   joinedAt   DateTime  @default(now()) @map("joined_at")
   mutedUntil DateTime? @map("muted_until")
+  lastReadAt DateTime? @map("last_read_at")
 
   @@id([userId, chatGroupId])
   @@map("chat_members")

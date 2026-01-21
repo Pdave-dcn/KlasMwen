@@ -1,3 +1,8 @@
+import {
+  handlePresenceConnect,
+  handlePresenceDisconnect,
+} from "./presence/presence.handler";
+
 import type { Server, Socket } from "socket.io";
 
 export const registerSocketHandlers = (io: Server) => {
@@ -7,10 +12,10 @@ export const registerSocketHandlers = (io: Server) => {
 
     void socket.join(userRoom);
 
-    console.log(`User ${user.id} joined room ${userRoom}`);
+    handlePresenceConnect(io, socket);
 
     socket.on("disconnect", () => {
-      console.log(`User ${user.id} disconnected`);
+      handlePresenceDisconnect(io, socket);
     });
   });
 };

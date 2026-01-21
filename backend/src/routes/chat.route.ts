@@ -44,7 +44,7 @@ router.delete("/:chatGroupId/members/:userId", enrichChatRole, removeMember);
 
 router.patch("/:chatGroupId/members/:userId", enrichChatRole, updateMemberRole);
 
-router.post("/:chatGroupId/messages", requireMembership, sendMessage);
+router.post("/:chatGroupId/message", requireMembership, sendMessage);
 
 router.get("/:chatGroupId/messages", requireMembership, getMessages);
 

@@ -1,6 +1,11 @@
 import ChatRepository from "./ChatRepository.js";
+import ChatTransformers from "./ChatTransformers.js";
 
-import type { ChatGroupWithMembers, EnrichedChatGroup } from "./chatTypes.js";
+import type {
+  ChatGroupWithMembers,
+  EnrichedChatGroup,
+  TransformedChatMessage,
+} from "./chatTypes.js";
 
 /**
  * Enriches chat data with additional computed fields and user-specific information.
@@ -14,7 +19,7 @@ class ChatEnricher {
    */
   static async enrichGroup(
     group: ChatGroupWithMembers,
-    userId?: string
+    userId?: string,
   ): Promise<EnrichedChatGroup> {
     const memberCount = group._count.members;
 
@@ -24,11 +29,26 @@ class ChatEnricher {
       userRole = membership?.role ?? null;
     }
 
-    const { _count, ...groupData } = group;
+    const latestMessage = await ChatRepository.getLatestMessage(group.id);
+
+    let transformedLatestMessage: TransformedChatMessage | null = null;
+    if (latestMessage)
+      transformedLatestMessage =
+        ChatTransformers.transformMessage(latestMessage);
+
+    const lastReadAt = group.members[0]?.lastReadAt ?? null;
+    const unreadCount = await ChatRepository.countUnreadMessages(
+      group.id,
+      lastReadAt ?? undefined,
+    );
+
+    const { _count, members: _members, ...groupData } = group;
 
     return {
       ...groupData,
       memberCount,
+      latestMessage: transformedLatestMessage,
+      unreadCount,
       userRole,
     };
   }
@@ -41,10 +61,10 @@ class ChatEnricher {
    */
   static async enrichGroups(
     groups: ChatGroupWithMembers[],
-    userId?: string
+    userId?: string,
   ): Promise<EnrichedChatGroup[]> {
     return await Promise.all(
-      groups.map((group) => this.enrichGroup(group, userId))
+      groups.map((group) => this.enrichGroup(group, userId)),
     );
   }
 }

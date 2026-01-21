@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 
 import AuthForm from "@/pages/AuthForm";
+import ChatPage from "@/pages/ChatPage";
 import DiscoverPage from "@/pages/DiscoverPage";
 import HomePage from "@/pages/HomePage";
 import LandingPage from "@/pages/LandingPage";
@@ -83,6 +84,16 @@ export const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/Chat"
+        element={
+          <ProtectedRoute>
+            <ChatPage />
+          </ProtectedRoute>
+        }
+      />
+
       <Route
         path="/notifications"
         element={

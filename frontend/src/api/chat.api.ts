@@ -15,11 +15,10 @@ import {
 
 import api from "./api";
 
-// Chat Group APIs
 
 const createChatGroup = async (data: CreateChatGroupData) => {
   try {
-    const res = await api.post("/chat", data);
+    const res = await api.post("/groups", data);
     const validatedData = ChatGroupResponseSchema.parse(res.data);
 
     return validatedData.data;
@@ -31,7 +30,7 @@ const createChatGroup = async (data: CreateChatGroupData) => {
 
 const getUserChatGroups = async () => {
   try {
-    const res = await api.get("/chat");
+    const res = await api.get("/groups");
     const validatedData = ChatGroupsResponseSchema.parse(res.data);
 
     return validatedData.data;
@@ -43,7 +42,7 @@ const getUserChatGroups = async () => {
 
 const getChatGroupById = async (chatGroupId: string) => {
   try {
-    const res = await api.get(`/chat/${chatGroupId}`);
+    const res = await api.get(`/groups/${chatGroupId}`);
     const validatedData = ChatGroupResponseSchema.parse(res.data);
 
     return validatedData.data;
@@ -58,7 +57,7 @@ const updateChatGroup = async (
   data: UpdateChatGroupData,
 ) => {
   try {
-    const res = await api.put(`/chat/${chatGroupId}`, data);
+    const res = await api.put(`/groups/${chatGroupId}`, data);
     const validatedData = ChatGroupResponseSchema.parse(res.data);
 
     return validatedData.data;
@@ -70,7 +69,7 @@ const updateChatGroup = async (
 
 const deleteChatGroup = async (chatGroupId: string) => {
   try {
-    await api.delete(`/chat/${chatGroupId}`);
+    await api.delete(`/groups/${chatGroupId}`);
   } catch (error) {
     handleZodValidationError(error, "deleteChatGroup");
     throw error;
@@ -81,7 +80,7 @@ const deleteChatGroup = async (chatGroupId: string) => {
 
 const addChatMember = async (chatGroupId: string, data: AddMemberData) => {
   try {
-    const res = await api.post(`/chat/${chatGroupId}/members`, data);
+    const res = await api.post(`/groups/${chatGroupId}/members`, data);
     const validatedData = ChatMemberResponseSchema.parse(res.data);
 
     return validatedData.data;
@@ -93,7 +92,7 @@ const addChatMember = async (chatGroupId: string, data: AddMemberData) => {
 
 const getChatMembers = async (chatGroupId: string) => {
   try {
-    const res = await api.get(`/chat/${chatGroupId}/members`);
+    const res = await api.get(`/groups/${chatGroupId}/members`);
     const validatedData = ChatMembersResponseSchema.parse(res.data);
 
     return validatedData.data;
@@ -105,7 +104,7 @@ const getChatMembers = async (chatGroupId: string) => {
 
 const removeChatMember = async (chatGroupId: string, userId: string) => {
   try {
-    await api.delete(`/chat/${chatGroupId}/members/${userId}`);
+    await api.delete(`/groups/${chatGroupId}/members/${userId}`);
   } catch (error) {
     handleZodValidationError(error, "removeChatMember");
     throw error;
@@ -118,7 +117,10 @@ const updateChatMemberRole = async (
   data: UpdateMemberRoleData,
 ) => {
   try {
-    const res = await api.patch(`/chat/${chatGroupId}/members/${userId}`, data);
+    const res = await api.patch(
+      `/groups/${chatGroupId}/members/${userId}`,
+      data,
+    );
     const validatedData = ChatMemberResponseSchema.parse(res.data);
 
     return validatedData.data;
@@ -132,7 +134,7 @@ const updateChatMemberRole = async (
 
 const sendChatMessage = async (chatGroupId: string, data: SendMessageData) => {
   try {
-    const res = await api.post(`/chat/${chatGroupId}/messages`, data);
+    const res = await api.post(`/groups/${chatGroupId}/messages`, data);
     const validatedData = ChatMessageResponseSchema.parse(res.data);
 
     return validatedData.data;
@@ -152,7 +154,7 @@ const getChatMessages = async (
     if (cursor) params.append("cursor", cursor.toString());
     params.append("limit", limit.toString());
 
-    const res = await api.get(`/chat/${chatGroupId}/messages?${params}`);
+    const res = await api.get(`/groups/${chatGroupId}/messages?${params}`);
     const validatedData = ChatMessagesResponseSchema.parse(res.data);
 
     return validatedData;
@@ -164,7 +166,7 @@ const getChatMessages = async (
 
 const deleteChatMessage = async (chatGroupId: string, messageId: number) => {
   try {
-    await api.delete(`/chat/${chatGroupId}/messages/${messageId}`);
+    await api.delete(`/groups/${chatGroupId}/messages/${messageId}`);
   } catch (error) {
     handleZodValidationError(error, "deleteChatMessage");
     throw error;

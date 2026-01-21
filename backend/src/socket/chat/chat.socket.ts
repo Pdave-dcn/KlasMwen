@@ -4,7 +4,6 @@ import {
   handleDisconnect,
   handleJoinGroup,
   handleLeaveGroup,
-  handleSendMessage,
 } from "./handlers/index.js";
 
 import type { Namespace, Socket } from "socket.io";
@@ -26,7 +25,6 @@ export const registerChatSocketHandlers = (nsp: Namespace) => {
 
     socket.on("chat:join", handleJoinGroup(socket));
     socket.on("chat:leave", handleLeaveGroup(socket));
-    socket.on("chat:send_message", handleSendMessage(socket));
     socket.on("disconnect", handleDisconnect(socket));
   });
 

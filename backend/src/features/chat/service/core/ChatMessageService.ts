@@ -2,8 +2,10 @@ import {
   ChatGroupNotFoundError,
   MessageNotFoundError,
 } from "../../../../core/error/custom/chat.error.js";
+import { processPaginatedResults } from "../../../../utils/pagination.util.js";
 import { assertChatPermission } from "../../security/rbac.js";
 import ChatRepository from "../ChatRepository.js";
+import ChatTransformers from "../ChatTransformers.js";
 
 import type { SendMessageData, MessagePaginationCursor } from "../chatTypes.js";
 import type { ChatRole } from "@prisma/client";
@@ -28,7 +30,8 @@ export class ChatMessageService {
 
     assertChatPermission(user, "chatMessages", "send");
 
-    return await ChatRepository.createMessage(data);
+    const message = await ChatRepository.createMessage(data);
+    return ChatTransformers.transformMessage(message);
   }
 
   /**
@@ -47,7 +50,18 @@ export class ChatMessageService {
 
     assertChatPermission(user, "chatMessages", "read");
 
-    return await ChatRepository.getMessages(chatGroupId, pagination);
+    const messages = await ChatRepository.getMessages(chatGroupId, pagination);
+    await ChatRepository.updateLastReadAt(user.id, group.id);
+
+    const transformedMessages = ChatTransformers.transformMessages(messages);
+
+    const result = processPaginatedResults(
+      transformedMessages,
+      pagination?.limit ?? 10,
+      "id",
+    );
+
+    return result;
   }
 
   /**
@@ -80,13 +94,17 @@ export class ChatMessageService {
 
     assertChatPermission(user, "chatMessages", "delete", message);
 
-    return await ChatRepository.deleteMessage(messageId);
+    await ChatRepository.deleteMessage(messageId);
+
+    return ChatTransformers.transformMessage(message);
   }
 
   /**
    * Gets the latest message in a chat group.
    */
   static async getLatestMessage(chatGroupId: string) {
-    return await ChatRepository.getLatestMessage(chatGroupId);
+    const message = await ChatRepository.getLatestMessage(chatGroupId);
+    if (!message) return null;
+    return ChatTransformers.transformMessage(message);
   }
 }

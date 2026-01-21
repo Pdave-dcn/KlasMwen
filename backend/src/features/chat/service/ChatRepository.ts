@@ -207,7 +207,7 @@ class ChatRepository {
     return await prisma.chatMessage.findMany({
       where: { chatGroupId },
       select: BaseSelectors.chatMessage,
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: "asc" },
       take: limit + 1,
       ...(cursor && {
         cursor: { id: cursor },

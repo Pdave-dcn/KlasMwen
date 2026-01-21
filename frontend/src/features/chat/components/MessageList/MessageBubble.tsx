@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { ChatMessage } from "@/zodSchemas/chat.zod";
 
-import { UserAvatar } from "./UserAvatar";
+import { UserAvatar } from "../UserAvatar";
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -20,15 +20,10 @@ export function MessageBubble({
   const timestamp = format(new Date(message.createdAt), "HH:mm");
 
   return (
-    <div
-      className={cn(
-        "flex gap-2 message-appear",
-        isSent ? "flex-row-reverse" : "flex-row",
-      )}
-    >
+    <div className={cn("flex gap-2", isSent ? "flex-row-reverse" : "flex-row")}>
       {/* Avatar - only show for received messages */}
       {!isSent && showSender && (
-        <UserAvatar user={message.sender} size="sm" className="mt-auto" />
+        <UserAvatar user={message.sender} size="sm" className="" />
       )}
 
       {!isSent && !showSender && <div className="w-8" />}

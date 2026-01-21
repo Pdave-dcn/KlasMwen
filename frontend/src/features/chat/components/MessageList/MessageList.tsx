@@ -3,12 +3,11 @@ import { useEffect, useRef } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { ChatMessage } from "@/zodSchemas/chat.zod";
 
-import { MessageBubble } from "../MessageBubble";
-
 import { DateDivider } from "./DateDivider";
 import { EmptyState } from "./EmptyState";
 import { groupMessagesByDate } from "./helpers";
 import { LoadingState } from "./LoadingState";
+import { MessageBubble } from "./MessageBubble";
 // 1. Import Shadcn ScrollArea
 
 interface MessageListProps {

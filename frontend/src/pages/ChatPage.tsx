@@ -1,4 +1,4 @@
-import { ChatLayout } from "@/features/chat/components/ChatLayout";
+import { ChatLayout } from "@/features/chat/components/ChatLayout/ChatLayout";
 
 const ChatPage = () => {
   return <ChatLayout />;

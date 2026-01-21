@@ -12,6 +12,7 @@ interface ChatRoomProps {
   currentUserId: string;
   isLoading: boolean;
   isMuted: boolean;
+  isMobile: boolean;
   onSendMessage: (content: string) => void;
   onToggleMembers: () => void;
   showMembersButton?: boolean;
@@ -23,6 +24,7 @@ export const ChatRoom = ({
   currentUserId,
   isLoading,
   isMuted,
+  isMobile,
   onSendMessage,
   onToggleMembers,
   showMembersButton = true,
@@ -48,36 +50,40 @@ export const ChatRoom = ({
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <span className="text-primary font-semibold">
-              {getGroupInitials(group.name)}
-            </span>
+      {!isMobile && (
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <span className="text-primary font-semibold">
+                {getGroupInitials(group.name)}
+              </span>
+            </div>
+            <div>
+              <h2 className="font-semibold text-foreground truncate">
+                {group.name}
+              </h2>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Users className="h-3 w-3" />
+                {group.memberCount} members
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="font-semibold text-foreground">{group.name}</h2>
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Users className="h-3 w-3" />
-              {group.memberCount} members
-            </p>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-2">
-          {showMembersButton && (
-            <button
-              onClick={onToggleMembers}
-              className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-            >
-              <Users className="h-5 w-5" />
+          <div className="flex items-center gap-2">
+            {showMembersButton && (
+              <button
+                onClick={onToggleMembers}
+                className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              >
+                <Users className="h-5 w-5" />
+              </button>
+            )}
+            <button className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
+              <Settings className="h-5 w-5" />
             </button>
-          )}
-          <button className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
-            <Settings className="h-5 w-5" />
-          </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Messages */}
       <MessageList

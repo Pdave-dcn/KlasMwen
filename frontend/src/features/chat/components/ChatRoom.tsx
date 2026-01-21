@@ -1,9 +1,10 @@
 import { Users, Settings, MessageCircle } from "lucide-react";
 
+import { getGroupInitials } from "@/utils/getInitials.util";
 import type { ChatGroup, ChatMessage } from "@/zodSchemas/chat.zod";
 
 import { MessageInput } from "./MessageInput";
-import { MessageList } from "./MessageList";
+import { MessageList } from "./MessageList/MessageList";
 
 interface ChatRoomProps {
   group: ChatGroup | undefined;
@@ -51,12 +52,7 @@ export const ChatRoom = ({
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
             <span className="text-primary font-semibold">
-              {group.name
-                .split(" ")
-                .map((w) => w[0])
-                .join("")
-                .slice(0, 2)
-                .toUpperCase()}
+              {getGroupInitials(group.name)}
             </span>
           </div>
           <div>

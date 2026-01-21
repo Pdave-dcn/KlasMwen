@@ -6,9 +6,9 @@ import { cn } from "@/lib/utils";
 
 import { useChat } from "../hooks/useChat";
 
-import { ChatGroupList } from "./ChatGroupList";
+import { ChatGroupList } from "./ChatGroupList/ChatGroupList";
 import { ChatRoom } from "./ChatRoom";
-import { MemberList } from "./MemberList";
+import { MemberList } from "./MemberList/MemberList";
 
 export const ChatLayout = () => {
   const {

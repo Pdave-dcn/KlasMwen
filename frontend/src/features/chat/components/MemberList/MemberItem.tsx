@@ -6,7 +6,7 @@ import type {
   ChatRole as MemberRole,
 } from "@/zodSchemas/chat.zod";
 
-import { UserAvatar } from "./UserAvatar";
+import { UserAvatar } from "../UserAvatar";
 
 const roleConfig: Record<
   MemberRole,

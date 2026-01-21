@@ -2,6 +2,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Users } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { getGroupInitials } from "@/utils/getInitials.util";
 import type { ChatGroup } from "@/zodSchemas/chat.zod";
 
 interface ChatGroupItemProps {
@@ -10,11 +11,11 @@ interface ChatGroupItemProps {
   onClick: () => void;
 }
 
-export function ChatGroupItem({
+export const ChatGroupItem = ({
   group,
   isSelected,
   onClick,
-}: ChatGroupItemProps) {
+}: ChatGroupItemProps) => {
   const formattedTime = group.latestMessage
     ? formatDistanceToNow(new Date(group.latestMessage.createdAt), {
         addSuffix: false,
@@ -32,20 +33,13 @@ export function ChatGroupItem({
     "bg-cyan-500",
   ];
 
-  const initials = group.name
-    .split(" ")
-    .map((word) => word[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-
   return (
     <button
       onClick={onClick}
       className={cn(
-        "w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer",
-        "hover:bg-muted/80 dark:hover:bg-muted",
-        isSelected ? "bg-muted shadow-sm" : "bg-transparent",
+        "w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer min-w-0 overflow-hidden",
+        "hover:bg-muted/80 dark:hover:bg-accent-",
+        isSelected ? "bg-muted dark:bg-accent shadow-sm" : "bg-transparent",
       )}
     >
       {/* Group Avatar */}
@@ -65,33 +59,35 @@ export function ChatGroupItem({
           {initials}
         </div>
       )} */}
+
+      {/* Group Avatar */}
       <div
         className={cn(
-          "h-12 w-12 rounded-xl flex items-center justify-center text-white font-semibold",
+          "h-12 w-12 shrink-0 rounded-xl flex items-center justify-center text-white font-semibold",
           bgColors[colorIndex],
         )}
       >
-        {initials}
+        {getGroupInitials(group.name)}
       </div>
 
       {/* Group Info */}
       <div className="flex-1 min-w-0 text-left">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="font-semibold text-foreground truncate">
+          <h3 className="font-semibold text-foreground truncate flex-1">
             {group.name}
           </h3>
           {group.latestMessage && (
-            <span className="text-xs text-muted-foreground whitespace-nowrap">
+            <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">
               {formattedTime}
             </span>
           )}
         </div>
 
         <div className="flex items-center justify-between gap-2 mt-0.5">
-          <p className="text-sm text-muted-foreground truncate">
+          <p className="text-sm text-muted-foreground truncate flex-1">
             {group.latestMessage ? (
               <>
-                <span className="font-medium">
+                <span className="font-medium shrink-0">
                   {group.latestMessage.sender.username}:
                 </span>{" "}
                 {group.latestMessage.content}
@@ -113,4 +109,4 @@ export function ChatGroupItem({
       </div>
     </button>
   );
-}
+};

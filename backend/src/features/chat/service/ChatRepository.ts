@@ -2,12 +2,12 @@ import prisma from "../../../core/config/db.js";
 
 import {
   BaseSelectors,
-  type CreateChatGroupData,
   type UpdateChatGroupData,
   type JoinChatGroupData,
   type UpdateMemberRoleData,
   type SendMessageData,
   type MessagePaginationCursor,
+  type CreateChatGroupFinalData,
 } from "./chatTypes.js";
 
 class ChatRepository {
@@ -22,13 +22,14 @@ class ChatRepository {
   }
 
   /** Create a new chat group and add creator as owner */
-  static async createGroup(data: CreateChatGroupData) {
+  static async createGroup(data: CreateChatGroupFinalData) {
     return await prisma.chatGroup.create({
       data: {
         name: data.name,
         description: data.description ?? null,
         isPrivate: data.isPrivate ?? false,
         creatorId: data.creatorId,
+        avatarId: data.avatarId,
         members: {
           create: {
             userId: data.creatorId,

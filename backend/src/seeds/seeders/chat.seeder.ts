@@ -3,13 +3,21 @@ import { faker } from "@faker-js/faker";
 
 import prisma from "../../core/config/db.js";
 import { createLogger } from "../../core/config/logger.js";
-import { calculateMetrics, handleSeedingError } from "../utils/seedHelpers.js";
+import {
+  calculateMetrics,
+  getRandomAvatar,
+  handleSeedingError,
+} from "../utils/seedHelpers.js";
 
-import type { User, Prisma } from "@prisma/client";
+import type { User, Prisma, ChatGroupAvatar } from "@prisma/client";
 
 const logger = createLogger({ module: "ChatSeeder" });
 
-const seedChats = async (users: User[], groupCount = 5) => {
+const seedChats = async (
+  users: User[],
+  chatGroupAvatars: ChatGroupAvatar[],
+  groupCount = 5,
+) => {
   try {
     logger.info("Chat creation phase started");
     const chatCreationStartTime = Date.now();
@@ -17,6 +25,7 @@ const seedChats = async (users: User[], groupCount = 5) => {
     // 1. Create Chat Groups
     const chatGroups = [];
     for (let i = 0; i < groupCount; i++) {
+      const avatar = getRandomAvatar(chatGroupAvatars);
       const creator = faker.helpers.arrayElement(users);
       const group = await prisma.chatGroup.create({
         data: {
@@ -24,6 +33,7 @@ const seedChats = async (users: User[], groupCount = 5) => {
           description: faker.lorem.sentence(),
           isPrivate: faker.datatype.boolean(),
           creatorId: creator.id,
+          avatarId: avatar.id,
         },
       });
       chatGroups.push(group);

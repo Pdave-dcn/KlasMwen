@@ -1,4 +1,5 @@
 import { ChatGroupNotFoundError } from "../../../../core/error/custom/chat.error.js";
+import { getRandomChatGroupAvatar } from "../../../avatar/avatarService.js";
 import { assertChatPermission } from "../../security/rbac.js";
 import ChatEnricher from "../ChatEnrichers.js";
 import ChatRepository from "../ChatRepository.js";
@@ -17,7 +18,11 @@ export class ChatGroupService {
    * @returns The newly created chat group with member count and user role
    */
   static async createGroup(data: CreateChatGroupData) {
-    const group = await ChatRepository.createGroup(data);
+    const avatar = await getRandomChatGroupAvatar();
+    const group = await ChatRepository.createGroup({
+      ...data,
+      avatarId: avatar.id,
+    });
     return ChatEnricher.enrichGroup(group, data.creatorId);
   }
 
@@ -42,7 +47,7 @@ export class ChatGroupService {
   static async getUserGroups(userId: string) {
     const groups = await ChatRepository.findUserGroups(userId);
     return Promise.all(
-      groups.map((group) => ChatEnricher.enrichGroup(group, userId))
+      groups.map((group) => ChatEnricher.enrichGroup(group, userId)),
     );
   }
 
@@ -55,7 +60,7 @@ export class ChatGroupService {
   static async updateGroup(
     chatGroupId: string,
     user: Express.User & { chatRole?: ChatRole },
-    data: UpdateChatGroupData
+    data: UpdateChatGroupData,
   ) {
     const group = await ChatRepository.findGroupById(chatGroupId);
     if (!group) throw new ChatGroupNotFoundError(chatGroupId);
@@ -74,7 +79,7 @@ export class ChatGroupService {
    */
   static async deleteGroup(
     chatGroupId: string,
-    user: Express.User & { chatRole?: ChatRole }
+    user: Express.User & { chatRole?: ChatRole },
   ) {
     const group = await ChatRepository.findGroupById(chatGroupId);
     if (!group) throw new ChatGroupNotFoundError(chatGroupId);

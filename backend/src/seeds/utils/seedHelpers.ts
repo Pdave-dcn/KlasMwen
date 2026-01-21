@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 
 import SeedingError from "../../core/error/custom/seed.error.js";
 
-import type { Avatar, Tag } from "@prisma/client";
+import type { Avatar, ChatGroupAvatar, Tag } from "@prisma/client";
 import type { Logger } from "pino";
 
 /**
@@ -19,7 +19,7 @@ const handleSeedingError = (
   logger: Logger,
   operation: string,
   phase: string,
-  additionalMetadata = {}
+  additionalMetadata = {},
 ): never => {
   const errorMessage = error instanceof Error ? error.message : String(error);
   logger.error({ error: errorMessage }, `${operation} failed`);
@@ -50,7 +50,7 @@ const getRandomTags = (tags: Tag[], minCount = 1, maxCount = 3) => {
  * @param {import('@prisma/client').Avatar[]} avatars An array of avatar objects to choose from.
  * @return {import('@prisma/client').Avatar} A single, randomly selected avatar object.
  */
-const getRandomAvatar = (avatars: Avatar[]) => {
+const getRandomAvatar = (avatars: Avatar[] | ChatGroupAvatar[]) => {
   return avatars[Math.floor(Math.random() * avatars.length)];
 };
 

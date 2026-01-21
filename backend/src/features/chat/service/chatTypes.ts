@@ -20,6 +20,11 @@ const ChatFragments = {
         username: true,
       },
     },
+    avatar: {
+      select: {
+        url: true,
+      },
+    },
   } satisfies Prisma.ChatGroupSelect,
 
   chatMemberBase: {
@@ -79,6 +84,11 @@ const BaseSelectors = {
         username: true,
       },
     },
+    avatar: {
+      select: {
+        url: true,
+      },
+    },
     members: {
       select: {
         lastReadAt: true,
@@ -100,10 +110,15 @@ interface CreateChatGroupData {
   creatorId: string;
 }
 
+interface CreateChatGroupFinalData extends CreateChatGroupData {
+  avatarId: number;
+}
+
 interface UpdateChatGroupData {
   name?: string;
   description?: string;
   isPrivate?: boolean;
+  avatarId?: number;
 }
 
 interface JoinChatGroupData {
@@ -173,6 +188,7 @@ interface MessagePage {
 export {
   BaseSelectors,
   type CreateChatGroupData,
+  type CreateChatGroupFinalData,
   type UpdateChatGroupData,
   type JoinChatGroupData,
   type UpdateMemberRoleData,

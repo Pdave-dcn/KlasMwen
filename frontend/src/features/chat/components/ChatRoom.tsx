@@ -1,5 +1,6 @@
 import { Users, Settings, MessageCircle } from "lucide-react";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getGroupInitials } from "@/utils/getInitials.util";
 import type { ChatGroup, ChatMessage } from "@/zodSchemas/chat.zod";
 
@@ -53,11 +54,10 @@ export const ChatRoom = ({
       {!isMobile && (
         <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <span className="text-primary font-semibold">
-                {getGroupInitials(group.name)}
-              </span>
-            </div>
+            <Avatar>
+              <AvatarImage src={group.avatar?.url} alt="avatar" />
+              <AvatarFallback>{getGroupInitials(group.name)}</AvatarFallback>
+            </Avatar>
             <div>
               <h2 className="font-semibold text-foreground truncate">
                 {group.name}

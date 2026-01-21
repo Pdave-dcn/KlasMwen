@@ -4,14 +4,16 @@ import { z } from "zod";
 
 const ChatRoleSchema = z.enum(["OWNER", "MODERATOR", "MEMBER"]);
 
-const AvatarSchema = z.object({
-  url: z.url(),
-});
+const AvatarSchema = z
+  .object({
+    url: z.url(),
+  })
+  .nullable();
 
 const UserBasicSchema = z.object({
   id: z.uuid(),
   username: z.string(),
-  avatar: AvatarSchema.nullable(),
+  avatar: AvatarSchema,
 });
 
 const ChatGroupCreatorSchema = UserBasicSchema.omit({ avatar: true });
@@ -47,6 +49,7 @@ const ChatGroupDataSchema = z.object({
   isPrivate: z.boolean(),
   createdAt: z.string(),
   creator: ChatGroupCreatorSchema,
+  avatar: AvatarSchema,
   memberCount: z.number().int().nonnegative(),
   unreadCount: z.number().int().nonnegative(),
   userRole: ChatRoleSchema.nullable(),

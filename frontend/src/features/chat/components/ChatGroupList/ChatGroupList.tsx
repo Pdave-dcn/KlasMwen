@@ -33,11 +33,6 @@ export const ChatGroupList = ({
 
       <div className="flex-1 min-h-0 w-full relative">
         <ScrollArea className="h-full w-full">
-          {/* THE FIX: 
-              1. 'inline-table' + 'table-fixed' + 'w-full' 
-              This is the only way to reliably stop Radix Viewports 
-              from expanding horizontally.
-          */}
           <div className="p-2 w-full inline-table table-fixed min-w-0">
             {isLoading ? (
               <LoadingState />

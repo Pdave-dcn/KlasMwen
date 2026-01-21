@@ -43,10 +43,10 @@ export const ChatGroupItem = ({
       )}
     >
       {/* Group Avatar */}
-      {/* {group.avatar ? (
+      {group.avatar ? (
         <img
-          src={group.avatar}
-          alt={group.name}
+          src={group.avatar.url}
+          alt="avatar"
           className="h-12 w-12 rounded-xl object-cover"
         />
       ) : (
@@ -56,19 +56,9 @@ export const ChatGroupItem = ({
             bgColors[colorIndex],
           )}
         >
-          {initials}
+          {getGroupInitials(group.name)}
         </div>
-      )} */}
-
-      {/* Group Avatar */}
-      <div
-        className={cn(
-          "h-12 w-12 shrink-0 rounded-xl flex items-center justify-center text-white font-semibold",
-          bgColors[colorIndex],
-        )}
-      >
-        {getGroupInitials(group.name)}
-      </div>
+      )}
 
       {/* Group Info */}
       <div className="flex-1 min-w-0 text-left">

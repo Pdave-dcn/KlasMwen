@@ -244,8 +244,11 @@ model ChatGroup {
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  creator   User   @relation(fields: [creatorId], references: [id])
   creatorId String @map("creator_id")
+  avatarId  Int?   @map("avatar_id")
+
+  creator User             @relation(fields: [creatorId], references: [id])
+  avatar  ChatGroupAvatar? @relation(fields: [avatarId], references: [id])
 
   members  ChatMember[]
   messages ChatMessage[]
@@ -284,4 +287,12 @@ model ChatMessage {
 
   @@index([chatGroupId, createdAt])
   @@map("chat_messages")
+}
+
+model ChatGroupAvatar {
+  id         Int         @id @default(autoincrement())
+  url        String      @unique
+  chatGroups ChatGroup[]
+
+  @@map("chat_group_avatars")
 }

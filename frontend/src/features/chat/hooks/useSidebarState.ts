@@ -1,32 +1,46 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+
+import debounce from "lodash.debounce";
 
 export const useSidebarState = (selectedGroupId: string | null) => {
   const [showLeftSidebar, setShowLeftSidebar] = useState(true);
   const [showRightSidebar, setShowRightSidebar] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  const debouncedCheckMobile = useMemo(
+    () =>
+      debounce(() => {
+        const width = window.innerWidth;
+        const mobile = width < 768;
+        const isTablet = width < 1024;
+
+        setIsMobile(mobile);
+
+        if (mobile) {
+          setShowLeftSidebar(!selectedGroupId);
+          setShowRightSidebar(false);
+        } else if (isTablet) {
+          setShowRightSidebar(false);
+        } else {
+          setShowLeftSidebar(true);
+          setShowRightSidebar(true);
+        }
+      }, 150),
+    [selectedGroupId],
+  );
 
   useEffect(() => {
-    const checkMobile = () => {
-      const mobile = window.innerWidth < 768;
-      const isTablet = window.innerWidth < 1024;
+    // Run immediately on mount
+    const initialWidth = window.innerWidth;
+    setIsMobile(initialWidth < 768);
 
-      setIsMobile(mobile);
+    window.addEventListener("resize", debouncedCheckMobile);
 
-      if (mobile) {
-        setShowLeftSidebar(!selectedGroupId);
-        setShowRightSidebar(false);
-      } else if (isTablet) {
-        setShowRightSidebar(false);
-      } else {
-        setShowLeftSidebar(true);
-        setShowRightSidebar(true);
-      }
+    return () => {
+      window.removeEventListener("resize", debouncedCheckMobile);
+      debouncedCheckMobile.cancel();
     };
-
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, [selectedGroupId]);
+  }, [debouncedCheckMobile]);
 
   return {
     showLeftSidebar,

@@ -1,6 +1,6 @@
 import type {
-  ChatMember,
   ChatMessage,
+  EnrichedChatMember,
   TransformedChatMember,
   TransformedChatMessage,
 } from "./chatTypes";
@@ -27,7 +27,7 @@ class ChatTransformers {
    * // { userId: "123", user: { id: "123", username: "john", avatar: { url: "..." } } }
    * ```
    */
-  static transformMember(member: ChatMember): TransformedChatMember {
+  static transformMember(member: EnrichedChatMember): TransformedChatMember {
     const { Avatar, ...restUser } = member.user;
 
     return {
@@ -45,7 +45,9 @@ class ChatTransformers {
    * @param members - Array of raw member data
    * @returns Array of transformed members
    */
-  static transformMembers(members: ChatMember[]): TransformedChatMember[] {
+  static transformMembers(
+    members: EnrichedChatMember[],
+  ): TransformedChatMember[] {
     return members.map((member) => this.transformMember(member));
   }
 

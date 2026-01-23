@@ -85,7 +85,17 @@ class InsufficientChatRoleError extends BaseCustomError {
     const roleStr = requiredRoles.join(" or ");
     const current = currentRole ?? "none";
     super(
-      `User ${userId} does not have required role. Required: ${roleStr}, Got: ${current}`
+      `User ${userId} does not have required role. Required: ${roleStr}, Got: ${current}`,
+    );
+  }
+}
+
+class UserMutedError extends BaseCustomError {
+  statusCode = 403;
+
+  constructor(userId: string, chatGroupId: string, mutedUntil: Date) {
+    super(
+      `User ${userId} is muted in group ${chatGroupId} until ${mutedUntil.toISOString()}`,
     );
   }
 }
@@ -98,4 +108,5 @@ export {
   AlreadyMemberError,
   InsufficientPermissionsError,
   InsufficientChatRoleError,
+  UserMutedError,
 };

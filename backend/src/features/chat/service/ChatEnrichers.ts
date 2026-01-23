@@ -3,7 +3,9 @@ import ChatTransformers from "./ChatTransformers.js";
 
 import type {
   ChatGroupWithMembers,
+  ChatMember,
   EnrichedChatGroup,
+  EnrichedChatMember,
   TransformedChatMessage,
 } from "./chatTypes.js";
 
@@ -66,6 +68,33 @@ class ChatEnricher {
     return await Promise.all(
       groups.map((group) => this.enrichGroup(group, userId)),
     );
+  }
+
+  /**
+   * Transforms a raw database member record into an enriched member object.
+   * Maps the 'mutedUntil' timestamp to a simple 'isMuted' boolean and
+   * removes sensitive date information from the final object.
+   * @param {ChatMember} member - The raw member record from the database.
+   * @returns {EnrichedMember} The member object with an active 'isMuted' flag.
+   */
+  static enrichMember(member: ChatMember): EnrichedChatMember {
+    const now = new Date();
+    const { mutedUntil, ...memberData } = member;
+
+    return {
+      ...memberData,
+      isMuted: mutedUntil ? new Date(mutedUntil) > now : false,
+    };
+  }
+
+  /**
+   * Enriches a collection of group members with real-time status flags.
+   * This performs an in-memory transformation, avoiding additional database round-trips.
+   * @param {ChatMember[]} members - Array of raw member records.
+   * @returns {EnrichedMember[]} Array of members with computed 'isMuted' statuses.
+   */
+  static enrichMembers(members: ChatMember[]) {
+    return members.map((m) => this.enrichMember(m));
   }
 }
 

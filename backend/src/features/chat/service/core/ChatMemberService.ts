@@ -4,6 +4,7 @@ import {
   ChatMemberNotFoundError,
 } from "../../../../core/error/custom/chat.error.js";
 import { assertChatPermission } from "../../security/rbac.js";
+import ChatEnricher from "../ChatEnrichers.js";
 import ChatRepository from "../ChatRepository.js";
 import ChatTransformers from "../ChatTransformers.js";
 
@@ -46,7 +47,8 @@ export class ChatMemberService {
     }
 
     const member = await ChatRepository.addMember(data);
-    return ChatTransformers.transformMember(member);
+    const enrichedMember = ChatEnricher.enrichMember(member);
+    return ChatTransformers.transformMember(enrichedMember);
   }
 
   /**
@@ -76,7 +78,9 @@ export class ChatMemberService {
     assertChatPermission(requester, "chatMembers", "remove", membership);
 
     const member = await ChatRepository.removeMember(targetUserId, chatGroupId);
-    return ChatTransformers.transformMember(member);
+    const enrichedMember = ChatEnricher.enrichMember(member);
+
+    return ChatTransformers.transformMember(enrichedMember);
   }
 
   /**
@@ -110,7 +114,9 @@ export class ChatMemberService {
       chatGroupId,
       data,
     );
-    return ChatTransformers.transformMember(member);
+    const enrichedMember = ChatEnricher.enrichMember(member);
+
+    return ChatTransformers.transformMember(enrichedMember);
   }
 
   /**
@@ -122,7 +128,10 @@ export class ChatMemberService {
     if (!group) throw new ChatGroupNotFoundError(chatGroupId);
 
     const members = await ChatRepository.getGroupMembers(chatGroupId);
-    return ChatTransformers.transformMembers(members);
+
+    const enrichedMembers = ChatEnricher.enrichMembers(members);
+
+    return ChatTransformers.transformMembers(enrichedMembers);
   }
 
   /**
@@ -135,7 +144,8 @@ export class ChatMemberService {
       throw new ChatMemberNotFoundError(userId, chatGroupId);
     }
 
-    return ChatTransformers.transformMember(membership);
+    const enrichedMember = ChatEnricher.enrichMember(membership);
+    return ChatTransformers.transformMember(enrichedMember);
   }
 
   /**

@@ -70,7 +70,7 @@ const ChatMemberDataSchema = z.object({
   userId: z.uuid(),
   role: ChatRoleSchema,
   joinedAt: z.string(),
-  mutedUntil: z.string().nullable(),
+  isMuted: z.boolean(),
   user: UserBasicSchema,
 });
 

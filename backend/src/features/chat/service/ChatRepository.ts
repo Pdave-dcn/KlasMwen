@@ -114,6 +114,19 @@ class ChatRepository {
     });
   }
 
+  /** Get multiple user memberships in a specific group*/
+  static async getMemberships(userIds: string[], chatGroupId: string) {
+    return await prisma.chatMember.findMany({
+      where: {
+        chatGroupId,
+        userId: {
+          in: userIds,
+        },
+      },
+      select: BaseSelectors.chatMember,
+    });
+  }
+
   /** Add a user to a chat group */
   static async addMember(data: JoinChatGroupData) {
     return await prisma.chatMember.create({

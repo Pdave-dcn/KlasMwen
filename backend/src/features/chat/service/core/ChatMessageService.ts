@@ -7,6 +7,8 @@ import { assertChatPermission } from "../../security/rbac.js";
 import ChatRepository from "../ChatRepository.js";
 import ChatTransformers from "../ChatTransformers.js";
 
+import { ChatValidationService } from "./ChatValidationService.js";
+
 import type { SendMessageData, MessagePaginationCursor } from "../chatTypes.js";
 import type { ChatRole } from "@prisma/client";
 
@@ -20,6 +22,7 @@ export class ChatMessageService {
    * Only group members can send messages.
    * @throws {ChatGroupNotFoundError} If the group does not exist
    * @throws {AuthorizationError} If user is not a member
+   * @throws {UserMutedError} if user is muted
    */
   static async sendMessage(
     data: SendMessageData,
@@ -29,6 +32,8 @@ export class ChatMessageService {
     if (!group) throw new ChatGroupNotFoundError(data.chatGroupId);
 
     assertChatPermission(user, "chatMessages", "send");
+
+    await ChatValidationService.ensureMemberNotMuted(data);
 
     const message = await ChatRepository.createMessage(data);
     return ChatTransformers.transformMessage(message);

@@ -2,8 +2,11 @@ import {
   ChatGroupNotFoundError,
   ChatMemberNotFoundError,
   MessageNotFoundError,
+  UserMutedError,
 } from "../../../../core/error/custom/chat.error.js";
 import ChatRepository from "../ChatRepository.js";
+
+import type { SendMessageData } from "../chatTypes.js";
 
 /**
  * Service for chat-related validations.
@@ -35,6 +38,25 @@ export class ChatValidationService {
   }
 
   /**
+   * Ensures the member is not currently muted.
+   * @throws {UserMutedError} if the mute period is still active.
+   */
+  static async ensureMemberNotMuted(data: SendMessageData) {
+    const membership = await ChatRepository.getMembership(
+      data.senderId,
+      data.chatGroupId,
+    );
+
+    const mutedUntil = membership?.mutedUntil;
+
+    if (!mutedUntil || new Date(mutedUntil) <= new Date()) {
+      return;
+    }
+
+    throw new UserMutedError(data.senderId, data.chatGroupId, mutedUntil);
+  }
+
+  /**
    * Validates that a message exists.
    * @throws {MessageNotFoundError} If the message does not exist
    * @returns The message if it exists
@@ -53,7 +75,7 @@ export class ChatValidationService {
    */
   static async checkMembership(
     userId: string,
-    chatGroupId: string
+    chatGroupId: string,
   ): Promise<boolean> {
     return await ChatRepository.isMember(userId, chatGroupId);
   }

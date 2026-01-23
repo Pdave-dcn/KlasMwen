@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
 import { useSendChatMessageMutation } from "@/queries/chat.query";
 import { useAuthStore } from "@/stores/auth.store";
@@ -8,8 +8,7 @@ import { useChatData } from "./useChatData";
 import { useChatSocket } from "./useChatSocket";
 
 export const useChat = () => {
-  const { selectedGroupId, isMuted, selectGroup, setCurrentUser } =
-    useChatStore();
+  const { selectedGroupId, selectGroup, setCurrentUser } = useChatStore();
   const currentUser = useAuthStore((state) => state.user);
 
   useEffect(() => {
@@ -29,6 +28,11 @@ export const useChat = () => {
     isFetchingNextPage,
     pagination,
   } = useChatData(selectedGroupId);
+
+  const isMuted = useMemo(() => {
+    const me = enrichedMembers.find((m) => m.userId === currentUser?.id);
+    return me?.isMuted ?? false;
+  }, [enrichedMembers, currentUser?.id]);
 
   const sendMessageMutation = useSendChatMessageMutation(selectedGroupId ?? "");
 

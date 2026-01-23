@@ -155,7 +155,11 @@ type ChatMember = Prisma.ChatMemberGetPayload<{
   select: typeof BaseSelectors.chatMember;
 }>;
 
-type TransformedChatMember = Omit<ChatMember, "user"> & {
+type EnrichedChatMember = Omit<ChatMember, "mutedUntil"> & {
+  isMuted: boolean;
+};
+
+type TransformedChatMember = Omit<EnrichedChatMember, "user"> & {
   user: Omit<ChatMember["user"], "Avatar"> & {
     avatar: ChatMember["user"]["Avatar"];
   };
@@ -197,6 +201,7 @@ export {
   type ChatGroup,
   type ChatGroupWithMembers,
   type ChatMember,
+  type EnrichedChatMember,
   type TransformedChatMember,
   type ChatMessage,
   type TransformedChatMessage,

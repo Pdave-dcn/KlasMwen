@@ -53,7 +53,7 @@ export const MemberItem = ({
             {isCurrentUser && " (You)"}
           </span>
 
-          {member.mutedUntil && (
+          {member.isMuted && (
             <VolumeX className="h-3.5 w-3.5 text-destructive shrink-0" />
           )}
         </div>

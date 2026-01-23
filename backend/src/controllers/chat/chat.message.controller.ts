@@ -18,6 +18,9 @@ const sendMessage = async (req: Request, res: Response, next: NextFunction) => {
 
   try {
     actionLogger.info("Sending message to chat group");
+    console.log("req.params:", req.params);
+    console.log("req.url:", req.url);
+
     const { user } = req as AuthenticatedRequest;
     const { chatGroupId } = ChatGroupIdParamSchema.parse(req.params);
     const { content } = SendMessageDataSchema.parse(req.body);
@@ -32,7 +35,12 @@ const sendMessage = async (req: Request, res: Response, next: NextFunction) => {
     );
 
     const io = req.app.get("io");
-    io.to(`chat:${chatGroupId}`).emit("chat:new_message", { message });
+
+    if (io) {
+      const chatNamespace = io.of("/chat");
+
+      chatNamespace.to(`chat:${chatGroupId}`).emit("chat:new_message", message);
+    }
 
     actionLogger.info(
       {

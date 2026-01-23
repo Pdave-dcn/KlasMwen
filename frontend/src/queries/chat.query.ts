@@ -4,6 +4,7 @@ import {
   useQueryClient,
   useInfiniteQuery,
 } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import {
   createChatGroup,
@@ -169,10 +170,14 @@ const useSendChatMessageMutation = (chatGroupId: string) => {
 
   return useMutation({
     mutationFn: (data: SendMessageData) => sendChatMessage(chatGroupId, data),
+
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["chat", "groups", chatGroupId, "messages"],
       });
+    },
+    onError: () => {
+      toast.error("Failed to send message");
     },
   });
 };

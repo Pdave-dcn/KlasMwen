@@ -42,19 +42,21 @@ class ChatSocketService {
    * Establishes Socket.io connection to the chat namespace.
    * Automatically rejoins the current room on reconnection.
    *
-   * @param namespace - Socket.io namespace to connect to (default: "/chat")
-   *
    * @example
    * ```typescript
-   * chatSocketService.connect('/chat');
+   * chatSocketService.connect();
    * ```
    */
-  connect(namespace: string = "/chat"): void {
+  connect(): void {
     if (this.socket) return;
 
-    this.socket = io(import.meta.env.VITE_SOCKET_URL + namespace, {
+    this.socket = io(import.meta.env.VITE_CHAT_SOCKET_URL, {
       withCredentials: true,
       transports: ["websocket"],
+    });
+
+    this.socket.on("connect_error", (error) => {
+      console.error("Socket.io connection error:", error);
     });
 
     this.socket.on("connect", () => {
@@ -104,8 +106,7 @@ class ChatSocketService {
   }
 
   /**
-   * Joins a chat room (group). Automatically leaves previous room if any.
-   * Only allows being in one room at a time.
+   * Joins a chat room (group).
    *
    * @param chatGroupId - UUID of the chat group to join
    *
@@ -115,16 +116,21 @@ class ChatSocketService {
    * ```
    */
   joinRoom(chatGroupId: string): void {
-    if (this.currentRoom === chatGroupId) return;
-
-    if (this.currentRoom) {
-      this.leaveRoom(this.currentRoom);
-    }
+    this.currentRoom = chatGroupId;
 
     if (this.socket && this.connected) {
-      this.socket.emit("chat:join", { chatGroupId });
+      this.socket.emit(
+        "chat:join",
+        { chatGroupId },
+        (response: { success: boolean; error?: string }) => {
+          if (!response.success) {
+            console.error("Failed to join room:", response.error);
+          }
+        },
+      );
+    } else {
+      console.log("Socket not connected yet, room join queued for connection.");
     }
-    this.currentRoom = chatGroupId;
   }
 
   /**

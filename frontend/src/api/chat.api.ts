@@ -15,7 +15,6 @@ import {
 
 import api from "./api";
 
-
 const createChatGroup = async (data: CreateChatGroupData) => {
   try {
     const res = await api.post("/groups", data);
@@ -134,7 +133,7 @@ const updateChatMemberRole = async (
 
 const sendChatMessage = async (chatGroupId: string, data: SendMessageData) => {
   try {
-    const res = await api.post(`/groups/${chatGroupId}/messages`, data);
+    const res = await api.post(`/groups/${chatGroupId}/message`, data);
     const validatedData = ChatMessageResponseSchema.parse(res.data);
 
     return validatedData.data;
@@ -150,11 +149,9 @@ const getChatMessages = async (
   limit: number = 50,
 ) => {
   try {
-    const params = new URLSearchParams();
-    if (cursor) params.append("cursor", cursor.toString());
-    params.append("limit", limit.toString());
-
-    const res = await api.get(`/groups/${chatGroupId}/messages?${params}`);
+    const res = await api.get(`/groups/${chatGroupId}/messages`, {
+      params: { cursor, limit },
+    });
     const validatedData = ChatMessagesResponseSchema.parse(res.data);
 
     return validatedData;

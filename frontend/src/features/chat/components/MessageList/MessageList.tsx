@@ -24,7 +24,7 @@ export const MessageList = ({
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Adding a slight delay ensures Radix has calculated the viewport height
+    // Slight delay ensuring Radix has calculated the viewport height
     const timer = setTimeout(() => {
       endRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 100);

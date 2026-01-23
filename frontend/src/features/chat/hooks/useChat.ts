@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from "react";
 
-import { toast } from "sonner";
+import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
 
 import {
   useChatGroupsQuery,
@@ -12,18 +12,13 @@ import {
 import { useAuthStore } from "@/stores/auth.store";
 import { useChatStore } from "@/stores/chat.store";
 import { usePresenceStore } from "@/stores/presence.store";
+import type { ChatMessagesResponse } from "@/zodSchemas/chat.zod";
 
 import { chatSocketService } from "../services/socketService";
 
 export const useChat = () => {
-  const {
-    selectedGroupId,
-    isMuted,
-    selectGroup,
-    setCurrentUser,
-    markGroupAsRead,
-    addMessage,
-  } = useChatStore();
+  const { selectedGroupId, isMuted, selectGroup, setCurrentUser } =
+    useChatStore();
 
   const { onlineUsers } = usePresenceStore.getState();
 
@@ -60,44 +55,73 @@ export const useChat = () => {
   } = useChatMessagesQuery(selectedGroupId ?? "");
 
   // Flatten all message pages into single array
-  const messages = messagesData?.pages.flatMap((page) => page.data) ?? [];
+  const messages = messagesData
+    ? messagesData.pages.flatMap((page) => page.data).reverse()
+    : [];
 
   // Send message mutation
   const sendMessageMutation = useSendChatMessageMutation(selectedGroupId ?? "");
 
-  // Initialize socket connection
-  useEffect(() => {
-    chatSocketService.connect("/chat");
-
-    return () => {
-      chatSocketService.disconnect();
-    };
-  }, []);
-
   // Handle group selection - join socket room
   useEffect(() => {
     if (!selectedGroupId) return;
-
     chatSocketService.joinRoom(selectedGroupId);
-    markGroupAsRead(selectedGroupId);
 
     return () => {
       if (selectedGroupId) {
         chatSocketService.leaveRoom(selectedGroupId);
       }
     };
-  }, [selectedGroupId, markGroupAsRead]);
+  }, [selectedGroupId]);
+
+  const queryClient = useQueryClient();
 
   // Listen for incoming messages via socket
   useEffect(() => {
     const unsubscribe = chatSocketService.onMessage((message) => {
-      if (message.chatGroupId === selectedGroupId) {
-        addMessage(message);
-      }
+      queryClient.setQueryData<InfiniteData<ChatMessagesResponse>>(
+        ["chat", "groups", message.chatGroupId, "messages"],
+        (oldData) => {
+          // Handle Empty Cache: If no messages exist yet, create the first page
+          if (!oldData?.pages.length) {
+            return {
+              pages: [
+                {
+                  data: [message],
+                  pagination: {
+                    hasMore: false,
+                    nextCursor: null,
+                  },
+                },
+              ],
+              pageParams: [undefined],
+            };
+          }
+
+          const [firstPage, ...restPages] = oldData.pages;
+
+          // Duplicate Check: Prevent the same message from appearing twice
+          if (firstPage.data.some((m) => m.id === message.id)) {
+            return oldData;
+          }
+
+          // Return updated structure
+          return {
+            ...oldData,
+            pages: [
+              {
+                ...firstPage,
+                data: [message, ...firstPage.data],
+              },
+              ...restPages,
+            ],
+          };
+        },
+      );
     });
 
     return unsubscribe;
-  }, [selectedGroupId, addMessage]);
+  }, [queryClient]);
 
   // Handle group selection
   const handleSelectGroup = useCallback(
@@ -111,17 +135,9 @@ export const useChat = () => {
     async (content: string) => {
       if (!selectedGroupId || !content.trim() || isMuted) return;
 
-      try {
-        const message = await sendMessageMutation.mutateAsync({ content });
-
-        // Optimistically update local UI state
-        addMessage(message);
-      } catch (error) {
-        console.error("Failed to send message:", error);
-        toast.error("Failed to send message");
-      }
+      await sendMessageMutation.mutateAsync({ content });
     },
-    [selectedGroupId, isMuted, addMessage, sendMessageMutation],
+    [selectedGroupId, isMuted, sendMessageMutation],
   );
 
   // Load more messages

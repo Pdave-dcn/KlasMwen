@@ -40,6 +40,7 @@ const UpdateChatGroupDataSchema = z
       .max(500, "Description must not exceed 500 characters")
       .optional(),
     isPrivate: z.boolean().optional(),
+    avatarId: z.number().int().positive(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: "At least one field must be provided for update",
@@ -59,7 +60,6 @@ const UpdateMemberRoleDataSchema = z.object({
 // Chat Message Schemas
 
 const SendMessageDataSchema = z.object({
-  chatGroupId: z.uuid("Invalid chat group ID format"),
   content: z
     .string()
     .trim()

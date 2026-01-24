@@ -102,12 +102,24 @@ class ChatSocketService {
         { chatGroupId },
         (response: {
           success: boolean;
-          presentUserIds: string[];
+          presentMemberIds?: string[];
+          onlineMemberIds?: string[];
           error?: string;
         }) => {
-          if (response.success && response.presentUserIds) {
-            // Bulk update the store with the "Who's already here" list
-            useChatStore.getState().setPresentUsers(response.presentUserIds);
+          if (response.success) {
+            if (response.onlineMemberIds) {
+              // Bulk update the store with the "Who's already online" list
+              useChatStore
+                .getState()
+                .setOnlineMembers(response.onlineMemberIds);
+            }
+
+            if (response.presentMemberIds) {
+              // Bulk update the store with the "Who's already here" list
+              useChatStore
+                .getState()
+                .setPresentMembers(response.presentMemberIds);
+            }
           } else if (response.error) {
             console.error("Failed to join room:", response.error);
           }

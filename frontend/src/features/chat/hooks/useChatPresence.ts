@@ -37,6 +37,7 @@ export const useChatPresence = (groupId: string | null) => {
       unsubJoined();
       unsubLeft();
       useChatStore.getState().clearPresence();
+      useChatStore.getState().clearOnlineMembers();
     };
   }, [groupId]);
 };

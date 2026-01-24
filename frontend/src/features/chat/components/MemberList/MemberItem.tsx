@@ -1,6 +1,7 @@
 import { Crown, Shield, Users, VolumeX, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useChatStore } from "@/stores/chat.store";
 import type {
   EnrichedChatMember,
   ChatRole as MemberRole,
@@ -27,6 +28,8 @@ export const MemberItem = ({
   const config = roleConfig[member.role];
   const RoleIcon = config.icon;
 
+  const { onlineMemberIds } = useChatStore();
+
   return (
     <div
       className={cn(
@@ -38,7 +41,7 @@ export const MemberItem = ({
       <div className="relative">
         <UserAvatar
           user={member.user}
-          isOnline={member.isOnline}
+          isOnline={member.isOnline || onlineMemberIds.has(member.userId)}
           size="sm"
           showOnlineStatus
         />

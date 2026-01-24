@@ -11,7 +11,7 @@ import { usePresenceStore } from "@/stores/presence.store";
 
 export const useChatData = (groupId: string | null) => {
   const { onlineUsers } = usePresenceStore();
-  const { presentUserIds } = useChatStore();
+  const { presentMemberIds, onlineMemberIds } = useChatStore();
 
   const { data: groups = [], isLoading: isLoadingGroups } =
     useChatGroupsQuery();
@@ -35,10 +35,11 @@ export const useChatData = (groupId: string | null) => {
     () =>
       members.map((member) => ({
         ...member,
-        isOnline: onlineUsers.has(member.userId),
-        isPresent: presentUserIds.has(member.userId),
+        isOnline:
+          onlineUsers.has(member.userId) || onlineMemberIds.has(member.userId),
+        isPresent: presentMemberIds.has(member.userId),
       })),
-    [members, onlineUsers, presentUserIds],
+    [members, onlineUsers, presentMemberIds, onlineMemberIds],
   );
 
   const messages = useMemo(

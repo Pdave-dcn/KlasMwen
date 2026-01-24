@@ -1,10 +1,14 @@
+// eslint-disable max-lines-per-function
+// eslint-disable max-lines-per-function
 import { createLogger } from "../../../core/config/logger.js";
 import {
   ChatGroupNotFoundError,
   NotAMemberError,
 } from "../../../core/error/custom/chat.error.js";
 import ChatService from "../../../features/chat/service/ChatService.js";
+import { ChatMemberService } from "../../../features/chat/service/core/ChatMemberService.js";
 import { ChatGroupIdParamSchema as ChatGroupIdSchema } from "../../../zodSchemas/chat.zod.js";
+import { PresenceService } from "../../presence/presence.service.js";
 
 import type UserService from "../../../features/user/service/UserService.js";
 import type { Namespace, Socket } from "socket.io";
@@ -19,7 +23,8 @@ export const handleJoinGroup = (socket: Socket, nsp: Namespace) => {
     data: { chatGroupId: string },
     callback?: (response: {
       success: boolean;
-      presentUserIds?: string[];
+      presentMemberIds?: string[]; // People actually WATCHING the chat
+      onlineMemberIds?: string[]; // People who have the APP OPEN
       error?: string;
     }) => void,
   ) => {
@@ -50,11 +55,17 @@ export const handleJoinGroup = (socket: Socket, nsp: Namespace) => {
 
       const socketsInRoom = await nsp.in(`chat:${chatGroupId}`).fetchSockets();
 
-      const presentUserIds = Array.from(
+      const presentMemberIds = Array.from(
         new Set(socketsInRoom.map((s) => s.data.user.id)),
       );
 
-      callback?.({ success: true, presentUserIds });
+      const allMembers = await ChatMemberService.getGroupMembers(chatGroupId);
+
+      const onlineMemberIds = allMembers
+        .filter((member) => PresenceService.isOnline(member.userId))
+        .map((m) => m.userId);
+
+      callback?.({ success: true, presentMemberIds, onlineMemberIds });
 
       socket.to(`chat:${chatGroupId}`).emit("chat:member_joined", {
         user: {

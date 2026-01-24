@@ -12,10 +12,10 @@ export const registerSocketHandlers = (io: Server) => {
 
     void socket.join(userRoom);
 
-    handlePresenceConnect(io, socket);
+    void handlePresenceConnect(io, socket);
 
     socket.on("disconnect", () => {
-      handlePresenceDisconnect(io, socket);
+      void handlePresenceDisconnect(io, socket);
     });
   });
 };

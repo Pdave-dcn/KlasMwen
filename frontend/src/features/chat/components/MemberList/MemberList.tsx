@@ -5,7 +5,6 @@ import { Header } from "./Header";
 import { getOnlineCount, sortMembers } from "./helpers";
 import { LoadingState } from "./LoadingState";
 import { MemberItem } from "./MemberItem";
-// 1. Import ScrollArea
 
 interface MemberListProps {
   members: EnrichedChatMember[];

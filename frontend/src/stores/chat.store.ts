@@ -11,11 +11,15 @@ interface ChatStore {
   currentUser: User | null;
   setCurrentUser: (user: User) => void;
 
+  onlineMemberIds: Set<string>;
+  setOnlineMembers: (userIds: string[]) => void;
+  clearOnlineMembers: () => void;
+
   // Room Presence (Who is currently looking at the chat room)
-  presentUserIds: Set<string>;
+  presentMemberIds: Set<string>;
   setMemberJoined: (userId: string) => void;
   setMemberLeft: (userId: string) => void;
-  setPresentUsers: (userIds: string[]) => void;
+  setPresentMembers: (userIds: string[]) => void;
   clearPresence: () => void;
 }
 
@@ -23,29 +27,35 @@ export const useChatStore = create<ChatStore>((set) => ({
   // Selection
   selectedGroupId: null,
   selectGroup: (groupId) => {
-    set({ selectedGroupId: groupId, presentUserIds: new Set() });
+    set({ selectedGroupId: groupId, presentMemberIds: new Set() });
   },
 
   // Current user
   currentUser: null,
   setCurrentUser: (user) => set({ currentUser: user }),
 
-  // Room Presence
-  presentUserIds: new Set(),
+  // Room online state
+  onlineMemberIds: new Set(),
+  setOnlineMembers(userIds) {
+    set({ onlineMemberIds: new Set(userIds) });
+  },
+  clearOnlineMembers: () => set({ onlineMemberIds: new Set() }),
 
-  setPresentUsers: (userIds) => set({ presentUserIds: new Set(userIds) }),
+  // Room Presence
+  presentMemberIds: new Set(),
+  setPresentMembers: (userIds) => set({ presentMemberIds: new Set(userIds) }),
 
   setMemberJoined: (id) =>
     set((state) => ({
-      presentUserIds: new Set(state.presentUserIds).add(id),
+      presentMemberIds: new Set(state.presentMemberIds).add(id),
     })),
 
   setMemberLeft: (id) =>
     set((state) => {
-      const next = new Set(state.presentUserIds);
+      const next = new Set(state.presentMemberIds);
       next.delete(id);
-      return { presentUserIds: next };
+      return { presentMemberIds: next };
     }),
 
-  clearPresence: () => set({ presentUserIds: new Set() }),
+  clearPresence: () => set({ presentMemberIds: new Set() }),
 }));

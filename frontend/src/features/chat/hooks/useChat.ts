@@ -5,6 +5,7 @@ import { useAuthStore } from "@/stores/auth.store";
 import { useChatStore } from "@/stores/chat.store";
 
 import { useChatData } from "./useChatData";
+import { useChatPresence } from "./useChatPresence";
 import { useChatSocket } from "./useChatSocket";
 
 export const useChat = () => {
@@ -16,6 +17,8 @@ export const useChat = () => {
   }, [currentUser, setCurrentUser]);
 
   useChatSocket(selectedGroupId);
+
+  useChatPresence(selectedGroupId);
 
   const {
     groups,

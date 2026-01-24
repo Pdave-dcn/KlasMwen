@@ -74,8 +74,15 @@ const ChatMemberDataSchema = z.object({
   user: UserBasicSchema,
 });
 
+const SocketMemberJoinedDataSchema = z.object({
+  user: UserBasicSchema.omit({ avatar: true }),
+});
+
+const SocketMemberLeftDataSchema = SocketMemberJoinedDataSchema;
+
 const EnrichedChatMemberDataSchema = ChatMemberDataSchema.extend({
   isOnline: z.boolean(),
+  isPresent: z.boolean(),
 });
 
 const ChatMembersResponseSchema = z.object({
@@ -117,6 +124,8 @@ export type ChatAttachedUser = z.infer<typeof UserBasicSchema>;
 export type ChatRole = z.infer<typeof ChatRoleSchema>;
 export type ChatGroup = z.infer<typeof ChatGroupDataSchema>;
 export type ChatMember = z.infer<typeof ChatMemberDataSchema>;
+export type MemberJoinedData = z.infer<typeof SocketMemberJoinedDataSchema>;
+export type MemberLeftData = z.infer<typeof SocketMemberLeftDataSchema>;
 export type EnrichedChatMember = z.infer<typeof EnrichedChatMemberDataSchema>;
 export type ChatMessage = z.infer<typeof ChatMessageDataSchema>;
 
@@ -141,4 +150,6 @@ export {
   AddMemberSchema,
   UpdateMemberRoleSchema,
   SendMessageSchema,
+  SocketMemberJoinedDataSchema,
+  SocketMemberLeftDataSchema,
 };

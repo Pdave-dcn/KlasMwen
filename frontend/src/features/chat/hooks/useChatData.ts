@@ -6,10 +6,12 @@ import {
   useChatMembersQuery,
   useChatMessagesQuery,
 } from "@/queries/chat.query";
+import { useChatStore } from "@/stores/chat.store";
 import { usePresenceStore } from "@/stores/presence.store";
 
 export const useChatData = (groupId: string | null) => {
   const { onlineUsers } = usePresenceStore();
+  const { presentUserIds } = useChatStore();
 
   const { data: groups = [], isLoading: isLoadingGroups } =
     useChatGroupsQuery();
@@ -34,8 +36,9 @@ export const useChatData = (groupId: string | null) => {
       members.map((member) => ({
         ...member,
         isOnline: onlineUsers.has(member.userId),
+        isPresent: presentUserIds.has(member.userId),
       })),
-    [members, onlineUsers],
+    [members, onlineUsers, presentUserIds],
   );
 
   const messages = useMemo(

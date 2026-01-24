@@ -23,7 +23,7 @@ export const registerChatSocketHandlers = (nsp: Namespace) => {
       "User connected to chat namespace",
     );
 
-    socket.on("chat:join", handleJoinGroup(socket));
+    socket.on("chat:join", handleJoinGroup(socket, nsp));
     socket.on("chat:leave", handleLeaveGroup(socket));
     socket.on("disconnect", handleDisconnect(socket));
   });

@@ -1,51 +1,32 @@
+/* eslint-disable no-console */
 import { io } from "socket.io-client";
 
-import type { ChatMessage } from "@/zodSchemas/chat.zod";
+import { useChatStore } from "@/stores/chat.store";
+import type {
+  ChatMessage,
+  MemberJoinedData,
+  MemberLeftData,
+} from "@/zodSchemas/chat.zod";
 
 type MessageHandler = (message: ChatMessage) => void;
 type ConnectionHandler = () => void;
 
 /**
- * Socket.io service for real-time chat functionality.
- * Handles connection management, room subscriptions, and message broadcasting.
- *
- * @example
- * ```typescript
- * // Connect to chat namespace
- * chatSocketService.connect('/chat');
- *
- * // Join a chat room
- * chatSocketService.joinRoom('group-uuid');
- *
- * // Listen for new messages
- * const unsubscribe = chatSocketService.onMessage((message) => {
- *   console.log('New message:', message);
- * });
- *
- * // Send a message
- * chatSocketService.sendMessage('group-uuid', 'Hello!');
- *
- * // Cleanup
- * unsubscribe();
- * chatSocketService.disconnect();
- * ```
+ * Socket.io service for real-time chat.
+ * Manages connections, room subscriptions, and message broadcasting.
  */
 class ChatSocketService {
   private socket: ReturnType<typeof io> | null = null;
   private connected: boolean = false;
   private currentRoom: string | null = null;
   private messageHandlers: MessageHandler[] = [];
+  private memberJoinedHandlers: ((data: MemberJoinedData) => void)[] = [];
+  private memberLeftHandlers: ((data: MemberLeftData) => void)[] = [];
   private connectionHandlers: ConnectionHandler[] = [];
   private disconnectionHandlers: ConnectionHandler[] = [];
 
   /**
-   * Establishes Socket.io connection to the chat namespace.
-   * Automatically rejoins the current room on reconnection.
-   *
-   * @example
-   * ```typescript
-   * chatSocketService.connect();
-   * ```
+   * Connects to chat namespace. Automatically rejoins current room on reconnection.
    */
   connect(): void {
     if (this.socket) return;
@@ -63,7 +44,6 @@ class ChatSocketService {
       this.connected = true;
       this.connectionHandlers.forEach((h) => h());
 
-      // Rejoin room if previously connected
       if (this.currentRoom) {
         this.joinRoom(this.currentRoom);
       }
@@ -77,11 +57,18 @@ class ChatSocketService {
     this.socket.on("chat:new_message", (msg: ChatMessage) => {
       this.messageHandlers.forEach((h) => h(msg));
     });
+
+    this.socket.on("chat:member_joined", (data: MemberJoinedData) => {
+      this.memberJoinedHandlers.forEach((h) => h(data));
+    });
+
+    this.socket.on("chat:member_left", (data: MemberLeftData) => {
+      this.memberLeftHandlers.forEach((h) => h(data));
+    });
   }
 
   /**
-   * Disconnects from the Socket.io server.
-   * Leaves current room and cleans up connection.
+   * Disconnects from server, leaves current room, and cleans up.
    */
   disconnect(): void {
     if (this.currentRoom) {
@@ -97,23 +84,14 @@ class ChatSocketService {
   }
 
   /**
-   * Checks if socket is currently connected.
-   *
-   * @returns True if connected, false otherwise
+   * Returns true if socket is connected.
    */
   isConnected(): boolean {
     return this.connected;
   }
 
   /**
-   * Joins a chat room (group).
-   *
-   * @param chatGroupId - UUID of the chat group to join
-   *
-   * @example
-   * ```typescript
-   * chatSocketService.joinRoom('chat-group-uuid');
-   * ```
+   * Joins a chat room by group ID.
    */
   joinRoom(chatGroupId: string): void {
     this.currentRoom = chatGroupId;
@@ -122,8 +100,15 @@ class ChatSocketService {
       this.socket.emit(
         "chat:join",
         { chatGroupId },
-        (response: { success: boolean; error?: string }) => {
-          if (!response.success) {
+        (response: {
+          success: boolean;
+          presentUserIds: string[];
+          error?: string;
+        }) => {
+          if (response.success && response.presentUserIds) {
+            // Bulk update the store with the "Who's already here" list
+            useChatStore.getState().setPresentUsers(response.presentUserIds);
+          } else if (response.error) {
             console.error("Failed to join room:", response.error);
           }
         },
@@ -134,9 +119,7 @@ class ChatSocketService {
   }
 
   /**
-   * Leaves a chat room (group).
-   *
-   * @param chatGroupId - UUID of the chat group to leave
+   * Leaves a chat room by group ID.
    */
   leaveRoom(chatGroupId: string): void {
     if (this.socket && this.connected) {
@@ -148,31 +131,14 @@ class ChatSocketService {
   }
 
   /**
-   * Gets the ID of the currently joined room.
-   *
-   * @returns Chat group UUID or null if not in any room
+   * Returns the current room ID or null.
    */
   getCurrentRoom(): string | null {
     return this.currentRoom;
   }
 
   /**
-   * Registers a handler for incoming messages.
-   * Handler is called whenever a new message is received in the current room.
-   *
-   * @param handler - Callback function to handle new messages
-   * @returns Unsubscribe function to remove the handler
-   *
-   * @example
-   * ```typescript
-   * const unsubscribe = chatSocketService.onMessage((message) => {
-   *   console.log('New message:', message);
-   *   addMessageToUI(message);
-   * });
-   *
-   * // Later, cleanup
-   * unsubscribe();
-   * ```
+   * Registers a handler for incoming messages. Returns unsubscribe function.
    */
   onMessage(handler: MessageHandler): () => void {
     this.messageHandlers.push(handler);
@@ -183,40 +149,39 @@ class ChatSocketService {
   }
 
   /**
-   * Simulates receiving a message without server communication.
-   * Useful for optimistic UI updates or testing.
-   *
-   * @param message - Message object to simulate
-   *
-   * @example
-   * ```typescript
-   * // Optimistic update before server confirms
-   * chatSocketService.simulateIncomingMessage({
-   *   id: Date.now(),
-   *   content: 'My message',
-   *   sender: currentUser,
-   *   createdAt: new Date().toISOString()
-   * });
-   * ```
+   * Registers a handler for member joined events. Returns unsubscribe function.
+   */
+  onMemberJoined(handler: (data: MemberJoinedData) => void): () => void {
+    this.memberJoinedHandlers.push(handler);
+    return () => {
+      this.memberJoinedHandlers = this.memberJoinedHandlers.filter(
+        (h) => h !== handler,
+      );
+    };
+  }
+
+  /**
+   * Registers a handler for member left events. Returns unsubscribe function.
+   */
+  onMemberLeft(handler: (data: MemberLeftData) => void): () => void {
+    this.memberLeftHandlers.push(handler);
+    return () => {
+      this.memberLeftHandlers = this.memberLeftHandlers.filter(
+        (h) => h !== handler,
+      );
+    };
+  }
+
+  /**
+   * Simulates receiving a message locally without server communication.
+   * Useful for optimistic updates.
    */
   simulateIncomingMessage(message: ChatMessage): void {
     this.messageHandlers.forEach((handler) => handler(message));
   }
 
   /**
-   * Registers a handler for connection events.
-   * Called when socket successfully connects or reconnects.
-   *
-   * @param handler - Callback function to handle connection
-   * @returns Unsubscribe function to remove the handler
-   *
-   * @example
-   * ```typescript
-   * const unsubscribe = chatSocketService.onConnect(() => {
-   *   console.log('Connected to chat server');
-   *   showNotification('Connected');
-   * });
-   * ```
+   * Registers a handler for connection events. Returns unsubscribe function.
    */
   onConnect(handler: ConnectionHandler): () => void {
     this.connectionHandlers.push(handler);
@@ -228,19 +193,7 @@ class ChatSocketService {
   }
 
   /**
-   * Registers a handler for disconnection events.
-   * Called when socket disconnects from server.
-   *
-   * @param handler - Callback function to handle disconnection
-   * @returns Unsubscribe function to remove the handler
-   *
-   * @example
-   * ```typescript
-   * const unsubscribe = chatSocketService.onDisconnect(() => {
-   *   console.log('Disconnected from chat server');
-   *   showNotification('Connection lost');
-   * });
-   * ```
+   * Registers a handler for disconnection events. Returns unsubscribe function.
    */
   onDisconnect(handler: ConnectionHandler): () => void {
     this.disconnectionHandlers.push(handler);
@@ -253,25 +206,6 @@ class ChatSocketService {
 }
 
 /**
- * Singleton instance of ChatSocketService.
- * Use this for all chat socket operations throughout the application.
- *
- * @example
- * ```typescript
- * import { chatSocketService } from '@/features/chat/services/socketService';
- *
- * // In component
- * useEffect(() => {
- *   chatSocketService.connect();
- *   chatSocketService.joinRoom(groupId);
- *
- *   const unsubscribe = chatSocketService.onMessage(handleMessage);
- *
- *   return () => {
- *     unsubscribe();
- *     chatSocketService.leaveRoom(groupId);
- *   };
- * }, [groupId]);
- * ```
+ * Singleton instance for all chat socket operations.
  */
 export const chatSocketService = new ChatSocketService();

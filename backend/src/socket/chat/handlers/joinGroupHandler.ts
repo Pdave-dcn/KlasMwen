@@ -7,17 +7,21 @@ import ChatService from "../../../features/chat/service/ChatService.js";
 import { ChatGroupIdParamSchema as ChatGroupIdSchema } from "../../../zodSchemas/chat.zod.js";
 
 import type UserService from "../../../features/user/service/UserService.js";
-import type { Socket } from "socket.io";
+import type { Namespace, Socket } from "socket.io";
 
 const logger = createLogger({ module: "ChatSocket" });
 
 /**
  * Handle user joining a chat group room
  */
-export const handleJoinGroup = (socket: Socket) => {
+export const handleJoinGroup = (socket: Socket, nsp: Namespace) => {
   return async (
     data: { chatGroupId: string },
-    callback?: (response: { success: boolean; error?: string }) => void,
+    callback?: (response: {
+      success: boolean;
+      presentUserIds?: string[];
+      error?: string;
+    }) => void,
   ) => {
     try {
       const { chatGroupId } = ChatGroupIdSchema.parse(data);
@@ -44,6 +48,14 @@ export const handleJoinGroup = (socket: Socket) => {
       socket.data.joinedChatGroups ??= new Set<string>();
       socket.data.joinedChatGroups.add(chatGroupId);
 
+      const socketsInRoom = await nsp.in(`chat:${chatGroupId}`).fetchSockets();
+
+      const presentUserIds = Array.from(
+        new Set(socketsInRoom.map((s) => s.data.user.id)),
+      );
+
+      callback?.({ success: true, presentUserIds });
+
       socket.to(`chat:${chatGroupId}`).emit("chat:member_joined", {
         user: {
           id: user.id,
@@ -55,8 +67,6 @@ export const handleJoinGroup = (socket: Socket) => {
         { userId: user.id, chatGroupId },
         "User joined chat group room",
       );
-
-      callback?.({ success: true });
     } catch (error) {
       logger.error(
         { userId: socket.data.user.id, chatGroupId: data.chatGroupId, error },

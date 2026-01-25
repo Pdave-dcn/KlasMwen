@@ -15,7 +15,7 @@ export const ChatLayout = () => {
     selectedGroup,
     selectedGroupId,
     messages,
-    enrichedMembers,
+    members,
     currentUser,
     isLoadingGroups,
     isLoadingMessages,
@@ -90,7 +90,7 @@ export const ChatLayout = () => {
 
       <RightSidebar
         selectedGroup={selectedGroup}
-        enrichedMembers={enrichedMembers}
+        members={members}
         currentUserId={currentUser?.id}
         isLoading={isLoadingMembers}
         showRightSidebar={showRightSidebar}

@@ -188,6 +188,26 @@ class ChatRepository {
     });
   }
 
+  /** find users sharing groups with a specific user */
+  static async findAllContacts(userId: string) {
+    const members = await prisma.chatMember.findMany({
+      where: {
+        chatGroupId: {
+          in: await prisma.chatMember
+            .findMany({
+              where: { userId },
+              select: { chatGroupId: true },
+            })
+            .then((groups) => groups.map((g) => g.chatGroupId)),
+        },
+        NOT: { userId },
+      },
+      select: { userId: true },
+      distinct: ["userId"],
+    });
+    return members.map((m) => m.userId);
+  }
+
   static async updateLastReadAt(userId: string, chatGroupId: string) {
     return await prisma.chatMember.update({
       where: { userId_chatGroupId: { userId, chatGroupId } },

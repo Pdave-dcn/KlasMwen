@@ -1,13 +1,13 @@
 import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import type { ChatGroup, EnrichedChatMember } from "@/zodSchemas/chat.zod";
+import type { ChatGroup, ChatMember } from "@/zodSchemas/chat.zod";
 
 import { MemberList } from "../MemberList/MemberList";
 
 interface RightSidebarProps {
   selectedGroup?: ChatGroup;
-  enrichedMembers: EnrichedChatMember[];
+  members: ChatMember[];
   currentUserId?: string;
   isLoading: boolean;
   showRightSidebar: boolean;
@@ -17,7 +17,7 @@ interface RightSidebarProps {
 
 export const RightSidebar = ({
   selectedGroup,
-  enrichedMembers,
+  members,
   currentUserId,
   isLoading,
   showRightSidebar,
@@ -51,7 +51,7 @@ export const RightSidebar = ({
           </button>
         )}
         <MemberList
-          members={enrichedMembers}
+          members={members}
           isLoading={isLoading}
           currentUserId={currentUserId}
         />

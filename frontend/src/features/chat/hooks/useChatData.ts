@@ -6,13 +6,8 @@ import {
   useChatMembersQuery,
   useChatMessagesQuery,
 } from "@/queries/chat.query";
-import { useChatStore } from "@/stores/chat.store";
-import { usePresenceStore } from "@/stores/presence.store";
 
 export const useChatData = (groupId: string | null) => {
-  const { onlineUsers } = usePresenceStore();
-  const { presentMemberIds, onlineMemberIds } = useChatStore();
-
   const { data: groups = [], isLoading: isLoadingGroups } =
     useChatGroupsQuery();
 
@@ -31,17 +26,6 @@ export const useChatData = (groupId: string | null) => {
     hasNextPage,
   } = useChatMessagesQuery(groupId ?? "");
 
-  const enrichedMembers = useMemo(
-    () =>
-      members.map((member) => ({
-        ...member,
-        isOnline:
-          onlineUsers.has(member.userId) || onlineMemberIds.has(member.userId),
-        isPresent: presentMemberIds.has(member.userId),
-      })),
-    [members, onlineUsers, presentMemberIds, onlineMemberIds],
-  );
-
   const messages = useMemo(
     () =>
       messagesData
@@ -53,7 +37,7 @@ export const useChatData = (groupId: string | null) => {
   return {
     groups,
     selectedGroup,
-    enrichedMembers,
+    members,
     messages,
     isLoadingGroups,
     isLoadingGroup,

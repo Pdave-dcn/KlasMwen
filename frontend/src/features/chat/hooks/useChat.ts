@@ -23,7 +23,7 @@ export const useChat = () => {
   const {
     groups,
     selectedGroup,
-    enrichedMembers,
+    members,
     messages,
     isLoadingGroups,
     isLoadingMembers,
@@ -33,9 +33,9 @@ export const useChat = () => {
   } = useChatData(selectedGroupId);
 
   const isMuted = useMemo(() => {
-    const me = enrichedMembers.find((m) => m.userId === currentUser?.id);
+    const me = members.find((m) => m.userId === currentUser?.id);
     return me?.isMuted ?? false;
-  }, [enrichedMembers, currentUser?.id]);
+  }, [members, currentUser?.id]);
 
   const sendMessageMutation = useSendChatMessageMutation(selectedGroupId ?? "");
 
@@ -57,7 +57,7 @@ export const useChat = () => {
     groups,
     selectedGroup,
     messages,
-    enrichedMembers,
+    members,
     currentUser,
     selectedGroupId,
     isLoadingGroups,

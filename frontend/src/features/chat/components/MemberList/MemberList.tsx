@@ -1,13 +1,12 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { EnrichedChatMember } from "@/zodSchemas/chat.zod";
+import type { ChatMember } from "@/zodSchemas/chat.zod";
 
 import { Header } from "./Header";
-import { getOnlineCount, sortMembers } from "./helpers";
 import { LoadingState } from "./LoadingState";
 import { MemberItem } from "./MemberItem";
 
 interface MemberListProps {
-  members: EnrichedChatMember[];
+  members: ChatMember[];
   isLoading: boolean;
   currentUserId?: string;
 }
@@ -17,13 +16,10 @@ export const MemberList = ({
   isLoading,
   currentUserId,
 }: MemberListProps) => {
-  const sortedMembers = sortMembers(members);
-  const onlineCount = getOnlineCount(members);
-
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <Header onlineCount={onlineCount} totalCount={members.length} />
+      <Header totalCount={members.length} />
 
       <div className="flex-1 min-h-0 w-full overflow-hidden">
         <ScrollArea className="h-full w-full">
@@ -32,7 +28,7 @@ export const MemberList = ({
               <LoadingState />
             ) : (
               <div className="space-y-0.5 w-full min-w-0">
-                {sortedMembers.map((member) => (
+                {members.map((member) => (
                   <MemberItem
                     key={member.userId}
                     member={member}

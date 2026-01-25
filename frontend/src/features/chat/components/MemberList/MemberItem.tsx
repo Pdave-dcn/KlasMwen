@@ -2,10 +2,8 @@ import { Crown, Shield, Users, VolumeX, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useChatStore } from "@/stores/chat.store";
-import type {
-  EnrichedChatMember,
-  ChatRole as MemberRole,
-} from "@/zodSchemas/chat.zod";
+import { usePresenceStore } from "@/stores/presence.store";
+import type { ChatMember, ChatRole as MemberRole } from "@/zodSchemas/chat.zod";
 
 import { UserAvatar } from "../UserAvatar";
 
@@ -22,32 +20,44 @@ export const MemberItem = ({
   member,
   isCurrentUser,
 }: {
-  member: EnrichedChatMember;
+  member: ChatMember;
   isCurrentUser: boolean;
 }) => {
   const config = roleConfig[member.role];
   const RoleIcon = config.icon;
 
-  const { onlineMemberIds } = useChatStore();
+  const isGloballyOnline = usePresenceStore((state) =>
+    state.onlineUsers.has(member.userId),
+  );
+
+  const isSyncOnline = useChatStore((state) =>
+    state.onlineMemberIds.has(member.userId),
+  );
+
+  const isPresent = useChatStore((state) =>
+    state.presentMemberIds.has(member.userId),
+  );
+
+  const isOnline = isGloballyOnline || isSyncOnline;
 
   return (
     <div
       className={cn(
         "flex items-center gap-3 p-2.5 rounded-lg transition-colors group",
         "hover:bg-muted/50",
-        member.isPresent && "bg-primary/5",
+        isPresent && "bg-primary/5",
       )}
     >
       <div className="relative">
         <UserAvatar
           user={member.user}
-          isOnline={member.isOnline || onlineMemberIds.has(member.userId)}
+          isOnline={isOnline || isCurrentUser}
           size="sm"
           showOnlineStatus
         />
 
         {/* Presence Indicator: Pulsing ring around avatar */}
-        {member.isPresent && (
+        {isPresent && (
           <span className="absolute -inset-1 rounded-full border-2 border-primary/40 animate-pulse pointer-events-none" />
         )}
       </div>
@@ -59,7 +69,7 @@ export const MemberItem = ({
               className={cn(
                 "text-sm font-medium truncate",
                 isCurrentUser && "text-primary",
-                member.isPresent && !isCurrentUser && "text-foreground",
+                isPresent && !isCurrentUser && "text-foreground",
               )}
             >
               {member.user.username}
@@ -71,7 +81,7 @@ export const MemberItem = ({
             )}
           </div>
 
-          {member.isPresent && !isCurrentUser && (
+          {isPresent && !isCurrentUser && (
             <div className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase tracking-wider animate-in fade-in zoom-in duration-300">
               <span className="relative flex h-1.5 w-1.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />

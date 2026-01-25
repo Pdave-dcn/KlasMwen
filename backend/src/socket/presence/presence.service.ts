@@ -22,6 +22,13 @@ export const PresenceService = {
     return false;
   },
 
+  /**
+   * Filters a list of user IDs and returns only those currently online
+   */
+  getOnlineUsersFromList(userIds: string[]): string[] {
+    return userIds.filter((id) => userSockets.has(id));
+  },
+
   isOnline(userId: string) {
     return userSockets.has(userId);
   },

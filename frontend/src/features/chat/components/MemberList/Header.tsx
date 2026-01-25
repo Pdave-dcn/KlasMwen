@@ -1,11 +1,13 @@
 import { Users } from "lucide-react";
 
+import { useChatStore } from "@/stores/chat.store";
+
 interface HeaderProps {
-  onlineCount: number;
   totalCount: number;
 }
 
-export const Header = ({ onlineCount, totalCount }: HeaderProps) => {
+export const Header = ({ totalCount }: HeaderProps) => {
+  const onlineCount = useChatStore((state) => state.onlineMemberIds.size);
   return (
     <div className="p-4 border-b border-border">
       <h3 className="font-semibold text-foreground flex items-center gap-2">

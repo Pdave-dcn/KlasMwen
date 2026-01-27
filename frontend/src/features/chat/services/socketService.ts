@@ -15,7 +15,7 @@ type ConnectionHandler = () => void;
  * Socket.io service for real-time chat.
  * Manages connections, room subscriptions, and message broadcasting.
  */
-class ChatSocketService {
+export class ChatSocketService {
   private socket: ReturnType<typeof io> | null = null;
   private connected: boolean = false;
   private currentRoom: string | null = null;

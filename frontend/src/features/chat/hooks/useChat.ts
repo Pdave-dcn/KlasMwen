@@ -6,7 +6,7 @@ import { useChatStore } from "@/stores/chat.store";
 
 import { useChatData } from "./useChatData";
 import { useChatPresence } from "./useChatPresence";
-import { useChatSocket } from "./useChatSocket";
+import { useChatSync } from "./useChatSync";
 
 export const useChat = () => {
   const { selectedGroupId, selectGroup, setCurrentUser } = useChatStore();
@@ -16,7 +16,7 @@ export const useChat = () => {
     if (currentUser) setCurrentUser(currentUser);
   }, [currentUser, setCurrentUser]);
 
-  useChatSocket(selectedGroupId);
+  useChatSync(selectedGroupId);
 
   useChatPresence(selectedGroupId);
 
@@ -37,7 +37,10 @@ export const useChat = () => {
     return me?.isMuted ?? false;
   }, [members, currentUser?.id]);
 
-  const sendMessageMutation = useSendChatMessageMutation(selectedGroupId ?? "");
+  const sendMessageMutation = useSendChatMessageMutation(
+    selectedGroupId ?? "",
+    currentUser,
+  );
 
   const handleSendMessage = useCallback(
     async (content: string) => {

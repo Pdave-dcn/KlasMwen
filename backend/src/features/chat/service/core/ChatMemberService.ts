@@ -120,6 +120,20 @@ export class ChatMemberService {
   }
 
   /**
+   * Updates the last read timestamp for a user in a chat group.
+   * @throws {ChatMemberNotFoundError} If user is not a member
+   */
+  static async updateLastReadAt(userId: string, chatGroupId: string) {
+    const membership = await ChatRepository.getMembership(userId, chatGroupId);
+
+    if (!membership) {
+      throw new ChatMemberNotFoundError(userId, chatGroupId);
+    }
+
+    await ChatRepository.updateLastReadAt(userId, chatGroupId);
+  }
+
+  /**
    * Retrieves all members of a chat group.
    * @throws {ChatGroupNotFoundError} If the group does not exist
    */

@@ -11,12 +11,10 @@ export const listenToPresence = (socket: Socket) => {
   });
 
   socket.on("presence:user_online", ({ userId }) => {
-    console.log("User is online: ", userId);
     setOnline(userId);
   });
 
   socket.on("presence:user_offline", ({ userId }) => {
-    console.log("User is offline: ", userId);
     setOffline(userId);
   });
 };

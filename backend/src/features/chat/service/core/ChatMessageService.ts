@@ -56,7 +56,6 @@ export class ChatMessageService {
     assertChatPermission(user, "chatMessages", "read");
 
     const messages = await ChatRepository.getMessages(chatGroupId, pagination);
-    await ChatRepository.updateLastReadAt(user.id, group.id);
 
     const transformedMessages = ChatTransformers.transformMessages(messages);
 

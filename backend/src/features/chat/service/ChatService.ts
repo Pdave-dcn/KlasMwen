@@ -30,6 +30,7 @@ export class ChatService {
   static getGroupMembers: typeof ChatMemberService.getGroupMembers;
   static getMemberInfo: typeof ChatMemberService.getMemberInfo;
   static isMember: typeof ChatMemberService.isMember;
+  static updateLastReadAt: typeof ChatMemberService.updateLastReadAt;
 
   // Message Operations
   static sendMessage: typeof ChatMessageService.sendMessage;
@@ -63,6 +64,7 @@ export class ChatService {
         "getGroupMembers",
         "getMemberInfo",
         "isMember",
+        "updateLastReadAt",
       ]),
       // Bind message operations
       bindMethods(ChatMessageService, [
@@ -78,7 +80,7 @@ export class ChatService {
         "verifyMembership",
         "verifyMessageExists",
         "checkMembership",
-      ])
+      ]),
     );
   }
 }

@@ -28,7 +28,7 @@ const addMember = async (req: Request, res: Response, next: NextFunction) => {
         chatGroupId,
         role,
       },
-      user
+      user,
     );
 
     actionLogger.info(
@@ -38,7 +38,7 @@ const addMember = async (req: Request, res: Response, next: NextFunction) => {
         role: member.role,
         requesterId: user.id,
       },
-      "Member added successfully"
+      "Member added successfully",
     );
 
     return res.status(201).json({
@@ -52,12 +52,12 @@ const addMember = async (req: Request, res: Response, next: NextFunction) => {
 const getGroupMembers = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "getGroupMembers",
-    req
+    req,
   );
 
   try {
@@ -71,7 +71,7 @@ const getGroupMembers = async (
         groupId: chatGroupId,
         memberCount: members.length,
       },
-      "Group members retrieved successfully"
+      "Group members retrieved successfully",
     );
 
     return res.status(200).json({
@@ -86,12 +86,12 @@ const getGroupMembers = async (
 const removeMember = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "removeMember",
-    req
+    req,
   );
 
   try {
@@ -113,7 +113,7 @@ const removeMember = async (
       },
       isSelfRemoval
         ? "User left group successfully"
-        : "Member removed successfully"
+        : "Member removed successfully",
     );
 
     return res.status(200).json({
@@ -129,12 +129,12 @@ const removeMember = async (
 const updateMemberRole = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "updateMemberRole",
-    req
+    req,
   );
 
   try {
@@ -148,7 +148,7 @@ const updateMemberRole = async (
       userId,
       chatGroupId,
       { role },
-      user
+      user,
     );
 
     actionLogger.info(
@@ -158,7 +158,7 @@ const updateMemberRole = async (
         newRole: role,
         requesterId: user.id,
       },
-      "Member role updated successfully"
+      "Member role updated successfully",
     );
 
     return res.status(200).json({
@@ -169,4 +169,45 @@ const updateMemberRole = async (
   }
 };
 
-export { addMember, getGroupMembers, removeMember, updateMemberRole };
+const updateLastReadAt = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const actionLogger = createActionLogger(
+    controllerLogger,
+    "updateLastReadAt",
+    req,
+  );
+
+  try {
+    actionLogger.info("Updating last read timestamp");
+    const { user } = req as AuthenticatedRequest;
+    const { chatGroupId } = ChatGroupIdParamSchema.parse(req.params);
+
+    await ChatService.updateLastReadAt(user.id, chatGroupId);
+
+    actionLogger.info(
+      {
+        groupId: chatGroupId,
+        targetUserId: user.id,
+        requesterId: user.id,
+      },
+      "Last read timestamp updated successfully",
+    );
+
+    return res.status(200).json({
+      message: "Last read timestamp updated successfully",
+    });
+  } catch (error: unknown) {
+    return next(error);
+  }
+};
+
+export {
+  addMember,
+  getGroupMembers,
+  removeMember,
+  updateMemberRole,
+  updateLastReadAt,
+};

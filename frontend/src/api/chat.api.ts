@@ -129,6 +129,15 @@ const updateChatMemberRole = async (
   }
 };
 
+const updateChatMemberLastReadAt = async (chatGroupId: string) => {
+  try {
+    await api.post(`/groups/${chatGroupId}/members/me/read`);
+  } catch (error) {
+    handleZodValidationError(error, "updateChatMemberLastReadAt");
+    throw error;
+  }
+};
+
 // Chat Message APIs
 
 const sendChatMessage = async (chatGroupId: string, data: SendMessageData) => {
@@ -182,6 +191,7 @@ export {
   getChatMembers,
   removeChatMember,
   updateChatMemberRole,
+  updateChatMemberLastReadAt,
   // Messages
   sendChatMessage,
   getChatMessages,

@@ -13,6 +13,7 @@ import {
   deleteMessage,
   getMessages,
   sendMessage,
+  updateLastReadAt,
 } from "../controllers/chat/index.js";
 import {
   enrichChatRole,
@@ -43,6 +44,8 @@ router.get("/:chatGroupId/members", requireMembership, getGroupMembers);
 router.delete("/:chatGroupId/members/:userId", enrichChatRole, removeMember);
 
 router.patch("/:chatGroupId/members/:userId", enrichChatRole, updateMemberRole);
+
+router.post("/:chatGroupId/members/me/read", updateLastReadAt);
 
 router.post("/:chatGroupId/message", requireMembership, sendMessage);
 

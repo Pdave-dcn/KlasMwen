@@ -136,6 +136,7 @@ export type UpdateMemberRoleData = z.infer<typeof UpdateMemberRoleSchema>;
 export type SendMessageData = z.infer<typeof SendMessageSchema>;
 
 export type ChatMessagesResponse = z.infer<typeof ChatMessagesResponseSchema>;
+export type ChatGroupResponse = z.infer<typeof ChatGroupDataSchema>;
 
 export {
   ChatGroupsResponseSchema,

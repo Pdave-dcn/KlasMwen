@@ -18,6 +18,11 @@ const UserBasicSchema = z.object({
 
 const ChatGroupCreatorSchema = UserBasicSchema.omit({ avatar: true });
 
+const PaginationSchema = z.object({
+  nextCursor: z.string().nullable(),
+  hasMore: z.boolean(),
+});
+
 // Chat Message Schemas
 
 const ChatMessageDataSchema = z.object({
@@ -53,7 +58,16 @@ const ChatGroupDataSchema = z.object({
   memberCount: z.number().int().nonnegative(),
   unreadCount: z.number().int().nonnegative(),
   userRole: ChatRoleSchema.nullable(),
-  latestMessage: ChatMessageDataSchema,
+  latestMessage: ChatMessageDataSchema.nullable(),
+});
+
+const ChatGroupForDiscoverySchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  description: z.string().nullable(),
+  isPrivate: z.boolean(),
+  avatar: AvatarSchema,
+  memberCount: z.number().int().nonnegative(),
 });
 
 const ChatGroupsResponseSchema = z.object({
@@ -62,6 +76,11 @@ const ChatGroupsResponseSchema = z.object({
 
 const ChatGroupResponseSchema = z.object({
   data: ChatGroupDataSchema,
+});
+
+const ChatGroupsForDiscoveryResponseSchema = z.object({
+  data: z.array(ChatGroupForDiscoverySchema),
+  pagination: PaginationSchema,
 });
 
 // Chat Member Schemas
@@ -96,9 +115,15 @@ const ChatMemberResponseSchema = z.object({
 // Request Schemas
 
 const CreateChatGroupSchema = z.object({
-  name: z.string().min(1).max(100),
-  description: z.string().max(500).optional(),
-  isPrivate: z.boolean().optional(),
+  name: z
+    .string()
+    .min(3, "Group name must be at least 3 characters")
+    .max(50, "Group name must be less than 50 characters"),
+  description: z
+    .string()
+    .max(200, "Description must be less than 200 characters")
+    .optional(),
+  isPrivate: z.boolean(),
 });
 
 const UpdateChatGroupSchema = z.object({
@@ -129,11 +154,18 @@ export type MemberLeftData = z.infer<typeof SocketMemberLeftDataSchema>;
 export type EnrichedChatMember = z.infer<typeof EnrichedChatMemberDataSchema>;
 export type ChatMessage = z.infer<typeof ChatMessageDataSchema>;
 
+export type ChatGroupForDiscovery = z.infer<typeof ChatGroupForDiscoverySchema>;
+export type ChatGroupsForDiscoveryResponseSchema = z.infer<
+  typeof ChatGroupsForDiscoveryResponseSchema
+>;
+
 export type CreateChatGroupData = z.infer<typeof CreateChatGroupSchema>;
 export type UpdateChatGroupData = z.infer<typeof UpdateChatGroupSchema>;
 export type AddMemberData = z.infer<typeof AddMemberSchema>;
 export type UpdateMemberRoleData = z.infer<typeof UpdateMemberRoleSchema>;
 export type SendMessageData = z.infer<typeof SendMessageSchema>;
+
+export type CreateGroupFormData = z.infer<typeof CreateChatGroupSchema>;
 
 export type ChatMessagesResponse = z.infer<typeof ChatMessagesResponseSchema>;
 export type ChatGroupResponse = z.infer<typeof ChatGroupDataSchema>;
@@ -153,4 +185,5 @@ export {
   SendMessageSchema,
   SocketMemberJoinedDataSchema,
   SocketMemberLeftDataSchema,
+  ChatGroupsForDiscoveryResponseSchema,
 };

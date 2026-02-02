@@ -11,6 +11,7 @@ import {
   type AddMemberData,
   type UpdateMemberRoleData,
   type SendMessageData,
+  ChatGroupsForDiscoveryResponseSchema,
 } from "@/zodSchemas/chat.zod";
 
 import api from "./api";
@@ -23,6 +24,18 @@ const createChatGroup = async (data: CreateChatGroupData) => {
     return validatedData.data;
   } catch (error) {
     handleZodValidationError(error, "createChatGroup");
+    throw error;
+  }
+};
+
+const joinChatGroup = async (chatGroupId: string) => {
+  try {
+    const res = await api.post(`/groups/join/${chatGroupId}`);
+    const validatedData = ChatGroupResponseSchema.parse(res.data);
+
+    return validatedData.data;
+  } catch (error) {
+    handleZodValidationError(error, "joinChatGroup");
     throw error;
   }
 };
@@ -47,6 +60,23 @@ const getChatGroupById = async (chatGroupId: string) => {
     return validatedData.data;
   } catch (error) {
     handleZodValidationError(error, "getChatGroupById");
+    throw error;
+  }
+};
+
+const getChatGroupsForDiscovery = async (
+  limit: number = 10,
+  cursor?: string,
+) => {
+  try {
+    const res = await api.get(`/groups/discover`, {
+      params: { limit, cursor },
+    });
+    const validatedData = ChatGroupsForDiscoveryResponseSchema.parse(res.data);
+
+    return validatedData;
+  } catch (error) {
+    handleZodValidationError(error, "getChatGroupsForDiscovery");
     throw error;
   }
 };
@@ -182,8 +212,10 @@ const deleteChatMessage = async (chatGroupId: string, messageId: number) => {
 export {
   // Groups
   createChatGroup,
+  joinChatGroup,
   getUserChatGroups,
   getChatGroupById,
+  getChatGroupsForDiscovery,
   updateChatGroup,
   deleteChatGroup,
   // Members

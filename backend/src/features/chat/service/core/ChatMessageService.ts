@@ -4,8 +4,8 @@ import {
 } from "../../../../core/error/custom/chat.error.js";
 import { processPaginatedResults } from "../../../../utils/pagination.util.js";
 import { assertChatPermission } from "../../security/rbac.js";
-import ChatRepository from "../ChatRepository.js";
 import ChatTransformers from "../ChatTransformers.js";
+import ChatRepository from "../Repositories/ChatRepository.js";
 
 import { ChatValidationService } from "./ChatValidationService.js";
 

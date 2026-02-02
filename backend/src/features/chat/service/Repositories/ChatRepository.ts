@@ -1,5 +1,4 @@
-import prisma from "../../../core/config/db.js";
-
+import prisma from "../../../../core/config/db.js";
 import {
   BaseSelectors,
   type UpdateChatGroupData,
@@ -8,7 +7,8 @@ import {
   type SendMessageData,
   type MessagePaginationCursor,
   type CreateChatGroupFinalData,
-} from "./chatTypes.js";
+  type GroupPaginationCursor,
+} from "../chatTypes.js";
 
 class ChatRepository {
   //Chat Group Operations
@@ -18,6 +18,30 @@ class ChatRepository {
     return await prisma.chatGroup.findUnique({
       where: { id: chatGroupId },
       select: BaseSelectors.chatGroupWithMembers,
+    });
+  }
+
+  /** Find public groups with cursor-based pagination, excluding groups the user is already a member of */
+  static async findPublicGroups(
+    userId: string,
+    pagination: GroupPaginationCursor,
+  ) {
+    return await prisma.chatGroup.findMany({
+      where: {
+        isPrivate: false,
+        members: {
+          none: {
+            userId,
+          },
+        },
+      },
+      select: BaseSelectors.chatGroupForDiscovery,
+      orderBy: { createdAt: "desc" },
+      take: pagination.limit + 1,
+      ...(pagination.cursor && {
+        cursor: { id: pagination.cursor },
+        skip: 1,
+      }),
     });
   }
 

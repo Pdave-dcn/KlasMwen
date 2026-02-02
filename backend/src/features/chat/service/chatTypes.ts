@@ -71,6 +71,23 @@ const BaseSelectors = {
 
   chatMessage: ChatFragments.chatMessageBase,
 
+  chatGroupForDiscovery: {
+    id: true,
+    name: true,
+    description: true,
+    isPrivate: true,
+    avatar: {
+      select: {
+        url: true,
+      },
+    },
+    _count: {
+      select: {
+        members: true,
+      },
+    },
+  } satisfies Prisma.ChatGroupSelect,
+
   // Full group info with member count
   chatGroupWithMembers: {
     id: true,
@@ -100,9 +117,82 @@ const BaseSelectors = {
       },
     },
   } satisfies Prisma.ChatGroupSelect,
+
+  // Search-specific selectors
+  chatGroupForSearch: {
+    id: true,
+    name: true,
+    description: true,
+    isPrivate: true,
+    avatar: {
+      select: {
+        url: true,
+      },
+    },
+    _count: {
+      select: {
+        members: true,
+      },
+    },
+  } satisfies Prisma.ChatGroupSelect,
+
+  chatGroupForTrending: {
+    id: true,
+    name: true,
+    description: true,
+    isPrivate: true,
+    avatar: {
+      select: {
+        url: true,
+      },
+    },
+    _count: {
+      select: {
+        members: true,
+        messages: true,
+      },
+    },
+  } satisfies Prisma.ChatGroupSelect,
+
+  chatGroupForActive: {
+    id: true,
+    name: true,
+    description: true,
+    isPrivate: true,
+    avatar: {
+      select: {
+        url: true,
+      },
+    },
+    messages: {
+      select: {
+        createdAt: true,
+      },
+      orderBy: {
+        createdAt: "desc" as const,
+      },
+      take: 1,
+    },
+    _count: {
+      select: {
+        members: true,
+      },
+    },
+  } satisfies Prisma.ChatGroupSelect,
+
+  chatGroupSuggestion: {
+    id: true,
+    name: true,
+    _count: {
+      select: {
+        members: true,
+      },
+    },
+  } satisfies Prisma.ChatGroupSelect,
 } as const;
 
-// Input types
+// Input Types
+
 interface CreateChatGroupData {
   name: string;
   description?: string;
@@ -137,12 +227,44 @@ interface SendMessageData {
   chatGroupId: string;
 }
 
+// Pagination Types
+
 interface MessagePaginationCursor {
   cursor?: number; // message ID
   limit?: number;
 }
 
-// Return types
+interface GroupPaginationCursor {
+  cursor?: string; // Group UUID
+  limit: number;
+}
+
+// Search & Filter Types
+
+interface GroupSearchFilters {
+  query?: string; // Search by name or description
+  isPrivate?: boolean; // Filter by privacy
+  excludeJoined?: boolean; // Exclude groups user is already in
+  creatorId?: string; // Filter by creator
+  minMembers?: number; // Minimum member count
+  maxMembers?: number; // Maximum member count
+}
+
+interface GroupSearchSuggestion {
+  id: string;
+  name: string;
+  memberCount: number;
+}
+
+// Search result types for different discovery methods
+interface SearchResultMetadata {
+  totalResults?: number;
+  searchQuery?: string;
+  appliedFilters?: Partial<GroupSearchFilters>;
+}
+
+// Return Types
+
 type ChatGroup = Prisma.ChatGroupGetPayload<{
   select: typeof BaseSelectors.chatGroup;
 }>;
@@ -150,6 +272,40 @@ type ChatGroup = Prisma.ChatGroupGetPayload<{
 type ChatGroupWithMembers = Prisma.ChatGroupGetPayload<{
   select: typeof BaseSelectors.chatGroupWithMembers;
 }>;
+
+type ChatGroupForDiscovery = Prisma.ChatGroupGetPayload<{
+  select: typeof BaseSelectors.chatGroupForDiscovery;
+}>;
+
+type ChatGroupForSearch = Prisma.ChatGroupGetPayload<{
+  select: typeof BaseSelectors.chatGroupForSearch;
+}>;
+
+type ChatGroupForTrending = Prisma.ChatGroupGetPayload<{
+  select: typeof BaseSelectors.chatGroupForTrending;
+}>;
+
+type ChatGroupForActive = Prisma.ChatGroupGetPayload<{
+  select: typeof BaseSelectors.chatGroupForActive;
+}>;
+
+type ChatGroupSuggestionResult = Prisma.ChatGroupGetPayload<{
+  select: typeof BaseSelectors.chatGroupSuggestion;
+}>;
+
+type TransformedChatGroupForDiscovery = Omit<
+  ChatGroupForDiscovery,
+  "_count"
+> & {
+  memberCount: number;
+};
+
+type TransformedChatGroupSuggestion = Omit<
+  ChatGroupSuggestionResult,
+  "_count"
+> & {
+  memberCount: number;
+};
 
 type ChatMember = Prisma.ChatMemberGetPayload<{
   select: typeof BaseSelectors.chatMember;
@@ -175,7 +331,8 @@ type TransformedChatMessage = Omit<ChatMessage, "sender"> & {
   };
 };
 
-// Enriched types
+// Enriched Types
+
 type EnrichedChatGroup = Omit<ChatGroupWithMembers, "_count" | "members"> & {
   memberCount: number;
   latestMessage: TransformedChatMessage | null;
@@ -183,28 +340,57 @@ type EnrichedChatGroup = Omit<ChatGroupWithMembers, "_count" | "members"> & {
   userRole?: ChatRole | null;
 };
 
+// Page Types
+
 interface MessagePage {
   messages: ChatMessage[];
   nextCursor: number | null;
   hasMore: boolean;
 }
 
+interface GroupSearchPage {
+  groups: TransformedChatGroupForDiscovery[];
+  nextCursor: string | null;
+  hasMore: boolean;
+  metadata?: SearchResultMetadata;
+}
+
+// Exports
+
 export {
   BaseSelectors,
+  // Input types
   type CreateChatGroupData,
   type CreateChatGroupFinalData,
   type UpdateChatGroupData,
   type JoinChatGroupData,
   type UpdateMemberRoleData,
   type SendMessageData,
+  // Pagination types
   type MessagePaginationCursor,
+  type GroupPaginationCursor,
+  // Search & Filter types
+  type GroupSearchFilters,
+  type GroupSearchSuggestion,
+  type SearchResultMetadata,
+  type GroupSearchPage,
+  // Return types
   type ChatGroup,
   type ChatGroupWithMembers,
+  type ChatGroupForDiscovery,
+  type ChatGroupForSearch,
+  type ChatGroupForTrending,
+  type ChatGroupForActive,
+  type ChatGroupSuggestionResult,
+  type TransformedChatGroupForDiscovery,
+  type TransformedChatGroupSuggestion,
   type ChatMember,
   type EnrichedChatMember,
   type TransformedChatMember,
   type ChatMessage,
   type TransformedChatMessage,
+  // Enriched types
   type EnrichedChatGroup,
+  // Page types
   type MessagePage,
 };

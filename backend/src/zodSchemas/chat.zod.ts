@@ -46,6 +46,27 @@ const UpdateChatGroupDataSchema = z
     message: "At least one field must be provided for update",
   });
 
+const GroupSearchFiltersSchema = z.object({
+  query: z.string().optional(),
+  isPrivate: z
+    .string()
+    .transform((val) => val === "true")
+    .optional(),
+  excludeJoined: z
+    .string()
+    .transform((val) => val === "true")
+    .optional(),
+  creatorId: z.string().uuid().optional(),
+  minMembers: z
+    .string()
+    .transform((val) => parseInt(val))
+    .optional(),
+  maxMembers: z
+    .string()
+    .transform((val) => parseInt(val))
+    .optional(),
+});
+
 // Chat Member Schemas
 
 const AddMemberDataSchema = z.object({
@@ -94,6 +115,7 @@ type SendMessageData = z.infer<typeof SendMessageDataSchema>;
 export {
   CreateChatGroupDataSchema,
   UpdateChatGroupDataSchema,
+  GroupSearchFiltersSchema,
   ChatGroupIdParamSchema,
   UserIdParamSchema,
   AddMemberDataSchema,

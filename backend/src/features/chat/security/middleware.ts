@@ -3,7 +3,7 @@ import {
   InsufficientChatRoleError,
   NotAMemberError,
 } from "../../../core/error/custom/chat.error.js";
-import ChatRepository from "../service/ChatRepository.js";
+import ChatRepository from "../service/Repositories/ChatRepository.js";
 
 import type { ChatRole } from "@prisma/client";
 import type { Request, Response, NextFunction } from "express";
@@ -37,7 +37,7 @@ import type { Request, Response, NextFunction } from "express";
 const enrichChatRole = async (
   req: Request,
   _res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { chatGroupId } = req.params;
@@ -56,7 +56,7 @@ const enrichChatRole = async (
     if (req.user) {
       const membership = await ChatRepository.getMembership(
         req.user.id,
-        chatGroupId
+        chatGroupId,
       );
 
       // Attach chat role to user object (can be undefined if not a member)
@@ -99,7 +99,7 @@ const enrichChatRole = async (
 const requireMembership = async (
   req: Request,
   _res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { chatGroupId } = req.params;
@@ -118,7 +118,7 @@ const requireMembership = async (
     if (req.user) {
       const membership = await ChatRepository.getMembership(
         req.user.id,
-        chatGroupId
+        chatGroupId,
       );
 
       req.user.chatRole = membership?.role ?? undefined;
@@ -161,7 +161,7 @@ const requireChatRole = (roles: ChatRole[]) => {
   return async (
     req: Request,
     _res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> => {
     try {
       const { chatGroupId } = req.params;
@@ -180,7 +180,7 @@ const requireChatRole = (roles: ChatRole[]) => {
       if (req.user) {
         const membership = await ChatRepository.getMembership(
           req.user.id,
-          chatGroupId
+          chatGroupId,
         );
 
         req.user.chatRole = membership?.role ?? undefined;
@@ -191,7 +191,7 @@ const requireChatRole = (roles: ChatRole[]) => {
         throw new InsufficientChatRoleError(
           req.user?.id ?? "unknown",
           roles,
-          req.user?.chatRole
+          req.user?.chatRole,
         );
       }
 

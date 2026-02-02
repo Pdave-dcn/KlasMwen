@@ -4,7 +4,7 @@ import {
   MessageNotFoundError,
   UserMutedError,
 } from "../../../../core/error/custom/chat.error.js";
-import ChatRepository from "../ChatRepository.js";
+import ChatRepository from "../Repositories/ChatRepository.js";
 
 import type { SendMessageData } from "../chatTypes.js";
 

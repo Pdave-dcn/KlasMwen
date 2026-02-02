@@ -5,8 +5,8 @@ import {
 } from "../../../../core/error/custom/chat.error.js";
 import { assertChatPermission } from "../../security/rbac.js";
 import ChatEnricher from "../ChatEnrichers.js";
-import ChatRepository from "../ChatRepository.js";
 import ChatTransformers from "../ChatTransformers.js";
+import ChatRepository from "../Repositories/ChatRepository.js";
 
 import type { JoinChatGroupData, UpdateMemberRoleData } from "../chatTypes.js";
 import type { ChatRole } from "@prisma/client";

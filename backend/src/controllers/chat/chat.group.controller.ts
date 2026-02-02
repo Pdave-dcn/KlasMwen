@@ -15,12 +15,12 @@ const controllerLogger = createLogger({ module: "ChatGroupController" });
 const createChatGroup = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "createChatGroup",
-    req
+    req,
   );
 
   try {
@@ -40,7 +40,7 @@ const createChatGroup = async (
         groupName: group.name,
         creatorId: user.id,
       },
-      "Chat group created successfully"
+      "Chat group created successfully",
     );
 
     return res.status(201).json({
@@ -51,15 +51,44 @@ const createChatGroup = async (
   }
 };
 
+const joinGroup = async (req: Request, res: Response, next: NextFunction) => {
+  const actionLogger = createActionLogger(controllerLogger, "joinGroup", req);
+
+  try {
+    actionLogger.info("User joining chat group");
+
+    const { user } = req as AuthenticatedRequest;
+    const { chatGroupId } = ChatGroupIdParamSchema.parse(req.params);
+
+    const group = await ChatService.joinGroup(chatGroupId, user.id);
+
+    actionLogger.info(
+      {
+        groupId: chatGroupId,
+        groupName: group.name,
+        userId: user.id,
+        userRole: group.userRole,
+      },
+      "User joined chat group successfully",
+    );
+
+    return res.status(200).json({
+      data: group,
+    });
+  } catch (error: unknown) {
+    return next(error);
+  }
+};
+
 const getGroupById = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "getGroupById",
-    req
+    req,
   );
 
   try {
@@ -75,7 +104,7 @@ const getGroupById = async (
         groupName: group.name,
         userRole: group.userRole,
       },
-      "Chat group retrieved successfully"
+      "Chat group retrieved successfully",
     );
 
     return res.status(200).json({
@@ -89,12 +118,12 @@ const getGroupById = async (
 const getUserGroups = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "getUserGroups",
-    req
+    req,
   );
 
   try {
@@ -108,7 +137,7 @@ const getUserGroups = async (
         userId: user.id,
         groupCount: groups.length,
       },
-      "User groups retrieved successfully"
+      "User groups retrieved successfully",
     );
 
     return res.status(200).json({
@@ -136,7 +165,7 @@ const updateGroup = async (req: Request, res: Response, next: NextFunction) => {
         groupName: updatedGroup.name,
         userId: user.id,
       },
-      "Chat group updated successfully"
+      "Chat group updated successfully",
     );
 
     return res.status(200).json({
@@ -162,7 +191,7 @@ const deleteGroup = async (req: Request, res: Response, next: NextFunction) => {
         groupId: chatGroupId,
         userId: user.id,
       },
-      "Chat group deleted successfully"
+      "Chat group deleted successfully",
     );
 
     return res.status(200).json({
@@ -179,4 +208,5 @@ export {
   getUserGroups,
   updateGroup,
   deleteGroup,
+  joinGroup,
 };

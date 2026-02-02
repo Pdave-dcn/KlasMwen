@@ -1,5 +1,6 @@
 import { bindMethods } from "../../../utils/bindMethods.util.js";
 
+import { ChatGroupSearchService } from "./core/ChatGroupSearchService.js";
 import { ChatGroupService } from "./core/ChatGroupService.js";
 import { ChatMemberService } from "./core/ChatMemberService.js";
 import { ChatMessageService } from "./core/ChatMessageService.js";
@@ -14,6 +15,7 @@ import { ChatValidationService } from "./core/ChatValidationService.js";
  * - Member management (add, remove, update roles)
  * - Message operations (send, retrieve, delete)
  * - Validation utilities
+ * - Search and discovery of chat groups
  */
 export class ChatService {
   // Group Operations
@@ -31,6 +33,7 @@ export class ChatService {
   static getMemberInfo: typeof ChatMemberService.getMemberInfo;
   static isMember: typeof ChatMemberService.isMember;
   static updateLastReadAt: typeof ChatMemberService.updateLastReadAt;
+  static joinGroup: typeof ChatGroupService.joinGroup;
 
   // Message Operations
   static sendMessage: typeof ChatMessageService.sendMessage;
@@ -45,12 +48,16 @@ export class ChatService {
   static verifyMessageExists: typeof ChatValidationService.verifyMessageExists;
   static checkMembership: typeof ChatValidationService.checkMembership;
 
+  // Search and Discovery Operations
+  static discoverGroups: typeof ChatGroupSearchService.discoverGroups;
+
   static {
     Object.assign(
       this,
       // Bind group operations
       bindMethods(ChatGroupService, [
         "createGroup",
+        "joinGroup",
         "getGroupById",
         "getUserGroups",
         "updateGroup",
@@ -81,6 +88,8 @@ export class ChatService {
         "verifyMessageExists",
         "checkMembership",
       ]),
+      // Bind search and discovery operations
+      bindMethods(ChatGroupSearchService, ["discoverGroups"]),
     );
   }
 }

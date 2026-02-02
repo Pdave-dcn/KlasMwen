@@ -14,6 +14,8 @@ import {
   getMessages,
   sendMessage,
   updateLastReadAt,
+  discoverGroups,
+  joinGroup,
 } from "../controllers/chat/index.js";
 import {
   enrichChatRole,
@@ -30,6 +32,10 @@ router.use(requireAuth);
 router.post("/", createChatGroup);
 
 router.get("/", getUserGroups);
+
+router.post("/join/:chatGroupId", joinGroup);
+
+router.get("/discover", discoverGroups);
 
 router.get("/:chatGroupId", enrichChatRole, getGroupById);
 

@@ -1,5 +1,10 @@
 import { Routes, Route } from "react-router-dom";
 
+import {
+  ChatHubPage,
+  CreateGroupPage,
+  DiscoverGroupsPage,
+} from "@/features/chat-hub/components";
 import AuthForm from "@/pages/AuthForm";
 import ChatPage from "@/pages/ChatPage";
 import DiscoverPage from "@/pages/DiscoverPage";
@@ -86,10 +91,34 @@ export const AppRoutes = () => {
       />
 
       <Route
-        path="/Chat"
+        path="/Chat/hub"
+        element={
+          <ProtectedRoute>
+            <ChatHubPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/Chat/groups"
         element={
           <ProtectedRoute>
             <ChatPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/Chat/groups/discover"
+        element={
+          <ProtectedRoute>
+            <DiscoverGroupsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/Chat/groups/create"
+        element={
+          <ProtectedRoute>
+            <CreateGroupPage />
           </ProtectedRoute>
         }
       />

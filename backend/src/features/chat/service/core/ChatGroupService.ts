@@ -1,8 +1,12 @@
-import { ChatGroupNotFoundError } from "../../../../core/error/custom/chat.error.js";
+import { AuthorizationError } from "../../../../core/error/custom/auth.error.js";
+import {
+  AlreadyMemberError,
+  ChatGroupNotFoundError,
+} from "../../../../core/error/custom/chat.error.js";
 import { getRandomChatGroupAvatar } from "../../../avatar/avatarService.js";
 import { assertChatPermission } from "../../security/rbac.js";
 import ChatEnricher from "../ChatEnrichers.js";
-import ChatRepository from "../ChatRepository.js";
+import ChatRepository from "../Repositories/ChatRepository.js";
 
 import type { CreateChatGroupData, UpdateChatGroupData } from "../chatTypes.js";
 import type { ChatRole } from "@prisma/client";
@@ -24,6 +28,38 @@ export class ChatGroupService {
       avatarId: avatar.id,
     });
     return ChatEnricher.enrichGroup(group, data.creatorId);
+  }
+
+  /**
+   * Allows a user to join a public chat group.
+   * Private groups require invitation (not handled here).
+   * @param chatGroupId - The chat group ID
+   * @param userId - The user ID joining the group
+   * @throws {ChatGroupNotFoundError} If the group does not exist
+   * @throws {AuthorizationError} If trying to join a private group
+   */
+  static async joinGroup(chatGroupId: string, userId: string) {
+    const group = await ChatRepository.findGroupById(chatGroupId);
+    if (!group) throw new ChatGroupNotFoundError(chatGroupId);
+
+    if (group.isPrivate) {
+      throw new AuthorizationError(
+        "Cannot join private groups without invitation",
+      );
+    }
+
+    const isMember = await ChatRepository.isMember(userId, chatGroupId);
+    if (isMember) {
+      throw new AlreadyMemberError(userId, chatGroupId);
+    }
+
+    await ChatRepository.addMember({
+      userId,
+      chatGroupId,
+      role: "MEMBER",
+    });
+
+    return ChatEnricher.enrichGroup(group, userId);
   }
 
   /**

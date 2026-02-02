@@ -1,6 +1,8 @@
 import type {
+  ChatGroupForDiscovery,
   ChatMessage,
   EnrichedChatMember,
+  TransformedChatGroupForDiscovery,
   TransformedChatMember,
   TransformedChatMessage,
 } from "./chatTypes";
@@ -92,34 +94,33 @@ class ChatTransformers {
   }
 
   /**
-   * Transforms a chat group creator by normalizing the Avatar field.
+   * Transforms a chat group for discovery by replacing member count.
    *
-   * @param group - Raw group data from database
-   * @returns Transformed group with lowercase 'avatar' field in creator
+   * @param group - Raw chat group data from database
+   * @returns Transformed chat group with memberCount field
    */
-  // static transformGroup(group: any): any {
-  //   if (!group?.creator) return group;
+  static transformGroupForDiscovery(
+    group: ChatGroupForDiscovery,
+  ): TransformedChatGroupForDiscovery {
+    const { _count, ...groupData } = group;
 
-  //   const { Avatar, ...restCreator } = group.creator;
-
-  //   return {
-  //     ...group,
-  //     creator: {
-  //       ...restCreator,
-  //       avatar: Avatar ?? null,
-  //     },
-  //   };
-  // }
+    return {
+      ...groupData,
+      memberCount: _count.members,
+    };
+  }
 
   /**
-   * Transforms an array of chat groups.
+   * Transforms an array of chat groups for discovery.
    *
-   * @param groups - Array of raw group data
-   * @returns Array of transformed groups
+   * @param groups - Array of raw chat group data
+   * @returns Array of transformed chat groups
    */
-  // static transformGroups(groups: any[]): any[] {
-  //   return groups.map((group) => this.transformGroup(group));
-  // }
+  static transformGroupsForDiscovery(
+    groups: ChatGroupForDiscovery[],
+  ): TransformedChatGroupForDiscovery[] {
+    return groups.map((group) => this.transformGroupForDiscovery(group));
+  }
 }
 
 export default ChatTransformers;

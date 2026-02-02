@@ -1,5 +1,5 @@
-import ChatRepository from "./ChatRepository.js";
 import ChatTransformers from "./ChatTransformers.js";
+import ChatRepository from "./Repositories/ChatRepository.js";
 
 import type {
   ChatGroupWithMembers,

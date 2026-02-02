@@ -21,6 +21,8 @@ import {
   deleteChatMessage,
   sendChatMessage,
   updateChatMemberLastReadAt,
+  getChatGroupsForDiscovery,
+  joinChatGroup,
 } from "@/api/chat.api";
 import type { User } from "@/types/auth.type";
 import type {
@@ -32,6 +34,7 @@ import type {
   ChatMessage,
   ChatMessagesResponse,
   ChatGroup,
+  ChatGroupsForDiscoveryResponseSchema,
 } from "@/zodSchemas/chat.zod";
 
 // Chat Group Queries
@@ -51,6 +54,19 @@ const useChatGroupQuery = (chatGroupId: string) => {
   });
 };
 
+const useChatGroupsForDiscoveryQuery = (limit: number = 10) => {
+  return useInfiniteQuery({
+    queryKey: ["chat", "groups", "discover", limit],
+    queryFn: ({ pageParam }) => getChatGroupsForDiscovery(limit, pageParam),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination.hasMore
+        ? lastPage.pagination.nextCursor
+        : undefined;
+    },
+  });
+};
+
 // Chat Group Mutations
 
 const useCreateChatGroupMutation = () => {
@@ -61,6 +77,36 @@ const useCreateChatGroupMutation = () => {
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["chat", "groups", "list"],
+      });
+    },
+  });
+};
+
+const useJoinChatGroupMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (chatGroupId: string) => joinChatGroup(chatGroupId),
+    onSuccess: async (_data, chatGroupId) => {
+      toast.success("Successfully joined the group!");
+
+      await queryClient.invalidateQueries({
+        queryKey: ["chat", "groups", "list"],
+      });
+
+      queryClient.setQueryData<
+        InfiniteData<ChatGroupsForDiscoveryResponseSchema>
+      >(["chat", "groups", "discovery"], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            data: page.data.map((group) =>
+              group.id === chatGroupId ? { ...group, isJoined: true } : group,
+            ),
+          })),
+        };
       });
     },
   });
@@ -307,9 +353,11 @@ export {
   // Groups
   useChatGroupsQuery,
   useChatGroupQuery,
+  useChatGroupsForDiscoveryQuery,
   useCreateChatGroupMutation,
   useUpdateChatGroupMutation,
   useDeleteChatGroupMutation,
+  useJoinChatGroupMutation,
   // Members
   useChatMembersQuery,
   useAddChatMemberMutation,

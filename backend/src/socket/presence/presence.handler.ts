@@ -1,4 +1,4 @@
-import ChatRepository from "../../features/chat/service/ChatRepository";
+import ChatRepository from "../../features/chat/service/Repositories/ChatRepository";
 
 import { PresenceService } from "./presence.service";
 

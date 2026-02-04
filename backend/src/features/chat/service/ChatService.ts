@@ -51,6 +51,7 @@ export class ChatService {
 
   // Search and Discovery Operations
   static discoverGroups: typeof ChatGroupSearchService.discoverGroups;
+  static getRecommendedGroups: typeof ChatGroupSearchService.getRecommendedGroups;
 
   static {
     Object.assign(
@@ -91,7 +92,10 @@ export class ChatService {
         "checkMembership",
       ]),
       // Bind search and discovery operations
-      bindMethods(ChatGroupSearchService, ["discoverGroups"]),
+      bindMethods(ChatGroupSearchService, [
+        "discoverGroups",
+        "getRecommendedGroups",
+      ]),
     );
   }
 }

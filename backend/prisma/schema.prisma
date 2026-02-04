@@ -138,9 +138,10 @@ model Comment {
 
 // Represents a category or topic tag that can be attached to posts
 model Tag {
-  id       Int       @id @default(autoincrement())
-  name     String    @unique
-  postTags PostTag[]
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
+  postTags      PostTag[]
+  chatGroupTags ChatGroupTag[]
 
   @@map("tags")
 }
@@ -212,6 +213,7 @@ model Report {
   @@map("reports")
 }
 
+// Represents a notification sent to a user about various events
 model Notification {
   id   Int              @id @default(autoincrement())
   type NotificationType
@@ -236,6 +238,7 @@ model Notification {
   @@map("notifications")
 }
 
+// Represents a group chat or study circle
 model ChatGroup {
   id          String  @id @default(uuid())
   name        String
@@ -250,12 +253,14 @@ model ChatGroup {
   creator User             @relation(fields: [creatorId], references: [id])
   avatar  ChatGroupAvatar? @relation(fields: [avatarId], references: [id])
 
-  members  ChatMember[]
-  messages ChatMessage[]
+  members       ChatMember[]
+  messages      ChatMessage[]
+  chatGroupTags ChatGroupTag[]
 
   @@map("chat_groups")
 }
 
+// Junction table for Users and ChatGroups with additional fields
 model ChatMember {
   user   User   @relation(fields: [userId], references: [id])
   userId String @map("user_id")
@@ -273,6 +278,7 @@ model ChatMember {
   @@map("chat_members")
 }
 
+// Represents a message sent by a user in a chat group
 model ChatMessage {
   id Int @id @default(autoincrement())
 
@@ -289,10 +295,23 @@ model ChatMessage {
   @@map("chat_messages")
 }
 
+// Represents an avatar image for chat groups
 model ChatGroupAvatar {
   id         Int         @id @default(autoincrement())
   url        String      @unique
   chatGroups ChatGroup[]
 
   @@map("chat_group_avatars")
+}
+
+// Junction table for Groups and Tags
+model ChatGroupTag {
+  chatGroupId String @map("chat_group_id")
+  tagId       Int    @map("tag_id")
+
+  chatGroup ChatGroup @relation(fields: [chatGroupId], references: [id], onDelete: Cascade)
+  tag       Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([chatGroupId, tagId])
+  @@map("chat_group_tags")
 }

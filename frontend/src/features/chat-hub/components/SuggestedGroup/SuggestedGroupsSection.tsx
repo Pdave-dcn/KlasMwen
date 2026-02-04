@@ -1,37 +1,17 @@
-import { useState } from "react";
-
 import { useNavigate } from "react-router-dom";
 
 import { Sparkles, ChevronRight } from "lucide-react";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRecommendedGroupsQuery } from "@/queries/chat.query";
 
-import { SuggestedGroupCard, type SuggestedGroup } from "./SuggestedGroupCard";
+import { SuggestedGroupCard } from "./SuggestedGroupCard";
 
-interface SuggestedGroupsSectionProps {
-  groups: SuggestedGroup[];
-  isLoading?: boolean;
-  onJoin: (groupId: string) => Promise<void>;
-}
-
-export function SuggestedGroupsSection({
-  groups,
-  isLoading = false,
-  onJoin,
-}: SuggestedGroupsSectionProps) {
+export function SuggestedGroupsSection() {
   const navigate = useNavigate();
-  const [joiningId, setJoiningId] = useState<string | null>(null);
-  const [joinedIds, setJoinedIds] = useState<Set<string>>(new Set());
 
-  const handleJoin = async (groupId: string) => {
-    setJoiningId(groupId);
-    try {
-      await onJoin(groupId);
-      setJoinedIds((prev) => new Set(prev).add(groupId));
-    } finally {
-      setJoiningId(null);
-    }
-  };
+  const { data, isLoading, isError } = useRecommendedGroupsQuery(5);
+  const groups = data?.pages.flatMap((page) => page.data) ?? [];
 
   if (isLoading) {
     return (
@@ -43,7 +23,7 @@ export function SuggestedGroupsSection({
           </h3>
         </div>
         <div className="space-y-2">
-          {[1, 2, 3].map((i) => (
+          {[1, 2, 3, 4, 5].map((i) => (
             <Skeleton key={i} className="h-20 rounded-lg" />
           ))}
         </div>
@@ -51,7 +31,7 @@ export function SuggestedGroupsSection({
     );
   }
 
-  if (groups.length === 0) {
+  if (isError || !groups || groups.length === 0) {
     return null;
   }
 
@@ -75,13 +55,7 @@ export function SuggestedGroupsSection({
 
       <div className="space-y-2">
         {groups.map((group) => (
-          <SuggestedGroupCard
-            key={group.id}
-            group={group}
-            onJoin={handleJoin}
-            isJoining={joiningId === group.id}
-            isJoined={joinedIds.has(group.id)}
-          />
+          <SuggestedGroupCard key={group.id} group={group} />
         ))}
       </div>
     </section>

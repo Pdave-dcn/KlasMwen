@@ -1,34 +1,27 @@
-import { Flame, Users } from "lucide-react";
-
-import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useJoinChatGroupMutation } from "@/queries/chat.query";
+import { getGroupInitials } from "@/utils/getInitials.util";
+import type { ChatGroupForDiscovery } from "@/zodSchemas/chat.zod";
 
 import { PresenceIndicator } from "../PresenceIndicator";
 
-export interface SuggestedGroup {
-  id: string;
-  name: string;
-  description: string;
-  tags: string[];
-  memberCount: number;
-  activeMembers: number;
-  isTrending: boolean;
-}
-
 interface SuggestedGroupCardProps {
-  group: SuggestedGroup;
-  onJoin: (groupId: string) => void;
-  isJoining?: boolean;
-  isJoined?: boolean;
+  group: ChatGroupForDiscovery;
 }
 
-export const SuggestedGroupCard = ({
-  group,
-  onJoin,
-  isJoining = false,
-  isJoined = false,
-}: SuggestedGroupCardProps) => {
+export const SuggestedGroupCard = ({ group }: SuggestedGroupCardProps) => {
+  const joinChatGroupMutation = useJoinChatGroupMutation();
+
+  const isJoining =
+    joinChatGroupMutation.isPending &&
+    joinChatGroupMutation.variables === group.id;
+
+  const isJoined =
+    joinChatGroupMutation.isSuccess &&
+    joinChatGroupMutation.variables === group.id;
+
   return (
     <div
       className={cn(
@@ -39,14 +32,15 @@ export const SuggestedGroupCard = ({
     >
       {/* Left: Avatar with trending indicator */}
       <div className="relative shrink-0">
-        <div className="w-11 h-11 rounded-lg bg-linear-to-br from-accent to-accent/70 flex items-center justify-center">
-          <Users className="w-5 h-5 text-accent-foreground" />
-        </div>
-        {group.isTrending && (
+        <Avatar>
+          <AvatarImage src={group.avatar?.url} />
+          <AvatarFallback>{getGroupInitials(group.name)}</AvatarFallback>
+        </Avatar>
+        {/* {group.isTrending && (
           <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center">
             <Flame className="w-3 h-3 text-white" />
           </div>
-        )}
+        )} */}
       </div>
 
       {/* Middle: Info */}
@@ -55,21 +49,24 @@ export const SuggestedGroupCard = ({
           <h4 className="font-medium text-foreground text-sm truncate">
             {group.name}
           </h4>
-          {group.isTrending && (
+          {/* {group.isTrending && (
             <Badge
               variant="secondary"
               className="text-[10px] px-1.5 py-0 h-4 bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-400"
             >
               🔥 Trending
             </Badge>
-          )}
+          )} */}
         </div>
 
         {/* Tags */}
         <div className="flex items-center gap-1.5 mb-1">
-          {group.tags.slice(0, 3).map((tag) => (
-            <span key={tag} className="text-[10px] text-primary font-medium">
-              #{tag}
+          {group.tags.slice(0, 6).map((tag) => (
+            <span
+              key={tag.name}
+              className="text-[10px] text-primary font-medium"
+            >
+              #{tag.name}
             </span>
           ))}
         </div>
@@ -79,7 +76,8 @@ export const SuggestedGroupCard = ({
           <span className="text-[11px] text-muted-foreground">
             {group.memberCount} members
           </span>
-          <PresenceIndicator activeCount={group.activeMembers} />
+          {/** Should be dynamic */}
+          <PresenceIndicator activeCount={10} />
         </div>
       </div>
 
@@ -93,7 +91,7 @@ export const SuggestedGroupCard = ({
           <Button
             size="sm"
             variant="outline"
-            onClick={() => onJoin(group.id)}
+            onClick={() => joinChatGroupMutation.mutate(group.id)}
             disabled={isJoining}
             className="h-8 px-4 text-xs"
           >

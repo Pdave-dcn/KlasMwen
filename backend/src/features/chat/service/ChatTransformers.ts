@@ -102,11 +102,12 @@ class ChatTransformers {
   static transformGroupForDiscovery(
     group: ChatGroupForDiscovery,
   ): TransformedChatGroupForDiscovery {
-    const { _count, ...groupData } = group;
+    const { _count, chatGroupTags, ...groupData } = group;
 
     return {
       ...groupData,
       memberCount: _count.members,
+      tags: chatGroupTags.map((cgt) => cgt.tag),
     };
   }
 

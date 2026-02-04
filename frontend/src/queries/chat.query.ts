@@ -24,6 +24,7 @@ import {
   getChatGroupsForDiscovery,
   joinChatGroup,
   getRecentActivityGroups,
+  getRecommendedGroups,
 } from "@/api/chat.api";
 import type { User } from "@/types/auth.type";
 import type {
@@ -72,6 +73,19 @@ const useRecentActivityGroupsQuery = (limit = 8) => {
   return useQuery({
     queryKey: ["chat", "groups", "recent-activity", limit],
     queryFn: () => getRecentActivityGroups(limit),
+  });
+};
+
+const useRecommendedGroupsQuery = (limit = 5) => {
+  return useInfiniteQuery({
+    queryKey: ["chat", "groups", "recommended", limit],
+    queryFn: ({ pageParam }) => getRecommendedGroups(pageParam, limit),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination.hasMore
+        ? lastPage.pagination.nextCursor
+        : undefined;
+    },
   });
 };
 
@@ -363,6 +377,7 @@ export {
   useChatGroupQuery,
   useChatGroupsForDiscoveryQuery,
   useRecentActivityGroupsQuery,
+  useRecommendedGroupsQuery,
   useCreateChatGroupMutation,
   useUpdateChatGroupMutation,
   useDeleteChatGroupMutation,

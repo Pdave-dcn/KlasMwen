@@ -23,7 +23,7 @@ export const RecentActivitySection = () => {
           </h3>
         </div>
         <div className="flex gap-3 overflow-hidden">
-          {[1, 2, 3].map((i) => (
+          {[1, 2, 3, 4, 5].map((i) => (
             <Skeleton key={i} className="w-64 h-28 rounded-xl shrink-0" />
           ))}
         </div>

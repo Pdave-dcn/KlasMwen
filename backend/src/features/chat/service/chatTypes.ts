@@ -81,6 +81,9 @@ const BaseSelectors = {
         url: true,
       },
     },
+    chatGroupTags: {
+      include: { tag: true },
+    },
     _count: {
       select: {
         members: true,
@@ -129,6 +132,9 @@ const BaseSelectors = {
         url: true,
       },
     },
+    chatGroupTags: {
+      include: { tag: true },
+    },
     _count: {
       select: {
         members: true,
@@ -145,6 +151,9 @@ const BaseSelectors = {
       select: {
         url: true,
       },
+    },
+    chatGroupTags: {
+      include: { tag: true },
     },
     _count: {
       select: {
@@ -163,6 +172,9 @@ const BaseSelectors = {
       select: {
         url: true,
       },
+    },
+    chatGroupTags: {
+      include: { tag: true },
     },
     messages: {
       select: {
@@ -295,9 +307,10 @@ type ChatGroupSuggestionResult = Prisma.ChatGroupGetPayload<{
 
 type TransformedChatGroupForDiscovery = Omit<
   ChatGroupForDiscovery,
-  "_count"
+  "_count" | "chatGroupTags"
 > & {
   memberCount: number;
+  tags: { id: number; name: string }[];
 };
 
 type TransformedChatGroupSuggestion = Omit<

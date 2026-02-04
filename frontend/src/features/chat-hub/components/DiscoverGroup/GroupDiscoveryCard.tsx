@@ -3,22 +3,24 @@ import { Users, Globe, Check } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useJoinChatGroupMutation } from "@/queries/chat.query";
 import { getGroupInitials } from "@/utils/getInitials.util";
 import type { ChatGroupForDiscovery } from "@/zodSchemas/chat.zod";
 
 interface GroupDiscoveryCardProps {
-  group: ChatGroupForDiscovery & { isJoined?: boolean };
-  onJoin: (groupId: string) => void;
-  isJoining?: boolean;
+  group: ChatGroupForDiscovery;
 }
 
-export function GroupDiscoveryCard({
-  group,
-  onJoin,
-  isJoining = false,
-}: GroupDiscoveryCardProps) {
-  // Check if user is already a member based on the group data
-  const isJoined = group.isJoined ?? false;
+export function GroupDiscoveryCard({ group }: GroupDiscoveryCardProps) {
+  const joinChatGroupMutation = useJoinChatGroupMutation();
+
+  const isJoining =
+    joinChatGroupMutation.isPending &&
+    joinChatGroupMutation.variables === group.id;
+
+  const isJoined =
+    joinChatGroupMutation.isSuccess &&
+    joinChatGroupMutation.variables === group.id;
 
   return (
     <div
@@ -50,9 +52,28 @@ export function GroupDiscoveryCard({
           </div>
 
           {group.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+            <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
               {group.description}
             </p>
+          )}
+
+          {/* Tags */}
+          {group.tags && group.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {group.tags.slice(0, 6).map((tag) => (
+                <span
+                  key={tag.name}
+                  className="inline-flex items-center px-2 py-0.5 rounded-md bg-accent/50 text-accent-foreground text-xs font-medium"
+                >
+                  #{tag.name}
+                </span>
+              ))}
+              {group.tags.length > 4 && (
+                <span className="inline-flex items-center px-2 py-0.5 text-xs text-muted-foreground">
+                  +{group.tags.length - 4} more
+                </span>
+              )}
+            </div>
           )}
 
           <div className="flex items-center justify-between">
@@ -72,7 +93,7 @@ export function GroupDiscoveryCard({
             ) : (
               <Button
                 size="sm"
-                onClick={() => onJoin(group.id)}
+                onClick={() => joinChatGroupMutation.mutate(group.id)}
                 disabled={isJoining}
                 className="h-8 px-4"
               >

@@ -10,6 +10,11 @@ const AvatarSchema = z
   })
   .nullable();
 
+const TagSchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string(),
+});
+
 const UserBasicSchema = z.object({
   id: z.uuid(),
   username: z.string(),
@@ -67,6 +72,7 @@ const ChatGroupForDiscoverySchema = z.object({
   description: z.string().nullable(),
   isPrivate: z.boolean(),
   avatar: AvatarSchema,
+  tags: z.array(TagSchema),
   memberCount: z.number().int().nonnegative(),
 });
 

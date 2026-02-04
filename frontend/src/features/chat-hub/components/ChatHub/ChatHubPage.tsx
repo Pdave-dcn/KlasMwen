@@ -11,43 +11,32 @@ import { SuggestedGroupsSection } from "../SuggestedGroup/SuggestedGroupsSection
 
 import { ChatHubCard } from "./ChatHubCard";
 
-import type { SuggestedGroup } from "../SuggestedGroup/SuggestedGroupCard";
-
 export function ChatHubPage() {
   const navigate = useNavigate();
 
   // State for dynamic data
-  const [suggestedGroups, setSuggestedGroups] = useState<SuggestedGroup[]>([]);
   const [stats, setStats] = useState({
     activeGroups: 0,
     unreadMessages: 0,
     studyPartners: 0,
   });
-  const [isLoadingSuggested, setIsLoadingSuggested] = useState(true);
 
   // Fetch data on mount
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [_recent, suggested, quickStats] = await Promise.all([
+        const [_recent, _suggested, quickStats] = await Promise.all([
           chatHubApi.fetchRecentGroups(),
           chatHubApi.fetchSuggestedGroups(),
           chatHubApi.fetchQuickStats(),
         ]);
-        setSuggestedGroups(suggested);
         setStats(quickStats);
       } catch (error) {
         console.error("Failed to load hub data:", error);
-      } finally {
-        setIsLoadingSuggested(false);
       }
     };
     void loadData();
   }, []);
-
-  const handleJoinSuggested = async (groupId: string) => {
-    await chatHubApi.joinGroup(groupId);
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -94,11 +83,7 @@ export function ChatHubPage() {
         </section>
 
         {/* Suggested Groups Section */}
-        <SuggestedGroupsSection
-          groups={suggestedGroups}
-          isLoading={isLoadingSuggested}
-          onJoin={handleJoinSuggested}
-        />
+        <SuggestedGroupsSection />
       </main>
     </div>
   );

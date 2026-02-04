@@ -6,16 +6,18 @@ import { createLogger } from "../../core/config/logger.js";
 import {
   calculateMetrics,
   getRandomAvatar,
+  getRandomTags,
   handleSeedingError,
 } from "../utils/seedHelpers.js";
 
-import type { User, Prisma, ChatGroupAvatar } from "@prisma/client";
+import type { User, Prisma, ChatGroupAvatar, Tag } from "@prisma/client";
 
 const logger = createLogger({ module: "ChatSeeder" });
 
 const seedChats = async (
   users: User[],
   chatGroupAvatars: ChatGroupAvatar[],
+  tags: Tag[],
   groupCount = 5,
 ) => {
   try {
@@ -37,6 +39,15 @@ const seedChats = async (
         },
       });
       chatGroups.push(group);
+
+      // Assign random tags to this chat group
+      const randomTags = getRandomTags(tags);
+      await prisma.chatGroupTag.createMany({
+        data: randomTags.map((tag) => ({
+          chatGroupId: group.id,
+          tagId: tag.id,
+        })),
+      });
     }
 
     // 2. Create Chat Members
@@ -108,6 +119,7 @@ const seedChats = async (
       totalGroups: chatGroups.length,
       totalMemberships: allMembersData.length,
       totalMessages: messagesData.length,
+      totalTags: tags.length,
       chatCreationDuration: metrics.duration,
     };
 

@@ -6,12 +6,12 @@ import {
   ChatMemberResponseSchema,
   ChatMessagesResponseSchema,
   ChatMessageResponseSchema,
+  ChatGroupsForDiscoveryResponseSchema,
   type CreateChatGroupData,
   type UpdateChatGroupData,
   type AddMemberData,
   type UpdateMemberRoleData,
   type SendMessageData,
-  ChatGroupsForDiscoveryResponseSchema,
 } from "@/zodSchemas/chat.zod";
 
 import api from "./api";
@@ -48,6 +48,17 @@ const getUserChatGroups = async () => {
     return validatedData.data;
   } catch (error) {
     handleZodValidationError(error, "getUserChatGroups");
+    throw error;
+  }
+};
+
+const getRecentActivityGroups = async (limit: number = 8) => {
+  try {
+    const res = await api.get("/groups/recent-activity", { params: { limit } });
+    const validatedData = ChatGroupsResponseSchema.parse(res.data);
+    return validatedData.data;
+  } catch (error) {
+    handleZodValidationError(error, "getRecentActivityGroups");
     throw error;
   }
 };
@@ -218,6 +229,7 @@ export {
   getChatGroupsForDiscovery,
   updateChatGroup,
   deleteChatGroup,
+  getRecentActivityGroups,
   // Members
   addChatMember,
   getChatMembers,

@@ -45,6 +45,24 @@ class ChatRepository {
     });
   }
 
+  /** Find groups the user is in, ordered by the most recent message activity. */
+  static async findRecentGroupsWithActivity(userId: string, limit: number = 8) {
+    return await prisma.chatGroup.findMany({
+      where: {
+        members: {
+          some: { userId },
+        },
+      },
+      select: BaseSelectors.chatGroupWithMembers,
+      orderBy: {
+        messages: {
+          _count: "desc",
+        },
+      },
+      take: limit,
+    });
+  }
+
   /** Create a new chat group and add creator as owner */
   static async createGroup(data: CreateChatGroupFinalData) {
     return await prisma.chatGroup.create({

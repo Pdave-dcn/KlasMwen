@@ -11,39 +11,34 @@ import { SuggestedGroupsSection } from "../SuggestedGroup/SuggestedGroupsSection
 
 import { ChatHubCard } from "./ChatHubCard";
 
-import type { RecentGroup } from "../RecentActivity/RecentGroupCard";
 import type { SuggestedGroup } from "../SuggestedGroup/SuggestedGroupCard";
 
 export function ChatHubPage() {
   const navigate = useNavigate();
 
   // State for dynamic data
-  const [recentGroups, setRecentGroups] = useState<RecentGroup[]>([]);
   const [suggestedGroups, setSuggestedGroups] = useState<SuggestedGroup[]>([]);
   const [stats, setStats] = useState({
     activeGroups: 0,
     unreadMessages: 0,
     studyPartners: 0,
   });
-  const [isLoadingRecent, setIsLoadingRecent] = useState(true);
   const [isLoadingSuggested, setIsLoadingSuggested] = useState(true);
 
   // Fetch data on mount
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [recent, suggested, quickStats] = await Promise.all([
+        const [_recent, suggested, quickStats] = await Promise.all([
           chatHubApi.fetchRecentGroups(),
           chatHubApi.fetchSuggestedGroups(),
           chatHubApi.fetchQuickStats(),
         ]);
-        setRecentGroups(recent);
         setSuggestedGroups(suggested);
         setStats(quickStats);
       } catch (error) {
         console.error("Failed to load hub data:", error);
       } finally {
-        setIsLoadingRecent(false);
         setIsLoadingSuggested(false);
       }
     };
@@ -66,10 +61,7 @@ export function ChatHubPage() {
         </div>
 
         {/* Recent Activity Section */}
-        <RecentActivitySection
-          groups={recentGroups}
-          isLoading={isLoadingRecent}
-        />
+        <RecentActivitySection />
 
         {/* Action Cards Grid */}
         <section className="mb-8">

@@ -34,6 +34,7 @@ export class ChatService {
   static isMember: typeof ChatMemberService.isMember;
   static updateLastReadAt: typeof ChatMemberService.updateLastReadAt;
   static joinGroup: typeof ChatGroupService.joinGroup;
+  static getRecentActivityGroups: typeof ChatGroupService.getRecentActivityGroups;
 
   // Message Operations
   static sendMessage: typeof ChatMessageService.sendMessage;
@@ -62,6 +63,7 @@ export class ChatService {
         "getUserGroups",
         "updateGroup",
         "deleteGroup",
+        "getRecentActivityGroups",
       ]),
       // Bind member operations
       bindMethods(ChatMemberService, [

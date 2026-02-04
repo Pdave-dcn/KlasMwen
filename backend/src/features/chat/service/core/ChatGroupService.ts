@@ -87,6 +87,43 @@ export class ChatGroupService {
     );
   }
 
+  static async getRecentActivityGroups(userId: string, limit = 8) {
+    // Fetch potential candidates
+    const rawGroups = await ChatRepository.findRecentGroupsWithActivity(
+      userId,
+      15,
+    );
+
+    // Enrich
+    const enrichedGroups = await ChatEnricher.enrichGroups(rawGroups, userId);
+
+    // Priority Ranking
+    return enrichedGroups
+      .sort((a, b) => {
+        // Priority 1: Unread Activity (Groups with unreads go to the top)
+        if (a.unreadCount > 0 && b.unreadCount === 0) return -1;
+        if (a.unreadCount === 0 && b.unreadCount > 0) return 1;
+
+        // Priority 2: Latest Interaction (Compare timestamps of latest messages)
+        const timeA = a.latestMessage
+          ? new Date(a.latestMessage.createdAt).getTime()
+          : 0;
+        const timeB = b.latestMessage
+          ? new Date(b.latestMessage.createdAt).getTime()
+          : 0;
+
+        if (timeA !== timeB) {
+          return timeB - timeA; // Newer messages first
+        }
+
+        // Priority 3: Fallback to Group Creation date if no messages exist
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      })
+      .slice(0, limit); // Finally, take the top 8 after sorting
+  }
+
   /**
    * Updates chat group details (name, description, privacy).
    * Only owners and moderators can update groups.

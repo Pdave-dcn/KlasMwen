@@ -16,6 +16,7 @@ import {
   updateLastReadAt,
   discoverGroups,
   joinGroup,
+  getRecentActivityGroups,
 } from "../controllers/chat/index.js";
 import {
   enrichChatRole,
@@ -36,6 +37,8 @@ router.get("/", getUserGroups);
 router.post("/join/:chatGroupId", joinGroup);
 
 router.get("/discover", discoverGroups);
+
+router.get("/recent-activity", getRecentActivityGroups);
 
 router.get("/:chatGroupId", enrichChatRole, getGroupById);
 

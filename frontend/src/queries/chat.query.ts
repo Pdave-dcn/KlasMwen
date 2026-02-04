@@ -23,6 +23,7 @@ import {
   updateChatMemberLastReadAt,
   getChatGroupsForDiscovery,
   joinChatGroup,
+  getRecentActivityGroups,
 } from "@/api/chat.api";
 import type { User } from "@/types/auth.type";
 import type {
@@ -64,6 +65,13 @@ const useChatGroupsForDiscoveryQuery = (limit: number = 10) => {
         ? lastPage.pagination.nextCursor
         : undefined;
     },
+  });
+};
+
+const useRecentActivityGroupsQuery = (limit = 8) => {
+  return useQuery({
+    queryKey: ["chat", "groups", "recent-activity", limit],
+    queryFn: () => getRecentActivityGroups(limit),
   });
 };
 
@@ -354,6 +362,7 @@ export {
   useChatGroupsQuery,
   useChatGroupQuery,
   useChatGroupsForDiscoveryQuery,
+  useRecentActivityGroupsQuery,
   useCreateChatGroupMutation,
   useUpdateChatGroupMutation,
   useDeleteChatGroupMutation,

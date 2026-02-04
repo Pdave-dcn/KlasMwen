@@ -4,19 +4,14 @@ import { Clock, ChevronRight } from "lucide-react";
 
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRecentActivityGroupsQuery } from "@/queries/chat.query";
 
-import { RecentGroupCard, type RecentGroup } from "./RecentGroupCard";
+import { RecentGroupCard } from "./RecentGroupCard";
 
-interface RecentActivitySectionProps {
-  groups: RecentGroup[];
-  isLoading?: boolean;
-}
-
-export const RecentActivitySection = ({
-  groups,
-  isLoading = false,
-}: RecentActivitySectionProps) => {
+export const RecentActivitySection = () => {
   const navigate = useNavigate();
+
+  const { data: groups, isLoading, isError } = useRecentActivityGroupsQuery();
 
   if (isLoading) {
     return (
@@ -36,7 +31,7 @@ export const RecentActivitySection = ({
     );
   }
 
-  if (groups.length === 0) {
+  if (isError || !groups || groups.length === 0) {
     return null;
   }
 

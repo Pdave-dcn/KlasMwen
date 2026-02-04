@@ -148,6 +148,39 @@ const getUserGroups = async (
   }
 };
 
+const getRecentActivityGroups = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const actionLogger = createActionLogger(
+    controllerLogger,
+    "getRecentActivityGroups",
+    req,
+  );
+  try {
+    actionLogger.info("Fetching recent activity chat groups");
+
+    const { user, query } = req as AuthenticatedRequest;
+
+    const limit = query.limit ? Number(query.limit) : 8;
+
+    const groups = await ChatService.getRecentActivityGroups(user.id, limit);
+    actionLogger.info(
+      {
+        userId: user.id,
+        groupCount: groups.length,
+      },
+      "Recent activity groups retrieved successfully",
+    );
+    return res.status(200).json({
+      data: groups,
+    });
+  } catch (error: unknown) {
+    return next(error);
+  }
+};
+
 const updateGroup = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(controllerLogger, "updateGroup", req);
 
@@ -209,4 +242,5 @@ export {
   updateGroup,
   deleteGroup,
   joinGroup,
+  getRecentActivityGroups,
 };

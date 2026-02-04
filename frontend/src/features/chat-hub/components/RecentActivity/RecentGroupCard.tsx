@@ -1,43 +1,18 @@
-import { formatDistanceToNow } from "date-fns";
-
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { formatTimeAgo } from "@/utils/dateFormatter.util";
+import { getGroupInitials } from "@/utils/getInitials.util";
+import type { ChatGroup } from "@/zodSchemas/chat.zod";
 
 import { PresenceIndicator } from "../PresenceIndicator";
 
-export interface RecentGroup {
-  id: string;
-  name: string;
-  avatar?: string;
-  lastMessage: {
-    senderName: string;
-    content: string;
-    createdAt: string;
-  };
-  activeMembers: number;
-}
-
 interface RecentGroupCardProps {
-  group: RecentGroup;
+  group: ChatGroup;
   onClick: () => void;
 }
 
 export const RecentGroupCard = ({ group, onClick }: RecentGroupCardProps) => {
-  const initials = group.name
-    .split(" ")
-    .map((word) => word[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
-  const timeAgo = formatDistanceToNow(new Date(group.lastMessage.createdAt), {
-    addSuffix: true,
-  });
-
-  // Truncate message to ~30 chars
-  const messagePreview =
-    group.lastMessage.content.length > 30
-      ? `${group.lastMessage.content.slice(0, 30)}...`
-      : group.lastMessage.content;
+  const timeAgo = formatTimeAgo(group.latestMessage?.createdAt ?? "");
 
   return (
     <button
@@ -49,12 +24,10 @@ export const RecentGroupCard = ({ group, onClick }: RecentGroupCardProps) => {
       )}
     >
       <div className="flex items-start gap-3">
-        {/* Avatar */}
-        <div className="shrink-0 w-10 h-10 rounded-lg bg-linear-to-br from-primary to-primary/70 flex items-center justify-center">
-          <span className="text-xs font-semibold text-primary-foreground">
-            {initials}
-          </span>
-        </div>
+        <Avatar>
+          <AvatarImage src={group.avatar?.url} />
+          <AvatarFallback>{getGroupInitials(group.name)}</AvatarFallback>
+        </Avatar>
 
         <div className="flex-1 min-w-0">
           {/* Header row */}
@@ -70,13 +43,16 @@ export const RecentGroupCard = ({ group, onClick }: RecentGroupCardProps) => {
           {/* Message preview */}
           <p className="text-xs text-muted-foreground truncate mb-2">
             <span className="font-medium text-foreground/80">
-              {group.lastMessage.senderName}:
+              {group.latestMessage
+                ? `${group.latestMessage.sender.username}:`
+                : "No messages yet"}
             </span>{" "}
-            {messagePreview}
+            {group.latestMessage?.content ?? ""}
           </p>
 
           {/* Presence */}
-          <PresenceIndicator activeCount={group.activeMembers} />
+          {/** Should be dynamic based on group members */}
+          <PresenceIndicator activeCount={8} />
         </div>
       </div>
     </button>

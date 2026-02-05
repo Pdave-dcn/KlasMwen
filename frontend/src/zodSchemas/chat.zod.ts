@@ -151,6 +151,20 @@ const SendMessageSchema = z.object({
   content: z.string().min(1).max(1000),
 });
 
+// Statistics
+
+const QuickStatsSchema = z.object({
+  activeGroups: z.number().int().nonnegative(),
+  unreadMessages: z.number().int().nonnegative(),
+  studyPartners: z.number().int().nonnegative(),
+});
+
+const QuickStatsResponseSchema = z.object({
+  data: QuickStatsSchema,
+});
+
+// Exported Types
+
 export type ChatAttachedUser = z.infer<typeof UserBasicSchema>;
 export type ChatRole = z.infer<typeof ChatRoleSchema>;
 export type ChatGroup = z.infer<typeof ChatGroupDataSchema>;
@@ -159,6 +173,9 @@ export type MemberJoinedData = z.infer<typeof SocketMemberJoinedDataSchema>;
 export type MemberLeftData = z.infer<typeof SocketMemberLeftDataSchema>;
 export type EnrichedChatMember = z.infer<typeof EnrichedChatMemberDataSchema>;
 export type ChatMessage = z.infer<typeof ChatMessageDataSchema>;
+
+export type QuickStats = z.infer<typeof QuickStatsSchema>;
+export type QuickStatsResponse = z.infer<typeof QuickStatsResponseSchema>;
 
 export type ChatGroupForDiscovery = z.infer<typeof ChatGroupForDiscoverySchema>;
 export type ChatGroupsForDiscoveryResponseSchema = z.infer<
@@ -192,4 +209,5 @@ export {
   SocketMemberJoinedDataSchema,
   SocketMemberLeftDataSchema,
   ChatGroupsForDiscoveryResponseSchema,
+  QuickStatsResponseSchema,
 };

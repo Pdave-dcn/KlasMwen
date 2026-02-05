@@ -327,6 +327,69 @@ class ChatRepository {
       orderBy: { createdAt: "desc" },
     });
   }
+
+  // Statistics Operations
+
+  static async getQuickStats(userId: string) {
+    const [activeGroupsCount, unreadResult, studyPartnersCount] =
+      await Promise.all([
+        // Active Groups: Count groups user belongs to with activity in last 7 days
+        prisma.chatGroup.count({
+          where: {
+            members: { some: { userId } },
+            messages: {
+              some: {
+                createdAt: {
+                  gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+                },
+              },
+            },
+          },
+        }),
+
+        // Unread Messages: Sum of messages since user's lastReadAt in each group
+        prisma.chatMember.findMany({
+          where: { userId },
+          select: {
+            chatGroupId: true,
+            lastReadAt: true,
+          },
+        }),
+
+        // Study Partners: Unique users who share at least one group with this user
+        prisma.chatMember
+          .findMany({
+            where: {
+              chatGroup: {
+                members: { some: { userId } },
+              },
+              NOT: { userId },
+            },
+            distinct: ["userId"],
+            select: { userId: true },
+          })
+          .then((results) => results.length),
+      ]);
+
+    // For Unread calculation (Step 2 follow-up)
+    let totalUnread = 0;
+    for (const membership of unreadResult) {
+      const count = await prisma.chatMessage.count({
+        where: {
+          chatGroupId: membership.chatGroupId,
+          createdAt: { gt: membership.lastReadAt ?? new Date(0) },
+          NOT: { senderId: userId },
+        },
+      });
+      totalUnread += count;
+    }
+
+    return {
+      activeGroups: activeGroupsCount,
+      unreadMessages: totalUnread,
+      studyPartners: studyPartnersCount,
+    };
+  }
 }
 
 export default ChatRepository;

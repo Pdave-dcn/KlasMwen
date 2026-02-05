@@ -5,6 +5,7 @@ import { ChatGroupService } from "./core/ChatGroupService.js";
 import { ChatMemberService } from "./core/ChatMemberService.js";
 import { ChatMessageService } from "./core/ChatMessageService.js";
 import { ChatValidationService } from "./core/ChatValidationService.js";
+import ChatRepository from "./Repositories/ChatRepository.js";
 
 /**
  * Main facade for chat operations.
@@ -52,6 +53,11 @@ export class ChatService {
   // Search and Discovery Operations
   static discoverGroups: typeof ChatGroupSearchService.discoverGroups;
   static getRecommendedGroups: typeof ChatGroupSearchService.getRecommendedGroups;
+
+  // Statistics
+  static async getQuickStats(userId: string) {
+    return await ChatRepository.getQuickStats(userId);
+  }
 
   static {
     Object.assign(

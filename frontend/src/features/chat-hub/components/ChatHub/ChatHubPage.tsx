@@ -1,10 +1,7 @@
-import { useState, useEffect } from "react";
-
 import { useNavigate } from "react-router-dom";
 
 import { MessageCircle, Search, Plus } from "lucide-react";
 
-import { chatHubApi } from "../../services/chatHubApi";
 import { QuickStatsBar } from "../QuickStatsBar";
 import { RecentActivitySection } from "../RecentActivity/RecentActivitySection";
 import { SuggestedGroupsSection } from "../SuggestedGroup/SuggestedGroupsSection";
@@ -14,39 +11,11 @@ import { ChatHubCard } from "./ChatHubCard";
 export function ChatHubPage() {
   const navigate = useNavigate();
 
-  // State for dynamic data
-  const [stats, setStats] = useState({
-    activeGroups: 0,
-    unreadMessages: 0,
-    studyPartners: 0,
-  });
-
-  // Fetch data on mount
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [_recent, _suggested, quickStats] = await Promise.all([
-          chatHubApi.fetchRecentGroups(),
-          chatHubApi.fetchSuggestedGroups(),
-          chatHubApi.fetchQuickStats(),
-        ]);
-        setStats(quickStats);
-      } catch (error) {
-        console.error("Failed to load hub data:", error);
-      }
-    };
-    void loadData();
-  }, []);
-
   return (
     <div className="min-h-screen bg-background">
       <main className="max-w-5xl mx-auto px-4 py-6">
         <div className="mb-8">
-          <QuickStatsBar
-            activeGroups={stats.activeGroups}
-            unreadMessages={stats.unreadMessages}
-            studyPartners={stats.studyPartners}
-          />
+          <QuickStatsBar />
         </div>
 
         {/* Recent Activity Section */}

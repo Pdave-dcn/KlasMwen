@@ -12,6 +12,7 @@ import {
   type UpdateMemberRoleData,
   type SendMessageData,
   ChatGroupsForDiscoveryResponseSchema,
+  QuickStatsResponseSchema,
 } from "@/zodSchemas/chat.zod";
 
 import api from "./api";
@@ -72,6 +73,17 @@ const getRecommendedGroups = async (cursor?: string, limit = 5) => {
     return validatedData;
   } catch (error) {
     handleZodValidationError(error, "getRecommendedGroups");
+    throw error;
+  }
+};
+
+const getQuickStats = async () => {
+  try {
+    const res = await api.get("/groups/stats/quick");
+    const validatedData = QuickStatsResponseSchema.parse(res.data);
+    return validatedData.data;
+  } catch (error) {
+    handleZodValidationError(error, "getQuickStats");
     throw error;
   }
 };
@@ -254,4 +266,6 @@ export {
   sendChatMessage,
   getChatMessages,
   deleteChatMessage,
+  // Stats
+  getQuickStats,
 };

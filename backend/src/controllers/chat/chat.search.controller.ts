@@ -6,7 +6,7 @@ import { createPaginationSchema } from "../../utils/pagination.util";
 import type { AuthenticatedRequest } from "../../types/AuthRequest";
 import type { NextFunction, Request, Response } from "express";
 
-const controllerLogger = createLogger({ module: "ChatGroupController" });
+const controllerLogger = createLogger({ module: "ChatSearchController" });
 
 const discoverGroups = async (
   req: Request,

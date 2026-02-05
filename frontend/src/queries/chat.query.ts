@@ -25,6 +25,7 @@ import {
   joinChatGroup,
   getRecentActivityGroups,
   getRecommendedGroups,
+  getQuickStats,
 } from "@/api/chat.api";
 import type { User } from "@/types/auth.type";
 import type {
@@ -371,6 +372,15 @@ const useDeleteChatMessageMutation = (chatGroupId: string) => {
   });
 };
 
+// Stats Queries
+
+const useQuickStatsQuery = () => {
+  return useQuery({
+    queryKey: ["chat", "stats", "quick"],
+    queryFn: () => getQuickStats(),
+  });
+};
+
 export {
   // Groups
   useChatGroupsQuery,
@@ -392,4 +402,6 @@ export {
   useChatMessagesQuery,
   useSendChatMessageMutation,
   useDeleteChatMessageMutation,
+  // Stats
+  useQuickStatsQuery,
 };

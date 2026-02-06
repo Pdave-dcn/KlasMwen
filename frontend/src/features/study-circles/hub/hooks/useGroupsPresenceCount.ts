@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 
-import { chatSocketService } from "@/features/chat/services/socketService";
 import { usePresenceStore } from "@/stores/presence.store";
+
+import { chatSocketService } from "../../services/socketService";
 
 export const useGroupsPresenceCount = (groupIds: string[]) => {
   const { updateGroupActivityCounts } = usePresenceStore();

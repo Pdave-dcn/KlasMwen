@@ -2,13 +2,12 @@ import { useNavigate } from "react-router-dom";
 
 import { MessageCircle, Search, Plus } from "lucide-react";
 
-import { QuickStatsBar } from "../QuickStatsBar";
-import { RecentActivitySection } from "../RecentActivity/RecentActivitySection";
-import { SuggestedGroupsSection } from "../SuggestedGroup/SuggestedGroupsSection";
+import { ChatHubCard } from "../features/study-circles/hub/components/ChatHub/ChatHubCard";
+import { QuickStatsBar } from "../features/study-circles/hub/components/QuickStatsBar";
+import { RecentActivitySection } from "../features/study-circles/hub/components/RecentActivity/RecentActivitySection";
+import { SuggestedGroupsSection } from "../features/study-circles/hub/components/SuggestedGroup/SuggestedGroupsSection";
 
-import { ChatHubCard } from "./ChatHubCard";
-
-export function ChatHubPage() {
+const ChatHubPage = () => {
   const navigate = useNavigate();
 
   return (
@@ -56,4 +55,6 @@ export function ChatHubPage() {
       </main>
     </div>
   );
-}
+};
+
+export default ChatHubPage;

@@ -10,7 +10,7 @@ import type {
   ChatMessage,
 } from "@/zodSchemas/chat.zod";
 
-import { chatSocketService } from "../services/socketService";
+import { chatSocketService } from "../../services/socketService";
 
 export const useChatSync = (currentGroupId: string | null) => {
   const queryClient = useQueryClient();

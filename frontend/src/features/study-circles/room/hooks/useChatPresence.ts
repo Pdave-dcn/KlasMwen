@@ -7,7 +7,7 @@ import {
   SocketMemberLeftDataSchema,
 } from "@/zodSchemas/chat.zod";
 
-import { chatSocketService } from "../services/socketService";
+import { chatSocketService } from "../../services/socketService";
 
 export const useChatPresence = (groupId: string | null) => {
   useEffect(() => {

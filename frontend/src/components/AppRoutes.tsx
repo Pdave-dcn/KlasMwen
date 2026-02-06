@@ -1,12 +1,12 @@
 import { Routes, Route } from "react-router-dom";
 
 import {
-  ChatHubPage,
   CreateGroupPage,
   DiscoverGroupsPage,
-} from "@/features/chat-hub/components";
+} from "@/features/study-circles/hub/components";
+import ChatGroupsPage from "@/features/study-circles/room/components/ChatGroupsPage";
 import AuthForm from "@/pages/AuthForm";
-import ChatPage from "@/pages/ChatPage";
+import ChatHubPage from "@/pages/ChatHub";
 import DiscoverPage from "@/pages/DiscoverPage";
 import HomePage from "@/pages/HomePage";
 import LandingPage from "@/pages/LandingPage";
@@ -102,7 +102,7 @@ export const AppRoutes = () => {
         path="/Chat/groups"
         element={
           <ProtectedRoute>
-            <ChatPage />
+            <ChatGroupsPage />
           </ProtectedRoute>
         }
       />

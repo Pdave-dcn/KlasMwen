@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import api from "@/api/api";
-import { chatSocketService } from "@/features/chat/services/socketService";
+import { chatSocketService } from "@/features/study-circles/services/socketService";
 import { connectSocket, disconnectSocket } from "@/lib/socket/socket";
 import { useAuthStore } from "@/stores/auth.store";
 import { AuthVerificationResponseSchema } from "@/zodSchemas/auth.zod";

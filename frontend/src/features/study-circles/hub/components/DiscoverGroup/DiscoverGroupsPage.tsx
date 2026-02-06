@@ -6,10 +6,7 @@ import { ArrowLeft, Search, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  useChatGroupsForDiscoveryQuery,
-  useJoinChatGroupMutation,
-} from "@/queries/chat.query";
+import { useChatGroupsForDiscoveryQuery } from "@/queries/chat.query";
 
 import { GroupDiscoveryCard } from "./GroupDiscoveryCard";
 
@@ -23,8 +20,6 @@ export const DiscoverGroupsPage = () => {
     isLoading,
     isError,
   } = useChatGroupsForDiscoveryQuery();
-
-  const joinGroupMutation = useJoinChatGroupMutation();
 
   const groups = discoveryGroups?.pages.flatMap((page) => page.data) ?? [];
 
@@ -47,10 +42,6 @@ export const DiscoverGroupsPage = () => {
       </div>
     );
   }
-
-  const handleJoinGroup = (groupId: string) => {
-    joinGroupMutation.mutate(groupId);
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -116,15 +107,7 @@ export const DiscoverGroupsPage = () => {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             {filteredGroups.map((group) => (
-              <GroupDiscoveryCard
-                key={group.id}
-                group={group}
-                onJoin={handleJoinGroup}
-                isJoining={
-                  joinGroupMutation.isPending &&
-                  joinGroupMutation.variables === group.id
-                }
-              />
+              <GroupDiscoveryCard key={group.id} group={group} />
             ))}
           </div>
         )}

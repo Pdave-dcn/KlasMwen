@@ -1,9 +1,13 @@
 import { useNavigate } from "react-router-dom";
 
-import { Sparkles, ChevronRight } from "lucide-react";
+import { Sparkles, ChevronRight, AlertCircle, Search } from "lucide-react";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRecommendedGroupsQuery } from "@/queries/chat.query";
+
+import { useGroupsPresenceCount } from "../../hooks/useGroupsPresenceCount";
 
 import { SuggestedGroupCard } from "./SuggestedGroupCard";
 
@@ -12,6 +16,8 @@ export function SuggestedGroupsSection() {
 
   const { data, isLoading, isError } = useRecommendedGroupsQuery(5);
   const groups = data?.pages.flatMap((page) => page.data) ?? [];
+
+  useGroupsPresenceCount(groups.map((group) => group.id));
 
   if (isLoading) {
     return (
@@ -31,8 +37,56 @@ export function SuggestedGroupsSection() {
     );
   }
 
-  if (isError || !groups || groups.length === 0) {
-    return null;
+  if (isError) {
+    return (
+      <section className="mt-8">
+        <div className="flex items-center gap-2 mb-4">
+          <Sparkles className="w-4 h-4 text-muted-foreground" />
+          <h3 className="text-sm font-medium text-muted-foreground">
+            Suggested for You
+          </h3>
+        </div>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Unable to load suggestions</AlertTitle>
+          <AlertDescription>
+            We couldn't fetch group suggestions at this time. Please try again
+            later.
+          </AlertDescription>
+        </Alert>
+      </section>
+    );
+  }
+
+  if (!groups || groups.length === 0) {
+    return (
+      <section className="mt-8">
+        <div className="flex items-center gap-2 mb-4">
+          <Sparkles className="w-4 h-4 text-muted-foreground" />
+          <h3 className="text-sm font-medium text-muted-foreground">
+            Suggested for You
+          </h3>
+        </div>
+        <div className="flex flex-col items-center justify-center py-8 px-4 rounded-lg border border-dashed bg-muted/30">
+          <Search className="w-8 h-8 text-muted-foreground mb-2" />
+          <p className="text-sm text-muted-foreground font-medium mb-1">
+            No suggestions available
+          </p>
+          <p className="text-xs text-muted-foreground mb-3">
+            Try discovering groups to get started
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/chat/groups/discover")}
+            className="gap-1"
+          >
+            Discover groups
+            <ChevronRight className="w-3 h-3" />
+          </Button>
+        </div>
+      </section>
+    );
   }
 
   return (

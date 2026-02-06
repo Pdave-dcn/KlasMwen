@@ -10,6 +10,7 @@ import type {
 
 type MessageHandler = (message: ChatMessage) => void;
 type ConnectionHandler = () => void;
+type DiscoveryWatchHandler = (data: { counts: Record<string, number> }) => void;
 
 /**
  * Socket.io service for real-time chat.
@@ -24,6 +25,7 @@ export class ChatSocketService {
   private memberLeftHandlers: ((data: MemberLeftData) => void)[] = [];
   private connectionHandlers: ConnectionHandler[] = [];
   private disconnectionHandlers: ConnectionHandler[] = [];
+  private discoveryWatchHandlers: DiscoveryWatchHandler[] = [];
 
   /**
    * Connects to chat namespace. Automatically rejoins current room on reconnection.
@@ -65,6 +67,13 @@ export class ChatSocketService {
     this.socket.on("chat:member_left", (data: MemberLeftData) => {
       this.memberLeftHandlers.forEach((h) => h(data));
     });
+
+    this.socket.on(
+      "chat:presence_counts_update",
+      (data: { counts: Record<string, number> }) => {
+        this.discoveryWatchHandlers.forEach((h) => h(data));
+      },
+    );
   }
 
   /**
@@ -150,6 +159,24 @@ export class ChatSocketService {
   }
 
   /**
+   * Starts watching presence counts for given chat group IDs.
+   */
+  startDiscoveryWatch(chatGroupIds: string[]): void {
+    if (this.socket && this.connected) {
+      this.socket.emit("chat:discovery_watch", { chatGroupIds });
+    }
+  }
+
+  /**
+   * Stops watching presence counts for given chat group IDs.
+   */
+  stopDiscoveryWatch(chatGroupIds: string[]): void {
+    if (this.socket && this.connected) {
+      this.socket.emit("chat:discovery_unwatch", { chatGroupIds });
+    }
+  }
+
+  /**
    * Registers a handler for incoming messages. Returns unsubscribe function.
    */
   onMessage(handler: MessageHandler): () => void {
@@ -179,6 +206,18 @@ export class ChatSocketService {
     this.memberLeftHandlers.push(handler);
     return () => {
       this.memberLeftHandlers = this.memberLeftHandlers.filter(
+        (h) => h !== handler,
+      );
+    };
+  }
+
+  /**
+   * Registers a handler for discovery watch updates. Returns unsubscribe function.
+   */
+  onDiscoveryWatch(handler: DiscoveryWatchHandler): () => void {
+    this.discoveryWatchHandlers.push(handler);
+    return () => {
+      this.discoveryWatchHandlers = this.discoveryWatchHandlers.filter(
         (h) => h !== handler,
       );
     };

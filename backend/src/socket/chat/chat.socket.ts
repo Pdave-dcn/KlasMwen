@@ -2,6 +2,8 @@ import { createLogger } from "../../core/config/logger.js";
 
 import {
   handleDisconnect,
+  handleDiscoveryWatch,
+  handleDiscoveryUnwatch,
   handleJoinGroup,
   handleLeaveGroup,
 } from "./handlers/index.js";
@@ -24,8 +26,12 @@ export const registerChatSocketHandlers = (nsp: Namespace) => {
     );
 
     socket.on("chat:join", handleJoinGroup(socket, nsp));
-    socket.on("chat:leave", handleLeaveGroup(socket));
-    socket.on("disconnect", handleDisconnect(socket));
+    socket.on("chat:leave", handleLeaveGroup(socket, nsp));
+
+    socket.on("chat:discovery_watch", handleDiscoveryWatch(socket, nsp));
+    socket.on("chat:discovery_unwatch", handleDiscoveryUnwatch(socket));
+
+    socket.on("disconnect", handleDisconnect(socket, nsp));
   });
 
   logger.info("Chat socket handlers registered");

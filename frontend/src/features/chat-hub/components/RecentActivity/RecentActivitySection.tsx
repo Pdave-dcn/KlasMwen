@@ -6,12 +6,16 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRecentActivityGroupsQuery } from "@/queries/chat.query";
 
+import { useGroupsPresenceCount } from "../../hooks/useGroupsPresenceCount";
+
 import { RecentGroupCard } from "./RecentGroupCard";
 
 export const RecentActivitySection = () => {
   const navigate = useNavigate();
 
   const { data: groups, isLoading, isError } = useRecentActivityGroupsQuery();
+
+  useGroupsPresenceCount(groups ? groups.map((group) => group.id) : []);
 
   if (isLoading) {
     return (

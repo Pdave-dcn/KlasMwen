@@ -35,7 +35,7 @@ const main = async () => {
 
     // Phase 4: Create users
     if (!avatars) return;
-    const { users, userStats } = await seedUsers(20, avatars);
+    const { users, userStats } = await seedUsers(100, avatars);
 
     // Phase 5: Create posts
     if (!users || !tags) return;
@@ -65,7 +65,7 @@ const main = async () => {
     if (!chatGroupAvatars) return;
 
     // Phase 12: Create chat
-    const { chatStats } = await seedChats(users, chatGroupAvatars, tags, 10);
+    const { chatStats } = await seedChats(users, chatGroupAvatars, tags, 50);
 
     // Phase 13: Create notifications
     const allLikes = await prisma.like.findMany();

@@ -2,6 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useJoinChatGroupMutation } from "@/queries/chat.query";
+import { usePresenceStore } from "@/stores/presence.store";
 import { getGroupInitials } from "@/utils/getInitials.util";
 import type { ChatGroupForDiscovery } from "@/zodSchemas/chat.zod";
 
@@ -13,6 +14,10 @@ interface SuggestedGroupCardProps {
 
 export const SuggestedGroupCard = ({ group }: SuggestedGroupCardProps) => {
   const joinChatGroupMutation = useJoinChatGroupMutation();
+
+  const activeCount = usePresenceStore(
+    (state) => state.groupActivityCounts[group.id] || 0,
+  );
 
   const isJoining =
     joinChatGroupMutation.isPending &&
@@ -76,8 +81,7 @@ export const SuggestedGroupCard = ({ group }: SuggestedGroupCardProps) => {
           <span className="text-[11px] text-muted-foreground">
             {group.memberCount} members
           </span>
-          {/** Should be dynamic */}
-          <PresenceIndicator activeCount={10} />
+          <PresenceIndicator activeCount={activeCount} />
         </div>
       </div>
 

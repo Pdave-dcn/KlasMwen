@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { usePresenceStore } from "@/stores/presence.store";
 import { formatTimeAgo } from "@/utils/dateFormatter.util";
 import { getGroupInitials } from "@/utils/getInitials.util";
 import type { ChatGroup } from "@/zodSchemas/chat.zod";
@@ -13,6 +14,9 @@ interface RecentGroupCardProps {
 
 export const RecentGroupCard = ({ group, onClick }: RecentGroupCardProps) => {
   const timeAgo = formatTimeAgo(group.latestMessage?.createdAt ?? "");
+  const activeCount = usePresenceStore(
+    (state) => state.groupActivityCounts[group.id] || 0,
+  );
 
   return (
     <button
@@ -51,8 +55,7 @@ export const RecentGroupCard = ({ group, onClick }: RecentGroupCardProps) => {
           </p>
 
           {/* Presence */}
-          {/** Should be dynamic based on group members */}
-          <PresenceIndicator activeCount={8} />
+          <PresenceIndicator activeCount={activeCount} />
         </div>
       </div>
     </button>

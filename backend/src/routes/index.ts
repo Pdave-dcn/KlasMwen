@@ -5,7 +5,7 @@ import prisma from "../core/config/db.js";
 import authRoutes from "./auth.route.js";
 import avatarRoutes from "./avatar.route.js";
 import bookmarkRoutes from "./bookmark.route.js";
-import chatGroupRoutes from "./chat.route.js";
+import chatGroupRoutes from "./chat/index.js";
 import commentRoutes from "./comment.route.js";
 import notificationRoutes from "./notification.route.js";
 import postRoutes from "./post.route.js";

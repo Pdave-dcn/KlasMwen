@@ -55,25 +55,6 @@ export class ChatGroupSearchService {
   }
 
   /**
-   * Search groups by name or description.
-   */
-  static async searchByQuery(
-    userId: string,
-    query: string,
-    pagination: GroupPaginationCursor,
-  ) {
-    return await this.searchGroups(
-      userId,
-      {
-        query,
-        isPrivate: false,
-        excludeJoined: true,
-      },
-      pagination,
-    );
-  }
-
-  /**
    * Get recommended groups (popular groups by member count).
    */
   static async getRecommendedGroups(
@@ -216,6 +197,10 @@ export class ChatGroupSearchService {
    * Get search suggestions for autocomplete.
    */
   static async getSearchSuggestions(query: string, limit: number = 10) {
-    return await ChatSearchRepository.getSearchSuggestions(query, limit);
+    const suggestions = await ChatSearchRepository.getSearchSuggestions(
+      query,
+      limit,
+    );
+    return ChatTransformers.transformGroupsForSuggestion(suggestions);
   }
 }

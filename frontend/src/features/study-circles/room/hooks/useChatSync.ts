@@ -3,7 +3,7 @@ import { useEffect } from "react";
 
 import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
 
-import { useUpdateChatMemberLastReadAtMutation } from "@/queries/chat.query";
+import { useUpdateChatMemberLastReadAtMutation } from "@/queries/chat";
 import type {
   ChatMessagesResponse,
   ChatGroup,

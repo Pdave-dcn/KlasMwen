@@ -4,7 +4,7 @@ import { Clock, ChevronRight } from "lucide-react";
 
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useRecentActivityGroupsQuery } from "@/queries/chat.query";
+import { useRecentActivityGroupsQuery } from "@/queries/chat";
 
 import { useGroupsPresenceCount } from "../../hooks/useGroupsPresenceCount";
 

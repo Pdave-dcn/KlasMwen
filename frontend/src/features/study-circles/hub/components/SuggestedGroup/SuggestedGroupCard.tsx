@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useJoinChatGroupMutation } from "@/queries/chat.query";
+import { useJoinChatGroupMutation } from "@/queries/chat";
 import { usePresenceStore } from "@/stores/presence.store";
 import { getGroupInitials } from "@/utils/getInitials.util";
 import type { ChatGroupForDiscovery } from "@/zodSchemas/chat.zod";

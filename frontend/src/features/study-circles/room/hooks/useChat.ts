@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from "react";
 
-import { useSendChatMessageMutation } from "@/queries/chat.query";
+import { useSendChatMessageMutation } from "@/queries/chat";
 import { useAuthStore } from "@/stores/auth.store";
 import { useChatStore } from "@/stores/chat.store";
 

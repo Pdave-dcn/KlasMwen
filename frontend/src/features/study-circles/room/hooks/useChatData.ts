@@ -5,7 +5,7 @@ import {
   useChatGroupsQuery,
   useChatMembersQuery,
   useChatMessagesQuery,
-} from "@/queries/chat.query";
+} from "@/queries/chat";
 
 export const useChatData = (groupId: string | null) => {
   const { data: groups = [], isLoading: isLoadingGroups } =

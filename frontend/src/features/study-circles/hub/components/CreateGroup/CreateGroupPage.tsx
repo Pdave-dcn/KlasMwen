@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { useCreateChatGroupMutation } from "@/queries/chat.query";
+import { useCreateChatGroupMutation } from "@/queries/chat";
 import type { CreateGroupFormData } from "@/zodSchemas/chat.zod";
 
 import { CreateGroupForm } from "./CreateGroupForm";

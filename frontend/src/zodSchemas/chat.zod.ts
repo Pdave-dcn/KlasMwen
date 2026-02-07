@@ -89,6 +89,16 @@ const ChatGroupsForDiscoveryResponseSchema = z.object({
   pagination: PaginationSchema,
 });
 
+const ChatGroupSearchSuggestionSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  memberCount: z.number().int().nonnegative(),
+});
+
+const ChatGroupsSearchResponseSchema = z.object({
+  data: z.array(ChatGroupSearchSuggestionSchema),
+});
+
 // Chat Member Schemas
 
 const ChatMemberDataSchema = z.object({
@@ -181,6 +191,7 @@ export type ChatGroupForDiscovery = z.infer<typeof ChatGroupForDiscoverySchema>;
 export type ChatGroupsForDiscoveryResponseSchema = z.infer<
   typeof ChatGroupsForDiscoveryResponseSchema
 >;
+export type SearchSuggestion = z.infer<typeof ChatGroupSearchSuggestionSchema>;
 
 export type CreateChatGroupData = z.infer<typeof CreateChatGroupSchema>;
 export type UpdateChatGroupData = z.infer<typeof UpdateChatGroupSchema>;
@@ -210,4 +221,6 @@ export {
   SocketMemberLeftDataSchema,
   ChatGroupsForDiscoveryResponseSchema,
   QuickStatsResponseSchema,
+  ChatGroupSearchSuggestionSchema,
+  ChatGroupsSearchResponseSchema,
 };

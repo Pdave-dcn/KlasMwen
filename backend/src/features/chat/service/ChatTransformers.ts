@@ -1,8 +1,10 @@
 import type {
   ChatGroupForDiscovery,
+  ChatGroupSuggestionResult,
   ChatMessage,
   EnrichedChatMember,
   TransformedChatGroupForDiscovery,
+  TransformedChatGroupSuggestion,
   TransformedChatMember,
   TransformedChatMessage,
 } from "./chatTypes";
@@ -121,6 +123,35 @@ class ChatTransformers {
     groups: ChatGroupForDiscovery[],
   ): TransformedChatGroupForDiscovery[] {
     return groups.map((group) => this.transformGroupForDiscovery(group));
+  }
+
+  /**
+   * Transforms a chat group suggestion result by replacing member count.
+   *
+   * @param group - Raw chat group suggestion data from database
+   * @returns Transformed chat group suggestion with memberCount field
+   */
+  static transformGroupForSuggestion(
+    group: ChatGroupSuggestionResult,
+  ): TransformedChatGroupSuggestion {
+    const { _count, ...groupData } = group;
+
+    return {
+      ...groupData,
+      memberCount: _count.members,
+    };
+  }
+
+  /**
+   * Transforms an array of chat group suggestions.
+   *
+   * @param groups - Array of raw chat group suggestion data
+   * @return Array of transformed chat group suggestions
+   */
+  static transformGroupsForSuggestion(
+    groups: ChatGroupSuggestionResult[],
+  ): TransformedChatGroupSuggestion[] {
+    return groups.map((group) => this.transformGroupForSuggestion(group));
   }
 }
 

@@ -11,6 +11,10 @@ const UserIdParamSchema = z.object({
 
 // Chat Group Schemas
 
+const CreatorIdParamSchema = z.object({
+  creatorId: z.uuid("Invalid creator ID format"),
+});
+
 const CreateChatGroupDataSchema = z.object({
   name: z
     .string()
@@ -45,27 +49,6 @@ const UpdateChatGroupDataSchema = z
   .refine((data) => Object.keys(data).length > 0, {
     message: "At least one field must be provided for update",
   });
-
-const GroupSearchFiltersSchema = z.object({
-  query: z.string().optional(),
-  isPrivate: z
-    .string()
-    .transform((val) => val === "true")
-    .optional(),
-  excludeJoined: z
-    .string()
-    .transform((val) => val === "true")
-    .optional(),
-  creatorId: z.string().uuid().optional(),
-  minMembers: z
-    .string()
-    .transform((val) => parseInt(val))
-    .optional(),
-  maxMembers: z
-    .string()
-    .transform((val) => parseInt(val))
-    .optional(),
-});
 
 // Chat Member Schemas
 
@@ -106,6 +89,42 @@ const MessageIdParamSchema = z.object({
     }),
 });
 
+// Search Schemas
+
+const GroupSearchFiltersSchema = z.object({
+  query: z.string().optional(),
+  isPrivate: z
+    .string()
+    .transform((val) => val === "true")
+    .optional(),
+  excludeJoined: z
+    .string()
+    .transform((val) => val === "true")
+    .optional(),
+  creatorId: z.uuid().optional(),
+  minMembers: z
+    .string()
+    .transform((val) => parseInt(val))
+    .optional(),
+  maxMembers: z
+    .string()
+    .transform((val) => parseInt(val))
+    .optional(),
+});
+
+const TrendingQuerySchema = z.object({
+  timeframe: z.coerce.number().min(1).max(30).optional().default(7),
+});
+
+const SmallGroupsQuerySchema = z.object({
+  maxMembers: z.coerce.number().min(2).max(50).optional().default(10),
+});
+
+const SearchSuggestionQuerySchema = z.object({
+  query: z.string().min(1).max(100),
+  limit: z.coerce.number().min(1).max(20).optional().default(10),
+});
+
 type CreateChatGroupData = z.infer<typeof CreateChatGroupDataSchema>;
 type UpdateChatGroupData = z.infer<typeof UpdateChatGroupDataSchema>;
 type AddMemberData = z.infer<typeof AddMemberDataSchema>;
@@ -117,11 +136,15 @@ export {
   UpdateChatGroupDataSchema,
   GroupSearchFiltersSchema,
   ChatGroupIdParamSchema,
+  CreatorIdParamSchema,
   UserIdParamSchema,
   AddMemberDataSchema,
   UpdateMemberRoleDataSchema,
   SendMessageDataSchema,
   MessageIdParamSchema,
+  TrendingQuerySchema,
+  SmallGroupsQuerySchema,
+  SearchSuggestionQuerySchema,
   type CreateChatGroupData,
   type UpdateChatGroupData,
   type AddMemberData,

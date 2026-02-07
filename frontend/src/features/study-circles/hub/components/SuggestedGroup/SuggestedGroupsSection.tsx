@@ -5,7 +5,7 @@ import { Sparkles, ChevronRight, AlertCircle, Search } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useRecommendedGroupsQuery } from "@/queries/chat.query";
+import { useRecommendedGroupsQuery } from "@/queries/chat";
 
 import { useGroupsPresenceCount } from "../../hooks/useGroupsPresenceCount";
 

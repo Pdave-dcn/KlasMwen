@@ -53,6 +53,13 @@ export class ChatService {
   // Search and Discovery Operations
   static discoverGroups: typeof ChatGroupSearchService.discoverGroups;
   static getRecommendedGroups: typeof ChatGroupSearchService.getRecommendedGroups;
+  static getTrendingGroups: typeof ChatGroupSearchService.getTrendingGroups;
+  static getNewGroups: typeof ChatGroupSearchService.getNewGroups;
+  static getSmallGroups: typeof ChatGroupSearchService.getSmallGroups;
+  static getSimilarGroups: typeof ChatGroupSearchService.getSimilarGroups;
+  static getGroupsByCreator: typeof ChatGroupSearchService.getGroupsByCreator;
+  static searchGroups: typeof ChatGroupSearchService.searchGroups;
+  static getSearchSuggestions: typeof ChatGroupSearchService.getSearchSuggestions;
 
   // Statistics
   static async getQuickStats(userId: string) {
@@ -101,6 +108,13 @@ export class ChatService {
       bindMethods(ChatGroupSearchService, [
         "discoverGroups",
         "getRecommendedGroups",
+        "getTrendingGroups",
+        "getNewGroups",
+        "getSmallGroups",
+        "getSimilarGroups",
+        "getGroupsByCreator",
+        "searchGroups",
+        "getSearchSuggestions",
       ]),
     );
   }

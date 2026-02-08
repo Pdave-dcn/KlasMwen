@@ -6,15 +6,14 @@ import LoadMoreButton from "@/components/LoadMoreButton";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import {
-  useGroupDiscovery,
-  type DiscoveryCategory,
-} from "../../hooks/useGroupDiscovery";
+import { useGroupDiscovery } from "../../hooks/useGroupDiscovery";
 
 import { DiscoveryHero } from "./DiscoverHero";
 import { DiscoveryEmptyState } from "./DiscoveryEmptyState";
 import { DiscoveryGridSkeleton } from "./DiscoveryGridSkeleton";
 import { GroupDiscoveryCard } from "./GroupDiscoveryCard";
+
+import type { DiscoveryCategory } from "../../hooks/useGroupDiscoveryCategory";
 
 const CATEGORY_CONFIG: Record<
   DiscoveryCategory,
@@ -28,31 +27,9 @@ const CATEGORY_CONFIG: Record<
 
 export const DiscoverGroupsPage = () => {
   const navigate = useNavigate();
+  const { category, search, data, pagination } = useGroupDiscovery();
 
-  const {
-    activeCategory,
-    searchQuery,
-    isSearchActive,
-    groups,
-    isLoading,
-    isError,
-    isFetchingNextPage,
-    hasNextPage,
-    showSuggestions,
-    suggestions,
-    isLoadingSuggestions,
-    fetchNextPage,
-    setSearchQuery,
-    handleSearchSubmit,
-    handleSearchFocus,
-    handleSearchBlur,
-    handleSuggestionSelect,
-    handleTagClick,
-    clearSearch,
-    handleCategoryChange,
-  } = useGroupDiscovery();
-
-  if (isError) {
+  if (data.isError) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -86,38 +63,38 @@ export const DiscoverGroupsPage = () => {
 
       {/* Hero Section */}
       <DiscoveryHero
-        searchQuery={searchQuery}
-        suggestions={suggestions}
-        showSuggestions={showSuggestions}
-        isLoadingSuggestions={isLoadingSuggestions}
-        onSearchChange={setSearchQuery}
-        onSearchSubmit={handleSearchSubmit}
-        onClearSearch={clearSearch}
-        onTagClick={handleTagClick}
-        onSearchBlur={handleSearchBlur}
-        onSearchFocus={handleSearchFocus}
-        onSuggestionSelect={handleSuggestionSelect}
+        searchQuery={search.query}
+        suggestions={search.suggestions.items}
+        showSuggestions={search.suggestions.isVisible}
+        isLoadingSuggestions={search.suggestions.isLoading}
+        onSearchChange={search.setQuery}
+        onSearchSubmit={search.onSubmit}
+        onClearSearch={search.onClear}
+        onTagClick={search.onTagClick}
+        onSearchBlur={search.onBlur}
+        onSearchFocus={search.onFocus}
+        onSuggestionSelect={search.onSuggestionSelect}
       />
 
       {/* Content area */}
       <div className="max-w-5xl mx-auto px-4 py-6">
         {/* Active search indicator OR category tabs */}
-        {isSearchActive ? (
+        {search.isActive ? (
           <div className="flex items-center justify-between mb-6">
             <p className="text-sm text-muted-foreground">
               Results for{" "}
               <span className="font-semibold text-foreground">
-                "{searchQuery}"
+                "{search.query}"
               </span>
             </p>
-            <Button variant="ghost" size="sm" onClick={clearSearch}>
+            <Button variant="ghost" size="sm" onClick={search.onClear}>
               Clear search
             </Button>
           </div>
         ) : (
           <Tabs
-            value={activeCategory}
-            onValueChange={(v) => handleCategoryChange(v as DiscoveryCategory)}
+            value={category.active}
+            onValueChange={(v) => category.onChange(v as DiscoveryCategory)}
             className="mb-6"
           >
             <TabsList className="w-full grid grid-cols-4 h-auto p-1 bg-muted/60">
@@ -142,36 +119,36 @@ export const DiscoverGroupsPage = () => {
         )}
 
         {/* Groups Grid */}
-        {isLoading ? (
+        {data.isLoading ? (
           <DiscoveryGridSkeleton count={6} />
-        ) : groups.length === 0 ? (
+        ) : data.groups.length === 0 ? (
           <DiscoveryEmptyState
-            isSearchActive={isSearchActive}
-            onClearSearch={clearSearch}
+            isSearchActive={search.isActive}
+            onClearSearch={search.onClear}
           />
         ) : (
           <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {groups.map((group) => (
+              {data.groups.map((group) => (
                 <GroupDiscoveryCard
                   key={group.id}
                   group={group}
-                  category={isSearchActive ? undefined : activeCategory}
+                  category={search.isActive ? undefined : category.active}
                 />
               ))}
             </div>
 
             {/* Load More */}
-            {hasNextPage && (
+            {pagination.hasMore && (
               <LoadMoreButton
-                onClick={fetchNextPage}
-                isLoading={isFetchingNextPage}
+                onClick={pagination.loadMore}
+                isLoading={pagination.isLoadingMore}
                 variant="outline"
               />
             )}
 
             {/* Next-page skeletons */}
-            {isFetchingNextPage && (
+            {pagination.isLoadingMore && (
               <div className="mt-4">
                 <DiscoveryGridSkeleton count={3} />
               </div>

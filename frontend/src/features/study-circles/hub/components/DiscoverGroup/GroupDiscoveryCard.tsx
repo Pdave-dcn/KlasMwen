@@ -8,7 +8,7 @@ import { useJoinChatGroupMutation } from "@/queries/chat";
 import { getGroupInitials } from "@/utils/getInitials.util";
 import type { ChatGroupForDiscovery } from "@/zodSchemas/chat.zod";
 
-import type { DiscoveryCategory } from "../../hooks/useGroupDiscovery";
+import type { DiscoveryCategory } from "../../hooks/useGroupDiscoveryCategory";
 
 interface GroupDiscoveryCardProps {
   group: ChatGroupForDiscovery;

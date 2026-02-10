@@ -20,6 +20,7 @@ export const useGroupDiscovery = () => {
     suggestions,
     showSuggestions,
     isLoadingSuggestions,
+    selectedTags,
     setSearchQuery,
     handleSearchSubmit,
     clearSearch,
@@ -63,6 +64,7 @@ export const useGroupDiscovery = () => {
     search: {
       query: searchQuery,
       isActive: isSearchActive,
+      tags: selectedTags,
       suggestions: {
         items: suggestions,
         isVisible: showSuggestions,

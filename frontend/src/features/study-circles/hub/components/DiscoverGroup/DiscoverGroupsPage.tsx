@@ -63,6 +63,7 @@ export const DiscoverGroupsPage = () => {
 
       {/* Hero Section */}
       <DiscoveryHero
+        tags={search.tags}
         searchQuery={search.query}
         suggestions={search.suggestions.items}
         showSuggestions={search.suggestions.isVisible}
@@ -81,12 +82,30 @@ export const DiscoverGroupsPage = () => {
         {/* Active search indicator OR category tabs */}
         {search.isActive ? (
           <div className="flex items-center justify-between mb-6">
-            <p className="text-sm text-muted-foreground">
-              Results for{" "}
-              <span className="font-semibold text-foreground">
-                "{search.query}"
-              </span>
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-muted-foreground">Results for</p>
+
+              {/* Search query */}
+              {search.query && (
+                <span className="text-sm font-semibold text-foreground">
+                  "{search.query}"
+                </span>
+              )}
+
+              {/* Selected tags count */}
+              {search.tags.length > 0 && (
+                <>
+                  {search.query && (
+                    <span className="text-sm text-muted-foreground">with</span>
+                  )}
+                  <span className="text-sm font-semibold text-foreground">
+                    {search.tags.length}{" "}
+                    {search.tags.length === 1 ? "tag" : "tags"}
+                  </span>
+                </>
+              )}
+            </div>
+
             <Button variant="ghost" size="sm" onClick={search.onClear}>
               Clear search
             </Button>
@@ -144,6 +163,7 @@ export const DiscoverGroupsPage = () => {
                 onClick={pagination.loadMore}
                 isLoading={pagination.isLoadingMore}
                 variant="outline"
+                style="mt-5 max-w-xs mx-auto block"
               />
             )}
 

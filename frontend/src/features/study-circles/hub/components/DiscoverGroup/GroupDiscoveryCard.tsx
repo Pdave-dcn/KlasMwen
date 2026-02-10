@@ -105,11 +105,7 @@ export const GroupDiscoveryCard = ({
           {group.tags && group.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-3">
               {group.tags.slice(0, 6).map((tag) => (
-                <Badge
-                  key={tag.name}
-                  variant="secondary"
-                  className="text-xs px-2 py-0.5 h-auto font-medium"
-                >
+                <Badge key={tag.name} variant="secondary">
                   #{tag.name}
                 </Badge>
               ))}

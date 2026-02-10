@@ -4,16 +4,18 @@ import { Search, X, Compass } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import type { SearchSuggestion } from "@/zodSchemas/chat.zod";
+import type { PopularTag } from "@/zodSchemas/tag.zod";
 
 import { SearchSuggestionsDropdown } from "./SearchSuggestionsDropdown";
 import { TrendingTags } from "./TrendingTags";
 
 interface DiscoveryHeroProps {
   searchQuery: string;
+  tags: number[];
   onSearchChange: (query: string) => void;
   onSearchSubmit: (e: React.FormEvent) => void;
   onClearSearch: () => void;
-  onTagClick: (tag: string) => void;
+  onTagClick: (tag: PopularTag) => void;
   suggestions: SearchSuggestion[];
   showSuggestions: boolean;
   isLoadingSuggestions: boolean;
@@ -24,6 +26,7 @@ interface DiscoveryHeroProps {
 
 export function DiscoveryHero({
   searchQuery,
+  tags,
   onSearchChange,
   onSearchSubmit,
   onClearSearch,
@@ -38,7 +41,7 @@ export function DiscoveryHero({
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="relative overflow-hidden bg-linear-to-b from-primary/5 via-primary/2 to-background border-b border-border">
+    <div className="relative bg-linear-to-b from-primary/5 via-primary/2 to-background border-b border-border">
       <div className="max-w-4xl mx-auto px-4 pt-10 pb-8">
         {/* Title area */}
         <div className="text-center mb-8">
@@ -88,7 +91,7 @@ export function DiscoveryHero({
         </div>
 
         {/* Trending Tags */}
-        <TrendingTags onTagClick={onTagClick} />
+        <TrendingTags onTagClick={onTagClick} selectedTags={tags} />
       </div>
     </div>
   );

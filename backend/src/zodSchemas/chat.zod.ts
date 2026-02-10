@@ -92,7 +92,7 @@ const MessageIdParamSchema = z.object({
 // Search Schemas
 
 const GroupSearchFiltersSchema = z.object({
-  query: z.string().optional(),
+  query: z.string().trim().optional(),
   isPrivate: z
     .string()
     .transform((val) => val === "true")
@@ -110,6 +110,31 @@ const GroupSearchFiltersSchema = z.object({
     .string()
     .transform((val) => parseInt(val))
     .optional(),
+  tagIds: z
+    .union([
+      z.string(), // Handle comma-separated string
+      z.array(z.string()), // Handle array of strings from query params
+    ])
+    .transform((val) => {
+      // Handle array of strings
+      if (Array.isArray(val)) {
+        return val
+          .map((id) => parseInt(id, 10))
+          .filter((id) => !isNaN(id) && id > 0);
+      }
+
+      // Handle comma-separated string
+      if (!val || val.trim() === "") {
+        return [];
+      }
+
+      return val
+        .split(",")
+        .map((id) => parseInt(id.trim(), 10))
+        .filter((id) => !isNaN(id) && id > 0);
+    })
+    .pipe(z.array(z.number().int().positive()).max(10))
+    .default([]),
 });
 
 const TrendingQuerySchema = z.object({

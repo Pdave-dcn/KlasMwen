@@ -260,6 +260,7 @@ interface GroupSearchFilters {
   creatorId?: string; // Filter by creator
   minMembers?: number; // Minimum member count
   maxMembers?: number; // Maximum member count
+  tagIds?: number[]; // Filter by tags
 }
 
 interface GroupSearchSuggestion {

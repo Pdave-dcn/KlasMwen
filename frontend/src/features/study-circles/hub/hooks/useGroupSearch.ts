@@ -3,6 +3,7 @@ import { useState, useCallback } from "react";
 import { useDebouncedValue } from "@/features/search/hooks/useDebouncedValue";
 import { useSearchGroupsQuery } from "@/queries/chat";
 import type { SearchSuggestion } from "@/zodSchemas/chat.zod";
+import type { PopularTag } from "@/zodSchemas/tag.zod";
 
 import { useSearchSuggestions } from "./useSearchSuggestions";
 
@@ -10,18 +11,26 @@ const PAGE_LIMIT = 9;
 
 /**
  * Manages group search functionality including query state, suggestions, and search execution.
- * Handles debounced search input and suggestion dropdown visibility.
+ * Handles debounced search input, tag filtering, and suggestion dropdown visibility.
  */
 export const useGroupSearch = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [isSearchActive, setIsSearchActive] = useState(false);
 
   const debouncedQuery = useDebouncedValue(searchQuery, 300);
 
+  // Activate search when either query or tags change
+  const shouldEnableSearch =
+    isSearchActive && (debouncedQuery.length > 0 || selectedTags.length > 0);
+
   const searchQueryHook = useSearchGroupsQuery(
-    debouncedQuery,
+    {
+      query: debouncedQuery || undefined,
+      tagIds: selectedTags.length > 0 ? selectedTags : undefined,
+    },
     PAGE_LIMIT,
-    isSearchActive && debouncedQuery.length > 0,
+    shouldEnableSearch,
   );
 
   const {
@@ -31,24 +40,22 @@ export const useGroupSearch = () => {
     setShowSuggestions,
   } = useSearchSuggestions(searchQuery, isSearchActive);
 
-  /** Executes a search with the given query. Ignores empty queries. */
-  const executeSearch = useCallback(
-    (query: string) => {
-      if (!query.trim()) return;
-      setSearchQuery(query);
-      setIsSearchActive(true);
-      setShowSuggestions(false);
-    },
-    [setShowSuggestions],
-  );
+  /** Executes a search with current query and tags state. */
+  const executeSearch = useCallback(() => {
+    // Allow search if either query or tags are provided
+    if (!searchQuery.trim() && selectedTags.length === 0) return;
+
+    setIsSearchActive(true);
+    setShowSuggestions(false);
+  }, [searchQuery, selectedTags, setShowSuggestions]);
 
   /** Handles search form submission. */
   const handleSearchSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      executeSearch(searchQuery);
+      executeSearch();
     },
-    [searchQuery, executeSearch],
+    [executeSearch],
   );
 
   /** Resets search state and clears the query. */
@@ -56,6 +63,7 @@ export const useGroupSearch = () => {
     setSearchQuery("");
     setIsSearchActive(false);
     setShowSuggestions(false);
+    setSelectedTags([]);
   }, [setShowSuggestions]);
 
   /** Shows suggestions dropdown when input is focused and has results. */
@@ -75,22 +83,35 @@ export const useGroupSearch = () => {
     (suggestion: SearchSuggestion) => {
       setSearchQuery(suggestion.name);
       setShowSuggestions(false);
-      executeSearch(suggestion.name);
+      setIsSearchActive(true);
     },
-    [executeSearch, setShowSuggestions],
+    [setShowSuggestions],
   );
 
-  /** Executes search when a tag is clicked. */
+  /** Toggles a tag selection and triggers search if already active. */
   const handleTagClick = useCallback(
-    (tag: string) => {
-      setSearchQuery(tag);
-      executeSearch(tag);
+    (tag: PopularTag) => {
+      const tagId = tag.id;
+
+      setSelectedTags((prev) => {
+        const newTags = prev.includes(tagId)
+          ? prev.filter((id) => id !== tagId)
+          : [...prev, tagId];
+
+        return newTags;
+      });
+
+      // Auto-trigger search when tag is clicked
+      if (!isSearchActive) {
+        setIsSearchActive(true);
+      }
     },
-    [executeSearch],
+    [isSearchActive],
   );
 
   return {
     searchQuery,
+    selectedTags,
     isSearchActive,
     searchQueryHook,
     suggestions,
@@ -104,5 +125,6 @@ export const useGroupSearch = () => {
     handleSearchBlur,
     handleSuggestionSelect,
     handleTagClick,
+    setSelectedTags,
   };
 };

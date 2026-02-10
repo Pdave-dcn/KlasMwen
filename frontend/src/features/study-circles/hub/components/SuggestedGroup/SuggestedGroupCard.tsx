@@ -1,4 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useJoinChatGroupMutation } from "@/queries/chat";
@@ -65,16 +66,20 @@ export const SuggestedGroupCard = ({ group }: SuggestedGroupCardProps) => {
         </div>
 
         {/* Tags */}
-        <div className="flex items-center gap-1.5 mb-1">
-          {group.tags.slice(0, 6).map((tag) => (
-            <span
-              key={tag.name}
-              className="text-[10px] text-primary font-medium"
-            >
-              #{tag.name}
-            </span>
-          ))}
-        </div>
+        {group.tags && group.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {group.tags.slice(0, 6).map((tag) => (
+              <Badge key={tag.name} variant="outline" className="text-primary">
+                #{tag.name}
+              </Badge>
+            ))}
+            {group.tags.length > 6 && (
+              <span className="inline-flex items-center px-2 py-0.5 text-xs text-muted-foreground">
+                +{group.tags.length - 6} more
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Stats row */}
         <div className="flex items-center gap-3">

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import prisma from "../../../../core/config/db.js";
 import {
   BaseSelectors,
@@ -43,6 +44,19 @@ class ChatSearchRepository {
             },
           ],
         }),
+        // Tag filters
+        ...(filters.tagIds &&
+          filters.tagIds.length > 0 && {
+            chatGroupTags: {
+              some: {
+                tag: {
+                  id: {
+                    in: filters.tagIds,
+                  },
+                },
+              },
+            },
+          }),
         // Privacy filter
         ...(filters.isPrivate !== undefined && {
           isPrivate: filters.isPrivate,

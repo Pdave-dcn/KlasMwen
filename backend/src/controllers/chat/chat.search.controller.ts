@@ -323,13 +323,21 @@ const searchGroups = async (
 
     const filters = GroupSearchFiltersSchema.parse(req.query);
 
+    const sanitizedSearchTerm = filters.query
+      ? filters.query.replace(/[%_]/g, "\\$&")
+      : undefined;
+
     const searchPaginationSchema = createPaginationSchema(10, 50, "uuid");
     const { limit, cursor } = searchPaginationSchema.parse(req.query);
 
-    const result = await ChatService.searchGroups(user.id, filters, {
-      limit,
-      cursor: cursor as string | undefined,
-    });
+    const result = await ChatService.searchGroups(
+      user.id,
+      { ...filters, query: sanitizedSearchTerm },
+      {
+        limit,
+        cursor: cursor as string | undefined,
+      },
+    );
 
     actionLogger.info(
       {

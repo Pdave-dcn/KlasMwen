@@ -24,10 +24,6 @@ export function SearchSuggestionsDropdown({
         <div className="p-3 text-sm text-muted-foreground text-center">
           Searching...
         </div>
-      ) : suggestions.length === 0 ? (
-        <div className="p-3 text-sm text-muted-foreground text-center">
-          No suggestions found
-        </div>
       ) : (
         <ul className="py-1">
           {suggestions.map((suggestion) => (

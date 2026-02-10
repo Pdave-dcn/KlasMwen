@@ -6,6 +6,38 @@ import {
 
 import api from "../api";
 
+export interface GroupSearchFilters {
+  query?: string;
+  isPrivate?: boolean;
+  excludeJoined?: boolean;
+  creatorId?: string;
+  minMembers?: number;
+  maxMembers?: number;
+  tagIds?: number[];
+}
+
+export const searchGroups = async (
+  filters: GroupSearchFilters,
+  cursor?: string,
+  limit = 10,
+) => {
+  try {
+    const res = await api.get("/groups/discover/search", {
+      params: {
+        ...filters,
+        tagIds: filters.tagIds?.join(","),
+        cursor,
+        limit,
+      },
+    });
+    const validatedData = ChatGroupsForDiscoveryResponseSchema.parse(res.data);
+    return validatedData;
+  } catch (error) {
+    handleZodValidationError(error, "searchGroups");
+    throw error;
+  }
+};
+
 export const getChatGroupsForDiscovery = async (
   limit: number = 10,
   cursor?: string,
@@ -78,23 +110,6 @@ export const getSmallGroups = async (
     return validatedData;
   } catch (error) {
     handleZodValidationError(error, "getSmallGroups");
-    throw error;
-  }
-};
-
-export const searchGroups = async (
-  query: string,
-  cursor?: string,
-  limit = 10,
-) => {
-  try {
-    const res = await api.get("/groups/discover/search", {
-      params: { query, cursor, limit },
-    });
-    const validatedData = ChatGroupsForDiscoveryResponseSchema.parse(res.data);
-    return validatedData;
-  } catch (error) {
-    handleZodValidationError(error, "searchGroups");
     throw error;
   }
 };

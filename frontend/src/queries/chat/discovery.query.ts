@@ -10,6 +10,7 @@ import {
   getSimilarGroups,
   getGroupsByCreator,
   getSearchSuggestions,
+  type GroupSearchFilters,
 } from "@/api/chat";
 
 export const useChatGroupsForDiscoveryQuery = (limit: number = 10) => {
@@ -78,20 +79,22 @@ export const useSmallGroupsQuery = (limit = 10, maxMembers = 10) => {
 };
 
 export const useSearchGroupsQuery = (
-  query: string,
+  filters: GroupSearchFilters,
   limit = 10,
   enabled = true,
 ) => {
   return useInfiniteQuery({
-    queryKey: ["chat", "groups", "search", query, limit],
-    queryFn: ({ pageParam }) => searchGroups(query, pageParam, limit),
+    queryKey: ["chat", "groups", "search", filters, limit],
+    queryFn: ({ pageParam }) => searchGroups(filters, pageParam, limit),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.hasMore
         ? lastPage.pagination.nextCursor
         : undefined;
     },
-    enabled: enabled && query.length > 0,
+    enabled:
+      enabled &&
+      ((filters.query?.length ?? 0) > 0 || (filters.tagIds?.length ?? 0) > 0),
   });
 };
 

@@ -1,8 +1,8 @@
 import { Routes, Route } from "react-router-dom";
 
 import {
-  CreateGroupPage,
   DiscoverGroupsPage,
+  CreateGroupPage,
 } from "@/features/study-circles/hub/components";
 import ChatGroupsPage from "@/features/study-circles/room/components/ChatGroupsPage";
 import AuthForm from "@/pages/AuthForm";

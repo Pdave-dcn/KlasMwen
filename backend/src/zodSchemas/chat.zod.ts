@@ -28,6 +28,7 @@ const CreateChatGroupDataSchema = z.object({
     .optional(),
   isPrivate: z.boolean().default(false),
   creatorId: z.uuid("Invalid creator ID"),
+  tagIds: z.array(z.number().int().positive()).optional().default([]),
 });
 
 const UpdateChatGroupDataSchema = z

@@ -1,18 +1,55 @@
-import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { cn } from "@/lib/utils";
 
 interface FormFieldProps {
   label: string;
-  htmlFor?: string;
+  required?: boolean;
+  optional?: boolean;
   error?: string;
+  characterCount?: {
+    current: number;
+    max: number;
+  };
   children: React.ReactNode;
 }
 
-export function FormField({ label, htmlFor, error, children }: FormFieldProps) {
+export function FormField({
+  label,
+  required,
+  optional,
+  error,
+  characterCount,
+  children,
+}: FormFieldProps) {
   return (
-    <div className="space-y-2">
-      <Label htmlFor={htmlFor}>{label}</Label>
+    <div className="flex flex-col gap-3">
+      <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+        {label}
+        {required && " *"}
+        {optional && (
+          <span className="text-muted-foreground font-normal"> (optional)</span>
+        )}
+      </label>
       {children}
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      <div className="flex justify-between items-center min-h-5">
+        {error && (
+          <Alert variant="destructive" className="py-2">
+            <AlertDescription className="text-sm">{error}</AlertDescription>
+          </Alert>
+        )}
+        {characterCount && (
+          <span
+            className={cn(
+              "text-xs tabular-nums ml-auto",
+              characterCount.current >= characterCount.max
+                ? "text-destructive"
+                : "text-muted-foreground",
+            )}
+          >
+            {characterCount.current}/{characterCount.max}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

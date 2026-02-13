@@ -210,6 +210,7 @@ interface CreateChatGroupData {
   description?: string;
   isPrivate?: boolean;
   creatorId: string;
+  tagIds: number[];
 }
 
 interface CreateChatGroupFinalData extends CreateChatGroupData {

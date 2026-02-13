@@ -140,6 +140,10 @@ const CreateChatGroupSchema = z.object({
     .max(200, "Description must be less than 200 characters")
     .optional(),
   isPrivate: z.boolean(),
+  tagIds: z
+    .array(z.number().int().positive())
+    .max(10, "Maximum 10 tags allowed")
+    .optional(),
 });
 
 const UpdateChatGroupSchema = z.object({

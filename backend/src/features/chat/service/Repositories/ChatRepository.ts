@@ -78,6 +78,12 @@ class ChatRepository {
             role: "OWNER",
           },
         },
+        chatGroupTags: {
+          create:
+            data.tagIds.map((tagId) => ({
+              tagId,
+            })) ?? [],
+        },
       },
       select: BaseSelectors.chatGroupWithMembers,
     });

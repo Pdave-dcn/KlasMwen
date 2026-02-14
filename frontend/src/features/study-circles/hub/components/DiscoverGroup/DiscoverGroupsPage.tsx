@@ -50,7 +50,7 @@ export const DiscoverGroupsPage = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate("/chat/hub")}
+            onClick={() => navigate("/circles")}
             className="shrink-0 -ml-2"
           >
             <ArrowLeft className="h-5 w-5" />

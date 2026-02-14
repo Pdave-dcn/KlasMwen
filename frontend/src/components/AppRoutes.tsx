@@ -24,11 +24,13 @@ import ProtectedRoute from "./ProtectedRoute";
 export const AppRoutes = () => {
   return (
     <Routes>
+      {/* Public Routes */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/register" element={<AuthForm defaultMode="signup" />} />
       <Route path="/sign-in" element={<AuthForm />} />
       <Route path="/discover" element={<DiscoverPage />} />
 
+      {/* Main App Routes */}
       <Route
         path="/home"
         element={
@@ -47,6 +49,7 @@ export const AppRoutes = () => {
         }
       />
 
+      {/* Profile Domain */}
       <Route
         path="/profile/me"
         element={
@@ -72,6 +75,7 @@ export const AppRoutes = () => {
         }
       />
 
+      {/* Discovery & Settings */}
       <Route
         path="/search"
         element={
@@ -80,7 +84,6 @@ export const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/settings"
         element={
@@ -90,8 +93,9 @@ export const AppRoutes = () => {
         }
       />
 
+      {/* --- Study Circles Domain (/circles) --- */}
       <Route
-        path="/Chat/hub"
+        path="/circles"
         element={
           <ProtectedRoute>
             <ChatHubPage />
@@ -99,7 +103,7 @@ export const AppRoutes = () => {
         }
       />
       <Route
-        path="/Chat/groups"
+        path="/circles/mine"
         element={
           <ProtectedRoute>
             <ChatGroupsPage />
@@ -107,7 +111,7 @@ export const AppRoutes = () => {
         }
       />
       <Route
-        path="/Chat/groups/discover"
+        path="/circles/discover"
         element={
           <ProtectedRoute>
             <DiscoverGroupsPage />
@@ -115,7 +119,7 @@ export const AppRoutes = () => {
         }
       />
       <Route
-        path="/Chat/groups/create"
+        path="/circles/create"
         element={
           <ProtectedRoute>
             <CreateGroupPage />
@@ -123,6 +127,7 @@ export const AppRoutes = () => {
         }
       />
 
+      {/* System Routes */}
       <Route
         path="/notifications"
         element={

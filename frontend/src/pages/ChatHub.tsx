@@ -31,21 +31,21 @@ const ChatHubPage = () => {
               subtitle="Jump back into your conversations"
               icon={MessageCircle}
               variant="primary"
-              onClick={() => navigate("/chat/groups")}
+              onClick={() => navigate("/circles/mine")}
             />
 
             <ChatHubCard
               title="Discover"
               subtitle="Find study circles"
               icon={Search}
-              onClick={() => navigate("/chat/groups/discover")}
+              onClick={() => navigate("/circles/discover")}
             />
 
             <ChatHubCard
               title="Create"
               subtitle="Start a new group"
               icon={Plus}
-              onClick={() => navigate("/chat/groups/create")}
+              onClick={() => navigate("/circles/create")}
             />
           </div>
         </section>

@@ -42,7 +42,7 @@ const Layout = ({ children }: LayoutProps) => {
 
   // Check if current route is moderation dashboard or chat page
   const isModDashboard = location.pathname.startsWith("/mod/dashboard");
-  const isChatPage = location.pathname.startsWith("/chat");
+  const isChatPage = location.pathname.startsWith("/circles");
 
   const isHidden = isModDashboard || isChatPage;
 

@@ -57,7 +57,7 @@ export function CreateGroupPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <CreateGroupHeader onBack={() => navigate("/chat/hub")} />
+      <CreateGroupHeader onBack={() => navigate("/circles")} />
 
       <CreateGroupContent
         onSubmit={handleSubmit}

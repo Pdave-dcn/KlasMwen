@@ -1,4 +1,4 @@
-import { NavLink, useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, NavLink } from "react-router-dom";
 
 import { Shield } from "lucide-react";
 
@@ -25,9 +25,9 @@ const Sidebar = ({ onCreateClick }: SidebarProps) => {
   const { theme, setTheme } = useTheme();
 
   const isModDashboard = location.pathname.startsWith("/mod/dashboard");
-  const isChatPage = location.pathname.startsWith("/chat");
+  const isCirclesPage = location.pathname.startsWith("/circles");
 
-  const isHidden = isModDashboard || isChatPage;
+  const isHidden = isModDashboard || isCirclesPage;
 
   const handleLogOut = async () => {
     await apiLogOut();
@@ -35,27 +35,33 @@ const Sidebar = ({ onCreateClick }: SidebarProps) => {
     await navigate("/", { replace: true });
   };
 
-  const handleSaved = async () => {
-    await navigate("/profile/me", { state: { activeTab: "saved" } });
-  };
-
-  const handleSettings = async () => {
-    await navigate("/settings");
-  };
-
   return (
     <div className="min-h-screen flex flex-col md:justify-between md:px-6 md:py-20 lg:py-2.5">
       <Logo isHidden={isHidden} />
 
       <div className="flex flex-col gap-10">
-        {NAV_ITEMS.map((item) => (
-          <NavItem
-            key={item.title}
-            item={item}
-            isLabelHidden={isHidden}
-            onCreateClick={onCreateClick}
-          />
-        ))}
+        {NAV_ITEMS.map((item) => {
+          let isActive = false;
+          if (!item.action && item.url) {
+            if (item.url === "/home") {
+              isActive = location.pathname === "/home";
+            } else if (item.url.startsWith("/circles")) {
+              isActive = location.pathname.startsWith("/circles");
+            } else {
+              isActive = location.pathname.startsWith(item.url);
+            }
+          }
+
+          return (
+            <NavItem
+              key={item.title}
+              item={item}
+              isActive={isActive}
+              isLabelHidden={isHidden}
+              onCreateClick={onCreateClick}
+            />
+          );
+        })}
 
         <RequireRole allowed={["ADMIN", "MODERATOR"]}>
           <NavLink
@@ -81,8 +87,10 @@ const Sidebar = ({ onCreateClick }: SidebarProps) => {
         theme={theme}
         isLabelHidden={isHidden}
         onThemeChange={setTheme}
-        onSavedClick={handleSaved}
-        onSettingsClick={handleSettings}
+        onSavedClick={() =>
+          navigate("/profile/me", { state: { activeTab: "saved" } })
+        }
+        onSettingsClick={() => navigate("/settings")}
         onLogOut={handleLogOut}
       />
     </div>

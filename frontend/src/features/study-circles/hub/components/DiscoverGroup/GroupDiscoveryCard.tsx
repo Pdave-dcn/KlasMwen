@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 import { Users, Globe, Check } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -59,14 +61,14 @@ export const GroupDiscoveryCard = ({
   return (
     <div
       className={cn(
-        "p-3 sm:p-4 rounded-xl border bg-card transition-all duration-200",
+        "group relative p-3 sm:p-4 rounded-xl border bg-card transition-all duration-200",
         "hover:shadow-md hover:border-primary/30",
         isJoined && "border-green-500/50 bg-green-50/50 dark:bg-green-950/20",
       )}
     >
       <div className="flex items-start gap-3 sm:gap-4">
         {/* Avatar - smaller on mobile */}
-        <Avatar className="h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0">
+        <Avatar className="h-10 w-10 sm:h-12 sm:w-12 shrink-0">
           <AvatarImage src={group.avatar?.url} alt={group.name} />
           <AvatarFallback>{getGroupInitials(group.name)}</AvatarFallback>
         </Avatar>
@@ -75,24 +77,33 @@ export const GroupDiscoveryCard = ({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <h3 className="font-semibold text-foreground truncate text-sm sm:text-base">
-              {group.name}
-            </h3>
-            {!group.isPrivate && (
-              <span className="inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium flex-shrink-0">
-                <Globe className="w-3 h-3" />
-                <span className="hidden xs:inline">Public</span>
-              </span>
-            )}
-            {badge && (
-              <span
-                className={cn(
-                  "inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0",
-                  badge.className,
-                )}
+              {/* ACCESSIBILITY: Stretched link pattern */}
+              <Link
+                to={`/circles/${group.id}/preview`}
+                className="focus:outline-none after:absolute after:inset-0"
               >
-                {badge.label}
-              </span>
-            )}
+                {group.name}
+              </Link>
+            </h3>
+
+            <div className="flex items-center gap-2 relative z-10">
+              {!group.isPrivate && (
+                <span className="inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium shrink-0">
+                  <Globe className="w-3 h-3" />
+                  <span className="hidden xs:inline">Public</span>
+                </span>
+              )}
+              {badge && (
+                <span
+                  className={cn(
+                    "inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-medium shrink-0",
+                    badge.className,
+                  )}
+                >
+                  {badge.label}
+                </span>
+              )}
+            </div>
           </div>
 
           {group.description && (
@@ -101,9 +112,8 @@ export const GroupDiscoveryCard = ({
             </p>
           )}
 
-          {/* Tags */}
           {group.tags && group.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-3">
+            <div className="flex flex-wrap gap-1.5 mb-3 relative z-10">
               {group.tags.slice(0, 4).map((tag) => (
                 <Badge key={tag.name} variant="secondary" className="text-xs">
                   #{tag.name}
@@ -117,8 +127,7 @@ export const GroupDiscoveryCard = ({
             </div>
           )}
 
-          {/* Footer - stack on mobile, row on desktop */}
-          <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2">
+          <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 relative z-10">
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
               <div className="flex items-center gap-1.5">
                 <Users className="w-3.5 h-3.5" />
@@ -137,7 +146,10 @@ export const GroupDiscoveryCard = ({
             ) : (
               <Button
                 size="sm"
-                onClick={() => joinChatGroupMutation.mutate(group.id)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  joinChatGroupMutation.mutate(group.id);
+                }}
                 disabled={isJoining}
                 className="h-8 px-3 sm:px-4 text-sm w-full xs:w-auto"
               >

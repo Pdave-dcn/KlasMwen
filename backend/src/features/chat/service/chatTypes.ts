@@ -201,6 +201,44 @@ const BaseSelectors = {
       },
     },
   } satisfies Prisma.ChatGroupSelect,
+
+  chatGroupPreviewDetail: {
+    id: true,
+    name: true,
+    description: true,
+    avatar: { select: { url: true } },
+    isPrivate: true,
+    createdAt: true,
+    creator: {
+      select: {
+        id: true,
+        username: true,
+        Avatar: {
+          select: {
+            url: true,
+          },
+        },
+      },
+    },
+    messages: {
+      select: {
+        id: true,
+        createdAt: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 1,
+    },
+    chatGroupTags: {
+      include: { tag: true },
+    },
+    _count: {
+      select: {
+        members: true,
+      },
+    },
+  } satisfies Prisma.ChatGroupSelect,
 } as const;
 
 // Input Types
@@ -307,6 +345,10 @@ type ChatGroupSuggestionResult = Prisma.ChatGroupGetPayload<{
   select: typeof BaseSelectors.chatGroupSuggestion;
 }>;
 
+type ChatGroupPreviewDetail = Prisma.ChatGroupGetPayload<{
+  select: typeof BaseSelectors.chatGroupPreviewDetail;
+}>;
+
 type TransformedChatGroupForDiscovery = Omit<
   ChatGroupForDiscovery,
   "_count" | "chatGroupTags"
@@ -344,6 +386,18 @@ type TransformedChatMessage = Omit<ChatMessage, "sender"> & {
   sender: Omit<ChatMessage["sender"], "Avatar"> & {
     avatar: ChatMessage["sender"]["Avatar"];
   };
+};
+
+type TransformedChatGroupPreviewDetail = Omit<
+  ChatGroupPreviewDetail,
+  "creator" | "messages" | "_count" | "chatGroupTags"
+> & {
+  creator: Omit<ChatGroupPreviewDetail["creator"], "Avatar"> & {
+    avatar: ChatGroupPreviewDetail["creator"]["Avatar"];
+  };
+  lastActivityAt: ChatGroupPreviewDetail["messages"][0]["createdAt"];
+  tags: { id: number; name: string }[];
+  memberCount: number;
 };
 
 // Enriched Types
@@ -404,6 +458,8 @@ export {
   type TransformedChatMember,
   type ChatMessage,
   type TransformedChatMessage,
+  type ChatGroupPreviewDetail,
+  type TransformedChatGroupPreviewDetail,
   // Enriched types
   type EnrichedChatGroup,
   // Page types

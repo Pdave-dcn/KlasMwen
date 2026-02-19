@@ -22,11 +22,14 @@ export class ChatService {
   // Group Operations
   static createGroup: typeof ChatGroupService.createGroup;
   static getGroupById: typeof ChatGroupService.getGroupById;
+  static getGroupPreviewDetails: typeof ChatGroupService.getGroupPreviewDetails;
   static getUserGroups: typeof ChatGroupService.getUserGroups;
   static updateGroup: typeof ChatGroupService.updateGroup;
   static deleteGroup: typeof ChatGroupService.deleteGroup;
+  static joinGroup: typeof ChatGroupService.joinGroup;
+  static getRecentActivityGroups: typeof ChatGroupService.getRecentActivityGroups;
 
-  // ==================== Member Operations ====================
+  // Member Operations
   static addMember: typeof ChatMemberService.addMember;
   static removeMember: typeof ChatMemberService.removeMember;
   static updateMemberRole: typeof ChatMemberService.updateMemberRole;
@@ -34,8 +37,6 @@ export class ChatService {
   static getMemberInfo: typeof ChatMemberService.getMemberInfo;
   static isMember: typeof ChatMemberService.isMember;
   static updateLastReadAt: typeof ChatMemberService.updateLastReadAt;
-  static joinGroup: typeof ChatGroupService.joinGroup;
-  static getRecentActivityGroups: typeof ChatGroupService.getRecentActivityGroups;
 
   // Message Operations
   static sendMessage: typeof ChatMessageService.sendMessage;
@@ -78,6 +79,7 @@ export class ChatService {
         "updateGroup",
         "deleteGroup",
         "getRecentActivityGroups",
+        "getGroupPreviewDetails",
       ]),
       // Bind member operations
       bindMethods(ChatMemberService, [

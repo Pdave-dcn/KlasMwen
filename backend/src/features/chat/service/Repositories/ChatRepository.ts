@@ -21,6 +21,13 @@ class ChatRepository {
     });
   }
 
+  static async getGroupDetails(chatGroupId: string) {
+    return await prisma.chatGroup.findUnique({
+      where: { id: chatGroupId },
+      select: BaseSelectors.chatGroupPreviewDetail,
+    });
+  }
+
   /** Find public groups with cursor-based pagination, excluding groups the user is already a member of */
   static async findPublicGroups(
     userId: string,

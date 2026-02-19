@@ -7,6 +7,7 @@ import {
 import ChatGroupsPage from "@/features/study-circles/room/components/ChatGroupsPage";
 import AuthForm from "@/pages/AuthForm";
 import ChatHubPage from "@/pages/ChatHub";
+import CirclePreviewPage from "@/pages/CirclePreviewPage";
 import DiscoverPage from "@/pages/DiscoverPage";
 import HomePage from "@/pages/HomePage";
 import LandingPage from "@/pages/LandingPage";
@@ -123,6 +124,15 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <CreateGroupPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/circles/:id/preview"
+        element={
+          <ProtectedRoute>
+            <CirclePreviewPage />
           </ProtectedRoute>
         }
       />

@@ -1,9 +1,11 @@
 import type {
   ChatGroupForDiscovery,
+  ChatGroupPreviewDetail,
   ChatGroupSuggestionResult,
   ChatMessage,
   EnrichedChatMember,
   TransformedChatGroupForDiscovery,
+  TransformedChatGroupPreviewDetail,
   TransformedChatGroupSuggestion,
   TransformedChatMember,
   TransformedChatMessage,
@@ -152,6 +154,31 @@ class ChatTransformers {
     groups: ChatGroupSuggestionResult[],
   ): TransformedChatGroupSuggestion[] {
     return groups.map((group) => this.transformGroupForSuggestion(group));
+  }
+
+  /**
+   * Transforms a chat group for preview page view with normalized field names.
+   * Converts `Avatar` → `avatar`, `_count.members` → `memberCount`, and extracts tags/lastActivityAt.
+   *
+   * @param group - Raw chat group detail data from database
+   * @returns {TransformedChatGroupPreviewDetail} Transformed chat group
+   */
+  static transformGroupForDetailPage(
+    group: ChatGroupPreviewDetail,
+  ): TransformedChatGroupPreviewDetail {
+    const { Avatar, ...restCreator } = group.creator;
+    const { messages, _count, chatGroupTags, ...restData } = group;
+
+    return {
+      ...restData,
+      creator: {
+        ...restCreator,
+        avatar: Avatar ?? null,
+      },
+      lastActivityAt: messages[0].createdAt ?? null,
+      tags: chatGroupTags.map((cgt) => cgt.tag),
+      memberCount: _count.members,
+    };
   }
 }
 

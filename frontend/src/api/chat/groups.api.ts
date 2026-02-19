@@ -4,6 +4,7 @@ import {
   ChatGroupResponseSchema,
   type CreateChatGroupData,
   type UpdateChatGroupData,
+  ChatGroupPreviewResponseSchema,
 } from "@/zodSchemas/chat.zod";
 
 import api from "../api";
@@ -59,6 +60,17 @@ export const getChatGroupById = async (chatGroupId: string) => {
     return validatedData.data;
   } catch (error) {
     handleZodValidationError(error, "getChatGroupById");
+    throw error;
+  }
+};
+
+export const getGroupPreviewDetails = async (chatGroupId: string) => {
+  try {
+    const res = await api.get(`/groups/${chatGroupId}/preview`);
+    const validatedData = ChatGroupPreviewResponseSchema.parse(res.data);
+    return validatedData.data;
+  } catch (error) {
+    handleZodValidationError(error, "getGroupDetails");
     throw error;
   }
 };

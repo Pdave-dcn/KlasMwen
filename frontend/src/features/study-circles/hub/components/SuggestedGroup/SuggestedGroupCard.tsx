@@ -1,13 +1,12 @@
+import { Link } from "react-router-dom";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useJoinChatGroupMutation } from "@/queries/chat";
-import { usePresenceStore } from "@/stores/presence.store";
 import { getGroupInitials } from "@/utils/getInitials.util";
 import type { ChatGroupForDiscovery } from "@/zodSchemas/chat.zod";
-
-import { PresenceIndicator } from "../PresenceIndicator";
 
 interface SuggestedGroupCardProps {
   group: ChatGroupForDiscovery;
@@ -15,10 +14,6 @@ interface SuggestedGroupCardProps {
 
 export const SuggestedGroupCard = ({ group }: SuggestedGroupCardProps) => {
   const joinChatGroupMutation = useJoinChatGroupMutation();
-
-  const activeCount = usePresenceStore(
-    (state) => state.groupActivityCounts[group.id] || 0,
-  );
 
   const isJoining =
     joinChatGroupMutation.isPending &&
@@ -31,8 +26,8 @@ export const SuggestedGroupCard = ({ group }: SuggestedGroupCardProps) => {
   return (
     <div
       className={cn(
-        "flex items-center gap-4 p-3 rounded-lg border bg-card/50 transition-all duration-200",
-        "hover:bg-card hover:shadow-sm",
+        "group relative flex items-center gap-4 p-3 rounded-lg border bg-card/50 transition-all duration-200",
+        "hover:bg-card hover:shadow-sm hover:border-primary/30",
         isJoined && "border-green-500/30 bg-green-50/30 dark:bg-green-950/10",
       )}
     >
@@ -53,7 +48,16 @@ export const SuggestedGroupCard = ({ group }: SuggestedGroupCardProps) => {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
           <h4 className="font-medium text-foreground text-sm truncate">
-            {group.name}
+            {/* ACCESSIBILITY TRICK: The 'after:absolute after:inset-0' 
+                makes the link area cover the entire card without 
+                nesting other interactive elements inside it.
+            */}
+            <Link
+              to={`/circles/${group.id}/preview`}
+              className="focus:outline-none after:absolute after:inset-0"
+            >
+              {group.name}
+            </Link>
           </h4>
           {/* {group.isTrending && (
             <Badge
@@ -67,7 +71,7 @@ export const SuggestedGroupCard = ({ group }: SuggestedGroupCardProps) => {
 
         {/* Tags */}
         {group.tags && group.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-3">
+          <div className="flex flex-wrap gap-1.5 mb-3 relative z-10">
             {group.tags.slice(0, 6).map((tag) => (
               <Badge key={tag.name} variant="outline" className="text-primary">
                 #{tag.name}
@@ -86,12 +90,12 @@ export const SuggestedGroupCard = ({ group }: SuggestedGroupCardProps) => {
           <span className="text-[11px] text-muted-foreground">
             {group.memberCount} members
           </span>
-          <PresenceIndicator activeCount={activeCount} />
+          {/* <PresenceIndicator activeCount={activeCount} /> */}
         </div>
       </div>
 
       {/* Right: Action */}
-      <div className="shrink-0">
+      <div className="shrink-0 relative z-10">
         {isJoined ? (
           <span className="text-xs font-medium text-green-600 dark:text-green-400 px-3">
             ✓ Joined
@@ -100,7 +104,10 @@ export const SuggestedGroupCard = ({ group }: SuggestedGroupCardProps) => {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => joinChatGroupMutation.mutate(group.id)}
+            onClick={(e) => {
+              e.preventDefault(); // Prevents the Link click from firing
+              joinChatGroupMutation.mutate(group.id);
+            }}
             disabled={isJoining}
             className="h-8 px-4 text-xs"
           >

@@ -14,6 +14,7 @@ import {
   deleteChatGroup,
   joinChatGroup,
   getRecentActivityGroups,
+  getGroupPreviewDetails,
 } from "@/api/chat";
 import type {
   CreateChatGroupData,
@@ -42,6 +43,14 @@ export const useRecentActivityGroupsQuery = (limit = 8) => {
   return useQuery({
     queryKey: ["chat", "groups", "recent-activity", limit],
     queryFn: () => getRecentActivityGroups(limit),
+  });
+};
+
+export const useChatGroupPublicDetailsQuery = (chatGroupId: string) => {
+  return useQuery({
+    queryKey: ["chat", "groups", chatGroupId, "preview"],
+    queryFn: () => getGroupPreviewDetails(chatGroupId),
+    enabled: !!chatGroupId,
   });
 };
 

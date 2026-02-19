@@ -66,6 +66,23 @@ const ChatGroupDataSchema = z.object({
   latestMessage: ChatMessageDataSchema.nullable(),
 });
 
+const ChatGroupPreviewSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  description: z.string().nullable(),
+  avatar: AvatarSchema,
+  creator: ChatGroupCreatorSchema.extend({ avatar: AvatarSchema }),
+  lastActivityAt: z.string(),
+  tags: z.array(TagSchema),
+  memberCount: z.number().int().nonnegative(),
+  isPrivate: z.boolean(),
+  createdAt: z.string(),
+});
+
+const ChatGroupPreviewResponseSchema = z.object({
+  data: ChatGroupPreviewSchema,
+});
+
 const ChatGroupForDiscoverySchema = z.object({
   id: z.uuid(),
   name: z.string(),
@@ -205,6 +222,8 @@ export type SendMessageData = z.infer<typeof SendMessageSchema>;
 
 export type CreateGroupFormData = z.infer<typeof CreateChatGroupSchema>;
 
+export type ChatGroupPreview = z.infer<typeof ChatGroupPreviewSchema>;
+
 export type ChatMessagesResponse = z.infer<typeof ChatMessagesResponseSchema>;
 export type ChatGroupResponse = z.infer<typeof ChatGroupDataSchema>;
 
@@ -227,4 +246,6 @@ export {
   QuickStatsResponseSchema,
   ChatGroupSearchSuggestionSchema,
   ChatGroupsSearchResponseSchema,
+  ChatGroupPreviewSchema,
+  ChatGroupPreviewResponseSchema,
 };

@@ -6,6 +6,7 @@ import {
 import { getRandomChatGroupAvatar } from "../../../avatar/avatarService.js";
 import { assertChatPermission } from "../../security/rbac.js";
 import ChatEnricher from "../ChatEnrichers.js";
+import ChatTransformers from "../ChatTransformers.js";
 import ChatRepository from "../Repositories/ChatRepository.js";
 
 import type { CreateChatGroupData, UpdateChatGroupData } from "../chatTypes.js";
@@ -73,6 +74,22 @@ export class ChatGroupService {
     if (!group) throw new ChatGroupNotFoundError(chatGroupId);
 
     return ChatEnricher.enrichGroup(group, userId);
+  }
+
+  /**
+   * Fetches a group by ID and returns it in a client‑friendly shape.
+   * Throws {@link ChatGroupNotFoundError} if missing. Transforms the raw
+   * result with {@link ChatTransformers.transformGroupForDetailPage}.
+   *
+   * @param {string} chatGroupId - ID of the group to load.
+   * @throws {ChatGroupNotFoundError} if the group doesn't exist.
+   * @returns {Promise<TransformedChatGroupDetail>} transformed detail object.
+   */
+  static async getGroupPreviewDetails(chatGroupId: string) {
+    const group = await ChatRepository.getGroupDetails(chatGroupId);
+    if (!group) throw new ChatGroupNotFoundError(chatGroupId);
+
+    return ChatTransformers.transformGroupForDetailPage(group);
   }
 
   /**

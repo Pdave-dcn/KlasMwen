@@ -115,6 +115,36 @@ const getGroupById = async (
   }
 };
 
+const getGroupPreviewDetails = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const actionLogger = createActionLogger(
+    controllerLogger,
+    "getGroupDetails",
+    req,
+  );
+  try {
+    actionLogger.info("Fetching group details");
+    const { chatGroupId } = ChatGroupIdParamSchema.parse(req.params);
+
+    const group = await ChatService.getGroupPreviewDetails(chatGroupId);
+    actionLogger.info(
+      {
+        groupId: chatGroupId,
+        groupName: group.name,
+        memberCount: group.memberCount,
+      },
+      "Chat group details retrieved successfully",
+    );
+
+    return res.status(200).json({ data: group });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 const getUserGroups = async (
   req: Request,
   res: Response,
@@ -243,4 +273,5 @@ export {
   deleteGroup,
   joinGroup,
   getRecentActivityGroups,
+  getGroupPreviewDetails,
 };

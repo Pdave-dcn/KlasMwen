@@ -1,5 +1,5 @@
-export { CreateGroupForm } from "./CreateGroup/CreateGroupPage/CreateGroupForm";
-export { CreateGroupPage } from "./CreateGroup/CreateGroupPage/CreateGroupPage";
-export { ChatHubCard } from "./ChatHub/ChatHubCard";
-export { DiscoverGroupsPage } from "./DiscoverGroup/DiscoverGroupsPage";
-export { GroupDiscoveryCard } from "./DiscoverGroup/GroupDiscoveryCard";
+export { CreateCircleForm as CreateGroupForm } from "./CreateGroup/CreateCirclePage/CreateCircleForm";
+export { CreateCirclePage as CreateGroupPage } from "./CreateGroup/CreateCirclePage/CreateCirclePage";
+export { CircleHubCard as ChatHubCard } from "./CirclesHub/CircleHubCard";
+export { DiscoverCirclesPage as DiscoverGroupsPage } from "./DiscoverStudyCircles/DiscoverCirclesPage";
+export { CircleDiscoveryCard as GroupDiscoveryCard } from "./DiscoverStudyCircles/CircleDiscoveryCard";

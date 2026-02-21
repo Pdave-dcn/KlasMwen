@@ -1,7 +1,7 @@
 import { Crown, Shield, Users, VolumeX, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { useChatStore } from "@/stores/chat.store";
+import { useCircleStore } from "@/stores/circle.store";
 import { usePresenceStore } from "@/stores/presence.store";
 import type { ChatMember, ChatRole as MemberRole } from "@/zodSchemas/chat.zod";
 
@@ -30,11 +30,11 @@ export const MemberItem = ({
     state.onlineUsers.has(member.userId),
   );
 
-  const isSyncOnline = useChatStore((state) =>
+  const isSyncOnline = useCircleStore((state) =>
     state.onlineMemberIds.has(member.userId),
   );
 
-  const isPresent = useChatStore((state) =>
+  const isPresent = useCircleStore((state) =>
     state.presentMemberIds.has(member.userId),
   );
 

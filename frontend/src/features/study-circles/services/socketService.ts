@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import { io } from "socket.io-client";
 
-import { useChatStore } from "@/stores/chat.store";
+import { useCircleStore } from "@/stores/circle.store";
 import type {
   ChatMessage,
   MemberJoinedData,
@@ -16,10 +16,10 @@ type DiscoveryWatchHandler = (data: { counts: Record<string, number> }) => void;
  * Socket.io service for real-time chat.
  * Manages connections, room subscriptions, and message broadcasting.
  */
-export class ChatSocketService {
+export class CircleSocketService {
   private socket: ReturnType<typeof io> | null = null;
   private connected: boolean = false;
-  private currentRoom: string | null = null;
+  private currentCircleId: string | null = null;
   private messageHandlers: MessageHandler[] = [];
   private memberJoinedHandlers: ((data: MemberJoinedData) => void)[] = [];
   private memberLeftHandlers: ((data: MemberLeftData) => void)[] = [];
@@ -28,7 +28,7 @@ export class ChatSocketService {
   private discoveryWatchHandlers: DiscoveryWatchHandler[] = [];
 
   /**
-   * Connects to chat namespace. Automatically rejoins current room on reconnection.
+   * Connects to the circle namespace. Automatically rejoins the active circle on reconnection.
    */
   connect(): void {
     if (this.socket) return;
@@ -46,8 +46,8 @@ export class ChatSocketService {
       this.connected = true;
       this.connectionHandlers.forEach((h) => h());
 
-      if (this.currentRoom) {
-        this.joinRoom(this.currentRoom);
+      if (this.currentCircleId) {
+        this.joinCircle(this.currentCircleId);
       }
     });
 
@@ -80,8 +80,8 @@ export class ChatSocketService {
    * Disconnects from server, leaves current room, and cleans up.
    */
   disconnect(): void {
-    if (this.currentRoom) {
-      this.leaveRoom(this.currentRoom);
+    if (this.currentCircleId) {
+      this.leaveCircle(this.currentCircleId);
     }
 
     if (this.socket) {
@@ -100,15 +100,15 @@ export class ChatSocketService {
   }
 
   /**
-   * Joins a chat room by group ID.
+   * Joins a specific study circle room.
    */
-  joinRoom(chatGroupId: string): void {
-    this.currentRoom = chatGroupId;
+  joinCircle(circleId: string): void {
+    this.currentCircleId = circleId;
 
     if (this.socket && this.connected) {
       this.socket.emit(
         "chat:join",
-        { chatGroupId },
+        { circleId },
         (response: {
           success: boolean;
           presentMemberIds?: string[];
@@ -118,14 +118,14 @@ export class ChatSocketService {
           if (response.success) {
             if (response.onlineMemberIds) {
               // Bulk update the store with the "Who's already online" list
-              useChatStore
+              useCircleStore
                 .getState()
                 .setOnlineMembers(response.onlineMemberIds);
             }
 
             if (response.presentMemberIds) {
               // Bulk update the store with the "Who's already here" list
-              useChatStore
+              useCircleStore
                 .getState()
                 .setPresentMembers(response.presentMemberIds);
             }
@@ -140,39 +140,39 @@ export class ChatSocketService {
   }
 
   /**
-   * Leaves a chat room by group ID.
+   * Leaves a study circle room.
    */
-  leaveRoom(chatGroupId: string): void {
+  leaveCircle(circleId: string): void {
     if (this.socket && this.connected) {
-      this.socket.emit("chat:leave", { chatGroupId });
+      this.socket.emit("chat:leave", { circleId });
     }
-    if (this.currentRoom === chatGroupId) {
-      this.currentRoom = null;
+    if (this.currentCircleId === circleId) {
+      this.currentCircleId = null;
     }
   }
 
   /**
-   * Returns the current room ID or null.
+   * Returns the current study circle room ID or null.
    */
-  getCurrentRoom(): string | null {
-    return this.currentRoom;
+  getCurrentCircleId(): string | null {
+    return this.currentCircleId;
   }
 
   /**
-   * Starts watching presence counts for given chat group IDs.
+   * Starts watching presence counts for given study circle IDs.
    */
-  startDiscoveryWatch(chatGroupIds: string[]): void {
+  startDiscoveryWatch(circleIds: string[]): void {
     if (this.socket && this.connected) {
-      this.socket.emit("chat:discovery_watch", { chatGroupIds });
+      this.socket.emit("chat:discovery_watch", { circleIds });
     }
   }
 
   /**
    * Stops watching presence counts for given chat group IDs.
    */
-  stopDiscoveryWatch(chatGroupIds: string[]): void {
+  stopDiscoveryWatch(circleIds: string[]): void {
     if (this.socket && this.connected) {
-      this.socket.emit("chat:discovery_unwatch", { chatGroupIds });
+      this.socket.emit("chat:discovery_unwatch", { circleIds });
     }
   }
 
@@ -257,6 +257,6 @@ export class ChatSocketService {
 }
 
 /**
- * Singleton instance for all chat socket operations.
+ * Singleton instance for all real-time circle operations.
  */
-export const chatSocketService = new ChatSocketService();
+export const circleSocketService = new CircleSocketService();

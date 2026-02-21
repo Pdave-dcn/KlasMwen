@@ -6,16 +6,16 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRecentActivityGroupsQuery } from "@/queries/chat";
 
-import { useGroupsPresenceCount } from "../../hooks/useGroupsPresenceCount";
+import { useCirclesPresenceCount } from "../../hooks/useCirclesPresenceCount";
 
-import { RecentGroupCard } from "./RecentGroupCard";
+import { RecentCircleCard } from "./RecentCircleCard";
 
 export const RecentActivitySection = () => {
   const navigate = useNavigate();
 
   const { data: groups, isLoading, isError } = useRecentActivityGroupsQuery();
 
-  useGroupsPresenceCount(groups ? groups.map((group) => group.id) : []);
+  useCirclesPresenceCount(groups ? groups.map((group) => group.id) : []);
 
   if (isLoading) {
     return (
@@ -49,7 +49,7 @@ export const RecentActivitySection = () => {
           </h3>
         </div>
         <button
-          onClick={() => navigate("/chat/groups")}
+          onClick={() => navigate("/circles/mine")}
           className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
         >
           View all
@@ -60,9 +60,9 @@ export const RecentActivitySection = () => {
       <ScrollArea className="w-full">
         <div className="flex gap-3 pb-4">
           {groups.map((group) => (
-            <RecentGroupCard
+            <RecentCircleCard
               key={group.id}
-              group={group}
+              circle={group}
               onClick={() => navigate(`/chat/groups?group=${group.id}`)}
             />
           ))}

@@ -4,10 +4,10 @@ import {
   DiscoverGroupsPage,
   CreateGroupPage,
 } from "@/features/study-circles/hub/components";
-import ChatGroupsPage from "@/features/study-circles/room/components/ChatGroupsPage";
+import CircleRoomPage from "@/features/study-circles/room/components/CircleRoomPage";
 import AuthForm from "@/pages/AuthForm";
-import ChatHubPage from "@/pages/ChatHub";
 import CirclePreviewPage from "@/pages/CirclePreviewPage";
+import CirclesHubPage from "@/pages/CirclesHubPage";
 import DiscoverPage from "@/pages/DiscoverPage";
 import HomePage from "@/pages/HomePage";
 import LandingPage from "@/pages/LandingPage";
@@ -99,7 +99,7 @@ export const AppRoutes = () => {
         path="/circles"
         element={
           <ProtectedRoute>
-            <ChatHubPage />
+            <CirclesHubPage />
           </ProtectedRoute>
         }
       />
@@ -107,7 +107,7 @@ export const AppRoutes = () => {
         path="/circles/mine"
         element={
           <ProtectedRoute>
-            <ChatGroupsPage />
+            <CircleRoomPage />
           </ProtectedRoute>
         }
       />

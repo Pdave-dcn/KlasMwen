@@ -3,7 +3,7 @@ import ChatService from "../../features/chat/service/ChatService.js";
 import createActionLogger from "../../utils/logger.util.js";
 import {
   AddMemberDataSchema,
-  ChatGroupIdParamSchema,
+  StudyCircleIdParamSchema,
   UpdateMemberRoleDataSchema,
   UserIdParamSchema,
 } from "../../zodSchemas/chat.zod.js";
@@ -19,13 +19,13 @@ const addMember = async (req: Request, res: Response, next: NextFunction) => {
   try {
     actionLogger.info("Adding member to chat group");
     const { user } = req as AuthenticatedRequest;
-    const { chatGroupId } = ChatGroupIdParamSchema.parse(req.params);
+    const { circleId } = StudyCircleIdParamSchema.parse(req.params);
     const { userId, role } = AddMemberDataSchema.parse(req.body);
 
     const member = await ChatService.addMember(
       {
         userId,
-        chatGroupId,
+        chatGroupId: circleId,
         role,
       },
       user,
@@ -33,7 +33,7 @@ const addMember = async (req: Request, res: Response, next: NextFunction) => {
 
     actionLogger.info(
       {
-        groupId: chatGroupId,
+        circleId,
         addedUserId: userId,
         role: member.role,
         requesterId: user.id,
@@ -62,13 +62,13 @@ const getGroupMembers = async (
 
   try {
     actionLogger.info("Fetching group members");
-    const { chatGroupId } = ChatGroupIdParamSchema.parse(req.params);
+    const { circleId } = StudyCircleIdParamSchema.parse(req.params);
 
-    const members = await ChatService.getGroupMembers(chatGroupId);
+    const members = await ChatService.getGroupMembers(circleId);
 
     actionLogger.info(
       {
-        groupId: chatGroupId,
+        circleId,
         memberCount: members.length,
       },
       "Group members retrieved successfully",
@@ -97,7 +97,9 @@ const removeMember = async (
   try {
     actionLogger.info("Removing member from chat group");
     const { user } = req as AuthenticatedRequest;
-    const { chatGroupId } = ChatGroupIdParamSchema.parse(req.params);
+    const { circleId: chatGroupId } = StudyCircleIdParamSchema.parse(
+      req.params,
+    );
     const { userId } = UserIdParamSchema.parse(req.params);
 
     await ChatService.removeMember(userId, chatGroupId, user);
@@ -140,7 +142,9 @@ const updateMemberRole = async (
   try {
     actionLogger.info("Updating member role");
     const { user } = req as AuthenticatedRequest;
-    const { chatGroupId } = ChatGroupIdParamSchema.parse(req.params);
+    const { circleId: chatGroupId } = StudyCircleIdParamSchema.parse(
+      req.params,
+    );
     const { userId } = UserIdParamSchema.parse(req.params);
     const { role } = UpdateMemberRoleDataSchema.parse(req.body);
 
@@ -183,7 +187,9 @@ const updateLastReadAt = async (
   try {
     actionLogger.info("Updating last read timestamp");
     const { user } = req as AuthenticatedRequest;
-    const { chatGroupId } = ChatGroupIdParamSchema.parse(req.params);
+    const { circleId: chatGroupId } = StudyCircleIdParamSchema.parse(
+      req.params,
+    );
 
     await ChatService.updateLastReadAt(user.id, chatGroupId);
 

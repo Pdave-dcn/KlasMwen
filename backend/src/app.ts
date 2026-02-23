@@ -13,7 +13,7 @@ import { errorMiddleware } from "./middleware/error.middleware.js";
 import { httpLogger } from "./middleware/httpLogger.middleware.js";
 import router from "./routes/index.js";
 import { socketAuthMiddleware } from "./socket/auth/auth.js";
-import { registerChatSocketHandlers } from "./socket/chat/chat.socket.js";
+import { registerCircleSocketHandlers } from "./socket/chat/circle.socket.js";
 import { registerSocketHandlers } from "./socket/global.socket.js";
 import setupSwagger from "./swagger/index.js";
 
@@ -43,9 +43,9 @@ app.set("io", io);
 io.use(socketAuthMiddleware);
 registerSocketHandlers(io);
 
-const chatNamespace = io.of("/chat");
-chatNamespace.use(socketAuthMiddleware);
-registerChatSocketHandlers(chatNamespace);
+const studyCircleNamespace = io.of("/circles");
+studyCircleNamespace.use(socketAuthMiddleware);
+registerCircleSocketHandlers(studyCircleNamespace);
 
 setupSwagger(app);
 

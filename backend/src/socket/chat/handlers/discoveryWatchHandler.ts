@@ -21,7 +21,7 @@ export const handleDiscoveryWatch = (socket: Socket, nsp: Namespace) => {
     const counts: Record<string, number> = {};
     for (const circleId of data.circleIds) {
       // Calculate active participants in the actual chat room
-      const socketsInRoom = await nsp.in(`chat:${circleId}`).fetchSockets();
+      const socketsInRoom = await nsp.in(`circle:${circleId}`).fetchSockets();
 
       // Note: Using unique user IDs here is recommended to avoid double-counting tabs
       const uniqueCount = new Set(socketsInRoom.map((s) => s.data.user.id))
@@ -30,6 +30,6 @@ export const handleDiscoveryWatch = (socket: Socket, nsp: Namespace) => {
     }
 
     // Send the starting numbers back to the user
-    socket.emit("chat:presence_counts_update", { counts });
+    socket.emit("circle:presence_counts_update", { counts });
   };
 };

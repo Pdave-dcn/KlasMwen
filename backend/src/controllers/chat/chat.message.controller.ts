@@ -3,7 +3,7 @@ import ChatService from "../../features/chat/service/ChatService.js";
 import createActionLogger from "../../utils/logger.util.js";
 import { createPaginationSchema } from "../../utils/pagination.util.js";
 import {
-  ChatGroupIdParamSchema,
+  StudyCircleIdParamSchema,
   MessageIdParamSchema,
   SendMessageDataSchema,
 } from "../../zodSchemas/chat.zod.js";
@@ -18,18 +18,16 @@ const sendMessage = async (req: Request, res: Response, next: NextFunction) => {
 
   try {
     actionLogger.info("Sending message to chat group");
-    console.log("req.params:", req.params);
-    console.log("req.url:", req.url);
 
     const { user } = req as AuthenticatedRequest;
-    const { chatGroupId } = ChatGroupIdParamSchema.parse(req.params);
+    const { circleId } = StudyCircleIdParamSchema.parse(req.params);
     const { content } = SendMessageDataSchema.parse(req.body);
 
     const message = await ChatService.sendMessage(
       {
         content,
         senderId: user.id,
-        chatGroupId,
+        chatGroupId: circleId,
       },
       user,
     );
@@ -37,15 +35,17 @@ const sendMessage = async (req: Request, res: Response, next: NextFunction) => {
     const io = req.app.get("io");
 
     if (io) {
-      const chatNamespace = io.of("/chat");
+      const chatNamespace = io.of("/circles");
 
-      chatNamespace.to(`chat:${chatGroupId}`).emit("chat:new_message", message);
+      chatNamespace
+        .to(`circle:${circleId}`)
+        .emit("circle:new_message", message);
     }
 
     actionLogger.info(
       {
         messageId: message.id,
-        groupId: chatGroupId,
+        groupId: circleId,
         senderId: user.id,
       },
       "Message sent successfully",
@@ -65,18 +65,18 @@ const getMessages = async (req: Request, res: Response, next: NextFunction) => {
   try {
     actionLogger.info("Fetching messages from chat group");
     const { user } = req as AuthenticatedRequest;
-    const { chatGroupId } = ChatGroupIdParamSchema.parse(req.params);
+    const { circleId } = StudyCircleIdParamSchema.parse(req.params);
     const customValidator = createPaginationSchema(10, 50, "number");
     const { limit, cursor } = customValidator.parse(req.query);
 
-    const result = await ChatService.getMessages(chatGroupId, user, {
+    const result = await ChatService.getMessages(circleId, user, {
       limit,
       cursor: cursor as number | undefined,
     });
 
     actionLogger.info(
       {
-        groupId: chatGroupId,
+        groupId: circleId,
         messageCount: result.data.length,
         hasMore: result.pagination.hasMore,
         nextCursor: result.pagination.nextCursor,

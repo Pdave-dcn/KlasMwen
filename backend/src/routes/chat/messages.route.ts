@@ -12,8 +12,8 @@ import {
 
 const router = Router();
 
-router.post("/:chatGroupId/message", requireMembership, sendMessage);
-router.get("/:chatGroupId/messages", requireMembership, getMessages);
-router.delete("/:chatGroupId/messages/:id", enrichChatRole, deleteMessage);
+router.post("/:circleId/message", requireMembership, sendMessage);
+router.get("/:circleId/messages", requireMembership, getMessages);
+router.delete("/:circleId/messages/:id", enrichChatRole, deleteMessage);
 
 export default router;

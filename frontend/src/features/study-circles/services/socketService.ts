@@ -33,7 +33,7 @@ export class CircleSocketService {
   connect(): void {
     if (this.socket) return;
 
-    this.socket = io(import.meta.env.VITE_CHAT_SOCKET_URL, {
+    this.socket = io(import.meta.env.VITE_CIRCLE_SOCKET_URL, {
       withCredentials: true,
       transports: ["websocket"],
     });
@@ -56,20 +56,20 @@ export class CircleSocketService {
       this.disconnectionHandlers.forEach((h) => h());
     });
 
-    this.socket.on("chat:new_message", (msg: ChatMessage) => {
+    this.socket.on("circle:new_message", (msg: ChatMessage) => {
       this.messageHandlers.forEach((h) => h(msg));
     });
 
-    this.socket.on("chat:member_joined", (data: MemberJoinedData) => {
+    this.socket.on("circle:member_joined", (data: MemberJoinedData) => {
       this.memberJoinedHandlers.forEach((h) => h(data));
     });
 
-    this.socket.on("chat:member_left", (data: MemberLeftData) => {
+    this.socket.on("circle:member_left", (data: MemberLeftData) => {
       this.memberLeftHandlers.forEach((h) => h(data));
     });
 
     this.socket.on(
-      "chat:presence_counts_update",
+      "circle:presence_counts_update",
       (data: { counts: Record<string, number> }) => {
         this.discoveryWatchHandlers.forEach((h) => h(data));
       },
@@ -107,7 +107,7 @@ export class CircleSocketService {
 
     if (this.socket && this.connected) {
       this.socket.emit(
-        "chat:join",
+        "circle:join_room",
         { circleId },
         (response: {
           success: boolean;
@@ -144,7 +144,7 @@ export class CircleSocketService {
    */
   leaveCircle(circleId: string): void {
     if (this.socket && this.connected) {
-      this.socket.emit("chat:leave", { circleId });
+      this.socket.emit("circle:leave_room", { circleId });
     }
     if (this.currentCircleId === circleId) {
       this.currentCircleId = null;
@@ -163,16 +163,16 @@ export class CircleSocketService {
    */
   startDiscoveryWatch(circleIds: string[]): void {
     if (this.socket && this.connected) {
-      this.socket.emit("chat:discovery_watch", { circleIds });
+      this.socket.emit("circle:watch_discovery", { circleIds });
     }
   }
 
   /**
-   * Stops watching presence counts for given chat group IDs.
+   * Stops watching presence counts for given circle IDs.
    */
   stopDiscoveryWatch(circleIds: string[]): void {
     if (this.socket && this.connected) {
-      this.socket.emit("chat:discovery_unwatch", { circleIds });
+      this.socket.emit("circle:unwatch_discovery", { circleIds });
     }
   }
 

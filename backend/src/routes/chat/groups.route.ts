@@ -17,10 +17,10 @@ const router = Router();
 router.post("/", createChatGroup);
 router.get("/", getUserGroups);
 router.get("/recent-activity", getRecentActivityGroups);
-router.post("/join/:chatGroupId", joinGroup);
-router.get("/:chatGroupId/preview", getGroupPreviewDetails);
-router.get("/:chatGroupId", enrichChatRole, getGroupById);
-router.put("/:chatGroupId", enrichChatRole, updateGroup);
-router.delete("/:chatGroupId", enrichChatRole, deleteGroup);
+router.post("/join/:circleId", joinGroup);
+router.get("/:circleId/preview", getGroupPreviewDetails);
+router.get("/:circleId", enrichChatRole, getGroupById);
+router.put("/:circleId", enrichChatRole, updateGroup);
+router.delete("/:circleId", enrichChatRole, deleteGroup);
 
 export default router;

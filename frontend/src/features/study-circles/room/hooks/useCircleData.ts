@@ -7,15 +7,15 @@ import {
   useChatMessagesQuery,
 } from "@/queries/chat";
 
-export const useCircleData = (groupId: string | null) => {
+export const useCircleData = (circleId: string | null) => {
   const { data: groups = [], isLoading: isLoadingCircles } =
     useChatGroupsQuery();
 
   const { data: selectedCircle, isLoading: isLoadingCircle } =
-    useChatGroupQuery(groupId ?? "");
+    useChatGroupQuery(circleId ?? "");
 
   const { data: members = [], isLoading: isLoadingMembers } =
-    useChatMembersQuery(groupId ?? "");
+    useChatMembersQuery(circleId ?? "");
 
   const {
     data: messagesData,
@@ -23,7 +23,7 @@ export const useCircleData = (groupId: string | null) => {
     isFetchingNextPage,
     fetchNextPage,
     hasNextPage,
-  } = useChatMessagesQuery(groupId ?? "");
+  } = useChatMessagesQuery(circleId ?? "");
 
   const messages = useMemo(
     () =>

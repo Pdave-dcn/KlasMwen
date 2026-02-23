@@ -4,13 +4,13 @@ import { broadcastPresenceUpdate } from "../helpers/broadcastPresenceUpdate.js";
 import type UserService from "../../../features/user/service/UserService.js";
 import type { Namespace, Socket } from "socket.io";
 
-const logger = createLogger({ module: "ChatSocket" });
+const logger = createLogger({ module: "StudyCircleSocket" });
 
 /**
  * Handles cleaning up when a student leaves the app or closes their tab.
  *
  * This function:
- * 1. Identifies which chat groups the student was actually looking at.
+ * 1. Identifies which study circles the student was actually looking at.
  * 2. Tells people inside those chats that the student has left.
  * 3. Updates the "Active Count" for people looking at the dashboard.
  */
@@ -25,12 +25,12 @@ export const handleDisconnect = (socket: Socket, nsp: Namespace) => {
       "User disconnected from chat",
     );
 
-    const joinedGroups = socket.data.joinedChatGroups as Set<string>;
+    const joinedCircles = socket.data.joinedStudyCircles as Set<string>;
 
-    if (joinedGroups) {
-      for (const chatGroupId of joinedGroups) {
+    if (joinedCircles) {
+      for (const studyCircleId of joinedCircles) {
         // Notify people INSIDE the chat room
-        socket.to(`chat:${chatGroupId}`).emit("chat:member_left", {
+        socket.to(`circle:${studyCircleId}`).emit("circle:member_left", {
           user: {
             id: user.id,
             username: user.username,
@@ -38,7 +38,7 @@ export const handleDisconnect = (socket: Socket, nsp: Namespace) => {
         });
 
         // Update the count for people watching from the HUB
-        void broadcastPresenceUpdate(chatGroupId, nsp);
+        void broadcastPresenceUpdate(studyCircleId, nsp);
       }
     }
   };

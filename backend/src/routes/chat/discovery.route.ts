@@ -22,7 +22,7 @@ router.get("/new", getNewGroups);
 router.get("/small", getSmallGroups);
 router.get("/search", searchGroups);
 router.get("/suggestions", getSearchSuggestions);
-router.get("/similar/:chatGroupId", getSimilarGroups);
+router.get("/similar/:circleId", getSimilarGroups);
 router.get("/creator/:creatorId", getGroupsByCreator);
 
 export default router;

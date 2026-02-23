@@ -14,10 +14,10 @@ import {
 
 const router = Router();
 
-router.post("/:chatGroupId/members", enrichChatRole, addMember);
-router.get("/:chatGroupId/members", requireMembership, getGroupMembers);
-router.delete("/:chatGroupId/members/:userId", enrichChatRole, removeMember);
-router.patch("/:chatGroupId/members/:userId", enrichChatRole, updateMemberRole);
-router.post("/:chatGroupId/members/me/read", updateLastReadAt);
+router.post("/:circleId/members", enrichChatRole, addMember);
+router.get("/:circleId/members", requireMembership, getGroupMembers);
+router.delete("/:circleId/members/:userId", enrichChatRole, removeMember);
+router.patch("/:circleId/members/:userId", enrichChatRole, updateMemberRole);
+router.post("/:circleId/members/me/read", updateLastReadAt);
 
 export default router;

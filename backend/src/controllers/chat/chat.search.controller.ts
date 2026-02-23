@@ -3,7 +3,7 @@ import ChatService from "../../features/chat/service/ChatService";
 import createActionLogger from "../../utils/logger.util";
 import { createPaginationSchema } from "../../utils/pagination.util";
 import {
-  ChatGroupIdParamSchema,
+  StudyCircleIdParamSchema,
   CreatorIdParamSchema,
   GroupSearchFiltersSchema,
   SearchSuggestionQuerySchema,
@@ -237,12 +237,12 @@ const getSimilarGroups = async (
 
     const { user } = req as AuthenticatedRequest;
 
-    const { chatGroupId } = ChatGroupIdParamSchema.parse(req.params);
+    const { circleId } = StudyCircleIdParamSchema.parse(req.params);
 
     const similarPaginationSchema = createPaginationSchema(10, 50, "uuid");
     const { limit, cursor } = similarPaginationSchema.parse(req.query);
 
-    const result = await ChatService.getSimilarGroups(user.id, chatGroupId, {
+    const result = await ChatService.getSimilarGroups(user.id, circleId, {
       limit,
       cursor: cursor as string | undefined,
     });
@@ -252,7 +252,7 @@ const getSimilarGroups = async (
         count: result.data.length,
         hasMore: result.pagination.hasMore,
         nextCursor: result.pagination.nextCursor,
-        referenceGroupId: chatGroupId,
+        referenceGroupId: circleId,
       },
       "Similar groups fetched successfully",
     );

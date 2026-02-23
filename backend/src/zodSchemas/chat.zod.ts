@@ -1,8 +1,8 @@
 import { ChatRole } from "@prisma/client";
 import { z } from "zod";
 
-const ChatGroupIdParamSchema = z.object({
-  chatGroupId: z.uuid("Invalid chat group ID format"),
+const StudyCircleIdParamSchema = z.object({
+  circleId: z.uuid("Invalid study circle ID format"),
 });
 
 const UserIdParamSchema = z.object({
@@ -161,7 +161,7 @@ export {
   CreateChatGroupDataSchema,
   UpdateChatGroupDataSchema,
   GroupSearchFiltersSchema,
-  ChatGroupIdParamSchema,
+  StudyCircleIdParamSchema,
   CreatorIdParamSchema,
   UserIdParamSchema,
   AddMemberDataSchema,

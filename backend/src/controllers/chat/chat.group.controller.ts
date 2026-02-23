@@ -2,7 +2,7 @@ import { createLogger } from "../../core/config/logger.js";
 import ChatService from "../../features/chat/service/ChatService.js";
 import createActionLogger from "../../utils/logger.util.js";
 import {
-  ChatGroupIdParamSchema,
+  StudyCircleIdParamSchema,
   CreateChatGroupDataSchema,
   UpdateChatGroupDataSchema,
 } from "../../zodSchemas/chat.zod.js";
@@ -24,7 +24,7 @@ const createChatGroup = async (
   );
 
   try {
-    actionLogger.info("Creating chat group");
+    actionLogger.info("Creating study circle");
     const { user } = req as AuthenticatedRequest;
 
     const parsed = CreateChatGroupDataSchema.parse({
@@ -40,7 +40,7 @@ const createChatGroup = async (
         groupName: group.name,
         creatorId: user.id,
       },
-      "Chat group created successfully",
+      "Study circle created successfully",
     );
 
     return res.status(201).json({
@@ -55,21 +55,21 @@ const joinGroup = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(controllerLogger, "joinGroup", req);
 
   try {
-    actionLogger.info("User joining chat group");
+    actionLogger.info("User joining study circle");
 
     const { user } = req as AuthenticatedRequest;
-    const { chatGroupId } = ChatGroupIdParamSchema.parse(req.params);
+    const { circleId } = StudyCircleIdParamSchema.parse(req.params);
 
-    const group = await ChatService.joinGroup(chatGroupId, user.id);
+    const group = await ChatService.joinGroup(circleId, user.id);
 
     actionLogger.info(
       {
-        groupId: chatGroupId,
+        circleId,
         groupName: group.name,
         userId: user.id,
         userRole: group.userRole,
       },
-      "User joined chat group successfully",
+      "User joined study circle successfully",
     );
 
     return res.status(200).json({
@@ -92,19 +92,19 @@ const getGroupById = async (
   );
 
   try {
-    actionLogger.info("Fetching chat group by ID");
+    actionLogger.info("Fetching study circle by ID");
     const { user } = req as AuthenticatedRequest;
-    const { chatGroupId } = ChatGroupIdParamSchema.parse(req.params);
+    const { circleId } = StudyCircleIdParamSchema.parse(req.params);
 
-    const group = await ChatService.getGroupById(chatGroupId, user.id);
+    const group = await ChatService.getGroupById(circleId, user.id);
 
     actionLogger.info(
       {
-        groupId: chatGroupId,
+        circleId,
         groupName: group.name,
         userRole: group.userRole,
       },
-      "Chat group retrieved successfully",
+      "Study circle retrieved successfully",
     );
 
     return res.status(200).json({
@@ -126,17 +126,17 @@ const getGroupPreviewDetails = async (
     req,
   );
   try {
-    actionLogger.info("Fetching group details");
-    const { chatGroupId } = ChatGroupIdParamSchema.parse(req.params);
+    actionLogger.info("Fetching study circle details");
+    const { circleId } = StudyCircleIdParamSchema.parse(req.params);
 
-    const group = await ChatService.getGroupPreviewDetails(chatGroupId);
+    const group = await ChatService.getGroupPreviewDetails(circleId);
     actionLogger.info(
       {
-        groupId: chatGroupId,
+        circleId,
         groupName: group.name,
         memberCount: group.memberCount,
       },
-      "Chat group details retrieved successfully",
+      "Study circle details retrieved successfully",
     );
 
     return res.status(200).json({ data: group });
@@ -157,7 +157,7 @@ const getUserGroups = async (
   );
 
   try {
-    actionLogger.info("Fetching user's chat groups");
+    actionLogger.info("Fetching user's study circles");
     const { user } = req as AuthenticatedRequest;
 
     const groups = await ChatService.getUserGroups(user.id);
@@ -167,7 +167,7 @@ const getUserGroups = async (
         userId: user.id,
         groupCount: groups.length,
       },
-      "User groups retrieved successfully",
+      "User study circles retrieved successfully",
     );
 
     return res.status(200).json({
@@ -189,7 +189,7 @@ const getRecentActivityGroups = async (
     req,
   );
   try {
-    actionLogger.info("Fetching recent activity chat groups");
+    actionLogger.info("Fetching recent activity study circles");
 
     const { user, query } = req as AuthenticatedRequest;
 
@@ -201,7 +201,7 @@ const getRecentActivityGroups = async (
         userId: user.id,
         groupCount: groups.length,
       },
-      "Recent activity groups retrieved successfully",
+      "Recent activity study circles retrieved successfully",
     );
     return res.status(200).json({
       data: groups,
@@ -215,20 +215,20 @@ const updateGroup = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(controllerLogger, "updateGroup", req);
 
   try {
-    actionLogger.info("Updating chat group");
+    actionLogger.info("Updating study circle");
     const { user } = req as AuthenticatedRequest;
-    const { chatGroupId } = ChatGroupIdParamSchema.parse(req.params);
+    const { circleId } = StudyCircleIdParamSchema.parse(req.params);
     const data = UpdateChatGroupDataSchema.parse(req.body);
 
-    const updatedGroup = await ChatService.updateGroup(chatGroupId, user, data);
+    const updatedGroup = await ChatService.updateGroup(circleId, user, data);
 
     actionLogger.info(
       {
-        groupId: chatGroupId,
+        circleId,
         groupName: updatedGroup.name,
         userId: user.id,
       },
-      "Chat group updated successfully",
+      "Study circle updated successfully",
     );
 
     return res.status(200).json({
@@ -243,22 +243,22 @@ const deleteGroup = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(controllerLogger, "deleteGroup", req);
 
   try {
-    actionLogger.info("Deleting chat group");
+    actionLogger.info("Deleting Study circle");
     const { user } = req as AuthenticatedRequest;
-    const { chatGroupId } = ChatGroupIdParamSchema.parse(req.params);
+    const { circleId } = StudyCircleIdParamSchema.parse(req.params);
 
-    await ChatService.deleteGroup(chatGroupId, user);
+    await ChatService.deleteGroup(circleId, user);
 
     actionLogger.info(
       {
-        groupId: chatGroupId,
+        circleId,
         userId: user.id,
       },
-      "Chat group deleted successfully",
+      "Study circle deleted successfully",
     );
 
     return res.status(200).json({
-      message: "Chat group deleted successfully",
+      message: "Study circle deleted successfully",
     });
   } catch (error: unknown) {
     return next(error);

@@ -4,27 +4,27 @@ import {
   NotAMemberError,
 } from "../../../core/error/custom/chat.error.js";
 import ChatService from "../../../features/chat/service/ChatService.js";
-import { ChatGroupIdParamSchema as ChatGroupIdSchema } from "../../../zodSchemas/chat.zod.js";
+import { StudyCircleIdParamSchema } from "../../../zodSchemas/chat.zod.js";
 import { PresenceService } from "../../presence/presence.service.js";
 import { broadcastPresenceUpdate } from "../helpers/broadcastPresenceUpdate.js";
 
 import type UserService from "../../../features/user/service/UserService.js";
 import type { Namespace, Socket } from "socket.io";
 
-const logger = createLogger({ module: "ChatSocket" });
+const logger = createLogger({ module: "StudyCircleSocket" });
 
 // Helper function to get present and online members
 const getMemberPresence = async (
   nsp: Namespace,
-  chatGroupId: string,
+  studyCircleId: string,
 ): Promise<{ presentMemberIds: string[]; onlineMemberIds: string[] }> => {
-  const socketsInRoom = await nsp.in(`chat:${chatGroupId}`).fetchSockets();
+  const socketsInRoom = await nsp.in(`circle:${studyCircleId}`).fetchSockets();
 
   const presentMemberIds = Array.from(
     new Set(socketsInRoom.map((s) => s.data.user.id)),
   );
 
-  const allMembers = await ChatService.getGroupMembers(chatGroupId);
+  const allMembers = await ChatService.getGroupMembers(studyCircleId);
 
   const onlineMemberIds = allMembers
     .filter((member) => PresenceService.isOnline(member.userId))
@@ -34,35 +34,35 @@ const getMemberPresence = async (
 };
 
 // Helper function to handle errors
-const handleJoinGroupError = (
+const handleJoinCircleError = (
   error: unknown,
   callback?: (response: { success: boolean; error?: string }) => void,
 ) => {
   if (error instanceof ChatGroupNotFoundError) {
-    callback?.({ success: false, error: "Chat group not found" });
+    callback?.({ success: false, error: "Study circle not found" });
   } else if (error instanceof NotAMemberError) {
-    callback?.({ success: false, error: "Not a member of this group" });
+    callback?.({ success: false, error: "Not a member of this study circle" });
   } else {
-    callback?.({ success: false, error: "Failed to join chat group" });
+    callback?.({ success: false, error: "Failed to join study circle" });
   }
 };
 
 /**
- * Handles a student entering a specific chat group.
+ * Handles a student entering a specific study circle room.
  *
  * This function:
- * 1. Checks if the group exists and if the student is actually allowed to be there.
+ * 1. Checks if the study circle exists and if the student is actually allowed to be there.
  * 2. Connects the student to the live chat room so they can send and receive messages.
- * 3. Tells everyone on the Dashboard/Hub that one more person is active in this group.
+ * 3. Tells everyone on the Dashboard/Hub that one more person is active in this study circle.
  * 4. Gathers two lists: who is currently inside the chat room right now (Present)
  * and who is just online on the app (Online).
  * 5. Sends a "Welcome" notification to the other students already in the room.
  * @param socket - The student's individual connection.
  * @param nsp - The overall chat server area.
  */
-export const handleJoinGroup = (socket: Socket, nsp: Namespace) => {
+export const handleJoinCircle = (socket: Socket, nsp: Namespace) => {
   return async (
-    data: { chatGroupId: string },
+    data: { circleId: string },
     callback?: (response: {
       success: boolean;
       presentMemberIds?: string[]; // People actually WATCHING the chat
@@ -71,53 +71,53 @@ export const handleJoinGroup = (socket: Socket, nsp: Namespace) => {
     }) => void,
   ) => {
     try {
-      const { chatGroupId } = ChatGroupIdSchema.parse(data);
+      const { circleId } = StudyCircleIdParamSchema.parse(data);
 
       const user = socket.data.user as Awaited<
         ReturnType<typeof UserService.getUserForSocket>
       >;
 
       logger.info(
-        { userId: user.id, chatGroupId, socketId: socket.id },
-        "User joining chat group",
+        { userId: user.id, circleId, socketId: socket.id },
+        "User joining study circle room",
       );
 
-      // Validate group exists and user is a member
-      await ChatService.verifyGroupExists(chatGroupId);
-      const isMember = await ChatService.isMember(user.id, chatGroupId);
+      // Validate study circle exists and user is a member
+      await ChatService.verifyGroupExists(circleId);
+      const isMember = await ChatService.isMember(user.id, circleId);
 
       if (!isMember) {
-        throw new NotAMemberError(user.id, chatGroupId);
+        throw new NotAMemberError(user.id, circleId);
       }
 
       // Join the room
-      await socket.join(`chat:${chatGroupId}`);
-      socket.data.joinedChatGroups ??= new Set<string>();
-      socket.data.joinedChatGroups.add(chatGroupId);
+      await socket.join(`circle:${circleId}`);
+      socket.data.joinedStudyCircles ??= new Set<string>();
+      (socket.data.joinedStudyCircles as Set<string>).add(circleId);
 
-      void broadcastPresenceUpdate(chatGroupId, nsp);
+      void broadcastPresenceUpdate(circleId, nsp);
 
       const { presentMemberIds, onlineMemberIds } = await getMemberPresence(
         nsp,
-        chatGroupId,
+        circleId,
       );
 
       callback?.({ success: true, presentMemberIds, onlineMemberIds });
 
-      socket.to(`chat:${chatGroupId}`).emit("chat:member_joined", {
+      socket.to(`circle:${circleId}`).emit("circle:member_joined", {
         user: { id: user.id, username: user.username },
       });
 
       logger.info(
-        { userId: user.id, chatGroupId },
-        "User joined chat group room",
+        { userId: user.id, circleId },
+        "User joined study circle room",
       );
     } catch (error) {
       logger.error(
-        { userId: socket.data.user.id, chatGroupId: data.chatGroupId, error },
-        "Error joining chat group",
+        { userId: socket.data.user.id, circleId: data.circleId, error },
+        "Error joining study circle",
       );
-      handleJoinGroupError(error, callback);
+      handleJoinCircleError(error, callback);
     }
   };
 };

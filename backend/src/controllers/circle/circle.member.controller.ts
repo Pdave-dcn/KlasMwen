@@ -11,13 +11,13 @@ import {
 import type { AuthenticatedRequest } from "../../types/AuthRequest.js";
 import type { NextFunction, Request, Response } from "express";
 
-const controllerLogger = createLogger({ module: "ChatMemberController" });
+const controllerLogger = createLogger({ module: "CircleMemberController" });
 
 const addMember = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(controllerLogger, "addMember", req);
 
   try {
-    actionLogger.info("Adding member to chat group");
+    actionLogger.info("Adding member to study circle");
     const { user } = req as AuthenticatedRequest;
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
     const { userId, role } = AddMemberDataSchema.parse(req.body);
@@ -61,7 +61,7 @@ const getGroupMembers = async (
   );
 
   try {
-    actionLogger.info("Fetching group members");
+    actionLogger.info("Fetching study circle members");
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
 
     const members = await ChatService.getGroupMembers(circleId);
@@ -71,14 +71,14 @@ const getGroupMembers = async (
         circleId,
         memberCount: members.length,
       },
-      "Group members retrieved successfully",
+      "Circle members retrieved successfully",
     );
 
     return res.status(200).json({
       data: members,
     });
   } catch (error: unknown) {
-    actionLogger.error({ error }, "Failed to fetch group members");
+    actionLogger.error({ error }, "Failed to fetch circle members");
     return next(error);
   }
 };
@@ -95,7 +95,7 @@ const removeMember = async (
   );
 
   try {
-    actionLogger.info("Removing member from chat group");
+    actionLogger.info("Removing member from study circle");
     const { user } = req as AuthenticatedRequest;
     const { circleId: chatGroupId } = StudyCircleIdParamSchema.parse(
       req.params,
@@ -114,13 +114,13 @@ const removeMember = async (
         isSelfRemoval,
       },
       isSelfRemoval
-        ? "User left group successfully"
+        ? "User left circle successfully"
         : "Member removed successfully",
     );
 
     return res.status(200).json({
       message: isSelfRemoval
-        ? "Left group successfully"
+        ? "Left circle successfully"
         : "Member removed successfully",
     });
   } catch (error: unknown) {

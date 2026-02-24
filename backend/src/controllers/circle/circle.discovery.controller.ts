@@ -14,21 +14,23 @@ import {
 import type { AuthenticatedRequest } from "../../types/AuthRequest";
 import type { NextFunction, Request, Response } from "express";
 
-const controllerLogger = createLogger({ module: "ChatSearchController" });
+const controllerLogger = createLogger({
+  module: "StudyCircleSearchController",
+});
 
-const discoverGroups = async (
+const discoverCircles = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
-    "discoverGroups",
+    "discoverCircles",
     req,
   );
 
   try {
-    actionLogger.info("Discovering public chat groups");
+    actionLogger.info("Discovering public study circles");
 
     const { user } = req as AuthenticatedRequest;
 
@@ -46,7 +48,7 @@ const discoverGroups = async (
         hasMore: result.pagination.hasMore,
         nextCursor: result.pagination.nextCursor,
       },
-      "Public groups discovered successfully",
+      "Public circles discovered successfully",
     );
 
     return res.status(200).json(result);
@@ -55,18 +57,18 @@ const discoverGroups = async (
   }
 };
 
-const getRecommendedGroups = async (
+const getRecommendedCircles = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
-    "getRecommendedGroups",
+    "getRecommendedCircles",
     req,
   );
   try {
-    actionLogger.info("Fetching recommended chat groups for user");
+    actionLogger.info("Fetching recommended study circles for user");
 
     const { user } = req as AuthenticatedRequest;
     const suggestionPaginationSchema = createPaginationSchema(5, 20, "uuid");
@@ -83,7 +85,7 @@ const getRecommendedGroups = async (
         hasMore: result.pagination.hasMore,
         nextCursor: result.pagination.nextCursor,
       },
-      "Recommended groups fetched successfully",
+      "Recommended circles fetched successfully",
     );
 
     return res.status(200).json(result);
@@ -92,19 +94,19 @@ const getRecommendedGroups = async (
   }
 };
 
-const getTrendingGroups = async (
+const getTrendingCircles = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
-    "getTrendingGroups",
+    "getTrendingCircles",
     req,
   );
 
   try {
-    actionLogger.info("Fetching trending chat groups");
+    actionLogger.info("Fetching trending study circles");
 
     const { user } = req as AuthenticatedRequest;
 
@@ -128,7 +130,7 @@ const getTrendingGroups = async (
         nextCursor: result.pagination.nextCursor,
         timeframe,
       },
-      "Trending groups fetched successfully",
+      "Trending circles fetched successfully",
     );
 
     return res.status(200).json(result);
@@ -137,19 +139,19 @@ const getTrendingGroups = async (
   }
 };
 
-const getNewGroups = async (
+const getNewCircles = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
-    "getNewGroups",
+    "getNewCircles",
     req,
   );
 
   try {
-    actionLogger.info("Fetching newly created chat groups");
+    actionLogger.info("Fetching newly created study circles");
 
     const { user } = req as AuthenticatedRequest;
 
@@ -167,7 +169,7 @@ const getNewGroups = async (
         hasMore: result.pagination.hasMore,
         nextCursor: result.pagination.nextCursor,
       },
-      "New groups fetched successfully",
+      "New circles fetched successfully",
     );
 
     return res.status(200).json(result);
@@ -176,19 +178,19 @@ const getNewGroups = async (
   }
 };
 
-const getSmallGroups = async (
+const getSmallCircles = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
-    "getSmallGroups",
+    "getSmallCircles",
     req,
   );
 
   try {
-    actionLogger.info("Fetching small chat groups");
+    actionLogger.info("Fetching small study circles");
 
     const { user } = req as AuthenticatedRequest;
 
@@ -212,7 +214,7 @@ const getSmallGroups = async (
         nextCursor: result.pagination.nextCursor,
         maxMembers,
       },
-      "Small groups fetched successfully",
+      "Small circles fetched successfully",
     );
 
     return res.status(200).json(result);
@@ -221,19 +223,19 @@ const getSmallGroups = async (
   }
 };
 
-const getSimilarGroups = async (
+const getSimilarCircles = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
-    "getSimilarGroups",
+    "getSimilarCircles",
     req,
   );
 
   try {
-    actionLogger.info("Fetching similar chat groups");
+    actionLogger.info("Fetching similar study circles");
 
     const { user } = req as AuthenticatedRequest;
 
@@ -254,7 +256,7 @@ const getSimilarGroups = async (
         nextCursor: result.pagination.nextCursor,
         referenceGroupId: circleId,
       },
-      "Similar groups fetched successfully",
+      "Similar circles fetched successfully",
     );
 
     return res.status(200).json(result);
@@ -263,19 +265,19 @@ const getSimilarGroups = async (
   }
 };
 
-const getGroupsByCreator = async (
+const getCirclesByCreator = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
-    "getGroupsByCreator",
+    "getCirclesByCreator",
     req,
   );
 
   try {
-    actionLogger.info("Fetching groups by creator");
+    actionLogger.info("Fetching circles by creator");
 
     const { user } = req as AuthenticatedRequest;
 
@@ -296,7 +298,7 @@ const getGroupsByCreator = async (
         nextCursor: result.pagination.nextCursor,
         creatorId,
       },
-      "Groups by creator fetched successfully",
+      "Circles by creator fetched successfully",
     );
 
     return res.status(200).json(result);
@@ -305,19 +307,19 @@ const getGroupsByCreator = async (
   }
 };
 
-const searchGroups = async (
+const searchCircles = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
-    "searchGroups",
+    "searchCircles",
     req,
   );
 
   try {
-    actionLogger.info("Searching chat groups");
+    actionLogger.info("Searching study circles");
 
     const { user } = req as AuthenticatedRequest;
 
@@ -346,7 +348,7 @@ const searchGroups = async (
         nextCursor: result.pagination.nextCursor,
         filters,
       },
-      "Groups search completed successfully",
+      "Circles search completed successfully",
     );
 
     return res.status(200).json(result);
@@ -388,13 +390,13 @@ const getSearchSuggestions = async (
 };
 
 export {
-  discoverGroups,
-  getRecommendedGroups,
-  getTrendingGroups,
-  getNewGroups,
-  getSmallGroups,
-  getSimilarGroups,
-  getGroupsByCreator,
-  searchGroups,
+  discoverCircles,
+  getRecommendedCircles,
+  getTrendingCircles,
+  getNewCircles,
+  getSmallCircles,
+  getSimilarCircles,
+  getCirclesByCreator,
+  searchCircles,
   getSearchSuggestions,
 };

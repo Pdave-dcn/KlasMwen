@@ -5,7 +5,7 @@ import { Sparkles, ChevronRight, AlertCircle, Search } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useRecommendedGroupsQuery } from "@/queries/chat";
+import { useRecommendedCirclesQuery } from "@/queries/circle";
 
 import { useCirclesPresenceCount } from "../../hooks/useCirclesPresenceCount";
 
@@ -14,7 +14,7 @@ import { SuggestedCircleCard } from "./SuggestedCircleCard";
 export function SuggestedCirclesSection() {
   const navigate = useNavigate();
 
-  const { data, isLoading, isError } = useRecommendedGroupsQuery(5);
+  const { data, isLoading, isError } = useRecommendedCirclesQuery(5);
   const circles = data?.pages.flatMap((page) => page.data) ?? [];
 
   useCirclesPresenceCount(circles.map((circle) => circle.id));

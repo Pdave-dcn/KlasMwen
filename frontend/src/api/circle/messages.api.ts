@@ -7,45 +7,45 @@ import {
 
 import api from "../api";
 
-export const sendChatMessage = async (
-  chatGroupId: string,
+export const sendCircleMessage = async (
+  circleId: string,
   data: SendMessageData,
 ) => {
   try {
-    const res = await api.post(`/groups/${chatGroupId}/message`, data);
+    const res = await api.post(`/circles/${circleId}/message`, data);
     const validatedData = ChatMessageResponseSchema.parse(res.data);
     return validatedData.data;
   } catch (error) {
-    handleZodValidationError(error, "sendChatMessage");
+    handleZodValidationError(error, "sendCircleMessage");
     throw error;
   }
 };
 
-export const getChatMessages = async (
-  chatGroupId: string,
+export const getCircleMessages = async (
+  circleId: string,
   cursor?: number,
   limit: number = 50,
 ) => {
   try {
-    const res = await api.get(`/groups/${chatGroupId}/messages`, {
+    const res = await api.get(`/circles/${circleId}/messages`, {
       params: { cursor, limit },
     });
     const validatedData = ChatMessagesResponseSchema.parse(res.data);
     return validatedData;
   } catch (error) {
-    handleZodValidationError(error, "getChatMessages");
+    handleZodValidationError(error, "getCircleMessages");
     throw error;
   }
 };
 
-export const deleteChatMessage = async (
-  chatGroupId: string,
+export const deleteCircleMessage = async (
+  circleId: string,
   messageId: number,
 ) => {
   try {
-    await api.delete(`/groups/${chatGroupId}/messages/${messageId}`);
+    await api.delete(`/circles/${circleId}/messages/${messageId}`);
   } catch (error) {
-    handleZodValidationError(error, "deleteChatMessage");
+    handleZodValidationError(error, "deleteCircleMessage");
     throw error;
   }
 };

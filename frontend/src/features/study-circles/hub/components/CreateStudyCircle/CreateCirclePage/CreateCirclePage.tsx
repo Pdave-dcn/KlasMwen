@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import { toast } from "sonner";
 
-import { useCreateChatGroupMutation } from "@/queries/chat";
+import { useCreateStudyCircleMutation } from "@/queries/circle";
 import type { CreateGroupFormData } from "@/zodSchemas/chat.zod";
 
 import { CreateCircleContent } from "./CreateCircleContent";
@@ -13,7 +13,7 @@ import { CreateCircleSuccess } from "./CreateCircleSuccess";
 
 export function CreateCirclePage() {
   const navigate = useNavigate();
-  const createGroupMutation = useCreateChatGroupMutation();
+  const createGroupMutation = useCreateStudyCircleMutation();
 
   const [createdGroupName, setCreatedGroupName] = useState<string | null>(null);
 

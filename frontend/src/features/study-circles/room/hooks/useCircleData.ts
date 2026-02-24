@@ -1,21 +1,21 @@
 import { useMemo } from "react";
 
 import {
-  useChatGroupQuery,
-  useChatGroupsQuery,
-  useChatMembersQuery,
-  useChatMessagesQuery,
-} from "@/queries/chat";
+  useCircleMembersQuery,
+  useCircleMessagesQuery,
+  useStudyCircleQuery,
+  useStudyCirclesQuery,
+} from "@/queries/circle";
 
 export const useCircleData = (circleId: string | null) => {
   const { data: groups = [], isLoading: isLoadingCircles } =
-    useChatGroupsQuery();
+    useStudyCirclesQuery();
 
   const { data: selectedCircle, isLoading: isLoadingCircle } =
-    useChatGroupQuery(circleId ?? "");
+    useStudyCircleQuery(circleId ?? "");
 
   const { data: members = [], isLoading: isLoadingMembers } =
-    useChatMembersQuery(circleId ?? "");
+    useCircleMembersQuery(circleId ?? "");
 
   const {
     data: messagesData,
@@ -23,7 +23,7 @@ export const useCircleData = (circleId: string | null) => {
     isFetchingNextPage,
     fetchNextPage,
     hasNextPage,
-  } = useChatMessagesQuery(circleId ?? "");
+  } = useCircleMessagesQuery(circleId ?? "");
 
   const messages = useMemo(
     () =>

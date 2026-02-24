@@ -1,11 +1,11 @@
 import { useState, useCallback } from "react";
 
 import {
-  useRecommendedGroupsQuery,
-  useTrendingGroupsQuery,
-  useNewGroupsQuery,
-  useSmallGroupsQuery,
-} from "@/queries/chat";
+  useNewCirclesQuery,
+  useRecommendedCirclesQuery,
+  useSmallCirclesQuery,
+  useTrendingCirclesQuery,
+} from "@/queries/circle";
 
 export type DiscoveryCategory = "popular" | "trending" | "new" | "small";
 
@@ -19,10 +19,10 @@ export const useDiscoveryCategory = () => {
   const [activeCategory, setActiveCategory] =
     useState<DiscoveryCategory>("popular");
 
-  const popularQuery = useRecommendedGroupsQuery(PAGE_LIMIT);
-  const trendingQuery = useTrendingGroupsQuery(PAGE_LIMIT);
-  const newQuery = useNewGroupsQuery(PAGE_LIMIT);
-  const smallQuery = useSmallGroupsQuery(PAGE_LIMIT);
+  const popularQuery = useRecommendedCirclesQuery(PAGE_LIMIT);
+  const trendingQuery = useTrendingCirclesQuery(PAGE_LIMIT);
+  const newQuery = useNewCirclesQuery(PAGE_LIMIT);
+  const smallQuery = useSmallCirclesQuery(PAGE_LIMIT);
 
   /** Returns the query hook for the currently active category. */
   const activeQuery = (() => {

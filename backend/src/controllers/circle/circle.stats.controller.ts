@@ -5,7 +5,7 @@ import createActionLogger from "../../utils/logger.util";
 import type { AuthenticatedRequest } from "../../types/AuthRequest";
 import type { NextFunction, Request, Response } from "express";
 
-const controllerLogger = createLogger({ module: "ChatStatsController" });
+const controllerLogger = createLogger({ module: "CircleStatsController" });
 
 export const getQuickStats = async (
   req: Request,

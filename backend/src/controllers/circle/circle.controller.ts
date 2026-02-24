@@ -10,16 +10,18 @@ import {
 import type { AuthenticatedRequest } from "../../types/AuthRequest.js";
 import type { NextFunction, Request, Response } from "express";
 
-const controllerLogger = createLogger({ module: "ChatGroupController" });
+const controllerLogger = createLogger({
+  module: "CircleSearchController",
+});
 
-const createChatGroup = async (
+const createStudyCircle = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
-    "createChatGroup",
+    "createStudyCircle",
     req,
   );
 
@@ -51,8 +53,8 @@ const createChatGroup = async (
   }
 };
 
-const joinGroup = async (req: Request, res: Response, next: NextFunction) => {
-  const actionLogger = createActionLogger(controllerLogger, "joinGroup", req);
+const joinCircle = async (req: Request, res: Response, next: NextFunction) => {
+  const actionLogger = createActionLogger(controllerLogger, "joinCircle", req);
 
   try {
     actionLogger.info("User joining study circle");
@@ -80,14 +82,14 @@ const joinGroup = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-const getGroupById = async (
+const getCircleById = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
-    "getGroupById",
+    "getCircleById",
     req,
   );
 
@@ -115,18 +117,18 @@ const getGroupById = async (
   }
 };
 
-const getGroupPreviewDetails = async (
+const getCirclePreviewDetails = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
-    "getGroupDetails",
+    "getCirclePreviewDetails",
     req,
   );
   try {
-    actionLogger.info("Fetching study circle details");
+    actionLogger.info("Fetching study circle preview details");
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
 
     const group = await ChatService.getGroupPreviewDetails(circleId);
@@ -145,14 +147,14 @@ const getGroupPreviewDetails = async (
   }
 };
 
-const getUserGroups = async (
+const getUserCircles = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
-    "getUserGroups",
+    "getUserCircles",
     req,
   );
 
@@ -178,14 +180,14 @@ const getUserGroups = async (
   }
 };
 
-const getRecentActivityGroups = async (
+const getRecentActivityCircles = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
-    "getRecentActivityGroups",
+    "getRecentActivityCircles",
     req,
   );
   try {
@@ -211,8 +213,16 @@ const getRecentActivityGroups = async (
   }
 };
 
-const updateGroup = async (req: Request, res: Response, next: NextFunction) => {
-  const actionLogger = createActionLogger(controllerLogger, "updateGroup", req);
+const updateCircle = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const actionLogger = createActionLogger(
+    controllerLogger,
+    "updateCircle",
+    req,
+  );
 
   try {
     actionLogger.info("Updating study circle");
@@ -239,8 +249,16 @@ const updateGroup = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-const deleteGroup = async (req: Request, res: Response, next: NextFunction) => {
-  const actionLogger = createActionLogger(controllerLogger, "deleteGroup", req);
+const deleteCircle = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const actionLogger = createActionLogger(
+    controllerLogger,
+    "deleteCircle",
+    req,
+  );
 
   try {
     actionLogger.info("Deleting Study circle");
@@ -266,12 +284,12 @@ const deleteGroup = async (req: Request, res: Response, next: NextFunction) => {
 };
 
 export {
-  createChatGroup,
-  getGroupById,
-  getUserGroups,
-  updateGroup,
-  deleteGroup,
-  joinGroup,
-  getRecentActivityGroups,
-  getGroupPreviewDetails,
+  createStudyCircle,
+  getCircleById,
+  getUserCircles,
+  updateCircle,
+  deleteCircle,
+  joinCircle,
+  getRecentActivityCircles,
+  getCirclePreviewDetails,
 };

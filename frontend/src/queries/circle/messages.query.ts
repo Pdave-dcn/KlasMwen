@@ -7,10 +7,10 @@ import {
 import { toast } from "sonner";
 
 import {
-  getChatMessages,
-  sendChatMessage,
-  deleteChatMessage,
-} from "@/api/chat";
+  getCircleMessages,
+  sendCircleMessage,
+  deleteCircleMessage,
+} from "@/api/circle";
 import type { User } from "@/types/auth.type";
 import type {
   SendMessageData,
@@ -21,20 +21,20 @@ import type {
 
 // Queries
 
-export const useChatMessagesQuery = (
-  chatGroupId: string,
+export const useCircleMessagesQuery = (
+  circleId: string,
   limit: number = 50,
 ) => {
   return useInfiniteQuery({
-    queryKey: ["chat", "groups", chatGroupId, "messages"],
-    queryFn: ({ pageParam }) => getChatMessages(chatGroupId, pageParam, limit),
+    queryKey: ["circles", circleId, "messages"],
+    queryFn: ({ pageParam }) => getCircleMessages(circleId, pageParam, limit),
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.hasMore
         ? lastPage.pagination.nextCursor
         : undefined;
     },
     initialPageParam: undefined as number | undefined,
-    enabled: !!chatGroupId,
+    enabled: !!circleId,
   });
 };
 
@@ -42,29 +42,29 @@ export const useChatMessagesQuery = (
 
 /**
  * Optimistic Send Message Mutation
- * Manually updates the messages cache and group list preview before the server responds.
+ * Manually updates the messages cache and circle list preview before the server responds.
  */
-export const useSendChatMessageMutation = (
-  chatGroupId: string,
+export const useSendCircleMessageMutation = (
+  circleId: string,
   currentUser: User | null,
 ) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: SendMessageData) => sendChatMessage(chatGroupId, data),
+    mutationFn: (data: SendMessageData) => sendCircleMessage(circleId, data),
 
     onMutate: async (newMessageData) => {
       if (!currentUser) return;
 
       await queryClient.cancelQueries({
-        queryKey: ["chat", "groups", chatGroupId, "messages"],
+        queryKey: ["chat", "groups", circleId, "messages"],
       });
       await queryClient.cancelQueries({ queryKey: ["chat", "groups", "list"] });
 
       const previousMessages = queryClient.getQueryData([
         "chat",
         "groups",
-        chatGroupId,
+        circleId,
         "messages",
       ]);
       const previousGroups = queryClient.getQueryData([
@@ -77,7 +77,7 @@ export const useSendChatMessageMutation = (
       const optimisticMessage: ChatMessage = {
         id: Math.random() * -1,
         content: newMessageData.content,
-        chatGroupId,
+        chatGroupId: circleId,
         createdAt: new Date().toISOString(),
         sender: {
           id: currentUser.id,
@@ -90,7 +90,7 @@ export const useSendChatMessageMutation = (
 
       // Optimistically update the message list
       queryClient.setQueryData<InfiniteData<ChatMessagesResponse>>(
-        ["chat", "groups", chatGroupId, "messages"],
+        ["circles", circleId, "messages"],
         (oldData) => {
           if (!oldData) return oldData;
           const [firstPage, ...rest] = oldData.pages;
@@ -106,13 +106,11 @@ export const useSendChatMessageMutation = (
 
       // Optimistically update the sidebar preview
       queryClient.setQueryData<ChatGroup[]>(
-        ["chat", "groups", "list"],
+        ["circles", "list"],
         (oldGroups) => {
           if (!oldGroups) return oldGroups;
           return oldGroups.map((g) =>
-            g.id === chatGroupId
-              ? { ...g, latestMessage: optimisticMessage }
-              : g,
+            g.id === circleId ? { ...g, latestMessage: optimisticMessage } : g,
           );
         },
       );
@@ -123,37 +121,33 @@ export const useSendChatMessageMutation = (
     onError: (_err, _newMessage, context) => {
       if (context?.previousMessages) {
         queryClient.setQueryData(
-          ["chat", "groups", chatGroupId, "messages"],
+          ["circles", circleId, "messages"],
           context.previousMessages,
         );
       }
       if (context?.previousGroups) {
-        queryClient.setQueryData(
-          ["chat", "groups", "list"],
-          context.previousGroups,
-        );
+        queryClient.setQueryData(["circles", "list"], context.previousGroups);
       }
       toast.error("Failed to send message");
     },
 
     onSettled: async () => {
       await queryClient.invalidateQueries({
-        queryKey: ["chat", "groups", chatGroupId, "messages"],
+        queryKey: ["circles", circleId, "messages"],
         refetchType: "none",
       });
     },
   });
 };
 
-export const useDeleteChatMessageMutation = (chatGroupId: string) => {
+export const useDeleteChatMessageMutation = (circleId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (messageId: number) =>
-      deleteChatMessage(chatGroupId, messageId),
+    mutationFn: (messageId: number) => deleteCircleMessage(circleId, messageId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: ["chat", "groups", chatGroupId, "messages"],
+        queryKey: ["circles", circleId, "messages"],
       });
     },
   });

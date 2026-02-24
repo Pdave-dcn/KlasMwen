@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { getQuickStats } from "../../controllers/chat/index.js";
+import { getQuickStats } from "../../controllers/circle/index.js";
 
 const router = Router();
 

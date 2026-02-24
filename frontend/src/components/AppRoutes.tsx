@@ -1,8 +1,8 @@
 import { Routes, Route } from "react-router-dom";
 
 import {
-  DiscoverGroupsPage,
-  CreateGroupPage,
+  DiscoverCirclesPage,
+  CreateCirclePage,
 } from "@/features/study-circles/hub/components";
 import CircleRoomPage from "@/features/study-circles/room/components/CircleRoomPage";
 import AuthForm from "@/pages/AuthForm";
@@ -115,7 +115,7 @@ export const AppRoutes = () => {
         path="/circles/discover"
         element={
           <ProtectedRoute>
-            <DiscoverGroupsPage />
+            <DiscoverCirclesPage />
           </ProtectedRoute>
         }
       />
@@ -123,7 +123,7 @@ export const AppRoutes = () => {
         path="/circles/create"
         element={
           <ProtectedRoute>
-            <CreateGroupPage />
+            <CreateCirclePage />
           </ProtectedRoute>
         }
       />

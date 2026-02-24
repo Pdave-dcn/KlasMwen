@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useJoinChatGroupMutation } from "@/queries/chat";
+import { useJoinCircleMutation } from "@/queries/circle";
 import { getGroupInitials } from "@/utils/getInitials.util";
 import type { ChatGroupForDiscovery } from "@/zodSchemas/chat.zod";
 
@@ -13,7 +13,7 @@ interface SuggestedCircleCardProps {
 }
 
 export const SuggestedCircleCard = ({ circle }: SuggestedCircleCardProps) => {
-  const joinChatGroupMutation = useJoinChatGroupMutation();
+  const joinChatGroupMutation = useJoinCircleMutation();
 
   const isJoining =
     joinChatGroupMutation.isPending &&

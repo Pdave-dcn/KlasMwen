@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from "react";
 
-import { useSendChatMessageMutation } from "@/queries/chat";
+import { useSendCircleMessageMutation } from "@/queries/circle";
 import { useAuthStore } from "@/stores/auth.store";
 import { useCircleStore } from "@/stores/circle.store";
 
@@ -37,7 +37,7 @@ export const useCircleRoom = () => {
     return me?.isMuted ?? false;
   }, [members, currentUser?.id]);
 
-  const sendMessageMutation = useSendChatMessageMutation(
+  const sendMessageMutation = useSendCircleMessageMutation(
     selectedCircleId ?? "",
     currentUser,
   );

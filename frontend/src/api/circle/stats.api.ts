@@ -5,7 +5,7 @@ import api from "../api";
 
 export const getQuickStats = async () => {
   try {
-    const res = await api.get("/groups/stats/quick");
+    const res = await api.get("/circles/stats/quick");
     const validatedData = QuickStatsResponseSchema.parse(res.data);
     return validatedData.data;
   } catch (error) {

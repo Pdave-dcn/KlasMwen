@@ -6,7 +6,7 @@ import {
   removeMember,
   updateMemberRole,
   updateLastReadAt,
-} from "../../controllers/chat/index.js";
+} from "../../controllers/circle/index.js";
 import {
   enrichChatRole,
   requireMembership,

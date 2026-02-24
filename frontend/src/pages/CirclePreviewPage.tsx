@@ -16,9 +16,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import {
-  useChatGroupPublicDetailsQuery,
-  useJoinChatGroupMutation,
-} from "@/queries/chat";
+  useCirclePreviewDetailsQuery,
+  useJoinCircleMutation,
+} from "@/queries/circle";
 import { formatDate } from "@/utils/dateFormatter.util";
 
 import { DetailError } from "../features/study-circles/hub/components/ChatGroupPreview/ErrorState";
@@ -40,8 +40,8 @@ const CirclePreviewPage = () => {
     isLoading,
     isError,
     refetch,
-  } = useChatGroupPublicDetailsQuery(id ?? "");
-  const joinChatGroupMutation = useJoinChatGroupMutation();
+  } = useCirclePreviewDetailsQuery(id ?? "");
+  const joinChatGroupMutation = useJoinCircleMutation();
 
   const isJoining =
     joinChatGroupMutation.isPending &&

@@ -1,22 +1,22 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
 import {
-  getChatGroupsForDiscovery,
-  getRecommendedGroups,
-  getTrendingGroups,
-  getNewGroups,
-  getSmallGroups,
-  searchGroups,
-  getSimilarGroups,
-  getGroupsByCreator,
+  getCirclesForDiscovery,
+  getRecommendedCircles,
+  getTrendingCircles,
+  getNewCircles,
+  getSmallCircles,
+  searchCircles,
+  getSimilarCircles,
+  getCirclesByCreator,
   getSearchSuggestions,
   type GroupSearchFilters,
-} from "@/api/chat";
+} from "@/api/circle";
 
-export const useChatGroupsForDiscoveryQuery = (limit: number = 10) => {
+export const useCirclesForDiscoveryQuery = (limit: number = 10) => {
   return useInfiniteQuery({
-    queryKey: ["chat", "groups", "discover", limit],
-    queryFn: ({ pageParam }) => getChatGroupsForDiscovery(limit, pageParam),
+    queryKey: ["circles", "discover", limit],
+    queryFn: ({ pageParam }) => getCirclesForDiscovery(limit, pageParam),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.hasMore
@@ -26,10 +26,10 @@ export const useChatGroupsForDiscoveryQuery = (limit: number = 10) => {
   });
 };
 
-export const useRecommendedGroupsQuery = (limit = 5) => {
+export const useRecommendedCirclesQuery = (limit = 5) => {
   return useInfiniteQuery({
-    queryKey: ["chat", "groups", "recommended", limit],
-    queryFn: ({ pageParam }) => getRecommendedGroups(pageParam, limit),
+    queryKey: ["circles", "recommended", limit],
+    queryFn: ({ pageParam }) => getRecommendedCircles(pageParam, limit),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.hasMore
@@ -39,10 +39,10 @@ export const useRecommendedGroupsQuery = (limit = 5) => {
   });
 };
 
-export const useTrendingGroupsQuery = (limit = 10, timeframe = 7) => {
+export const useTrendingCirclesQuery = (limit = 10, timeframe = 7) => {
   return useInfiniteQuery({
-    queryKey: ["chat", "groups", "trending", limit, timeframe],
-    queryFn: ({ pageParam }) => getTrendingGroups(pageParam, limit, timeframe),
+    queryKey: ["circles", "trending", limit, timeframe],
+    queryFn: ({ pageParam }) => getTrendingCircles(pageParam, limit, timeframe),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.hasMore
@@ -52,10 +52,10 @@ export const useTrendingGroupsQuery = (limit = 10, timeframe = 7) => {
   });
 };
 
-export const useNewGroupsQuery = (limit = 10) => {
+export const useNewCirclesQuery = (limit = 10) => {
   return useInfiniteQuery({
-    queryKey: ["chat", "groups", "new", limit],
-    queryFn: ({ pageParam }) => getNewGroups(pageParam, limit),
+    queryKey: ["circles", "new", limit],
+    queryFn: ({ pageParam }) => getNewCircles(pageParam, limit),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.hasMore
@@ -65,10 +65,10 @@ export const useNewGroupsQuery = (limit = 10) => {
   });
 };
 
-export const useSmallGroupsQuery = (limit = 10, maxMembers = 10) => {
+export const useSmallCirclesQuery = (limit = 10, maxMembers = 10) => {
   return useInfiniteQuery({
-    queryKey: ["chat", "groups", "small", limit, maxMembers],
-    queryFn: ({ pageParam }) => getSmallGroups(pageParam, limit, maxMembers),
+    queryKey: ["circles", "small", limit, maxMembers],
+    queryFn: ({ pageParam }) => getSmallCircles(pageParam, limit, maxMembers),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.hasMore
@@ -78,14 +78,14 @@ export const useSmallGroupsQuery = (limit = 10, maxMembers = 10) => {
   });
 };
 
-export const useSearchGroupsQuery = (
+export const useSearchCirclesQuery = (
   filters: GroupSearchFilters,
   limit = 10,
   enabled = true,
 ) => {
   return useInfiniteQuery({
-    queryKey: ["chat", "groups", "search", filters, limit],
-    queryFn: ({ pageParam }) => searchGroups(filters, pageParam, limit),
+    queryKey: ["circles", "search", filters, limit],
+    queryFn: ({ pageParam }) => searchCircles(filters, pageParam, limit),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.hasMore
@@ -100,30 +100,31 @@ export const useSearchGroupsQuery = (
 
 export const useSuggestionsQuery = (query: string, limit = 10) => {
   return useQuery({
-    queryKey: ["chat", "groups", "suggestions", query, limit],
+    queryKey: ["circles", "suggestions", query, limit],
     queryFn: () => getSearchSuggestions(query, limit),
     enabled: query.length > 0,
   });
 };
 
-export const useSimilarGroupsQuery = (chatGroupId: string, limit = 10) => {
+export const useSimilarCirclesQuery = (circleId: string, limit = 10) => {
   return useInfiniteQuery({
-    queryKey: ["chat", "groups", "similar", chatGroupId, limit],
-    queryFn: ({ pageParam }) => getSimilarGroups(chatGroupId, pageParam, limit),
+    queryKey: ["circles", "similar", circleId, limit],
+    queryFn: ({ pageParam }) => getSimilarCircles(circleId, pageParam, limit),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.hasMore
         ? lastPage.pagination.nextCursor
         : undefined;
     },
-    enabled: !!chatGroupId,
+    enabled: !!circleId,
   });
 };
 
-export const useGroupsByCreatorQuery = (creatorId: string, limit = 10) => {
+export const useCirclesByCreatorQuery = (creatorId: string, limit = 10) => {
   return useInfiniteQuery({
-    queryKey: ["chat", "groups", "creator", creatorId, limit],
-    queryFn: ({ pageParam }) => getGroupsByCreator(creatorId, pageParam, limit),
+    queryKey: ["circles", "creator", creatorId, limit],
+    queryFn: ({ pageParam }) =>
+      getCirclesByCreator(creatorId, pageParam, limit),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.hasMore

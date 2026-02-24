@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
 import { useDebouncedValue } from "@/features/search/hooks/useDebouncedValue";
-import { useSuggestionsQuery } from "@/queries/chat";
+import { useSuggestionsQuery } from "@/queries/circle";
 
 /**
  * Manages search suggestions visibility and fetching.

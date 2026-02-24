@@ -11,13 +11,13 @@ import {
 import type { AuthenticatedRequest } from "../../types/AuthRequest.js";
 import type { NextFunction, Request, Response } from "express";
 
-const controllerLogger = createLogger({ module: "ChatMessageController" });
+const controllerLogger = createLogger({ module: "CircleMessageController" });
 
 const sendMessage = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(controllerLogger, "sendMessage", req);
 
   try {
-    actionLogger.info("Sending message to chat group");
+    actionLogger.info("Sending message to study circle");
 
     const { user } = req as AuthenticatedRequest;
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
@@ -63,7 +63,7 @@ const getMessages = async (req: Request, res: Response, next: NextFunction) => {
   const actionLogger = createActionLogger(controllerLogger, "getMessages", req);
 
   try {
-    actionLogger.info("Fetching messages from chat group");
+    actionLogger.info("Fetching messages from study circle");
     const { user } = req as AuthenticatedRequest;
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
     const customValidator = createPaginationSchema(10, 50, "number");

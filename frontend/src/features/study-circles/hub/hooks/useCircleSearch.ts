@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 
 import { useDebouncedValue } from "@/features/search/hooks/useDebouncedValue";
-import { useSearchGroupsQuery } from "@/queries/chat";
+import { useSearchCirclesQuery } from "@/queries/circle";
 import type { SearchSuggestion } from "@/zodSchemas/chat.zod";
 import type { PopularTag } from "@/zodSchemas/tag.zod";
 
@@ -24,7 +24,7 @@ export const useCircleSearch = () => {
   const shouldEnableSearch =
     isSearchActive && (debouncedQuery.length > 0 || selectedTags.length > 0);
 
-  const searchQueryHook = useSearchGroupsQuery(
+  const searchQueryHook = useSearchCirclesQuery(
     {
       query: debouncedQuery || undefined,
       tagIds: selectedTags.length > 0 ? selectedTags : undefined,

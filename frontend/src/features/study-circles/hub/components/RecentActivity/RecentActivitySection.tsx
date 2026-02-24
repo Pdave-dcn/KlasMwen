@@ -4,7 +4,7 @@ import { Clock, ChevronRight } from "lucide-react";
 
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useRecentActivityGroupsQuery } from "@/queries/chat";
+import { useRecentActivityCirclesQuery } from "@/queries/circle";
 
 import { useCirclesPresenceCount } from "../../hooks/useCirclesPresenceCount";
 
@@ -13,7 +13,7 @@ import { RecentCircleCard } from "./RecentCircleCard";
 export const RecentActivitySection = () => {
   const navigate = useNavigate();
 
-  const { data: groups, isLoading, isError } = useRecentActivityGroupsQuery();
+  const { data: groups, isLoading, isError } = useRecentActivityCirclesQuery();
 
   useCirclesPresenceCount(groups ? groups.map((group) => group.id) : []);
 

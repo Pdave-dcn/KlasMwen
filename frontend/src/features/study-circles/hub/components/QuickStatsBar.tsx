@@ -2,7 +2,7 @@ import { MessageCircle, Users, Bell, AlertCircle } from "lucide-react";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { useQuickStatsQuery } from "@/queries/chat";
+import { useQuickStatsQuery } from "@/queries/circle";
 
 export const QuickStatsBar = () => {
   const { data, isLoading, isError } = useQuickStatsQuery();

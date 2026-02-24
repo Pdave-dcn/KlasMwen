@@ -16,13 +16,13 @@ export interface GroupSearchFilters {
   tagIds?: number[];
 }
 
-export const searchGroups = async (
+export const searchCircles = async (
   filters: GroupSearchFilters,
   cursor?: string,
   limit = 10,
 ) => {
   try {
-    const res = await api.get("/groups/discover/search", {
+    const res = await api.get("/circles/discover/search", {
       params: {
         ...filters,
         tagIds: filters.tagIds?.join(","),
@@ -33,90 +33,90 @@ export const searchGroups = async (
     const validatedData = ChatGroupsForDiscoveryResponseSchema.parse(res.data);
     return validatedData;
   } catch (error) {
-    handleZodValidationError(error, "searchGroups");
+    handleZodValidationError(error, "searchCircles");
     throw error;
   }
 };
 
-export const getChatGroupsForDiscovery = async (
+export const getCirclesForDiscovery = async (
   limit: number = 10,
   cursor?: string,
 ) => {
   try {
-    const res = await api.get(`/groups/discover`, {
+    const res = await api.get(`/circles/discover`, {
       params: { limit, cursor },
     });
     const validatedData = ChatGroupsForDiscoveryResponseSchema.parse(res.data);
     return validatedData;
   } catch (error) {
-    handleZodValidationError(error, "getChatGroupsForDiscovery");
+    handleZodValidationError(error, "getCirclesForDiscovery");
     throw error;
   }
 };
 
-export const getRecommendedGroups = async (cursor?: string, limit = 5) => {
+export const getRecommendedCircles = async (cursor?: string, limit = 5) => {
   try {
-    const res = await api.get("/groups/discover/recommended", {
+    const res = await api.get("/circles/discover/recommended", {
       params: { cursor, limit },
     });
     const validatedData = ChatGroupsForDiscoveryResponseSchema.parse(res.data);
     return validatedData;
   } catch (error) {
-    handleZodValidationError(error, "getRecommendedGroups");
+    handleZodValidationError(error, "getRecommendedCircles");
     throw error;
   }
 };
 
-export const getTrendingGroups = async (
+export const getTrendingCircles = async (
   cursor?: string,
   limit = 10,
   timeframe = 7,
 ) => {
   try {
-    const res = await api.get("/groups/discover/trending", {
+    const res = await api.get("/circles/discover/trending", {
       params: { cursor, limit, timeframe },
     });
     const validatedData = ChatGroupsForDiscoveryResponseSchema.parse(res.data);
     return validatedData;
   } catch (error) {
-    handleZodValidationError(error, "getTrendingGroups");
+    handleZodValidationError(error, "getTrendingCircles");
     throw error;
   }
 };
 
-export const getNewGroups = async (cursor?: string, limit = 10) => {
+export const getNewCircles = async (cursor?: string, limit = 10) => {
   try {
-    const res = await api.get("/groups/discover/new", {
+    const res = await api.get("/circles/discover/new", {
       params: { cursor, limit },
     });
     const validatedData = ChatGroupsForDiscoveryResponseSchema.parse(res.data);
     return validatedData;
   } catch (error) {
-    handleZodValidationError(error, "getNewGroups");
+    handleZodValidationError(error, "getNewCircles");
     throw error;
   }
 };
 
-export const getSmallGroups = async (
+export const getSmallCircles = async (
   cursor?: string,
   limit = 10,
   maxMembers = 10,
 ) => {
   try {
-    const res = await api.get("/groups/discover/small", {
+    const res = await api.get("/circles/discover/small", {
       params: { cursor, limit, maxMembers },
     });
     const validatedData = ChatGroupsForDiscoveryResponseSchema.parse(res.data);
     return validatedData;
   } catch (error) {
-    handleZodValidationError(error, "getSmallGroups");
+    handleZodValidationError(error, "getSmallCircles");
     throw error;
   }
 };
 
 export const getSearchSuggestions = async (query: string, limit = 10) => {
   try {
-    const res = await api.get("/groups/discover/suggestions", {
+    const res = await api.get("/circles/discover/suggestions", {
       params: { query, limit },
     });
     const validatedData = ChatGroupsSearchResponseSchema.parse(res.data);
@@ -127,36 +127,36 @@ export const getSearchSuggestions = async (query: string, limit = 10) => {
   }
 };
 
-export const getSimilarGroups = async (
-  chatGroupId: string,
+export const getSimilarCircles = async (
+  circleId: string,
   cursor?: string,
   limit = 10,
 ) => {
   try {
-    const res = await api.get(`/groups/discover/similar/${chatGroupId}`, {
+    const res = await api.get(`/circles/discover/similar/${circleId}`, {
       params: { cursor, limit },
     });
     const validatedData = ChatGroupsForDiscoveryResponseSchema.parse(res.data);
     return validatedData;
   } catch (error) {
-    handleZodValidationError(error, "getSimilarGroups");
+    handleZodValidationError(error, "getSimilarCircles");
     throw error;
   }
 };
 
-export const getGroupsByCreator = async (
+export const getCirclesByCreator = async (
   creatorId: string,
   cursor?: string,
   limit = 10,
 ) => {
   try {
-    const res = await api.get(`/groups/discover/creator/${creatorId}`, {
+    const res = await api.get(`/circles/discover/creator/${creatorId}`, {
       params: { cursor, limit },
     });
     const validatedData = ChatGroupsForDiscoveryResponseSchema.parse(res.data);
     return validatedData;
   } catch (error) {
-    handleZodValidationError(error, "getGroupsByCreator");
+    handleZodValidationError(error, "getCirclesByCreator");
     throw error;
   }
 };

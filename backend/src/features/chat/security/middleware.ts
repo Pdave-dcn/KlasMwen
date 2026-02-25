@@ -2,7 +2,7 @@ import {
   ChatGroupNotFoundError,
   NotAMemberError,
 } from "../../../core/error/custom/chat.error.js";
-import { StudyCircleIdParamSchema } from "../../../zodSchemas/chat.zod.js";
+import { StudyCircleIdParamSchema } from "../../../zodSchemas/circle.zod.js";
 import ChatRepository from "../service/Repositories/ChatRepository.js";
 
 import type { Request, Response, NextFunction } from "express";

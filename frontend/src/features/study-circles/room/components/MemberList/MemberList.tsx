@@ -1,12 +1,12 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { ChatMember } from "@/zodSchemas/chat.zod";
+import type { CircleMember } from "@/zodSchemas/circle.zod";
 
 import { Header } from "./Header";
 import { LoadingState } from "./LoadingState";
 import { MemberItem } from "./MemberItem";
 
 interface MemberListProps {
-  members: ChatMember[];
+  members: CircleMember[];
   isLoading: boolean;
   currentUserId?: string;
 }

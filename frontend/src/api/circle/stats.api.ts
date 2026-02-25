@@ -1,5 +1,5 @@
 import handleZodValidationError from "@/utils/zodErrorHandler.util";
-import { QuickStatsResponseSchema } from "@/zodSchemas/chat.zod";
+import { QuickStatsResponseSchema } from "@/zodSchemas/circle.zod";
 
 import api from "../api";
 

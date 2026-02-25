@@ -14,10 +14,10 @@ import {
 import type { User } from "@/types/auth.type";
 import type {
   SendMessageData,
-  ChatMessage,
-  ChatMessagesResponse,
-  ChatGroup,
-} from "@/zodSchemas/chat.zod";
+  CircleMessage,
+  CircleMessagesResponse,
+  StudyCircle,
+} from "@/zodSchemas/circle.zod";
 
 // Queries
 
@@ -74,7 +74,7 @@ export const useSendCircleMessageMutation = (
       ]);
 
       // Temporary optimistic message
-      const optimisticMessage: ChatMessage = {
+      const optimisticMessage: CircleMessage = {
         id: Math.random() * -1,
         content: newMessageData.content,
         chatGroupId: circleId,
@@ -89,7 +89,7 @@ export const useSendCircleMessageMutation = (
       };
 
       // Optimistically update the message list
-      queryClient.setQueryData<InfiniteData<ChatMessagesResponse>>(
+      queryClient.setQueryData<InfiniteData<CircleMessagesResponse>>(
         ["circles", circleId, "messages"],
         (oldData) => {
           if (!oldData) return oldData;
@@ -105,7 +105,7 @@ export const useSendCircleMessageMutation = (
       );
 
       // Optimistically update the sidebar preview
-      queryClient.setQueryData<ChatGroup[]>(
+      queryClient.setQueryData<StudyCircle[]>(
         ["circles", "list"],
         (oldGroups) => {
           if (!oldGroups) return oldGroups;

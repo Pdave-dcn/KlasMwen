@@ -5,7 +5,7 @@ import { useCircleStore } from "@/stores/circle.store";
 import {
   SocketMemberJoinedDataSchema,
   SocketMemberLeftDataSchema,
-} from "@/zodSchemas/chat.zod";
+} from "@/zodSchemas/circle.zod";
 
 import { circleSocketService } from "../../services/socketService";
 

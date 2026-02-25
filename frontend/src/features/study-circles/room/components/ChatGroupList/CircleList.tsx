@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { ChatGroup } from "@/zodSchemas/chat.zod";
+import type { StudyCircle } from "@/zodSchemas/circle.zod";
 
 import { CircleListItem } from "./CircleListItem";
 import { EmptyState } from "./EmptyState";
@@ -9,7 +9,7 @@ import { Header } from "./Header";
 import { LoadingState } from "./LoadingState";
 
 interface ChatGroupListProps {
-  circles: ChatGroup[];
+  circles: StudyCircle[];
   selectedCircleId: string | null;
   onSelectCircle: (circleId: string) => void;
   isLoading: boolean;

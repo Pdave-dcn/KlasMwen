@@ -3,7 +3,7 @@ import { useRef } from "react";
 import { Search, X, Compass } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
-import type { SearchSuggestion } from "@/zodSchemas/chat.zod";
+import type { SearchSuggestion } from "@/zodSchemas/circle.zod";
 import type { PopularTag } from "@/zodSchemas/tag.zod";
 
 import { SearchSuggestionsDropdown } from "./SearchSuggestionsDropdown";

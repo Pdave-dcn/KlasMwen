@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { ChatMessage } from "@/zodSchemas/chat.zod";
+import type { CircleMessage } from "@/zodSchemas/circle.zod";
 
 import { DateDivider } from "./DateDivider";
 import { EmptyState } from "./EmptyState";
@@ -11,7 +11,7 @@ import { MessageBubble } from "./MessageBubble";
 // 1. Import Shadcn ScrollArea
 
 interface MessageListProps {
-  messages: ChatMessage[];
+  messages: CircleMessage[];
   currentUserId: string;
   isLoading: boolean;
 }

@@ -5,11 +5,11 @@ import { createPaginationSchema } from "../../utils/pagination.util";
 import {
   StudyCircleIdParamSchema,
   CreatorIdParamSchema,
-  GroupSearchFiltersSchema,
+  CircleSearchFiltersSchema,
   SearchSuggestionQuerySchema,
-  SmallGroupsQuerySchema,
+  SmallCirclesQuerySchema,
   TrendingQuerySchema,
-} from "../../zodSchemas/chat.zod";
+} from "../../zodSchemas/circle.zod";
 
 import type { AuthenticatedRequest } from "../../types/AuthRequest";
 import type { NextFunction, Request, Response } from "express";
@@ -196,7 +196,7 @@ const getSmallCircles = async (
 
     const smallGroupsPaginationSchema = createPaginationSchema(10, 50, "uuid");
     const { limit, cursor } = smallGroupsPaginationSchema.parse(req.query);
-    const { maxMembers } = SmallGroupsQuerySchema.parse(req.query);
+    const { maxMembers } = SmallCirclesQuerySchema.parse(req.query);
 
     const result = await ChatService.getSmallGroups(
       user.id,
@@ -323,7 +323,7 @@ const searchCircles = async (
 
     const { user } = req as AuthenticatedRequest;
 
-    const filters = GroupSearchFiltersSchema.parse(req.query);
+    const filters = CircleSearchFiltersSchema.parse(req.query);
 
     const sanitizedSearchTerm = filters.query
       ? filters.query.replace(/[%_]/g, "\\$&")

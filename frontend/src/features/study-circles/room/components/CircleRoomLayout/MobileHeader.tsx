@@ -2,10 +2,10 @@ import { ArrowLeft, Users, Settings } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { getGroupInitials } from "@/utils/getInitials.util";
-import type { ChatGroup } from "@/zodSchemas/chat.zod";
+import type { StudyCircle } from "@/zodSchemas/circle.zod";
 
 interface MobileHeaderProps {
-  selectedCircle?: ChatGroup;
+  selectedCircle?: StudyCircle;
   showRightSidebar: boolean;
   onMenuClick: () => void;
   onMembersClick: () => void;

@@ -8,12 +8,12 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useJoinCircleMutation } from "@/queries/circle";
 import { getGroupInitials } from "@/utils/getInitials.util";
-import type { ChatGroupForDiscovery } from "@/zodSchemas/chat.zod";
+import type { StudyCircleForDiscovery } from "@/zodSchemas/circle.zod";
 
 import type { DiscoveryCategory } from "../../hooks/useCircleDiscoveryCategory";
 
 interface CircleDiscoveryCardProps {
-  circle: ChatGroupForDiscovery;
+  circle: StudyCircleForDiscovery;
   category?: DiscoveryCategory;
 }
 

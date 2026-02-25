@@ -1,13 +1,13 @@
 import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import type { ChatGroup, ChatMember } from "@/zodSchemas/chat.zod";
+import type { StudyCircle, CircleMember } from "@/zodSchemas/circle.zod";
 
 import { MemberList } from "../MemberList/MemberList";
 
 interface RightSidebarProps {
-  selectedCircle?: ChatGroup;
-  members: ChatMember[];
+  selectedCircle?: StudyCircle;
+  members: CircleMember[];
   currentUserId?: string;
   isLoading: boolean;
   showRightSidebar: boolean;

@@ -1,10 +1,10 @@
 import { cn } from "@/lib/utils";
-import type { ChatGroup } from "@/zodSchemas/chat.zod";
+import type { StudyCircle } from "@/zodSchemas/circle.zod";
 
 import { CircleList } from "../ChatGroupList/CircleList";
 
 interface LeftSidebarProps {
-  circles: ChatGroup[];
+  circles: StudyCircle[];
   selectedCircleId: string | null;
   onSelectCircle: (id: string) => void;
   isLoading: boolean;

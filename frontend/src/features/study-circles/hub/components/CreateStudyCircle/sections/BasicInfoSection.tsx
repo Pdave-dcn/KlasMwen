@@ -4,15 +4,15 @@ import { motion } from "framer-motion";
 
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { type CreateGroupFormData } from "@/zodSchemas/chat.zod";
+import { type CreateCircleFormData } from "@/zodSchemas/circle.zod";
 
 import { FormField } from "../FormField";
 
 import { SectionHeader } from "./SectionHeader";
 
 interface BasicInfoSectionProps {
-  control: Control<CreateGroupFormData>;
-  errors: FieldErrors<CreateGroupFormData>;
+  control: Control<CreateCircleFormData>;
+  errors: FieldErrors<CreateCircleFormData>;
   variants: {
     hidden: { opacity: number; y: number };
     visible: { opacity: number; y: number };

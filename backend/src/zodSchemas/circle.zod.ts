@@ -15,12 +15,12 @@ const CreatorIdParamSchema = z.object({
   creatorId: z.uuid("Invalid creator ID format"),
 });
 
-const CreateChatGroupDataSchema = z.object({
+const CreateStudyCircleDataSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(1, "Group name is required")
-    .max(100, "Group name must not exceed 100 characters"),
+    .min(1, "Study Circle name is required")
+    .max(100, "Study Circle name must not exceed 100 characters"),
   description: z
     .string()
     .trim()
@@ -31,13 +31,13 @@ const CreateChatGroupDataSchema = z.object({
   tagIds: z.array(z.number().int().positive()).optional().default([]),
 });
 
-const UpdateChatGroupDataSchema = z
+const UpdateStudyCircleDataSchema = z
   .object({
     name: z
       .string()
       .trim()
-      .min(1, "Group name is required")
-      .max(100, "Group name must not exceed 100 characters")
+      .min(1, "Study Circle name is required")
+      .max(100, "Study Circle name must not exceed 100 characters")
       .optional(),
     description: z
       .string()
@@ -51,7 +51,7 @@ const UpdateChatGroupDataSchema = z
     message: "At least one field must be provided for update",
   });
 
-// Chat Member Schemas
+// Circle Member Schemas
 
 const AddMemberDataSchema = z.object({
   userId: z.uuid("Invalid user ID"),
@@ -62,7 +62,7 @@ const UpdateMemberRoleDataSchema = z.object({
   role: z.enum(ChatRole),
 });
 
-// Chat Message Schemas
+// Circle Message Schemas
 
 const SendMessageDataSchema = z.object({
   content: z
@@ -92,7 +92,7 @@ const MessageIdParamSchema = z.object({
 
 // Search Schemas
 
-const GroupSearchFiltersSchema = z.object({
+const CircleSearchFiltersSchema = z.object({
   query: z.string().trim().optional(),
   isPrivate: z
     .string()
@@ -142,7 +142,7 @@ const TrendingQuerySchema = z.object({
   timeframe: z.coerce.number().min(1).max(30).optional().default(7),
 });
 
-const SmallGroupsQuerySchema = z.object({
+const SmallCirclesQuerySchema = z.object({
   maxMembers: z.coerce.number().min(2).max(50).optional().default(10),
 });
 
@@ -151,16 +151,16 @@ const SearchSuggestionQuerySchema = z.object({
   limit: z.coerce.number().min(1).max(20).optional().default(10),
 });
 
-type CreateChatGroupData = z.infer<typeof CreateChatGroupDataSchema>;
-type UpdateChatGroupData = z.infer<typeof UpdateChatGroupDataSchema>;
+type CreateStudyCircleData = z.infer<typeof CreateStudyCircleDataSchema>;
+type UpdateStudyCircleData = z.infer<typeof UpdateStudyCircleDataSchema>;
 type AddMemberData = z.infer<typeof AddMemberDataSchema>;
 type UpdateMemberRoleData = z.infer<typeof UpdateMemberRoleDataSchema>;
 type SendMessageData = z.infer<typeof SendMessageDataSchema>;
 
 export {
-  CreateChatGroupDataSchema,
-  UpdateChatGroupDataSchema,
-  GroupSearchFiltersSchema,
+  CreateStudyCircleDataSchema,
+  UpdateStudyCircleDataSchema,
+  CircleSearchFiltersSchema,
   StudyCircleIdParamSchema,
   CreatorIdParamSchema,
   UserIdParamSchema,
@@ -169,10 +169,10 @@ export {
   SendMessageDataSchema,
   MessageIdParamSchema,
   TrendingQuerySchema,
-  SmallGroupsQuerySchema,
+  SmallCirclesQuerySchema,
   SearchSuggestionQuerySchema,
-  type CreateChatGroupData,
-  type UpdateChatGroupData,
+  type CreateStudyCircleData,
+  type UpdateStudyCircleData,
   type AddMemberData,
   type UpdateMemberRoleData,
   type SendMessageData,

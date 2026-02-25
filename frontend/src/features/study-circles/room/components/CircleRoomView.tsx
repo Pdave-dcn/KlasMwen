@@ -2,14 +2,14 @@ import { Users, Settings, MessageCircle } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getGroupInitials } from "@/utils/getInitials.util";
-import type { ChatGroup, ChatMessage } from "@/zodSchemas/chat.zod";
+import type { StudyCircle, CircleMessage } from "@/zodSchemas/circle.zod";
 
 import { MessageInput } from "./MessageInput";
 import { MessageList } from "./MessageList/MessageList";
 
 interface ChatRoomProps {
-  circle: ChatGroup | undefined;
-  messages: ChatMessage[];
+  circle: StudyCircle | undefined;
+  messages: CircleMessage[];
   currentUserId: string;
   isLoading: boolean;
   isMuted: boolean;

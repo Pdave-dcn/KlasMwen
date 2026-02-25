@@ -1,12 +1,12 @@
 import { format } from "date-fns";
 
 import { cn } from "@/lib/utils";
-import type { ChatMessage } from "@/zodSchemas/chat.zod";
+import type { CircleMessage } from "@/zodSchemas/circle.zod";
 
 import { UserAvatar } from "../UserAvatar";
 
 interface MessageBubbleProps {
-  message: ChatMessage;
+  message: CircleMessage;
   currentUserId: string;
   showSender?: boolean;
 }

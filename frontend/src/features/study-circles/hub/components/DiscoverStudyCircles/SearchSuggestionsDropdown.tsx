@@ -1,7 +1,7 @@
 import { Users } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import type { SearchSuggestion } from "@/zodSchemas/chat.zod";
+import type { SearchSuggestion } from "@/zodSchemas/circle.zod";
 
 interface SearchSuggestionsDropdownProps {
   suggestions: SearchSuggestion[];

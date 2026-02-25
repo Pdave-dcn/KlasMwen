@@ -3,12 +3,12 @@ import { cn } from "@/lib/utils";
 import { usePresenceStore } from "@/stores/presence.store";
 import { formatTimeAgo } from "@/utils/dateFormatter.util";
 import { getGroupInitials } from "@/utils/getInitials.util";
-import type { ChatGroup } from "@/zodSchemas/chat.zod";
+import type { StudyCircle } from "@/zodSchemas/circle.zod";
 
 import { PresenceIndicator } from "../PresenceIndicator";
 
 interface RecentCircleCardProps {
-  circle: ChatGroup;
+  circle: StudyCircle;
   onClick: () => void;
 }
 

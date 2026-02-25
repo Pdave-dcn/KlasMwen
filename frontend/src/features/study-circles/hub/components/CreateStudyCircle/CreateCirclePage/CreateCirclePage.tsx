@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { useCreateStudyCircleMutation } from "@/queries/circle";
-import type { CreateGroupFormData } from "@/zodSchemas/chat.zod";
+import type { CreateCircleFormData } from "@/zodSchemas/circle.zod";
 
 import { CreateCircleContent } from "./CreateCircleContent";
 import { CreateCircleHeader } from "./CreateCircleHeader";
@@ -17,7 +17,7 @@ export function CreateCirclePage() {
 
   const [createdGroupName, setCreatedGroupName] = useState<string | null>(null);
 
-  const handleSubmit = async (data: CreateGroupFormData) => {
+  const handleSubmit = async (data: CreateCircleFormData) => {
     try {
       await createGroupMutation.mutateAsync({
         name: data.name,

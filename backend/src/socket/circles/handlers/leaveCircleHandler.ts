@@ -1,5 +1,5 @@
 import { createLogger } from "../../../core/config/logger.js";
-import { StudyCircleIdParamSchema } from "../../../zodSchemas/chat.zod.js";
+import { StudyCircleIdParamSchema } from "../../../zodSchemas/circle.zod.js";
 import { broadcastPresenceUpdate } from "../helpers/broadcastPresenceUpdate.js";
 
 import type UserService from "../../../features/user/service/UserService.js";

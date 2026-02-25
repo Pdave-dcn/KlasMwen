@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 
 import { useDebouncedValue } from "@/features/search/hooks/useDebouncedValue";
 import { useSearchCirclesQuery } from "@/queries/circle";
-import type { SearchSuggestion } from "@/zodSchemas/chat.zod";
+import type { SearchSuggestion } from "@/zodSchemas/circle.zod";
 import type { PopularTag } from "@/zodSchemas/tag.zod";
 
 import { useSearchSuggestions } from "./useSearchSuggestions";

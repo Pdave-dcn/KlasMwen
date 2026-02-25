@@ -3,12 +3,12 @@ import { io } from "socket.io-client";
 
 import { useCircleStore } from "@/stores/circle.store";
 import type {
-  ChatMessage,
+  CircleMessage,
   MemberJoinedData,
   MemberLeftData,
-} from "@/zodSchemas/chat.zod";
+} from "@/zodSchemas/circle.zod";
 
-type MessageHandler = (message: ChatMessage) => void;
+type MessageHandler = (message: CircleMessage) => void;
 type ConnectionHandler = () => void;
 type DiscoveryWatchHandler = (data: { counts: Record<string, number> }) => void;
 
@@ -56,7 +56,7 @@ export class CircleSocketService {
       this.disconnectionHandlers.forEach((h) => h());
     });
 
-    this.socket.on("circle:new_message", (msg: ChatMessage) => {
+    this.socket.on("circle:new_message", (msg: CircleMessage) => {
       this.messageHandlers.forEach((h) => h(msg));
     });
 
@@ -227,7 +227,7 @@ export class CircleSocketService {
    * Simulates receiving a message locally without server communication.
    * Useful for optimistic updates.
    */
-  simulateIncomingMessage(message: ChatMessage): void {
+  simulateIncomingMessage(message: CircleMessage): void {
     this.messageHandlers.forEach((handler) => handler(message));
   }
 

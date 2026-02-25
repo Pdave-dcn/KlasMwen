@@ -6,7 +6,7 @@ import {
   StudyCircleIdParamSchema,
   UpdateMemberRoleDataSchema,
   UserIdParamSchema,
-} from "../../zodSchemas/chat.zod.js";
+} from "../../zodSchemas/circle.zod.js";
 
 import type { AuthenticatedRequest } from "../../types/AuthRequest.js";
 import type { NextFunction, Request, Response } from "express";

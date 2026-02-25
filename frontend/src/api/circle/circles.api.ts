@@ -1,18 +1,18 @@
 import handleZodValidationError from "@/utils/zodErrorHandler.util";
 import {
-  ChatGroupsResponseSchema,
-  ChatGroupResponseSchema,
-  type CreateChatGroupData,
-  type UpdateChatGroupData,
-  ChatGroupPreviewResponseSchema,
-} from "@/zodSchemas/chat.zod";
+  StudyCirclesResponseSchema,
+  StudyCircleResponseSchema,
+  type CreateStudyCircleData,
+  type UpdateStudyCircleData,
+  StudyCirclePreviewResponseSchema,
+} from "@/zodSchemas/circle.zod";
 
 import api from "../api";
 
-export const createStudyCircle = async (data: CreateChatGroupData) => {
+export const createStudyCircle = async (data: CreateStudyCircleData) => {
   try {
     const res = await api.post("/circles", data);
-    const validatedData = ChatGroupResponseSchema.parse(res.data);
+    const validatedData = StudyCircleResponseSchema.parse(res.data);
     return validatedData.data;
   } catch (error) {
     handleZodValidationError(error, "createStudyCircle");
@@ -23,7 +23,7 @@ export const createStudyCircle = async (data: CreateChatGroupData) => {
 export const joinStudyCircle = async (circleId: string) => {
   try {
     const res = await api.post(`/circles/join/${circleId}`);
-    const validatedData = ChatGroupResponseSchema.parse(res.data);
+    const validatedData = StudyCircleResponseSchema.parse(res.data);
     return validatedData.data;
   } catch (error) {
     handleZodValidationError(error, "joinStudyCircle");
@@ -34,7 +34,7 @@ export const joinStudyCircle = async (circleId: string) => {
 export const getUserStudyCircles = async () => {
   try {
     const res = await api.get("/circles");
-    const validatedData = ChatGroupsResponseSchema.parse(res.data);
+    const validatedData = StudyCirclesResponseSchema.parse(res.data);
     return validatedData.data;
   } catch (error) {
     handleZodValidationError(error, "getUserStudyCircles");
@@ -47,7 +47,7 @@ export const getRecentActivityCircles = async (limit: number = 8) => {
     const res = await api.get("/circles/recent-activity", {
       params: { limit },
     });
-    const validatedData = ChatGroupsResponseSchema.parse(res.data);
+    const validatedData = StudyCirclesResponseSchema.parse(res.data);
     return validatedData.data;
   } catch (error) {
     handleZodValidationError(error, "getRecentActivityCircles");
@@ -58,7 +58,7 @@ export const getRecentActivityCircles = async (limit: number = 8) => {
 export const getStudyCircleById = async (circleId: string) => {
   try {
     const res = await api.get(`/circles/${circleId}`);
-    const validatedData = ChatGroupResponseSchema.parse(res.data);
+    const validatedData = StudyCircleResponseSchema.parse(res.data);
     return validatedData.data;
   } catch (error) {
     handleZodValidationError(error, "getStudyCircleById");
@@ -69,7 +69,7 @@ export const getStudyCircleById = async (circleId: string) => {
 export const getCirclePreviewDetails = async (circleId: string) => {
   try {
     const res = await api.get(`/circles/${circleId}/preview`);
-    const validatedData = ChatGroupPreviewResponseSchema.parse(res.data);
+    const validatedData = StudyCirclePreviewResponseSchema.parse(res.data);
     return validatedData.data;
   } catch (error) {
     handleZodValidationError(error, "getCirclePreviewDetails");
@@ -79,11 +79,11 @@ export const getCirclePreviewDetails = async (circleId: string) => {
 
 export const updateStudyCircle = async (
   circleId: string,
-  data: UpdateChatGroupData,
+  data: UpdateStudyCircleData,
 ) => {
   try {
     const res = await api.put(`/circles/${circleId}`, data);
-    const validatedData = ChatGroupResponseSchema.parse(res.data);
+    const validatedData = StudyCircleResponseSchema.parse(res.data);
     return validatedData.data;
   } catch (error) {
     handleZodValidationError(error, "updateStudyCircle");

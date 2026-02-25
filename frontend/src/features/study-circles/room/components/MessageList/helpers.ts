@@ -1,10 +1,10 @@
 import { format, isToday, isYesterday, isSameDay } from "date-fns";
 
-import type { ChatMessage } from "@/zodSchemas/chat.zod";
+import type { CircleMessage } from "@/zodSchemas/circle.zod";
 
 export interface GroupedMessage {
   date: Date;
-  messages: { message: ChatMessage; showSender: boolean }[];
+  messages: { message: CircleMessage; showSender: boolean }[];
 }
 
 /**
@@ -29,8 +29,8 @@ export const getDateLabel = (date: Date): string => {
  * @returns true if sender info should be shown
  */
 export const shouldShowSender = (
-  currentMessage: ChatMessage,
-  previousMessage: ChatMessage | undefined,
+  currentMessage: CircleMessage,
+  previousMessage: CircleMessage | undefined,
 ): boolean => {
   if (!previousMessage) {
     return true;
@@ -51,7 +51,7 @@ export const shouldShowSender = (
  * @returns Array of grouped messages by date
  */
 export const groupMessagesByDate = (
-  messages: ChatMessage[],
+  messages: CircleMessage[],
 ): GroupedMessage[] => {
   const grouped: GroupedMessage[] = [];
 

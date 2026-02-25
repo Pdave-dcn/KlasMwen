@@ -1,10 +1,10 @@
 import handleZodValidationError from "@/utils/zodErrorHandler.util";
 import {
-  ChatMembersResponseSchema,
-  ChatMemberResponseSchema,
+  CircleMembersResponseSchema,
+  CircleMemberResponseSchema,
   type AddMemberData,
   type UpdateMemberRoleData,
-} from "@/zodSchemas/chat.zod";
+} from "@/zodSchemas/circle.zod";
 
 import api from "../api";
 
@@ -14,7 +14,7 @@ export const addCircleMember = async (
 ) => {
   try {
     const res = await api.post(`/circles/${circleId}/members`, data);
-    const validatedData = ChatMemberResponseSchema.parse(res.data);
+    const validatedData = CircleMemberResponseSchema.parse(res.data);
     return validatedData.data;
   } catch (error) {
     handleZodValidationError(error, "addCircleMember");
@@ -25,7 +25,7 @@ export const addCircleMember = async (
 export const getCircleMembers = async (circleId: string) => {
   try {
     const res = await api.get(`/circles/${circleId}/members`);
-    const validatedData = ChatMembersResponseSchema.parse(res.data);
+    const validatedData = CircleMembersResponseSchema.parse(res.data);
     return validatedData.data;
   } catch (error) {
     handleZodValidationError(error, "getCircleMembers");
@@ -49,7 +49,7 @@ export const updateCircleMemberRole = async (
 ) => {
   try {
     const res = await api.patch(`/circles/${circleId}/members/${userId}`, data);
-    const validatedData = ChatMemberResponseSchema.parse(res.data);
+    const validatedData = CircleMemberResponseSchema.parse(res.data);
     return validatedData.data;
   } catch (error) {
     handleZodValidationError(error, "updateCircleMemberRole");

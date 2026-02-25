@@ -3,10 +3,10 @@ import { Users } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { getGroupInitials } from "@/utils/getInitials.util";
-import type { ChatGroup } from "@/zodSchemas/chat.zod";
+import type { StudyCircle } from "@/zodSchemas/circle.zod";
 
 interface CircleListItemProps {
-  circle: ChatGroup;
+  circle: StudyCircle;
   isSelected: boolean;
   onClick: () => void;
 }

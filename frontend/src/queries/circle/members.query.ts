@@ -10,7 +10,7 @@ import {
 import type {
   AddMemberData,
   UpdateMemberRoleData,
-} from "@/zodSchemas/chat.zod";
+} from "@/zodSchemas/circle.zod";
 
 // Queries
 

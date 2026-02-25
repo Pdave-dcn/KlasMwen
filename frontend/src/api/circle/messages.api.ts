@@ -1,9 +1,9 @@
 import handleZodValidationError from "@/utils/zodErrorHandler.util";
 import {
-  ChatMessagesResponseSchema,
-  ChatMessageResponseSchema,
+  CircleMessagesResponseSchema,
+  CircleMessageResponseSchema,
   type SendMessageData,
-} from "@/zodSchemas/chat.zod";
+} from "@/zodSchemas/circle.zod";
 
 import api from "../api";
 
@@ -13,7 +13,7 @@ export const sendCircleMessage = async (
 ) => {
   try {
     const res = await api.post(`/circles/${circleId}/message`, data);
-    const validatedData = ChatMessageResponseSchema.parse(res.data);
+    const validatedData = CircleMessageResponseSchema.parse(res.data);
     return validatedData.data;
   } catch (error) {
     handleZodValidationError(error, "sendCircleMessage");
@@ -30,7 +30,7 @@ export const getCircleMessages = async (
     const res = await api.get(`/circles/${circleId}/messages`, {
       params: { cursor, limit },
     });
-    const validatedData = ChatMessagesResponseSchema.parse(res.data);
+    const validatedData = CircleMessagesResponseSchema.parse(res.data);
     return validatedData;
   } catch (error) {
     handleZodValidationError(error, "getCircleMessages");

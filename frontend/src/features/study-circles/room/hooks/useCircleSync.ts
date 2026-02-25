@@ -5,10 +5,10 @@ import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
 
 import { useUpdateCircleMemberLastReadAtMutation } from "@/queries/circle";
 import type {
-  ChatMessagesResponse,
-  ChatGroup,
-  ChatMessage,
-} from "@/zodSchemas/chat.zod";
+  CircleMessagesResponse,
+  StudyCircle,
+  CircleMessage,
+} from "@/zodSchemas/circle.zod";
 
 import { circleSocketService } from "../../services/socketService";
 
@@ -21,12 +21,15 @@ export const useCircleSync = (currentCircleId: string | null) => {
     if (!currentCircleId) return;
 
     // 1. Immediately reset the unread count in the UI for the clicked circle
-    queryClient.setQueryData<ChatGroup[]>(["chat", "groups", "list"], (old) => {
-      if (!old) return old;
-      return old.map((g) =>
-        g.id === currentCircleId ? { ...g, unreadCount: 0 } : g,
-      );
-    });
+    queryClient.setQueryData<StudyCircle[]>(
+      ["chat", "groups", "list"],
+      (old) => {
+        if (!old) return old;
+        return old.map((g) =>
+          g.id === currentCircleId ? { ...g, unreadCount: 0 } : g,
+        );
+      },
+    );
 
     // 2. Sync server-side read status
     updateLastReadAtMutation.mutate(currentCircleId);
@@ -42,12 +45,12 @@ export const useCircleSync = (currentCircleId: string | null) => {
   // EFFECT 2: Handle Incoming Real-time Messages
   useEffect(() => {
     const unsubscribe = circleSocketService.onMessage(
-      (message: ChatMessage) => {
+      (message: CircleMessage) => {
         const { chatGroupId } = message;
 
         // 1. Update Active Message List if the message belongs to the current room
         if (currentCircleId === chatGroupId) {
-          queryClient.setQueryData<InfiniteData<ChatMessagesResponse>>(
+          queryClient.setQueryData<InfiniteData<CircleMessagesResponse>>(
             ["chat", "groups", chatGroupId, "messages"],
             (oldData) => {
               if (!oldData?.pages.length) return oldData;
@@ -93,7 +96,7 @@ export const useCircleSync = (currentCircleId: string | null) => {
         }
 
         // 2. Update Sidebar Group List for ALL incoming messages (Global Sync)
-        queryClient.setQueryData<ChatGroup[]>(
+        queryClient.setQueryData<StudyCircle[]>(
           ["chat", "groups", "list"],
           (old) => {
             if (!old) return old;

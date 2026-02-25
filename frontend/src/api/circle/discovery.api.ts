@@ -1,8 +1,8 @@
 import handleZodValidationError from "@/utils/zodErrorHandler.util";
 import {
-  ChatGroupsForDiscoveryResponseSchema,
-  ChatGroupsSearchResponseSchema,
-} from "@/zodSchemas/chat.zod";
+  StudyCirclesForDiscoveryResponseSchema,
+  StudyCirclesSearchResponseSchema,
+} from "@/zodSchemas/circle.zod";
 
 import api from "../api";
 
@@ -30,7 +30,9 @@ export const searchCircles = async (
         limit,
       },
     });
-    const validatedData = ChatGroupsForDiscoveryResponseSchema.parse(res.data);
+    const validatedData = StudyCirclesForDiscoveryResponseSchema.parse(
+      res.data,
+    );
     return validatedData;
   } catch (error) {
     handleZodValidationError(error, "searchCircles");
@@ -46,7 +48,9 @@ export const getCirclesForDiscovery = async (
     const res = await api.get(`/circles/discover`, {
       params: { limit, cursor },
     });
-    const validatedData = ChatGroupsForDiscoveryResponseSchema.parse(res.data);
+    const validatedData = StudyCirclesForDiscoveryResponseSchema.parse(
+      res.data,
+    );
     return validatedData;
   } catch (error) {
     handleZodValidationError(error, "getCirclesForDiscovery");
@@ -59,7 +63,9 @@ export const getRecommendedCircles = async (cursor?: string, limit = 5) => {
     const res = await api.get("/circles/discover/recommended", {
       params: { cursor, limit },
     });
-    const validatedData = ChatGroupsForDiscoveryResponseSchema.parse(res.data);
+    const validatedData = StudyCirclesForDiscoveryResponseSchema.parse(
+      res.data,
+    );
     return validatedData;
   } catch (error) {
     handleZodValidationError(error, "getRecommendedCircles");
@@ -76,7 +82,9 @@ export const getTrendingCircles = async (
     const res = await api.get("/circles/discover/trending", {
       params: { cursor, limit, timeframe },
     });
-    const validatedData = ChatGroupsForDiscoveryResponseSchema.parse(res.data);
+    const validatedData = StudyCirclesForDiscoveryResponseSchema.parse(
+      res.data,
+    );
     return validatedData;
   } catch (error) {
     handleZodValidationError(error, "getTrendingCircles");
@@ -89,7 +97,9 @@ export const getNewCircles = async (cursor?: string, limit = 10) => {
     const res = await api.get("/circles/discover/new", {
       params: { cursor, limit },
     });
-    const validatedData = ChatGroupsForDiscoveryResponseSchema.parse(res.data);
+    const validatedData = StudyCirclesForDiscoveryResponseSchema.parse(
+      res.data,
+    );
     return validatedData;
   } catch (error) {
     handleZodValidationError(error, "getNewCircles");
@@ -106,7 +116,9 @@ export const getSmallCircles = async (
     const res = await api.get("/circles/discover/small", {
       params: { cursor, limit, maxMembers },
     });
-    const validatedData = ChatGroupsForDiscoveryResponseSchema.parse(res.data);
+    const validatedData = StudyCirclesForDiscoveryResponseSchema.parse(
+      res.data,
+    );
     return validatedData;
   } catch (error) {
     handleZodValidationError(error, "getSmallCircles");
@@ -119,7 +131,7 @@ export const getSearchSuggestions = async (query: string, limit = 10) => {
     const res = await api.get("/circles/discover/suggestions", {
       params: { query, limit },
     });
-    const validatedData = ChatGroupsSearchResponseSchema.parse(res.data);
+    const validatedData = StudyCirclesSearchResponseSchema.parse(res.data);
     return validatedData.data;
   } catch (error) {
     handleZodValidationError(error, "getSearchSuggestions");
@@ -136,7 +148,9 @@ export const getSimilarCircles = async (
     const res = await api.get(`/circles/discover/similar/${circleId}`, {
       params: { cursor, limit },
     });
-    const validatedData = ChatGroupsForDiscoveryResponseSchema.parse(res.data);
+    const validatedData = StudyCirclesForDiscoveryResponseSchema.parse(
+      res.data,
+    );
     return validatedData;
   } catch (error) {
     handleZodValidationError(error, "getSimilarCircles");
@@ -153,7 +167,9 @@ export const getCirclesByCreator = async (
     const res = await api.get(`/circles/discover/creator/${creatorId}`, {
       params: { cursor, limit },
     });
-    const validatedData = ChatGroupsForDiscoveryResponseSchema.parse(res.data);
+    const validatedData = StudyCirclesForDiscoveryResponseSchema.parse(
+      res.data,
+    );
     return validatedData;
   } catch (error) {
     handleZodValidationError(error, "getCirclesByCreator");

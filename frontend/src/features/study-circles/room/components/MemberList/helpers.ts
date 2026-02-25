@@ -1,7 +1,7 @@
 import type {
-  EnrichedChatMember,
-  ChatRole as MemberRole,
-} from "@/zodSchemas/chat.zod";
+  EnrichedCircleMember,
+  StudyCircleRole as MemberRole,
+} from "@/zodSchemas/circle.zod";
 
 /**
  * Sorts members by online status first, then by role hierarchy
@@ -9,8 +9,8 @@ import type {
  * @returns Sorted array of members
  */
 export function sortMembers(
-  members: EnrichedChatMember[],
-): EnrichedChatMember[] {
+  members: EnrichedCircleMember[],
+): EnrichedCircleMember[] {
   const roleOrder: MemberRole[] = ["OWNER", "MODERATOR", "MEMBER"];
 
   return [...members].sort((a, b) => {
@@ -28,6 +28,6 @@ export function sortMembers(
  * @param members - Array of enriched chat members
  * @returns Number of online members
  */
-export function getOnlineCount(members: EnrichedChatMember[]): number {
+export function getOnlineCount(members: EnrichedCircleMember[]): number {
   return members.filter((m) => m.isOnline).length;
 }

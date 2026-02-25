@@ -4,7 +4,7 @@ import {
   NotAMemberError,
 } from "../../../core/error/custom/chat.error.js";
 import ChatService from "../../../features/chat/service/ChatService.js";
-import { StudyCircleIdParamSchema } from "../../../zodSchemas/chat.zod.js";
+import { StudyCircleIdParamSchema } from "../../../zodSchemas/circle.zod.js";
 import { PresenceService } from "../../presence/presence.service.js";
 import { broadcastPresenceUpdate } from "../helpers/broadcastPresenceUpdate.js";
 

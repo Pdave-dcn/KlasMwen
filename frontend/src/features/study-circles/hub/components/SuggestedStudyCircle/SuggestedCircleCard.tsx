@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useJoinCircleMutation } from "@/queries/circle";
 import { getGroupInitials } from "@/utils/getInitials.util";
-import type { ChatGroupForDiscovery } from "@/zodSchemas/chat.zod";
+import type { StudyCircleForDiscovery } from "@/zodSchemas/circle.zod";
 
 interface SuggestedCircleCardProps {
-  circle: ChatGroupForDiscovery;
+  circle: StudyCircleForDiscovery;
 }
 
 export const SuggestedCircleCard = ({ circle }: SuggestedCircleCardProps) => {

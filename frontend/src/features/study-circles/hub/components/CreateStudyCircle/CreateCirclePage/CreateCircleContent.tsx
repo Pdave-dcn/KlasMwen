@@ -1,12 +1,12 @@
 import { Lightbulb } from "lucide-react";
 
-import type { CreateGroupFormData } from "@/zodSchemas/chat.zod";
+import type { CreateCircleFormData } from "@/zodSchemas/circle.zod";
 
 import { CreateCircleForm } from "./CreateCircleForm";
 import { TipsAccordion } from "./TipsAccordion";
 
 interface CreateGroupContentProps {
-  onSubmit: (data: CreateGroupFormData) => Promise<void>;
+  onSubmit: (data: CreateCircleFormData) => Promise<void>;
   isSubmitting: boolean;
 }
 

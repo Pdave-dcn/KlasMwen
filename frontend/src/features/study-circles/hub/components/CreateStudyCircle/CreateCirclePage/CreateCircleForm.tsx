@@ -8,16 +8,16 @@ import { Loader2, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
-  CreateChatGroupSchema,
-  type CreateGroupFormData,
-} from "@/zodSchemas/chat.zod";
+  CreateStudyCircleSchema,
+  type CreateCircleFormData,
+} from "@/zodSchemas/circle.zod";
 
 import { BasicInfoSection } from "../sections/BasicInfoSection";
 import { PrivacySection } from "../sections/PrivacySection";
 import { TopicsSection } from "../sections/TopicSection";
 
 interface CreateGroupFormProps {
-  onSubmit: (data: CreateGroupFormData) => Promise<void>;
+  onSubmit: (data: CreateCircleFormData) => Promise<void>;
   isSubmitting: boolean;
 }
 
@@ -32,8 +32,8 @@ export function CreateCircleForm({
 }: CreateGroupFormProps) {
   const [privacySelection, setPrivacySelection] = useState<boolean>(true);
 
-  const form = useForm<CreateGroupFormData>({
-    resolver: zodResolver(CreateChatGroupSchema),
+  const form = useForm<CreateCircleFormData>({
+    resolver: zodResolver(CreateStudyCircleSchema),
     defaultValues: {
       name: "",
       description: "",

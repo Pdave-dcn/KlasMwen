@@ -1,9 +1,9 @@
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/utils/getInitials.util";
-import type { ChatAttachedUser } from "@/zodSchemas/chat.zod";
+import type { CircleAttachedUser } from "@/zodSchemas/circle.zod";
 
 interface UserAvatarProps {
-  user: ChatAttachedUser;
+  user: CircleAttachedUser;
   isOnline?: boolean;
   size?: "sm" | "md" | "lg";
   showOnlineStatus?: boolean;

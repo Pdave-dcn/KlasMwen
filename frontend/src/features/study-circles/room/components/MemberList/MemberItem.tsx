@@ -3,7 +3,10 @@ import { Crown, Shield, Users, VolumeX, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCircleStore } from "@/stores/circle.store";
 import { usePresenceStore } from "@/stores/presence.store";
-import type { ChatMember, ChatRole as MemberRole } from "@/zodSchemas/chat.zod";
+import type {
+  CircleMember,
+  StudyCircleRole as MemberRole,
+} from "@/zodSchemas/circle.zod";
 
 import { UserAvatar } from "../UserAvatar";
 
@@ -20,7 +23,7 @@ export const MemberItem = ({
   member,
   isCurrentUser,
 }: {
-  member: ChatMember;
+  member: CircleMember;
   isCurrentUser: boolean;
 }) => {
   const config = roleConfig[member.role];

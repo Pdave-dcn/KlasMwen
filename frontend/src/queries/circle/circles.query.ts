@@ -17,10 +17,10 @@ import {
   joinStudyCircle,
 } from "@/api/circle";
 import type {
-  CreateChatGroupData,
-  UpdateChatGroupData,
-  ChatGroupsForDiscoveryResponseSchema,
-} from "@/zodSchemas/chat.zod";
+  CreateStudyCircleData,
+  UpdateStudyCircleData,
+  StudyCirclesForDiscoveryResponseSchema,
+} from "@/zodSchemas/circle.zod";
 
 // Queries
 
@@ -60,7 +60,7 @@ export const useCreateStudyCircleMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CreateChatGroupData) => createStudyCircle(data),
+    mutationFn: (data: CreateStudyCircleData) => createStudyCircle(data),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["circles", "list"],
@@ -82,7 +82,7 @@ export const useJoinCircleMutation = () => {
       });
 
       queryClient.setQueryData<
-        InfiniteData<ChatGroupsForDiscoveryResponseSchema>
+        InfiniteData<StudyCirclesForDiscoveryResponseSchema>
       >(["circles", "discovery"], (old) => {
         if (!old) return old;
         return {
@@ -103,7 +103,7 @@ export const useUpdateCircleMutation = (circleId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: UpdateChatGroupData) =>
+    mutationFn: (data: UpdateStudyCircleData) =>
       updateStudyCircle(circleId, data),
     onSuccess: async () => {
       await queryClient.invalidateQueries({

@@ -3,9 +3,9 @@ import ChatService from "../../features/chat/service/ChatService.js";
 import createActionLogger from "../../utils/logger.util.js";
 import {
   StudyCircleIdParamSchema,
-  CreateChatGroupDataSchema,
-  UpdateChatGroupDataSchema,
-} from "../../zodSchemas/chat.zod.js";
+  CreateStudyCircleDataSchema,
+  UpdateStudyCircleDataSchema,
+} from "../../zodSchemas/circle.zod.js";
 
 import type { AuthenticatedRequest } from "../../types/AuthRequest.js";
 import type { NextFunction, Request, Response } from "express";
@@ -29,7 +29,7 @@ const createStudyCircle = async (
     actionLogger.info("Creating study circle");
     const { user } = req as AuthenticatedRequest;
 
-    const parsed = CreateChatGroupDataSchema.parse({
+    const parsed = CreateStudyCircleDataSchema.parse({
       ...req.body,
       creatorId: user.id,
     });
@@ -228,7 +228,7 @@ const updateCircle = async (
     actionLogger.info("Updating study circle");
     const { user } = req as AuthenticatedRequest;
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
-    const data = UpdateChatGroupDataSchema.parse(req.body);
+    const data = UpdateStudyCircleDataSchema.parse(req.body);
 
     const updatedGroup = await ChatService.updateGroup(circleId, user, data);
 

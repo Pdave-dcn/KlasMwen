@@ -1,5 +1,5 @@
 import { createLogger } from "../../core/config/logger";
-import ChatService from "../../features/chat/service/ChatService";
+import CircleService from "../../features/chat/service/CircleService";
 import createActionLogger from "../../utils/logger.util";
 
 import type { AuthenticatedRequest } from "../../types/AuthRequest";
@@ -22,7 +22,7 @@ export const getQuickStats = async (
     actionLogger.info("Fetching quick chat statistics");
     const { user } = req as AuthenticatedRequest;
 
-    const quickStats = await ChatService.getQuickStats(user.id);
+    const quickStats = await CircleService.getQuickStats(user.id);
 
     actionLogger.info(
       { quickStats },

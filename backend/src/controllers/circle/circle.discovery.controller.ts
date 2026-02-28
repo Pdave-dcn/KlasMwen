@@ -1,5 +1,5 @@
 import { createLogger } from "../../core/config/logger";
-import ChatService from "../../features/chat/service/ChatService";
+import CircleService from "../../features/chat/service/CircleService";
 import createActionLogger from "../../utils/logger.util";
 import { createPaginationSchema } from "../../utils/pagination.util";
 import {
@@ -37,7 +37,7 @@ const discoverCircles = async (
     const discoveryPaginationSchema = createPaginationSchema(10, 50, "uuid");
     const { limit, cursor } = discoveryPaginationSchema.parse(req.query);
 
-    const result = await ChatService.discoverGroups(user.id, {
+    const result = await CircleService.discoverCircles(user.id, {
       limit,
       cursor: cursor as string | undefined,
     });
@@ -74,7 +74,7 @@ const getRecommendedCircles = async (
     const suggestionPaginationSchema = createPaginationSchema(5, 20, "uuid");
     const { limit, cursor } = suggestionPaginationSchema.parse(req.query);
 
-    const result = await ChatService.getRecommendedGroups(user.id, {
+    const result = await CircleService.getRecommendedCircles(user.id, {
       limit,
       cursor: cursor as string | undefined,
     });
@@ -114,7 +114,7 @@ const getTrendingCircles = async (
     const { limit, cursor } = trendingPaginationSchema.parse(req.query);
     const { timeframe } = TrendingQuerySchema.parse(req.query);
 
-    const result = await ChatService.getTrendingGroups(
+    const result = await CircleService.getTrendingCircles(
       user.id,
       {
         limit,
@@ -158,7 +158,7 @@ const getNewCircles = async (
     const newGroupsPaginationSchema = createPaginationSchema(10, 50, "uuid");
     const { limit, cursor } = newGroupsPaginationSchema.parse(req.query);
 
-    const result = await ChatService.getNewGroups(user.id, {
+    const result = await CircleService.getNewCircles(user.id, {
       limit,
       cursor: cursor as string | undefined,
     });
@@ -198,7 +198,7 @@ const getSmallCircles = async (
     const { limit, cursor } = smallGroupsPaginationSchema.parse(req.query);
     const { maxMembers } = SmallCirclesQuerySchema.parse(req.query);
 
-    const result = await ChatService.getSmallGroups(
+    const result = await CircleService.getSmallCircles(
       user.id,
       {
         limit,
@@ -244,7 +244,7 @@ const getSimilarCircles = async (
     const similarPaginationSchema = createPaginationSchema(10, 50, "uuid");
     const { limit, cursor } = similarPaginationSchema.parse(req.query);
 
-    const result = await ChatService.getSimilarGroups(user.id, circleId, {
+    const result = await CircleService.getSimilarCircles(user.id, circleId, {
       limit,
       cursor: cursor as string | undefined,
     });
@@ -286,7 +286,7 @@ const getCirclesByCreator = async (
     const creatorPaginationSchema = createPaginationSchema(10, 50, "uuid");
     const { limit, cursor } = creatorPaginationSchema.parse(req.query);
 
-    const result = await ChatService.getGroupsByCreator(user.id, creatorId, {
+    const result = await CircleService.getCirclesByCreator(user.id, creatorId, {
       limit,
       cursor: cursor as string | undefined,
     });
@@ -332,7 +332,7 @@ const searchCircles = async (
     const searchPaginationSchema = createPaginationSchema(10, 50, "uuid");
     const { limit, cursor } = searchPaginationSchema.parse(req.query);
 
-    const result = await ChatService.searchGroups(
+    const result = await CircleService.searchCircles(
       user.id,
       { ...filters, query: sanitizedSearchTerm },
       {
@@ -373,7 +373,7 @@ const getSearchSuggestions = async (
 
     const { query, limit } = SearchSuggestionQuerySchema.parse(req.query);
 
-    const result = await ChatService.getSearchSuggestions(query, limit);
+    const result = await CircleService.getSearchSuggestions(query, limit);
 
     actionLogger.info(
       {

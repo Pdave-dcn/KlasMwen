@@ -1,5 +1,5 @@
 import { createLogger } from "../../core/config/logger.js";
-import ChatService from "../../features/chat/service/ChatService.js";
+import CircleService from "../../features/chat/service/CircleService.js";
 import createActionLogger from "../../utils/logger.util.js";
 import { createPaginationSchema } from "../../utils/pagination.util.js";
 import {
@@ -23,7 +23,7 @@ const sendMessage = async (req: Request, res: Response, next: NextFunction) => {
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
     const { content } = SendMessageDataSchema.parse(req.body);
 
-    const message = await ChatService.sendMessage(
+    const message = await CircleService.sendMessage(
       {
         content,
         senderId: user.id,
@@ -69,7 +69,7 @@ const getMessages = async (req: Request, res: Response, next: NextFunction) => {
     const customValidator = createPaginationSchema(10, 50, "number");
     const { limit, cursor } = customValidator.parse(req.query);
 
-    const result = await ChatService.getMessages(circleId, user, {
+    const result = await CircleService.getMessages(circleId, user, {
       limit,
       cursor: cursor as number | undefined,
     });
@@ -106,7 +106,7 @@ const deleteMessage = async (
     const { user } = req as AuthenticatedRequest;
     const { id: messageId } = MessageIdParamSchema.parse(req.params);
 
-    await ChatService.deleteMessage(messageId, user);
+    await CircleService.deleteMessage(messageId, user);
 
     actionLogger.info(
       {

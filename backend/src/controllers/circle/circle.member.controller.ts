@@ -1,5 +1,5 @@
 import { createLogger } from "../../core/config/logger.js";
-import ChatService from "../../features/chat/service/ChatService.js";
+import CircleService from "../../features/chat/service/CircleService.js";
 import createActionLogger from "../../utils/logger.util.js";
 import {
   AddMemberDataSchema,
@@ -22,7 +22,7 @@ const addMember = async (req: Request, res: Response, next: NextFunction) => {
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
     const { userId, role } = AddMemberDataSchema.parse(req.body);
 
-    const member = await ChatService.addMember(
+    const member = await CircleService.addMember(
       {
         userId,
         chatGroupId: circleId,
@@ -64,7 +64,7 @@ const getGroupMembers = async (
     actionLogger.info("Fetching study circle members");
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
 
-    const members = await ChatService.getGroupMembers(circleId);
+    const members = await CircleService.getCircleMembers(circleId);
 
     actionLogger.info(
       {
@@ -102,7 +102,7 @@ const removeMember = async (
     );
     const { userId } = UserIdParamSchema.parse(req.params);
 
-    await ChatService.removeMember(userId, chatGroupId, user);
+    await CircleService.removeMember(userId, chatGroupId, user);
 
     const isSelfRemoval = user.id === userId;
 
@@ -148,7 +148,7 @@ const updateMemberRole = async (
     const { userId } = UserIdParamSchema.parse(req.params);
     const { role } = UpdateMemberRoleDataSchema.parse(req.body);
 
-    const updatedMember = await ChatService.updateMemberRole(
+    const updatedMember = await CircleService.updateMemberRole(
       userId,
       chatGroupId,
       { role },
@@ -191,7 +191,7 @@ const updateLastReadAt = async (
       req.params,
     );
 
-    await ChatService.updateLastReadAt(user.id, chatGroupId);
+    await CircleService.updateLastReadAt(user.id, chatGroupId);
 
     actionLogger.info(
       {

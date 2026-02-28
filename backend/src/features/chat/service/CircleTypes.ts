@@ -1,6 +1,6 @@
 import type { Prisma, ChatRole } from "@prisma/client";
 
-const ChatFragments = {
+const CircleFragments = {
   userBase: {
     id: true,
     username: true,
@@ -8,7 +8,7 @@ const ChatFragments = {
     role: true,
   } satisfies Prisma.UserSelect,
 
-  chatGroupBase: {
+  circleBase: {
     id: true,
     name: true,
     description: true,
@@ -27,7 +27,7 @@ const ChatFragments = {
     },
   } satisfies Prisma.ChatGroupSelect,
 
-  chatMemberBase: {
+  circleMemberBase: {
     userId: true,
     role: true,
     joinedAt: true,
@@ -45,7 +45,7 @@ const ChatFragments = {
     },
   } satisfies Prisma.ChatMemberSelect,
 
-  chatMessageBase: {
+  circleMessageBase: {
     id: true,
     content: true,
     chatGroupId: true,
@@ -65,13 +65,13 @@ const ChatFragments = {
 } as const;
 
 const BaseSelectors = {
-  chatGroup: ChatFragments.chatGroupBase,
+  circle: CircleFragments.circleBase,
 
-  chatMember: ChatFragments.chatMemberBase,
+  circleMember: CircleFragments.circleMemberBase,
 
-  chatMessage: ChatFragments.chatMessageBase,
+  circleMessage: CircleFragments.circleMessageBase,
 
-  chatGroupForDiscovery: {
+  circleForDiscovery: {
     id: true,
     name: true,
     description: true,
@@ -91,8 +91,8 @@ const BaseSelectors = {
     },
   } satisfies Prisma.ChatGroupSelect,
 
-  // Full group info with member count
-  chatGroupWithMembers: {
+  // Full circle info with member count
+  circleWithMembers: {
     id: true,
     name: true,
     description: true,
@@ -122,7 +122,7 @@ const BaseSelectors = {
   } satisfies Prisma.ChatGroupSelect,
 
   // Search-specific selectors
-  chatGroupForSearch: {
+  circleForSearch: {
     id: true,
     name: true,
     description: true,
@@ -142,7 +142,7 @@ const BaseSelectors = {
     },
   } satisfies Prisma.ChatGroupSelect,
 
-  chatGroupForTrending: {
+  circleForTrending: {
     id: true,
     name: true,
     description: true,
@@ -163,7 +163,7 @@ const BaseSelectors = {
     },
   } satisfies Prisma.ChatGroupSelect,
 
-  chatGroupForActive: {
+  circleForActive: {
     id: true,
     name: true,
     description: true,
@@ -192,7 +192,7 @@ const BaseSelectors = {
     },
   } satisfies Prisma.ChatGroupSelect,
 
-  chatGroupSuggestion: {
+  circleSuggestion: {
     id: true,
     name: true,
     _count: {
@@ -202,7 +202,7 @@ const BaseSelectors = {
     },
   } satisfies Prisma.ChatGroupSelect,
 
-  chatGroupPreviewDetail: {
+  circlePreviewDetail: {
     id: true,
     name: true,
     description: true,
@@ -243,7 +243,7 @@ const BaseSelectors = {
 
 // Input Types
 
-interface CreateChatGroupData {
+interface CreateCircleData {
   name: string;
   description?: string;
   isPrivate?: boolean;
@@ -251,18 +251,18 @@ interface CreateChatGroupData {
   tagIds: number[];
 }
 
-interface CreateChatGroupFinalData extends CreateChatGroupData {
+interface CreateCircleFinalData extends CreateCircleData {
   avatarId: number;
 }
 
-interface UpdateChatGroupData {
+interface UpdateCircleData {
   name?: string;
   description?: string;
   isPrivate?: boolean;
   avatarId?: number;
 }
 
-interface JoinChatGroupData {
+interface JoinCircleData {
   userId: string;
   chatGroupId: string;
   role?: ChatRole;
@@ -285,14 +285,14 @@ interface MessagePaginationCursor {
   limit?: number;
 }
 
-interface GroupPaginationCursor {
-  cursor?: string; // Group UUID
+interface CirclePaginationCursor {
+  cursor?: string; // Circle UUID
   limit: number;
 }
 
 // Search & Filter Types
 
-interface GroupSearchFilters {
+interface CircleSearchFilters {
   query?: string; // Search by name or description
   isPrivate?: boolean; // Filter by privacy
   excludeJoined?: boolean; // Exclude groups user is already in
@@ -302,7 +302,7 @@ interface GroupSearchFilters {
   tagIds?: number[]; // Filter by tags
 }
 
-interface GroupSearchSuggestion {
+interface CircleSearchSuggestion {
   id: string;
   name: string;
   memberCount: number;
@@ -312,99 +312,96 @@ interface GroupSearchSuggestion {
 interface SearchResultMetadata {
   totalResults?: number;
   searchQuery?: string;
-  appliedFilters?: Partial<GroupSearchFilters>;
+  appliedFilters?: Partial<CircleSearchFilters>;
 }
 
 // Return Types
 
-type ChatGroup = Prisma.ChatGroupGetPayload<{
-  select: typeof BaseSelectors.chatGroup;
+type Circle = Prisma.ChatGroupGetPayload<{
+  select: typeof BaseSelectors.circle;
 }>;
 
-type ChatGroupWithMembers = Prisma.ChatGroupGetPayload<{
-  select: typeof BaseSelectors.chatGroupWithMembers;
+type CircleWithMembers = Prisma.ChatGroupGetPayload<{
+  select: typeof BaseSelectors.circleWithMembers;
 }>;
 
-type ChatGroupForDiscovery = Prisma.ChatGroupGetPayload<{
-  select: typeof BaseSelectors.chatGroupForDiscovery;
+type CircleForDiscovery = Prisma.ChatGroupGetPayload<{
+  select: typeof BaseSelectors.circleForDiscovery;
 }>;
 
-type ChatGroupForSearch = Prisma.ChatGroupGetPayload<{
-  select: typeof BaseSelectors.chatGroupForSearch;
+type CircleForSearch = Prisma.ChatGroupGetPayload<{
+  select: typeof BaseSelectors.circleForSearch;
 }>;
 
-type ChatGroupForTrending = Prisma.ChatGroupGetPayload<{
-  select: typeof BaseSelectors.chatGroupForTrending;
+type CircleForTrending = Prisma.ChatGroupGetPayload<{
+  select: typeof BaseSelectors.circleForTrending;
 }>;
 
-type ChatGroupForActive = Prisma.ChatGroupGetPayload<{
-  select: typeof BaseSelectors.chatGroupForActive;
+type CircleForActive = Prisma.ChatGroupGetPayload<{
+  select: typeof BaseSelectors.circleForActive;
 }>;
 
-type ChatGroupSuggestionResult = Prisma.ChatGroupGetPayload<{
-  select: typeof BaseSelectors.chatGroupSuggestion;
+type CircleSuggestionResult = Prisma.ChatGroupGetPayload<{
+  select: typeof BaseSelectors.circleSuggestion;
 }>;
 
-type ChatGroupPreviewDetail = Prisma.ChatGroupGetPayload<{
-  select: typeof BaseSelectors.chatGroupPreviewDetail;
+type CirclePreviewDetail = Prisma.ChatGroupGetPayload<{
+  select: typeof BaseSelectors.circlePreviewDetail;
 }>;
 
-type TransformedChatGroupForDiscovery = Omit<
-  ChatGroupForDiscovery,
+type TransformedCircleForDiscovery = Omit<
+  CircleForDiscovery,
   "_count" | "chatGroupTags"
 > & {
   memberCount: number;
   tags: { id: number; name: string }[];
 };
 
-type TransformedChatGroupSuggestion = Omit<
-  ChatGroupSuggestionResult,
-  "_count"
-> & {
+type TransformedCircleSuggestion = Omit<CircleSuggestionResult, "_count"> & {
   memberCount: number;
 };
 
-type ChatMember = Prisma.ChatMemberGetPayload<{
-  select: typeof BaseSelectors.chatMember;
+type CircleMember = Prisma.ChatMemberGetPayload<{
+  select: typeof BaseSelectors.circleMember;
 }>;
 
-type EnrichedChatMember = Omit<ChatMember, "mutedUntil"> & {
+type EnrichedCircleMember = Omit<CircleMember, "mutedUntil"> & {
   isMuted: boolean;
 };
 
-type TransformedChatMember = Omit<EnrichedChatMember, "user"> & {
-  user: Omit<ChatMember["user"], "Avatar"> & {
-    avatar: ChatMember["user"]["Avatar"];
+type TransformedCircleMember = Omit<EnrichedCircleMember, "user"> & {
+  user: Omit<CircleMember["user"], "Avatar"> & {
+    avatar: CircleMember["user"]["Avatar"];
   };
 };
 
-type ChatMessage = Prisma.ChatMessageGetPayload<{
-  select: typeof BaseSelectors.chatMessage;
+type CircleMessage = Prisma.ChatMessageGetPayload<{
+  select: typeof BaseSelectors.circleMessage;
 }>;
 
-type TransformedChatMessage = Omit<ChatMessage, "sender"> & {
-  sender: Omit<ChatMessage["sender"], "Avatar"> & {
-    avatar: ChatMessage["sender"]["Avatar"];
+type TransformedCircleMessage = Omit<CircleMessage, "sender"> & {
+  sender: Omit<CircleMessage["sender"], "Avatar"> & {
+    avatar: CircleMessage["sender"]["Avatar"];
   };
 };
 
-type TransformedChatGroupPreviewDetail = Omit<
-  ChatGroupPreviewDetail,
+type TransformedCirclePreviewDetail = Omit<
+  CirclePreviewDetail,
   "creator" | "messages" | "_count" | "chatGroupTags"
 > & {
-  creator: Omit<ChatGroupPreviewDetail["creator"], "Avatar"> & {
-    avatar: ChatGroupPreviewDetail["creator"]["Avatar"];
+  creator: Omit<CirclePreviewDetail["creator"], "Avatar"> & {
+    avatar: CirclePreviewDetail["creator"]["Avatar"];
   };
-  lastActivityAt: ChatGroupPreviewDetail["messages"][0]["createdAt"];
+  lastActivityAt: CirclePreviewDetail["messages"][0]["createdAt"];
   tags: { id: number; name: string }[];
   memberCount: number;
 };
 
 // Enriched Types
 
-type EnrichedChatGroup = Omit<ChatGroupWithMembers, "_count" | "members"> & {
+type EnrichedCircle = Omit<CircleWithMembers, "_count" | "members"> & {
   memberCount: number;
-  latestMessage: TransformedChatMessage | null;
+  latestMessage: TransformedCircleMessage | null;
   unreadCount: number;
   userRole?: ChatRole | null;
 };
@@ -412,13 +409,13 @@ type EnrichedChatGroup = Omit<ChatGroupWithMembers, "_count" | "members"> & {
 // Page Types
 
 interface MessagePage {
-  messages: ChatMessage[];
+  messages: CircleMessage[];
   nextCursor: number | null;
   hasMore: boolean;
 }
 
-interface GroupSearchPage {
-  groups: TransformedChatGroupForDiscovery[];
+interface CircleSearchPage {
+  groups: TransformedCircleForDiscovery[];
   nextCursor: string | null;
   hasMore: boolean;
   metadata?: SearchResultMetadata;
@@ -429,39 +426,39 @@ interface GroupSearchPage {
 export {
   BaseSelectors,
   // Input types
-  type CreateChatGroupData,
-  type CreateChatGroupFinalData,
-  type UpdateChatGroupData,
-  type JoinChatGroupData,
+  type CreateCircleData,
+  type CreateCircleFinalData,
+  type UpdateCircleData,
+  type JoinCircleData,
   type UpdateMemberRoleData,
   type SendMessageData,
   // Pagination types
   type MessagePaginationCursor,
-  type GroupPaginationCursor,
+  type CirclePaginationCursor,
   // Search & Filter types
-  type GroupSearchFilters,
-  type GroupSearchSuggestion,
+  type CircleSearchFilters,
+  type CircleSearchSuggestion,
   type SearchResultMetadata,
-  type GroupSearchPage,
+  type CircleSearchPage,
   // Return types
-  type ChatGroup,
-  type ChatGroupWithMembers,
-  type ChatGroupForDiscovery,
-  type ChatGroupForSearch,
-  type ChatGroupForTrending,
-  type ChatGroupForActive,
-  type ChatGroupSuggestionResult,
-  type TransformedChatGroupForDiscovery,
-  type TransformedChatGroupSuggestion,
-  type ChatMember,
-  type EnrichedChatMember,
-  type TransformedChatMember,
-  type ChatMessage,
-  type TransformedChatMessage,
-  type ChatGroupPreviewDetail,
-  type TransformedChatGroupPreviewDetail,
+  type Circle,
+  type CircleWithMembers,
+  type CircleForDiscovery,
+  type CircleForSearch,
+  type CircleForTrending,
+  type CircleForActive,
+  type CircleSuggestionResult,
+  type TransformedCircleForDiscovery,
+  type TransformedCircleSuggestion,
+  type CircleMember,
+  type EnrichedCircleMember,
+  type TransformedCircleMember,
+  type CircleMessage,
+  type TransformedCircleMessage,
+  type CirclePreviewDetail,
+  type TransformedCirclePreviewDetail,
   // Enriched types
-  type EnrichedChatGroup,
+  type EnrichedCircle,
   // Page types
   type MessagePage,
 };

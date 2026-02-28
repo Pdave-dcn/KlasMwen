@@ -4,13 +4,13 @@ import {
   NotAMemberError,
 } from "../../../core/error/custom/chat.error.js";
 
-import type ChatService from "../../../features/chat/service/ChatService.js";
+import type CircleService from "../../../features/chat/service/CircleService.js";
 import type { Logger } from "pino";
 import type { Socket } from "socket.io";
 
 export type SendMessageCallback = (response: {
   success: boolean;
-  message?: Awaited<ReturnType<typeof ChatService.sendMessage>>;
+  message?: Awaited<ReturnType<typeof CircleService.sendMessage>>;
   error?: string;
 }) => void;
 

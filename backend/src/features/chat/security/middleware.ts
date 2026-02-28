@@ -3,7 +3,7 @@ import {
   NotAMemberError,
 } from "../../../core/error/custom/chat.error.js";
 import { StudyCircleIdParamSchema } from "../../../zodSchemas/circle.zod.js";
-import ChatRepository from "../service/Repositories/ChatRepository.js";
+import CircleRepository from "../service/Repositories/CircleRepository.js";
 
 import type { Request, Response, NextFunction } from "express";
 
@@ -49,14 +49,14 @@ const enrichChatRole = async (
     }
 
     // Verify study circle exists
-    const circle = await ChatRepository.findGroupById(result.data.circleId);
+    const circle = await CircleRepository.findCircleById(result.data.circleId);
     if (!circle) {
       throw new ChatGroupNotFoundError(result.data.circleId);
     }
 
     // Get user's membership and role
     if (req.user) {
-      const membership = await ChatRepository.getMembership(
+      const membership = await CircleRepository.getMembership(
         req.user.id,
         result.data.circleId,
       );
@@ -115,14 +115,14 @@ const requireMembership = async (
     }
 
     // Verify study circle exists
-    const circle = await ChatRepository.findGroupById(result.data.circleId);
+    const circle = await CircleRepository.findCircleById(result.data.circleId);
     if (!circle) {
       throw new ChatGroupNotFoundError(result.data.circleId);
     }
 
     // Get user's membership and role
     if (req.user) {
-      const membership = await ChatRepository.getMembership(
+      const membership = await CircleRepository.getMembership(
         req.user.id,
         result.data.circleId,
       );

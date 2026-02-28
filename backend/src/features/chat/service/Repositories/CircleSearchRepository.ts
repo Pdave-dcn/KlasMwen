@@ -2,29 +2,29 @@
 import prisma from "../../../../core/config/db.js";
 import {
   BaseSelectors,
-  type GroupPaginationCursor,
-  type GroupSearchFilters,
-  type ChatGroupForSearch,
-  type ChatGroupForTrending,
-  type ChatGroupForActive,
-  type ChatGroupSuggestionResult,
-  type ChatGroupForDiscovery,
-} from "../chatTypes.js";
+  type CirclePaginationCursor,
+  type CircleSearchFilters,
+  type CircleForSearch,
+  type CircleForTrending,
+  type CircleForActive,
+  type CircleSuggestionResult,
+  type CircleForDiscovery,
+} from "../CircleTypes.js";
 
 /**
- * Repository for chat group search and discovery operations.
- * Handles all database queries related to searching and filtering chat groups.
+ * Repository for circle search and discovery operations.
+ * Handles all database queries related to searching and filtering circles.
  */
-class ChatSearchRepository {
+class CircleSearchRepository {
   /**
-   * Search groups with advanced filters.
+   * Search circles with advanced filters.
    * Supports text search, privacy filters, member count filters, and more.
    */
-  static async searchGroups(
+  static async searchCircles(
     userId: string,
-    filters: GroupSearchFilters,
-    pagination: GroupPaginationCursor,
-  ): Promise<ChatGroupForSearch[]> {
+    filters: CircleSearchFilters,
+    pagination: CirclePaginationCursor,
+  ): Promise<CircleForSearch[]> {
     const results = await prisma.chatGroup.findMany({
       where: {
         // Text search on name and description
@@ -65,7 +65,7 @@ class ChatSearchRepository {
         ...(filters.creatorId && {
           creatorId: filters.creatorId,
         }),
-        // Exclude groups user is already a member of
+        // Exclude circles user is already a member of
         ...(filters.excludeJoined && {
           members: {
             none: {
@@ -74,7 +74,7 @@ class ChatSearchRepository {
           },
         }),
       },
-      select: BaseSelectors.chatGroupForSearch,
+      select: BaseSelectors.circleForSearch,
       orderBy: { createdAt: "desc" },
       take: pagination.limit + 1,
       ...(pagination.cursor && {
@@ -88,13 +88,13 @@ class ChatSearchRepository {
   }
 
   /**
-   * Find public groups excluding those the user has joined.
+   * Find public circles excluding those the user has joined.
    * Used for the main discovery page.
    */
-  static async findPublicGroups(
+  static async findPublicCircles(
     userId: string,
-    pagination: GroupPaginationCursor,
-  ): Promise<ChatGroupForDiscovery[]> {
+    pagination: CirclePaginationCursor,
+  ): Promise<CircleForDiscovery[]> {
     return await prisma.chatGroup.findMany({
       where: {
         isPrivate: false,
@@ -104,7 +104,7 @@ class ChatSearchRepository {
           },
         },
       },
-      select: BaseSelectors.chatGroupForDiscovery,
+      select: BaseSelectors.circleForDiscovery,
       orderBy: { createdAt: "desc" },
       take: pagination.limit + 1,
       ...(pagination.cursor && {
@@ -115,13 +115,13 @@ class ChatSearchRepository {
   }
 
   /**
-   * Find popular groups sorted by member count.
-   * Excludes groups the user has already joined.
+   * Find popular circles sorted by member count.
+   * Excludes circles the user has already joined.
    */
-  static async findPopularGroups(
+  static async findPopularCircles(
     userId: string,
-    pagination: GroupPaginationCursor,
-  ): Promise<ChatGroupForSearch[]> {
+    pagination: CirclePaginationCursor,
+  ): Promise<CircleForSearch[]> {
     return await prisma.chatGroup.findMany({
       where: {
         isPrivate: false,
@@ -131,7 +131,7 @@ class ChatSearchRepository {
           },
         },
       },
-      select: BaseSelectors.chatGroupForSearch,
+      select: BaseSelectors.circleForSearch,
       orderBy: {
         members: {
           _count: "desc",
@@ -146,14 +146,14 @@ class ChatSearchRepository {
   }
 
   /**
-   * Find trending groups based on recent message activity.
-   * Groups with the most messages in the specified timeframe.
+   * Find trending circles based on recent message activity.
+   * Circles with the most messages in the specified timeframe.
    */
-  static async findTrendingGroups(
+  static async findTrendingCircles(
     userId: string,
-    pagination: GroupPaginationCursor,
+    pagination: CirclePaginationCursor,
     timeframeDays: number = 7,
-  ): Promise<ChatGroupForTrending[]> {
+  ): Promise<CircleForTrending[]> {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - timeframeDays);
 
@@ -173,7 +173,7 @@ class ChatSearchRepository {
           },
         },
       },
-      select: BaseSelectors.chatGroupForTrending,
+      select: BaseSelectors.circleForTrending,
       orderBy: {
         messages: {
           _count: "desc",
@@ -188,23 +188,23 @@ class ChatSearchRepository {
   }
 
   /**
-   * Find groups similar to a reference group.
-   * Matches groups with similar names or same creator.
+   * Find circles similar to a reference group.
+   * Matches circles with similar names or same creator.
    */
-  static async findSimilarGroups(
+  static async findSimilarCircles(
     userId: string,
-    referenceGroup: { name: string; creatorId: string; id: string },
-    pagination: GroupPaginationCursor,
-  ): Promise<ChatGroupForDiscovery[]> {
-    // Extract keywords from the reference group name
-    const keywords = referenceGroup.name.toLowerCase().split(/\s+/);
+    referenceCircle: { name: string; creatorId: string; id: string },
+    pagination: CirclePaginationCursor,
+  ): Promise<CircleForDiscovery[]> {
+    // Extract keywords from the reference circle name
+    const keywords = referenceCircle.name.toLowerCase().split(/\s+/);
     const primaryKeyword = keywords[0] || "";
 
     return await prisma.chatGroup.findMany({
       where: {
         isPrivate: false,
         id: {
-          not: referenceGroup.id, // Exclude the reference group itself
+          not: referenceCircle.id, // Exclude the reference circle itself
         },
         members: {
           none: {
@@ -212,20 +212,20 @@ class ChatSearchRepository {
           },
         },
         OR: [
-          // Groups with similar names
+          // Circles with similar names
           {
             name: {
               contains: primaryKeyword,
               mode: "insensitive",
             },
           },
-          // Groups by the same creator
+          // Circles by the same creator
           {
-            creatorId: referenceGroup.creatorId,
+            creatorId: referenceCircle.creatorId,
           },
         ],
       },
-      select: BaseSelectors.chatGroupForDiscovery,
+      select: BaseSelectors.circleForDiscovery,
       orderBy: { createdAt: "desc" },
       take: pagination.limit + 1,
       ...(pagination.cursor && {
@@ -236,13 +236,13 @@ class ChatSearchRepository {
   }
 
   /**
-   * Find newly created groups.
-   * Returns the most recently created public groups.
+   * Find newly created circles.
+   * Returns the most recently created public circles.
    */
-  static async findNewGroups(
+  static async findNewCircles(
     userId: string,
-    pagination: GroupPaginationCursor,
-  ): Promise<ChatGroupForDiscovery[]> {
+    pagination: CirclePaginationCursor,
+  ): Promise<CircleForDiscovery[]> {
     return await prisma.chatGroup.findMany({
       where: {
         isPrivate: false,
@@ -252,7 +252,7 @@ class ChatSearchRepository {
           },
         },
       },
-      select: BaseSelectors.chatGroupForDiscovery,
+      select: BaseSelectors.circleForDiscovery,
       orderBy: { createdAt: "desc" },
       take: pagination.limit + 1,
       ...(pagination.cursor && {
@@ -263,14 +263,14 @@ class ChatSearchRepository {
   }
 
   /**
-   * Find groups by creator.
-   * Returns all public groups created by a specific user.
+   * Find circles by creator.
+   * Returns all public circles created by a specific user.
    */
-  static async findGroupsByCreator(
+  static async findCirclesByCreator(
     userId: string,
     creatorId: string,
-    pagination: GroupPaginationCursor,
-  ): Promise<ChatGroupForDiscovery[]> {
+    pagination: CirclePaginationCursor,
+  ): Promise<CircleForDiscovery[]> {
     return await prisma.chatGroup.findMany({
       where: {
         creatorId,
@@ -281,7 +281,7 @@ class ChatSearchRepository {
           },
         },
       },
-      select: BaseSelectors.chatGroupForDiscovery,
+      select: BaseSelectors.circleForDiscovery,
       orderBy: { createdAt: "desc" },
       take: pagination.limit + 1,
       ...(pagination.cursor && {
@@ -292,14 +292,14 @@ class ChatSearchRepository {
   }
 
   /**
-   * Find active groups (groups with recent messages).
-   * Returns groups that have had activity in the last N days.
+   * Find active circles (circles with recent messages).
+   * Returns circles that have had activity in the last N days.
    */
-  static async findActiveGroups(
+  static async findActiveCircles(
     userId: string,
-    pagination: GroupPaginationCursor,
+    pagination: CirclePaginationCursor,
     activityDays: number = 3,
-  ): Promise<ChatGroupForActive[]> {
+  ): Promise<CircleForActive[]> {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - activityDays);
 
@@ -319,7 +319,7 @@ class ChatSearchRepository {
           },
         },
       },
-      select: BaseSelectors.chatGroupForActive,
+      select: BaseSelectors.circleForActive,
       orderBy: {
         messages: {
           _count: "desc",
@@ -334,14 +334,14 @@ class ChatSearchRepository {
   }
 
   /**
-   * Find small groups (under a certain member threshold).
-   * Good for users who prefer intimate group settings.
+   * Find small circles (under a certain member threshold).
+   * Good for users who prefer intimate circle settings.
    */
-  static async findSmallGroups(
+  static async findSmallCircles(
     userId: string,
-    pagination: GroupPaginationCursor,
+    pagination: CirclePaginationCursor,
     maxMembers: number = 10,
-  ): Promise<ChatGroupForSearch[]> {
+  ): Promise<CircleForSearch[]> {
     const results = await prisma.chatGroup.findMany({
       where: {
         isPrivate: false,
@@ -351,7 +351,7 @@ class ChatSearchRepository {
           },
         },
       },
-      select: BaseSelectors.chatGroupForSearch,
+      select: BaseSelectors.circleForSearch,
       orderBy: { createdAt: "desc" },
       take: pagination.limit + 1,
       ...(pagination.cursor && {
@@ -366,12 +366,12 @@ class ChatSearchRepository {
 
   /**
    * Get search suggestions based on partial query.
-   * Returns group names that match the query for autocomplete.
+   * Returns circle names that match the query for autocomplete.
    */
   static async getSearchSuggestions(
     query: string,
     limit: number = 10,
-  ): Promise<ChatGroupSuggestionResult[]> {
+  ): Promise<CircleSuggestionResult[]> {
     return await prisma.chatGroup.findMany({
       where: {
         isPrivate: false,
@@ -380,7 +380,7 @@ class ChatSearchRepository {
           mode: "insensitive",
         },
       },
-      select: BaseSelectors.chatGroupSuggestion,
+      select: BaseSelectors.circleSuggestion,
       orderBy: {
         members: {
           _count: "desc",
@@ -391,14 +391,14 @@ class ChatSearchRepository {
   }
 
   /**
-   * Helper method to filter groups by member count.
+   * Helper method to filter circles by member count.
    * Applied after the initial query since Prisma doesn't support
    * filtering by aggregated counts in the where clause.
    */
   private static filterByMemberCount<
     T extends { _count?: { members: number } },
-  >(groups: T[], filters: GroupSearchFilters): T[] {
-    let filtered = groups;
+  >(circles: T[], filters: CircleSearchFilters): T[] {
+    let filtered = circles;
 
     if (filters.minMembers !== undefined) {
       const minMembers = filters.minMembers;
@@ -418,4 +418,4 @@ class ChatSearchRepository {
   }
 }
 
-export default ChatSearchRepository;
+export default CircleSearchRepository;

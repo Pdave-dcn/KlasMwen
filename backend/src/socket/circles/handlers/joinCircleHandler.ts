@@ -3,7 +3,7 @@ import {
   ChatGroupNotFoundError,
   NotAMemberError,
 } from "../../../core/error/custom/chat.error.js";
-import ChatService from "../../../features/chat/service/ChatService.js";
+import CircleService from "../../../features/chat/service/CircleService.js";
 import { StudyCircleIdParamSchema } from "../../../zodSchemas/circle.zod.js";
 import { PresenceService } from "../../presence/presence.service.js";
 import { broadcastPresenceUpdate } from "../helpers/broadcastPresenceUpdate.js";
@@ -24,7 +24,7 @@ const getMemberPresence = async (
     new Set(socketsInRoom.map((s) => s.data.user.id)),
   );
 
-  const allMembers = await ChatService.getGroupMembers(studyCircleId);
+  const allMembers = await CircleService.getCircleMembers(studyCircleId);
 
   const onlineMemberIds = allMembers
     .filter((member) => PresenceService.isOnline(member.userId))
@@ -83,8 +83,8 @@ export const handleJoinCircle = (socket: Socket, nsp: Namespace) => {
       );
 
       // Validate study circle exists and user is a member
-      await ChatService.verifyGroupExists(circleId);
-      const isMember = await ChatService.isMember(user.id, circleId);
+      await CircleService.verifyCircleExists(circleId);
+      const isMember = await CircleService.isMember(user.id, circleId);
 
       if (!isMember) {
         throw new NotAMemberError(user.id, circleId);

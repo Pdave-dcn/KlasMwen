@@ -4,35 +4,35 @@ import {
   MessageNotFoundError,
   UserMutedError,
 } from "../../../../core/error/custom/chat.error.js";
-import ChatRepository from "../Repositories/ChatRepository.js";
+import CircleRepository from "../Repositories/CircleRepository.js";
 
-import type { SendMessageData } from "../chatTypes.js";
+import type { SendMessageData } from "../CircleTypes.js";
 
 /**
- * Service for chat-related validations.
+ * Service for circle-related validations.
  * Provides reusable validation methods used across other services.
  */
-export class ChatValidationService {
+export class CircleValidationService {
   /**
-   * Validates that a chat group exists.
+   * Validates that a circle exists.
    * @throws {ChatGroupNotFoundError} If the group does not exist
-   * @returns The chat group if it exists
+   * @returns The circle if it exists
    */
-  static async verifyGroupExists(chatGroupId: string) {
-    const group = await ChatRepository.findGroupById(chatGroupId);
-    if (!group) throw new ChatGroupNotFoundError(chatGroupId);
-    return group;
+  static async verifyCircleExists(circleId: string) {
+    const circle = await CircleRepository.findCircleById(circleId);
+    if (!circle) throw new ChatGroupNotFoundError(circleId);
+    return circle;
   }
 
   /**
-   * Validates that a user is a member of a chat group.
+   * Validates that a user is a member of a circle.
    * @throws {ChatMemberNotFoundError} If user is not a member
    * @returns The membership if it exists
    */
-  static async verifyMembership(userId: string, chatGroupId: string) {
-    const membership = await ChatRepository.getMembership(userId, chatGroupId);
+  static async verifyMembership(userId: string, circleId: string) {
+    const membership = await CircleRepository.getMembership(userId, circleId);
     if (!membership) {
-      throw new ChatMemberNotFoundError(userId, chatGroupId);
+      throw new ChatMemberNotFoundError(userId, circleId);
     }
     return membership;
   }
@@ -42,7 +42,7 @@ export class ChatValidationService {
    * @throws {UserMutedError} if the mute period is still active.
    */
   static async ensureMemberNotMuted(data: SendMessageData) {
-    const membership = await ChatRepository.getMembership(
+    const membership = await CircleRepository.getMembership(
       data.senderId,
       data.chatGroupId,
     );
@@ -62,7 +62,7 @@ export class ChatValidationService {
    * @returns The message if it exists
    */
   static async verifyMessageExists(messageId: number) {
-    const message = await ChatRepository.findMessageById(messageId);
+    const message = await CircleRepository.findMessageById(messageId);
     if (!message) {
       throw new MessageNotFoundError(messageId);
     }
@@ -70,13 +70,13 @@ export class ChatValidationService {
   }
 
   /**
-   * Checks if a user is a member of a group (non-throwing).
+   * Checks if a user is a member of a circle (non-throwing).
    * @returns True if the user is a member, false otherwise
    */
   static async checkMembership(
     userId: string,
-    chatGroupId: string,
+    circleId: string,
   ): Promise<boolean> {
-    return await ChatRepository.isMember(userId, chatGroupId);
+    return await CircleRepository.isMember(userId, circleId);
   }
 }

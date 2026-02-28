@@ -1,4 +1,4 @@
-import ChatRepository from "../../features/chat/service/Repositories/ChatRepository";
+import CircleRepository from "../../features/chat/service/Repositories/CircleRepository";
 
 import { PresenceService } from "./presence.service";
 
@@ -13,7 +13,7 @@ const handlePresenceConnect = async (io: Server, socket: Socket) => {
   const isFirst = PresenceService.userConnected(user.id, socket.id);
 
   // Find everyone who shares a group with this user
-  const contactIds = await ChatRepository.findAllContacts(user.id);
+  const contactIds = await CircleRepository.findAllContacts(user.id);
 
   if (isFirst) {
     // Emit "online" ONLY to the private rooms of those specific contacts
@@ -34,7 +34,7 @@ const handlePresenceDisconnect = async (io: Server, socket: Socket) => {
   const isLast = PresenceService.userDisconnected(user.id, socket.id);
 
   if (isLast) {
-    const contactIds = await ChatRepository.findAllContacts(user.id);
+    const contactIds = await CircleRepository.findAllContacts(user.id);
 
     contactIds.forEach((contactId) => {
       io.to(`user:${contactId}`).emit("presence:user_offline", {

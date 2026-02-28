@@ -1,5 +1,5 @@
 import { createLogger } from "../../core/config/logger.js";
-import ChatService from "../../features/chat/service/ChatService.js";
+import CircleService from "../../features/chat/service/CircleService.js";
 import createActionLogger from "../../utils/logger.util.js";
 import {
   StudyCircleIdParamSchema,
@@ -34,7 +34,7 @@ const createStudyCircle = async (
       creatorId: user.id,
     });
 
-    const group = await ChatService.createGroup(parsed);
+    const group = await CircleService.createCircle(parsed);
 
     actionLogger.info(
       {
@@ -62,7 +62,7 @@ const joinCircle = async (req: Request, res: Response, next: NextFunction) => {
     const { user } = req as AuthenticatedRequest;
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
 
-    const group = await ChatService.joinGroup(circleId, user.id);
+    const group = await CircleService.joinCircle(circleId, user.id);
 
     actionLogger.info(
       {
@@ -98,19 +98,19 @@ const getCircleById = async (
     const { user } = req as AuthenticatedRequest;
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
 
-    const group = await ChatService.getGroupById(circleId, user.id);
+    const circle = await CircleService.getCircleById(circleId, user.id);
 
     actionLogger.info(
       {
         circleId,
-        groupName: group.name,
-        userRole: group.userRole,
+        circleName: circle.name,
+        userRole: circle.userRole,
       },
       "Study circle retrieved successfully",
     );
 
     return res.status(200).json({
-      data: group,
+      data: circle,
     });
   } catch (error: unknown) {
     return next(error);
@@ -131,7 +131,7 @@ const getCirclePreviewDetails = async (
     actionLogger.info("Fetching study circle preview details");
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
 
-    const group = await ChatService.getGroupPreviewDetails(circleId);
+    const group = await CircleService.getCirclePreviewDetails(circleId);
     actionLogger.info(
       {
         circleId,
@@ -162,7 +162,7 @@ const getUserCircles = async (
     actionLogger.info("Fetching user's study circles");
     const { user } = req as AuthenticatedRequest;
 
-    const groups = await ChatService.getUserGroups(user.id);
+    const groups = await CircleService.getUserCircles(user.id);
 
     actionLogger.info(
       {
@@ -197,7 +197,7 @@ const getRecentActivityCircles = async (
 
     const limit = query.limit ? Number(query.limit) : 8;
 
-    const groups = await ChatService.getRecentActivityGroups(user.id, limit);
+    const groups = await CircleService.getRecentActivityCircles(user.id, limit);
     actionLogger.info(
       {
         userId: user.id,
@@ -230,7 +230,7 @@ const updateCircle = async (
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
     const data = UpdateStudyCircleDataSchema.parse(req.body);
 
-    const updatedGroup = await ChatService.updateGroup(circleId, user, data);
+    const updatedGroup = await CircleService.updateCircle(circleId, user, data);
 
     actionLogger.info(
       {
@@ -265,7 +265,7 @@ const deleteCircle = async (
     const { user } = req as AuthenticatedRequest;
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
 
-    await ChatService.deleteGroup(circleId, user);
+    await CircleService.deleteCircle(circleId, user);
 
     actionLogger.info(
       {

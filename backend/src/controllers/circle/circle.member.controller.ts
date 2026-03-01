@@ -1,5 +1,5 @@
 import { createLogger } from "../../core/config/logger.js";
-import CircleService from "../../features/chat/service/CircleService.js";
+import CircleService from "../../features/circle/service/CircleService.js";
 import createActionLogger from "../../utils/logger.util.js";
 import {
   AddMemberDataSchema,

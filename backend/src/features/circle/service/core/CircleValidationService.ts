@@ -1,9 +1,9 @@
 import {
-  ChatGroupNotFoundError,
-  ChatMemberNotFoundError,
+  CircleNotFoundError,
+  CircleMemberNotFoundError,
   MessageNotFoundError,
   UserMutedError,
-} from "../../../../core/error/custom/chat.error.js";
+} from "../../../../core/error/custom/circle.error.js";
 import CircleRepository from "../Repositories/CircleRepository.js";
 
 import type { SendMessageData } from "../CircleTypes.js";
@@ -15,24 +15,24 @@ import type { SendMessageData } from "../CircleTypes.js";
 export class CircleValidationService {
   /**
    * Validates that a circle exists.
-   * @throws {ChatGroupNotFoundError} If the group does not exist
+   * @throws {CircleNotFoundError} If the group does not exist
    * @returns The circle if it exists
    */
   static async verifyCircleExists(circleId: string) {
     const circle = await CircleRepository.findCircleById(circleId);
-    if (!circle) throw new ChatGroupNotFoundError(circleId);
+    if (!circle) throw new CircleNotFoundError(circleId);
     return circle;
   }
 
   /**
    * Validates that a user is a member of a circle.
-   * @throws {ChatMemberNotFoundError} If user is not a member
+   * @throws {CircleMemberNotFoundError} If user is not a member
    * @returns The membership if it exists
    */
   static async verifyMembership(userId: string, circleId: string) {
     const membership = await CircleRepository.getMembership(userId, circleId);
     if (!membership) {
-      throw new ChatMemberNotFoundError(userId, circleId);
+      throw new CircleMemberNotFoundError(userId, circleId);
     }
     return membership;
   }

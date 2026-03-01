@@ -1,5 +1,5 @@
 import { createLogger } from "../../core/config/logger";
-import CircleService from "../../features/chat/service/CircleService";
+import CircleService from "../../features/circle/service/CircleService";
 import createActionLogger from "../../utils/logger.util";
 import { createPaginationSchema } from "../../utils/pagination.util";
 import {

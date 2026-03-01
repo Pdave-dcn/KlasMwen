@@ -1,8 +1,8 @@
 import { AuthorizationError } from "../../../../core/error/custom/auth.error.js";
 import {
   AlreadyMemberError,
-  ChatGroupNotFoundError,
-} from "../../../../core/error/custom/chat.error.js";
+  CircleNotFoundError,
+} from "../../../../core/error/custom/circle.error.js";
 import { getRandomCircleAvatar } from "../../../avatar/avatarService.js";
 import { assertCirclePermission } from "../../security/rbac.js";
 import CircleEnricher from "../CircleEnrichers.js";
@@ -36,12 +36,12 @@ export class CircleCoreService {
    * Private groups require invitation (not handled here).
    * @param circleId - The circle ID
    * @param userId - The user ID joining the group
-   * @throws {ChatGroupNotFoundError} If the group does not exist
+   * @throws {CircleNotFoundError} If the group does not exist
    * @throws {AuthorizationError} If trying to join a private group
    */
   static async joinCircle(circleId: string, userId: string) {
     const group = await CircleRepository.findCircleById(circleId);
-    if (!group) throw new ChatGroupNotFoundError(circleId);
+    if (!group) throw new CircleNotFoundError(circleId);
 
     if (group.isPrivate) {
       throw new AuthorizationError(
@@ -67,27 +67,27 @@ export class CircleCoreService {
    * Retrieves a single circle by ID.
    * @param circleId - The circle ID
    * @param userId - Optional user ID to include their role in the group
-   * @throws {ChatGroupNotFoundError} If the group does not exist
+   * @throws {CircleNotFoundError} If the group does not exist
    */
   static async getCircleById(circleId: string, userId?: string) {
     const circle = await CircleRepository.findCircleById(circleId);
-    if (!circle) throw new ChatGroupNotFoundError(circleId);
+    if (!circle) throw new CircleNotFoundError(circleId);
 
     return CircleEnricher.enrichCircle(circle, userId);
   }
 
   /**
    * Fetches a circle by ID and returns it in a client‑friendly shape.
-   * Throws {@link ChatGroupNotFoundError} if missing. Transforms the raw
+   * Throws {@link CircleNotFoundError} if missing. Transforms the raw
    * result with {@link CircleTransformers.transformCircleForDetailPage}.
    *
    * @param {string} circleId - ID of the circle to load.
-   * @throws {ChatGroupNotFoundError} if the circle doesn't exist.
+   * @throws {CircleNotFoundError} if the circle doesn't exist.
    * @returns {Promise<TransformedChatGroupDetail>} transformed detail object.
    */
   static async getCirclePreviewDetails(circleId: string) {
     const group = await CircleRepository.getCircleDetails(circleId);
-    if (!group) throw new ChatGroupNotFoundError(circleId);
+    if (!group) throw new CircleNotFoundError(circleId);
 
     return CircleTransformers.transformCircleForDetailPage(group);
   }
@@ -147,7 +147,7 @@ export class CircleCoreService {
   /**
    * Updates circle details (name, description, privacy).
    * Only owners and moderators can update circles.
-   * @throws {ChatGroupNotFoundError} If the circle does not exist
+   * @throws {CircleNotFoundError} If the circle does not exist
    * @throws {AuthorizationError} If user lacks permissions
    */
   static async updateCircle(
@@ -156,7 +156,7 @@ export class CircleCoreService {
     data: UpdateCircleData,
   ) {
     const group = await CircleRepository.findCircleById(circleId);
-    if (!group) throw new ChatGroupNotFoundError(circleId);
+    if (!group) throw new CircleNotFoundError(circleId);
 
     assertCirclePermission(user, "circles", "update", group);
 
@@ -167,7 +167,7 @@ export class CircleCoreService {
   /**
    * Deletes a circle and all associated members and messages.
    * Only the owner can delete a circle.
-   * @throws {ChatGroupNotFoundError} If the circle does not exist
+   * @throws {CircleNotFoundError} If the circle does not exist
    * @throws {AuthorizationError} If user is not the owner
    */
   static async deleteCircle(
@@ -175,7 +175,7 @@ export class CircleCoreService {
     user: Express.User & { circleRole?: CircleRole },
   ) {
     const group = await CircleRepository.findCircleById(circleId);
-    if (!group) throw new ChatGroupNotFoundError(circleId);
+    if (!group) throw new CircleNotFoundError(circleId);
 
     assertCirclePermission(user, "circles", "delete", group);
 

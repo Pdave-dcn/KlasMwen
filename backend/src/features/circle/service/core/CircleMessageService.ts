@@ -1,7 +1,7 @@
 import {
-  ChatGroupNotFoundError,
+  CircleNotFoundError,
   MessageNotFoundError,
-} from "../../../../core/error/custom/chat.error.js";
+} from "../../../../core/error/custom/circle.error.js";
 import { processPaginatedResults } from "../../../../utils/pagination.util.js";
 import { assertCirclePermission } from "../../security/rbac.js";
 import CircleTransformers from "../CircleTransformers.js";
@@ -23,7 +23,7 @@ export class CircleMessageService {
   /**
    * Sends a message to a circle.
    * Only circle members can send messages.
-   * @throws {ChatGroupNotFoundError} If the circle does not exist
+   * @throws {CircleNotFoundError} If the circle does not exist
    * @throws {AuthorizationError} If user is not a member
    * @throws {UserMutedError} if user is muted
    */
@@ -32,7 +32,7 @@ export class CircleMessageService {
     user: Omit<Express.User, "email"> & { userRole?: CircleRole },
   ) {
     const circle = await CircleRepository.findCircleById(data.circleId);
-    if (!circle) throw new ChatGroupNotFoundError(data.circleId);
+    if (!circle) throw new CircleNotFoundError(data.circleId);
 
     assertCirclePermission(user, "circleMessages", "send");
 
@@ -45,7 +45,7 @@ export class CircleMessageService {
   /**
    * Retrieves messages from a circle with cursor-based pagination.
    * Only group members can view messages.
-   * @throws {ChatGroupNotFoundError} If the group does not exist
+   * @throws {CircleNotFoundError} If the group does not exist
    * @throws {AuthorizationError} If user is not a member
    */
   static async getMessages(
@@ -54,7 +54,7 @@ export class CircleMessageService {
     pagination?: MessagePaginationCursor,
   ) {
     const circle = await CircleRepository.findCircleById(circleId);
-    if (!circle) throw new ChatGroupNotFoundError(circleId);
+    if (!circle) throw new CircleNotFoundError(circleId);
 
     assertCirclePermission(user, "circleMessages", "read");
 

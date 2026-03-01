@@ -1,7 +1,7 @@
 import {
-  ChatGroupNotFoundError,
+  CircleNotFoundError,
   NotAMemberError,
-} from "../../../core/error/custom/chat.error.js";
+} from "../../../core/error/custom/circle.error.js";
 import { StudyCircleIdParamSchema } from "../../../zodSchemas/circle.zod.js";
 import CircleRepository from "../service/Repositories/CircleRepository.js";
 
@@ -23,7 +23,7 @@ import type { Request, Response, NextFunction } from "express";
  * @param {Response} res - Express response object
  * @param {NextFunction} next - Express next function
  *
- * @throws {ChatGroupNotFoundError} If the study circle does not exist
+ * @throws {CircleNotFoundError} If the study circle does not exist
  *
  * @example
  * router.delete(
@@ -51,7 +51,7 @@ const enrichCircleRole = async (
     // Verify study circle exists
     const circle = await CircleRepository.findCircleById(result.data.circleId);
     if (!circle) {
-      throw new ChatGroupNotFoundError(result.data.circleId);
+      throw new CircleNotFoundError(result.data.circleId);
     }
 
     // Get user's membership and role
@@ -84,7 +84,7 @@ const enrichCircleRole = async (
  * @param {Response} res - Express response object
  * @param {NextFunction} next - Express next function
  *
- * @throws {ChatGroupNotFoundError} If the study circle does not exist
+ * @throws {CircleNotFoundError} If the study circle does not exist
  * @throws {NotAMemberError} If the user is not a member of the study circle
  *
  * @example
@@ -117,7 +117,7 @@ const requireMembership = async (
     // Verify study circle exists
     const circle = await CircleRepository.findCircleById(result.data.circleId);
     if (!circle) {
-      throw new ChatGroupNotFoundError(result.data.circleId);
+      throw new CircleNotFoundError(result.data.circleId);
     }
 
     // Get user's membership and role

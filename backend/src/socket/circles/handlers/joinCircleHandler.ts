@@ -1,9 +1,9 @@
 import { createLogger } from "../../../core/config/logger.js";
 import {
-  ChatGroupNotFoundError,
+  CircleNotFoundError,
   NotAMemberError,
-} from "../../../core/error/custom/chat.error.js";
-import CircleService from "../../../features/chat/service/CircleService.js";
+} from "../../../core/error/custom/circle.error.js";
+import CircleService from "../../../features/circle/service/CircleService.js";
 import { StudyCircleIdParamSchema } from "../../../zodSchemas/circle.zod.js";
 import { PresenceService } from "../../presence/presence.service.js";
 import { broadcastPresenceUpdate } from "../helpers/broadcastPresenceUpdate.js";
@@ -38,7 +38,7 @@ const handleJoinCircleError = (
   error: unknown,
   callback?: (response: { success: boolean; error?: string }) => void,
 ) => {
-  if (error instanceof ChatGroupNotFoundError) {
+  if (error instanceof CircleNotFoundError) {
     callback?.({ success: false, error: "Study circle not found" });
   } else if (error instanceof NotAMemberError) {
     callback?.({ success: false, error: "Not a member of this study circle" });

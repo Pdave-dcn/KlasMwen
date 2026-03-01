@@ -1,4 +1,4 @@
-import { ChatGroupNotFoundError } from "../../../../core/error/custom/chat.error.js";
+import { CircleNotFoundError } from "../../../../core/error/custom/circle.error.js";
 import { processPaginatedResults } from "../../../../utils/pagination.util.js";
 import CircleTransformers from "../CircleTransformers.js";
 import CircleRepository from "../Repositories/CircleRepository.js";
@@ -103,7 +103,7 @@ export class CircleSearchService {
     const referenceCircle =
       await CircleRepository.findCircleById(referenceCircleId);
     if (!referenceCircle) {
-      throw new ChatGroupNotFoundError(referenceCircleId);
+      throw new CircleNotFoundError(referenceCircleId);
     }
 
     const circles = await CircleSearchRepository.findSimilarCircles(

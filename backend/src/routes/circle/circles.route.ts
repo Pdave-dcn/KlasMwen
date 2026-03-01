@@ -10,7 +10,7 @@ import {
   getRecentActivityCircles,
   getCirclePreviewDetails,
 } from "../../controllers/circle/index.js";
-import { enrichCircleRole } from "../../features/chat/security/middleware.js";
+import { enrichCircleRole } from "../../features/circle/security/middleware.js";
 
 const router = Router();
 

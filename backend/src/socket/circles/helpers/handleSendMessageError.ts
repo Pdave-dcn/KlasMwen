@@ -1,10 +1,10 @@
 import { AuthorizationError } from "../../../core/error/custom/auth.error.js";
 import {
-  ChatGroupNotFoundError,
+  CircleNotFoundError,
   NotAMemberError,
-} from "../../../core/error/custom/chat.error.js";
+} from "../../../core/error/custom/circle.error.js";
 
-import type CircleService from "../../../features/chat/service/CircleService.js";
+import type CircleService from "../../../features/circle/service/CircleService.js";
 import type { Logger } from "pino";
 import type { Socket } from "socket.io";
 
@@ -26,7 +26,7 @@ export const handleSendMessageError = (
     "Error sending message",
   );
 
-  if (error instanceof ChatGroupNotFoundError) {
+  if (error instanceof CircleNotFoundError) {
     callback?.({ success: false, error: "Chat group not found" });
     return;
   }

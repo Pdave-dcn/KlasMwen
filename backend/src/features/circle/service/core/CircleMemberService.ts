@@ -1,8 +1,8 @@
 import {
   AlreadyMemberError,
-  ChatGroupNotFoundError,
-  ChatMemberNotFoundError,
-} from "../../../../core/error/custom/chat.error.js";
+  CircleNotFoundError,
+  CircleMemberNotFoundError,
+} from "../../../../core/error/custom/circle.error.js";
 import { assertCirclePermission } from "../../security/rbac.js";
 import CircleEnricher from "../CircleEnrichers.js";
 import CircleTransformers from "../CircleTransformers.js";
@@ -19,7 +19,7 @@ export class CircleMemberService {
   /**
    * Adds a user to a circle.
    * For private circles, only owners and moderators can add members.
-   * @throws {ChatGroupNotFoundError} If the circle does not exist
+   * @throws {CircleNotFoundError} If the circle does not exist
    * @throws {AlreadyMemberError} If user is already a member
    * @throws {AuthorizationError} If adding to private circle without permission
    */
@@ -28,7 +28,7 @@ export class CircleMemberService {
     requester?: Express.User & { circleRole?: CircleRole },
   ) {
     const group = await CircleRepository.findCircleById(data.circleId);
-    if (!group) throw new ChatGroupNotFoundError(data.circleId);
+    if (!group) throw new CircleNotFoundError(data.circleId);
 
     // Check if user is already a member
     const isMember = await CircleRepository.isMember(
@@ -55,8 +55,8 @@ export class CircleMemberService {
    * Removes a user from a circle.
    * Users can leave voluntarily, or owners/moderators can remove members.
    * The owner cannot be removed.
-   * @throws {ChatGroupNotFoundError} If the circle does not exist
-   * @throws {ChatMemberNotFoundError} If user is not a member
+   * @throws {CircleNotFoundError} If the circle does not exist
+   * @throws {CircleMemberNotFoundError} If user is not a member
    * @throws {AuthorizationError} If trying to remove owner or lacking permissions
    */
   static async removeMember(
@@ -65,14 +65,14 @@ export class CircleMemberService {
     requester: Express.User & { circleRole?: CircleRole },
   ) {
     const group = await CircleRepository.findCircleById(circleId);
-    if (!group) throw new ChatGroupNotFoundError(circleId);
+    if (!group) throw new CircleNotFoundError(circleId);
 
     const membership = await CircleRepository.getMembership(
       targetUserId,
       circleId,
     );
     if (!membership) {
-      throw new ChatMemberNotFoundError(targetUserId, circleId);
+      throw new CircleMemberNotFoundError(targetUserId, circleId);
     }
 
     assertCirclePermission(requester, "circleMembers", "remove", membership);
@@ -86,8 +86,8 @@ export class CircleMemberService {
   /**
    * Updates a member's role in a circle.
    * Only owners can change roles.
-   * @throws {ChatGroupNotFoundError} If the circle does not exist
-   * @throws {ChatMemberNotFoundError} If user is not a member
+   * @throws {CircleNotFoundError} If the circle does not exist
+   * @throws {CircleMemberNotFoundError} If user is not a member
    * @throws {AuthorizationError} If requester is not owner
    */
   static async updateMemberRole(
@@ -97,14 +97,14 @@ export class CircleMemberService {
     requester: Express.User & { circleRole?: CircleRole },
   ) {
     const group = await CircleRepository.findCircleById(circleId);
-    if (!group) throw new ChatGroupNotFoundError(circleId);
+    if (!group) throw new CircleNotFoundError(circleId);
 
     const membership = await CircleRepository.getMembership(
       targetUserId,
       circleId,
     );
     if (!membership) {
-      throw new ChatMemberNotFoundError(targetUserId, circleId);
+      throw new CircleMemberNotFoundError(targetUserId, circleId);
     }
 
     assertCirclePermission(
@@ -126,13 +126,13 @@ export class CircleMemberService {
 
   /**
    * Updates the last read timestamp for a user in a circle.
-   * @throws {ChatMemberNotFoundError} If user is not a member
+   * @throws {CircleMemberNotFoundError} If user is not a member
    */
   static async updateLastReadAt(userId: string, circleId: string) {
     const membership = await CircleRepository.getMembership(userId, circleId);
 
     if (!membership) {
-      throw new ChatMemberNotFoundError(userId, circleId);
+      throw new CircleMemberNotFoundError(userId, circleId);
     }
 
     await CircleRepository.updateLastReadAt(userId, circleId);
@@ -140,11 +140,11 @@ export class CircleMemberService {
 
   /**
    * Retrieves all members of a circle.
-   * @throws {ChatGroupNotFoundError} If the circle does not exist
+   * @throws {CircleNotFoundError} If the circle does not exist
    */
   static async getCircleMembers(circleId: string) {
     const group = await CircleRepository.findCircleById(circleId);
-    if (!group) throw new ChatGroupNotFoundError(circleId);
+    if (!group) throw new CircleNotFoundError(circleId);
 
     const members = await CircleRepository.getGroupMembers(circleId);
 
@@ -155,12 +155,12 @@ export class CircleMemberService {
 
   /**
    * Gets a specific member's information in a circle.
-   * @throws {ChatMemberNotFoundError} If the user is not a member
+   * @throws {CircleMemberNotFoundError} If the user is not a member
    */
   static async getMemberInfo(userId: string, circleId: string) {
     const membership = await CircleRepository.getMembership(userId, circleId);
     if (!membership) {
-      throw new ChatMemberNotFoundError(userId, circleId);
+      throw new CircleMemberNotFoundError(userId, circleId);
     }
 
     const enrichedMember = CircleEnricher.enrichMember(membership);

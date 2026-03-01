@@ -1,28 +1,28 @@
 import BaseCustomError from "./base.error.js";
 
-import type { ChatRole } from "@prisma/client";
+import type { CircleRole } from "@prisma/client";
 
 /**
- * Thrown when a chat group cannot be found.
+ * Thrown when a Circle cannot be found.
  * HTTP 404 - Resource not found
  */
-class ChatGroupNotFoundError extends BaseCustomError {
+class CircleNotFoundError extends BaseCustomError {
   statusCode = 404;
 
-  constructor(chatGroupId: string) {
-    super(`Chat group with ID ${chatGroupId} not found`);
+  constructor(circleId: string) {
+    super(`Circle with ID ${circleId} not found`);
   }
 }
 
 /**
- * Thrown when a user is not a member of a chat group.
+ * Thrown when a user is not a member of a Circle.
  * HTTP 403 - Forbidden (user exists but lacks access)
  */
-class ChatMemberNotFoundError extends BaseCustomError {
+class CircleMemberNotFoundError extends BaseCustomError {
   statusCode = 403;
 
-  constructor(userId: string, chatGroupId: string) {
-    super(`User ${userId} is not a member of group ${chatGroupId}`);
+  constructor(userId: string, circleId: string) {
+    super(`User ${userId} is not a member of group ${circleId}`);
   }
 }
 
@@ -33,8 +33,8 @@ class ChatMemberNotFoundError extends BaseCustomError {
 class NotAMemberError extends BaseCustomError {
   statusCode = 403;
 
-  constructor(userId: string, chatGroupId: string) {
-    super(`User ${userId} is not a member of chat group ${chatGroupId}`);
+  constructor(userId: string, circleId: string) {
+    super(`User ${userId} is not a member of Circle ${circleId}`);
   }
 }
 
@@ -57,8 +57,8 @@ class MessageNotFoundError extends BaseCustomError {
 class AlreadyMemberError extends BaseCustomError {
   statusCode = 409;
 
-  constructor(userId: string, chatGroupId: string) {
-    super(`User ${userId} is already a member of group ${chatGroupId}`);
+  constructor(userId: string, circleId: string) {
+    super(`User ${userId} is already a member of group ${circleId}`);
   }
 }
 
@@ -78,10 +78,14 @@ class InsufficientPermissionsError extends BaseCustomError {
  * Thrown when user doesn't have the required chat role(s).
  * HTTP 403 - Forbidden (user is a member but lacks required role)
  */
-class InsufficientChatRoleError extends BaseCustomError {
+class InsufficientCircleRoleError extends BaseCustomError {
   statusCode = 403;
 
-  constructor(userId: string, requiredRoles: ChatRole[], currentRole?: string) {
+  constructor(
+    userId: string,
+    requiredRoles: CircleRole[],
+    currentRole?: string,
+  ) {
     const roleStr = requiredRoles.join(" or ");
     const current = currentRole ?? "none";
     super(
@@ -93,20 +97,20 @@ class InsufficientChatRoleError extends BaseCustomError {
 class UserMutedError extends BaseCustomError {
   statusCode = 403;
 
-  constructor(userId: string, chatGroupId: string, mutedUntil: Date) {
+  constructor(userId: string, circleId: string, mutedUntil: Date) {
     super(
-      `User ${userId} is muted in group ${chatGroupId} until ${mutedUntil.toISOString()}`,
+      `User ${userId} is muted in group ${circleId} until ${mutedUntil.toISOString()}`,
     );
   }
 }
 
 export {
-  ChatGroupNotFoundError,
-  ChatMemberNotFoundError,
+  CircleNotFoundError,
+  CircleMemberNotFoundError,
   NotAMemberError,
   MessageNotFoundError,
   AlreadyMemberError,
   InsufficientPermissionsError,
-  InsufficientChatRoleError,
+  InsufficientCircleRoleError,
   UserMutedError,
 };

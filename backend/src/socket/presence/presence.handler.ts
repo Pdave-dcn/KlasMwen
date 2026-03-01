@@ -1,4 +1,4 @@
-import CircleRepository from "../../features/chat/service/Repositories/CircleRepository";
+import CircleRepository from "../../features/circle/service/Repositories/CircleRepository";
 
 import { PresenceService } from "./presence.service";
 

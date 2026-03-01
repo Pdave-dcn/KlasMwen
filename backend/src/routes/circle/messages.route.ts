@@ -8,7 +8,7 @@ import {
 import {
   enrichCircleRole,
   requireMembership,
-} from "../../features/chat/security/middleware.js";
+} from "../../features/circle/security/middleware.js";
 
 const router = Router();
 

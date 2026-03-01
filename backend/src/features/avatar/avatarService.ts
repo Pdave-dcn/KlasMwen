@@ -26,18 +26,18 @@ const getRandomDefaultAvatar = async () => {
 };
 
 /**
- * Retrieves a random chat group avatar from the database.
- * Used for assigning avatars to new chat groups.
+ * Retrieves a random circle avatar from the database.
+ * Used for assigning avatars to new circles.
  *
- * @return {Promise<ChatGroupAvatar>} A randomly selected chat group avatar
- * @throws {AvatarServiceError} When no chat group avatars found (404) or operation fails (500)
+ * @return {Promise<CircleAvatar>} A randomly selected circle avatar
+ * @throws {AvatarServiceError} When no circle avatars found (404) or operation fails (500)
  */
-const getRandomChatGroupAvatar = async () => {
+const getRandomCircleAvatar = async () => {
   try {
-    const avatars = await prisma.chatGroupAvatar.findMany();
+    const avatars = await prisma.circleAvatar.findMany();
 
     if (!avatars || avatars.length === 0)
-      throw new AvatarServiceError("No chat group avatars found", 404);
+      throw new AvatarServiceError("No circle avatars found", 404);
 
     return avatars[Math.floor(Math.random() * avatars.length)];
   } catch (error: unknown) {
@@ -47,4 +47,4 @@ const getRandomChatGroupAvatar = async () => {
   }
 };
 
-export { getRandomDefaultAvatar, getRandomChatGroupAvatar };
+export { getRandomDefaultAvatar, getRandomCircleAvatar };

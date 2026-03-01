@@ -25,7 +25,7 @@ class CircleSearchRepository {
     filters: CircleSearchFilters,
     pagination: CirclePaginationCursor,
   ): Promise<CircleForSearch[]> {
-    const results = await prisma.chatGroup.findMany({
+    const results = await prisma.circle.findMany({
       where: {
         // Text search on name and description
         ...(filters.query && {
@@ -47,7 +47,7 @@ class CircleSearchRepository {
         // Tag filters
         ...(filters.tagIds &&
           filters.tagIds.length > 0 && {
-            chatGroupTags: {
+            circleTags: {
               some: {
                 tag: {
                   id: {
@@ -95,7 +95,7 @@ class CircleSearchRepository {
     userId: string,
     pagination: CirclePaginationCursor,
   ): Promise<CircleForDiscovery[]> {
-    return await prisma.chatGroup.findMany({
+    return await prisma.circle.findMany({
       where: {
         isPrivate: false,
         members: {
@@ -122,7 +122,7 @@ class CircleSearchRepository {
     userId: string,
     pagination: CirclePaginationCursor,
   ): Promise<CircleForSearch[]> {
-    return await prisma.chatGroup.findMany({
+    return await prisma.circle.findMany({
       where: {
         isPrivate: false,
         members: {
@@ -157,7 +157,7 @@ class CircleSearchRepository {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - timeframeDays);
 
-    return await prisma.chatGroup.findMany({
+    return await prisma.circle.findMany({
       where: {
         isPrivate: false,
         members: {
@@ -200,7 +200,7 @@ class CircleSearchRepository {
     const keywords = referenceCircle.name.toLowerCase().split(/\s+/);
     const primaryKeyword = keywords[0] || "";
 
-    return await prisma.chatGroup.findMany({
+    return await prisma.circle.findMany({
       where: {
         isPrivate: false,
         id: {
@@ -243,7 +243,7 @@ class CircleSearchRepository {
     userId: string,
     pagination: CirclePaginationCursor,
   ): Promise<CircleForDiscovery[]> {
-    return await prisma.chatGroup.findMany({
+    return await prisma.circle.findMany({
       where: {
         isPrivate: false,
         members: {
@@ -271,7 +271,7 @@ class CircleSearchRepository {
     creatorId: string,
     pagination: CirclePaginationCursor,
   ): Promise<CircleForDiscovery[]> {
-    return await prisma.chatGroup.findMany({
+    return await prisma.circle.findMany({
       where: {
         creatorId,
         isPrivate: false,
@@ -303,7 +303,7 @@ class CircleSearchRepository {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - activityDays);
 
-    return await prisma.chatGroup.findMany({
+    return await prisma.circle.findMany({
       where: {
         isPrivate: false,
         members: {
@@ -342,7 +342,7 @@ class CircleSearchRepository {
     pagination: CirclePaginationCursor,
     maxMembers: number = 10,
   ): Promise<CircleForSearch[]> {
-    const results = await prisma.chatGroup.findMany({
+    const results = await prisma.circle.findMany({
       where: {
         isPrivate: false,
         members: {
@@ -372,7 +372,7 @@ class CircleSearchRepository {
     query: string,
     limit: number = 10,
   ): Promise<CircleSuggestionResult[]> {
-    return await prisma.chatGroup.findMany({
+    return await prisma.circle.findMany({
       where: {
         isPrivate: false,
         name: {

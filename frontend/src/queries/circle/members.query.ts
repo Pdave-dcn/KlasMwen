@@ -34,7 +34,7 @@ export const useAddCircleMemberMutation = (circleId: string) => {
         queryKey: ["circles", circleId, "members"],
       });
       await queryClient.invalidateQueries({
-        queryKey: ["circles", circleId],
+        queryKey: ["circles", "single", circleId],
       });
     },
   });
@@ -50,7 +50,7 @@ export const useRemoveCircleMemberMutation = (circleId: string) => {
         queryKey: ["circles", circleId, "members"],
       });
       await queryClient.invalidateQueries({
-        queryKey: ["circles", circleId],
+        queryKey: ["circles", "single", circleId],
       });
     },
   });

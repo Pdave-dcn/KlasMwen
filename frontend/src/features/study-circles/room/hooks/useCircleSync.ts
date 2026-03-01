@@ -46,12 +46,12 @@ export const useCircleSync = (currentCircleId: string | null) => {
   useEffect(() => {
     const unsubscribe = circleSocketService.onMessage(
       (message: CircleMessage) => {
-        const { chatGroupId } = message;
+        const { circleId } = message;
 
         // 1. Update Active Message List if the message belongs to the current room
-        if (currentCircleId === chatGroupId) {
+        if (currentCircleId === circleId) {
           queryClient.setQueryData<InfiniteData<CircleMessagesResponse>>(
-            ["chat", "groups", chatGroupId, "messages"],
+            ["groups", circleId, "messages"],
             (oldData) => {
               if (!oldData?.pages.length) return oldData;
 
@@ -101,26 +101,26 @@ export const useCircleSync = (currentCircleId: string | null) => {
           (old) => {
             if (!old) return old;
 
-            return old.map((group) => {
-              if (group.id !== chatGroupId) return group;
+            return old.map((circle) => {
+              if (circle.id !== circleId) return circle;
 
-              const isViewingThisGroup = currentCircleId === chatGroupId;
+              const isViewingThisCircle = currentCircleId === circleId;
 
               return {
-                ...group,
+                ...circle,
                 latestMessage: message,
                 // If viewing, keep at 0. If not, increment.
-                unreadCount: isViewingThisGroup
+                unreadCount: isViewingThisCircle
                   ? 0
-                  : (group.unreadCount || 0) + 1,
+                  : (circle.unreadCount || 0) + 1,
               };
             });
           },
         );
 
         // 3. Keep server synced if message arrives while looking at the chat
-        if (currentCircleId === chatGroupId) {
-          updateLastReadAtMutation.mutate(chatGroupId);
+        if (currentCircleId === circleId) {
+          updateLastReadAtMutation.mutate(circleId);
         }
       },
     );

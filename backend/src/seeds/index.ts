@@ -5,8 +5,8 @@ import SeedingError from "../core/error/custom/seed.error.js";
 
 import seedAvatars from "./seeders/avatar.seeder.js";
 import seedBookmarks from "./seeders/bookmark.seeder.js";
-import seedChats from "./seeders/chat.seeder.js";
-import seedChatGroupAvatars from "./seeders/chatGroupAvatar.seeder.js";
+import seedCircleAvatars from "./seeders/chatGroupAvatar.seeder.js";
+import seedCircles from "./seeders/circle.seeder.js";
 import cleanupDatabase from "./seeders/cleanup.seeder.js";
 import seedComments from "./seeders/comment.seeder.js";
 import seedLikes from "./seeders/like.seeder.js";
@@ -59,13 +59,12 @@ const main = async () => {
     const allComments = await prisma.comment.findMany();
     const reportStats = await seedReports(users, posts, allComments, reasons);
 
-    // Phase 11: Create chat group avatars
-    const { chatGroupAvatars, chatGroupAvatarStats } =
-      await seedChatGroupAvatars(100);
-    if (!chatGroupAvatars) return;
+    // Phase 11: Create circle avatars
+    const { circleAvatars, circleAvatarStats } = await seedCircleAvatars(100);
+    if (!circleAvatars) return;
 
-    // Phase 12: Create chat
-    const { chatStats } = await seedChats(users, chatGroupAvatars, tags, 50);
+    // Phase 12: Create circles
+    const { circleStats } = await seedCircles(users, circleAvatars, tags, 50);
 
     // Phase 13: Create notifications
     const allLikes = await prisma.like.findMany();
@@ -100,8 +99,8 @@ const main = async () => {
             postReports: reportStats.postReportsCount,
             commentReports: reportStats.commentReportsCount,
           },
-          chatGroupAvatarStats,
-          chatStats,
+          circleAvatarStats,
+          circleStats,
           notificationStats,
         },
         phases: {

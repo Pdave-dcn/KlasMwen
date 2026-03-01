@@ -3,13 +3,13 @@ import {
   ChatGroupNotFoundError,
   ChatMemberNotFoundError,
 } from "../../../../core/error/custom/chat.error.js";
-import { assertChatPermission } from "../../security/rbac.js";
+import { assertCirclePermission } from "../../security/rbac.js";
 import CircleEnricher from "../CircleEnrichers.js";
 import CircleTransformers from "../CircleTransformers.js";
 import CircleRepository from "../Repositories/CircleRepository.js";
 
 import type { JoinCircleData, UpdateMemberRoleData } from "../CircleTypes.js";
-import type { ChatRole } from "@prisma/client";
+import type { CircleRole } from "@prisma/client";
 
 /**
  * Service for circle member operations.
@@ -25,24 +25,24 @@ export class CircleMemberService {
    */
   static async addMember(
     data: JoinCircleData,
-    requester?: Express.User & { chatRole?: ChatRole },
+    requester?: Express.User & { circleRole?: CircleRole },
   ) {
-    const group = await CircleRepository.findCircleById(data.chatGroupId);
-    if (!group) throw new ChatGroupNotFoundError(data.chatGroupId);
+    const group = await CircleRepository.findCircleById(data.circleId);
+    if (!group) throw new ChatGroupNotFoundError(data.circleId);
 
     // Check if user is already a member
     const isMember = await CircleRepository.isMember(
       data.userId,
-      data.chatGroupId,
+      data.circleId,
     );
     if (isMember) {
-      throw new AlreadyMemberError(data.userId, data.chatGroupId);
+      throw new AlreadyMemberError(data.userId, data.circleId);
     }
 
     // For private circles or when adding someone else, check permissions
     if (group.isPrivate || (requester && requester.id !== data.userId)) {
       if (requester) {
-        assertChatPermission(requester, "chatMembers", "add");
+        assertCirclePermission(requester, "circleMembers", "add");
       }
     }
 
@@ -62,7 +62,7 @@ export class CircleMemberService {
   static async removeMember(
     targetUserId: string,
     circleId: string,
-    requester: Express.User & { chatRole?: ChatRole },
+    requester: Express.User & { circleRole?: CircleRole },
   ) {
     const group = await CircleRepository.findCircleById(circleId);
     if (!group) throw new ChatGroupNotFoundError(circleId);
@@ -75,7 +75,7 @@ export class CircleMemberService {
       throw new ChatMemberNotFoundError(targetUserId, circleId);
     }
 
-    assertChatPermission(requester, "chatMembers", "remove", membership);
+    assertCirclePermission(requester, "circleMembers", "remove", membership);
 
     const member = await CircleRepository.removeMember(targetUserId, circleId);
     const enrichedMember = CircleEnricher.enrichMember(member);
@@ -94,7 +94,7 @@ export class CircleMemberService {
     targetUserId: string,
     circleId: string,
     data: UpdateMemberRoleData,
-    requester: Express.User & { chatRole?: ChatRole },
+    requester: Express.User & { circleRole?: CircleRole },
   ) {
     const group = await CircleRepository.findCircleById(circleId);
     if (!group) throw new ChatGroupNotFoundError(circleId);
@@ -107,7 +107,12 @@ export class CircleMemberService {
       throw new ChatMemberNotFoundError(targetUserId, circleId);
     }
 
-    assertChatPermission(requester, "chatMembers", "updateRole", membership);
+    assertCirclePermission(
+      requester,
+      "circleMembers",
+      "updateRole",
+      membership,
+    );
 
     const member = await CircleRepository.updateMemberRole(
       targetUserId,
@@ -137,11 +142,11 @@ export class CircleMemberService {
    * Retrieves all members of a circle.
    * @throws {ChatGroupNotFoundError} If the circle does not exist
    */
-  static async getCircleMembers(chatGroupId: string) {
-    const group = await CircleRepository.findCircleById(chatGroupId);
-    if (!group) throw new ChatGroupNotFoundError(chatGroupId);
+  static async getCircleMembers(circleId: string) {
+    const group = await CircleRepository.findCircleById(circleId);
+    if (!group) throw new ChatGroupNotFoundError(circleId);
 
-    const members = await CircleRepository.getGroupMembers(chatGroupId);
+    const members = await CircleRepository.getGroupMembers(circleId);
 
     const enrichedMembers = CircleEnricher.enrichMembers(members);
 

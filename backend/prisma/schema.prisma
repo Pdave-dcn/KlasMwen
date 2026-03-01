@@ -35,8 +35,8 @@ enum NotificationType {
   REPORT_UPDATE
 }
 
-// User Roles in a group chat/study circle
-enum ChatRole {
+// User Roles in a study circle
+enum CircleRole {
   OWNER
   MODERATOR
   MEMBER
@@ -59,13 +59,13 @@ model User {
   comments              Comment[]
   likes                 Like[]
   bookmarks             Bookmark[]
-  mentionedInComments   Comment[]      @relation("mentionedUser")
+  mentionedInComments   Comment[]       @relation("mentionedUser")
   reports               Report[]
-  notifications         Notification[] @relation("notificationActor")
-  notificationsReceived Notification[] @relation("notificationReceiver")
-  chatGroups            ChatGroup[]
-  chatMembers           ChatMember[]
-  chatMessages          ChatMessage[]
+  notifications         Notification[]  @relation("notificationActor")
+  notificationsReceived Notification[]  @relation("notificationReceiver")
+  circles               Circle[]
+  circleMembers         CircleMember[]
+  circleMessages        CircleMessage[]
 
   @@map("users")
 }
@@ -138,10 +138,10 @@ model Comment {
 
 // Represents a category or topic tag that can be attached to posts
 model Tag {
-  id            Int            @id @default(autoincrement())
-  name          String         @unique
-  postTags      PostTag[]
-  chatGroupTags ChatGroupTag[]
+  id         Int         @id @default(autoincrement())
+  name       String      @unique
+  postTags   PostTag[]
+  circleTags CircleTag[]
 
   @@map("tags")
 }
@@ -238,8 +238,8 @@ model Notification {
   @@map("notifications")
 }
 
-// Represents a group chat or study circle
-model ChatGroup {
+// Represents a study circle or group chat that users can join for discussions and collaboration
+model Circle {
   id          String  @id @default(uuid())
   name        String
   description String?
@@ -250,68 +250,67 @@ model ChatGroup {
   creatorId String @map("creator_id")
   avatarId  Int?   @map("avatar_id")
 
-  creator User             @relation(fields: [creatorId], references: [id])
-  avatar  ChatGroupAvatar? @relation(fields: [avatarId], references: [id])
+  creator User          @relation(fields: [creatorId], references: [id])
+  avatar  CircleAvatar? @relation(fields: [avatarId], references: [id])
 
-  members       ChatMember[]
-  messages      ChatMessage[]
-  chatGroupTags ChatGroupTag[]
+  members    CircleMember[]
+  messages   CircleMessage[]
+  circleTags CircleTag[]
 
-  @@map("chat_groups")
+  @@map("circles")
 }
 
-// Junction table for Users and ChatGroups with additional fields
-model ChatMember {
+// Junction table for Users and Circles
+model CircleMember {
   user   User   @relation(fields: [userId], references: [id])
   userId String @map("user_id")
 
-  chatGroup   ChatGroup @relation(fields: [chatGroupId], references: [id], onDelete: Cascade)
-  chatGroupId String    @map("chat_group_id")
+  circle   Circle @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  circleId String @map("circle_id")
 
-  role ChatRole @default(MEMBER)
+  role CircleRole @default(MEMBER)
 
   joinedAt   DateTime  @default(now()) @map("joined_at")
   mutedUntil DateTime? @map("muted_until")
   lastReadAt DateTime? @map("last_read_at")
 
-  @@id([userId, chatGroupId])
-  @@map("chat_members")
+  @@id([userId, circleId])
+  @@map("circle_members")
 }
 
-// Represents a message sent by a user in a chat group
-model ChatMessage {
-  id Int @id @default(autoincrement())
-
+// Represents a message sent within a circle
+model CircleMessage {
+  id        Int      @id @default(autoincrement())
   content   String
   createdAt DateTime @default(now()) @map("created_at")
 
   sender   User   @relation(fields: [senderId], references: [id])
   senderId String @map("sender_id")
 
-  chatGroup   ChatGroup @relation(fields: [chatGroupId], references: [id], onDelete: Cascade)
-  chatGroupId String    @map("chat_group_id")
+  circle   Circle @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  circleId String @map("circle_id")
 
-  @@index([chatGroupId, createdAt])
-  @@map("chat_messages")
+  @@index([circleId, createdAt])
+  @@map("circle_messages")
 }
 
-// Represents an avatar image for chat groups
-model ChatGroupAvatar {
-  id         Int         @id @default(autoincrement())
-  url        String      @unique
-  chatGroups ChatGroup[]
+// Represents an avatar image for circles
+model CircleAvatar {
+  id      Int      @id @default(autoincrement())
+  url     String   @unique
+  circles Circle[]
 
-  @@map("chat_group_avatars")
+  @@map("circle_avatars")
 }
 
-// Junction table for Groups and Tags
-model ChatGroupTag {
-  chatGroupId String @map("chat_group_id")
-  tagId       Int    @map("tag_id")
+// Junction table for Circles and Tags
+model CircleTag {
+  circleId String @map("circle_id") // DB column name updated
+  tagId    Int    @map("tag_id")
 
-  chatGroup ChatGroup @relation(fields: [chatGroupId], references: [id], onDelete: Cascade)
-  tag       Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  circle Circle @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
-  @@id([chatGroupId, tagId])
-  @@map("chat_group_tags")
+  @@id([circleId, tagId])
+  @@map("circle_tags")
 }

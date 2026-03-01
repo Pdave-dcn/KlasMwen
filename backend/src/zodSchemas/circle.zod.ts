@@ -1,4 +1,4 @@
-import { ChatRole } from "@prisma/client";
+import { CircleRole } from "@prisma/client";
 import { z } from "zod";
 
 const StudyCircleIdParamSchema = z.object({
@@ -9,7 +9,7 @@ const UserIdParamSchema = z.object({
   userId: z.uuid("Invalid user ID format"),
 });
 
-// Chat Group Schemas
+// Circle Schemas
 
 const CreatorIdParamSchema = z.object({
   creatorId: z.uuid("Invalid creator ID format"),
@@ -55,11 +55,11 @@ const UpdateStudyCircleDataSchema = z
 
 const AddMemberDataSchema = z.object({
   userId: z.uuid("Invalid user ID"),
-  role: z.enum(ChatRole).optional().default("MEMBER"),
+  role: z.enum(CircleRole).optional().default("MEMBER"),
 });
 
 const UpdateMemberRoleDataSchema = z.object({
-  role: z.enum(ChatRole),
+  role: z.enum(CircleRole),
 });
 
 // Circle Message Schemas

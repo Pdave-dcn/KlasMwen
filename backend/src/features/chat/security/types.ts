@@ -1,4 +1,4 @@
-import type { ChatGroup, ChatMessage, ChatRole } from "@prisma/client";
+import type { Circle, CircleMessage, CircleRole } from "@prisma/client";
 
 type WithCreatorId<T extends { id: string; creatorId: string }> = Pick<
   T,
@@ -17,32 +17,32 @@ type WithSenderId<T extends { id: number; senderId: string }> = Pick<
 };
 
 type WithMembershipRole = {
-  role: ChatRole;
+  role: CircleRole;
   userId?: string;
   user?: { id: string };
 };
 
-type ChatGroupForPolicy = WithCreatorId<ChatGroup>;
-type ChatMemberForPolicy = WithMembershipRole;
-type ChatMessageForPolicy = WithSenderId<ChatMessage> & {
-  chatGroupId: string;
+type CircleForPolicy = WithCreatorId<Circle>;
+type CircleMemberForPolicy = WithMembershipRole;
+type CircleMessageForPolicy = WithSenderId<CircleMessage> & {
+  circleId: string;
 };
 
-const chatRegistry = {
-  chatGroups: {
-    datatype: {} as ChatGroupForPolicy,
+const circleRegistry = {
+  circles: {
+    datatype: {} as CircleForPolicy,
     action: ["create", "read", "update", "delete", "join", "invite"],
   },
-  chatMembers: {
-    datatype: {} as ChatMemberForPolicy,
+  circleMembers: {
+    datatype: {} as CircleMemberForPolicy,
     action: ["add", "remove", "updateRole", "view"],
   },
-  chatMessages: {
-    datatype: {} as ChatMessageForPolicy,
+  circleMessages: {
+    datatype: {} as CircleMessageForPolicy,
     action: ["send", "read", "delete"],
   },
 } as const;
 
-type ChatRegistry = typeof chatRegistry;
+type CircleRegistry = typeof circleRegistry;
 
-export { chatRegistry, type ChatRegistry };
+export { circleRegistry, type CircleRegistry };

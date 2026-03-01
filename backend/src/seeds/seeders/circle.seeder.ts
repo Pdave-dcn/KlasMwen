@@ -10,26 +10,26 @@ import {
   handleSeedingError,
 } from "../utils/seedHelpers.js";
 
-import type { User, Prisma, ChatGroupAvatar, Tag } from "@prisma/client";
+import type { User, Prisma, CircleAvatar, Tag } from "@prisma/client";
 
-const logger = createLogger({ module: "ChatSeeder" });
+const logger = createLogger({ module: "CircleSeeder" });
 
-const seedChats = async (
+const seedCircles = async (
   users: User[],
-  chatGroupAvatars: ChatGroupAvatar[],
+  circleAvatars: CircleAvatar[],
   tags: Tag[],
-  groupCount = 5,
+  circleCount = 5,
 ) => {
   try {
-    logger.info("Chat creation phase started");
-    const chatCreationStartTime = Date.now();
+    logger.info("Circle creation phase started");
+    const circleCreationStartTime = Date.now();
 
-    // 1. Create Chat Groups
-    const chatGroups = [];
-    for (let i = 0; i < groupCount; i++) {
-      const avatar = getRandomAvatar(chatGroupAvatars);
+    // 1. Create circles
+    const circles = [];
+    for (let i = 0; i < circleCount; i++) {
+      const avatar = getRandomAvatar(circleAvatars);
       const creator = faker.helpers.arrayElement(users);
-      const group = await prisma.chatGroup.create({
+      const group = await prisma.circle.create({
         data: {
           name: faker.company.catchPhrase(),
           description: faker.lorem.sentence(),
@@ -38,26 +38,26 @@ const seedChats = async (
           avatarId: avatar.id,
         },
       });
-      chatGroups.push(group);
+      circles.push(group);
 
       // Assign random tags to this chat group
       const randomTags = getRandomTags(tags);
-      await prisma.chatGroupTag.createMany({
+      await prisma.circleTag.createMany({
         data: randomTags.map((tag) => ({
-          chatGroupId: group.id,
+          circleId: group.id,
           tagId: tag.id,
         })),
       });
     }
 
-    // 2. Create Chat Members
+    // 2. Create Circle Members
     // Ensure the creator is always an OWNER, and add random members
-    const allMembersData: Prisma.ChatMemberUncheckedCreateInput[] = [];
+    const allMembersData: Prisma.CircleMemberUncheckedCreateInput[] = [];
 
-    for (const group of chatGroups) {
+    for (const group of circles) {
       // Add the creator as OWNER
       allMembersData.push({
-        chatGroupId: group.id,
+        circleId: group.id,
         userId: group.creatorId,
         role: "OWNER",
       });
@@ -72,22 +72,22 @@ const seedChats = async (
 
       selectedMembers.forEach((member) => {
         allMembersData.push({
-          chatGroupId: group.id,
+          circleId: group.id,
           userId: member.id,
           role: faker.helpers.arrayElement(["MODERATOR", "MEMBER", "MEMBER"]),
         });
       });
     }
 
-    await prisma.chatMember.createMany({ data: allMembersData });
+    await prisma.circleMember.createMany({ data: allMembersData });
 
-    // 3. Create Chat Messages
-    const messagesData: Prisma.ChatMessageUncheckedCreateInput[] = [];
+    // 3. Create Circle Messages
+    const messagesData: Prisma.CircleMessageUncheckedCreateInput[] = [];
 
-    for (const group of chatGroups) {
-      // Get member IDs for this specific group to ensure only members send messages
+    for (const group of circles) {
+      // Get member IDs for this specific circle to ensure only members send messages
       const groupMemberIds = allMembersData
-        .filter((m) => m.chatGroupId === group.id)
+        .filter((m) => m.circleId === group.id)
         .map((m) => m.userId);
 
       const messageCount = faker.number.int({ min: 10, max: 30 });
@@ -95,41 +95,41 @@ const seedChats = async (
       for (let i = 0; i < messageCount; i++) {
         messagesData.push({
           content: faker.lorem.sentence(),
-          chatGroupId: group.id,
+          circleId: group.id,
           senderId: faker.helpers.arrayElement(groupMemberIds),
           createdAt: faker.date.recent({ days: 7 }),
         });
       }
     }
 
-    // Sort messages by date so the index [chatGroupId, createdAt] is happy
+    // Sort messages by date so the index [circleId, createdAt] is happy
     messagesData.sort(
       (a, b) =>
         (a.createdAt as Date).getTime() - (b.createdAt as Date).getTime(),
     );
 
-    await prisma.chatMessage.createMany({ data: messagesData });
+    await prisma.circleMessage.createMany({ data: messagesData });
 
     const metrics = calculateMetrics(
-      chatCreationStartTime,
+      circleCreationStartTime,
       messagesData.length,
     );
 
-    const chatStats = {
-      totalGroups: chatGroups.length,
+    const circleStats = {
+      totalCircles: circles.length,
       totalMemberships: allMembersData.length,
       totalMessages: messagesData.length,
       totalTags: tags.length,
-      chatCreationDuration: metrics.duration,
+      circleCreationDuration: metrics.duration,
     };
 
-    logger.info(chatStats, "Chat creation phase completed");
-    return { chatGroups, chatStats };
+    logger.info(circleStats, "Circle creation phase completed");
+    return { circles, circleStats };
   } catch (error) {
-    return handleSeedingError(error, logger, "Chat creation", "chats", {
+    return handleSeedingError(error, logger, "Circle creation", "circles", {
       userCount: users.length,
     });
   }
 };
 
-export default seedChats;
+export default seedCircles;

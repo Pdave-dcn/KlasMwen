@@ -3,7 +3,7 @@ import {
   MessageNotFoundError,
 } from "../../../../core/error/custom/chat.error.js";
 import { processPaginatedResults } from "../../../../utils/pagination.util.js";
-import { assertChatPermission } from "../../security/rbac.js";
+import { assertCirclePermission } from "../../security/rbac.js";
 import CircleTransformers from "../CircleTransformers.js";
 import CircleRepository from "../Repositories/CircleRepository.js";
 
@@ -13,7 +13,7 @@ import type {
   SendMessageData,
   MessagePaginationCursor,
 } from "../CircleTypes.js";
-import type { ChatRole } from "@prisma/client";
+import type { CircleRole } from "@prisma/client";
 
 /**
  * Service for circle message operations.
@@ -29,12 +29,12 @@ export class CircleMessageService {
    */
   static async sendMessage(
     data: SendMessageData,
-    user: Omit<Express.User, "email"> & { chatRole?: ChatRole },
+    user: Omit<Express.User, "email"> & { userRole?: CircleRole },
   ) {
-    const circle = await CircleRepository.findCircleById(data.chatGroupId);
-    if (!circle) throw new ChatGroupNotFoundError(data.chatGroupId);
+    const circle = await CircleRepository.findCircleById(data.circleId);
+    if (!circle) throw new ChatGroupNotFoundError(data.circleId);
 
-    assertChatPermission(user, "chatMessages", "send");
+    assertCirclePermission(user, "circleMessages", "send");
 
     await CircleValidationService.ensureMemberNotMuted(data);
 
@@ -49,19 +49,16 @@ export class CircleMessageService {
    * @throws {AuthorizationError} If user is not a member
    */
   static async getMessages(
-    chatGroupId: string,
-    user: Express.User & { chatRole?: ChatRole },
+    circleId: string,
+    user: Express.User & { circleRole?: CircleRole },
     pagination?: MessagePaginationCursor,
   ) {
-    const circle = await CircleRepository.findCircleById(chatGroupId);
-    if (!circle) throw new ChatGroupNotFoundError(chatGroupId);
+    const circle = await CircleRepository.findCircleById(circleId);
+    if (!circle) throw new ChatGroupNotFoundError(circleId);
 
-    assertChatPermission(user, "chatMessages", "read");
+    assertCirclePermission(user, "circleMessages", "read");
 
-    const messages = await CircleRepository.getMessages(
-      chatGroupId,
-      pagination,
-    );
+    const messages = await CircleRepository.getMessages(circleId, pagination);
 
     const transformedMessages = CircleTransformers.transformMessages(messages);
 
@@ -95,14 +92,14 @@ export class CircleMessageService {
    */
   static async deleteMessage(
     messageId: number,
-    user: Express.User & { chatRole?: ChatRole },
+    user: Express.User & { circleRole?: CircleRole },
   ) {
     const message = await CircleRepository.findMessageById(messageId);
     if (!message) {
       throw new MessageNotFoundError(messageId);
     }
 
-    assertChatPermission(user, "chatMessages", "delete", message);
+    assertCirclePermission(user, "circleMessages", "delete", message);
 
     await CircleRepository.deleteMessage(messageId);
 

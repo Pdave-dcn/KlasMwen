@@ -1,83 +1,109 @@
 import { AuthorizationError } from "../../../core/error/custom/auth.error.js";
 
-import { CHAT_POLICY } from "./policy.js";
+import { CIRCLE_POLICY } from "./policy.js";
 
-import type { ChatRegistry } from "./types.js";
-import type { ChatRole } from "@prisma/client";
+import type { CircleRegistry } from "./types.js";
+import type { CircleRole } from "@prisma/client";
 
 /**
- * Evaluates whether a user has permission to perform an action on a chat resource.
+ * Checks if a user is allowed to do something in a circle.
  *
- * This function checks the CHAT_POLICY for the user's chat role and evaluates
- * permission rules, which can be boolean values or functions that evaluate based
- * on the resource data.
+ * It looks at the user's circle role and checks the CIRCLE_POLICY
+ * to see if that role is allowed to perform the action.
  *
- * **Important**: The user object must have a `chatRole` property populated,
- * typically by middleware that fetches the user's role in the specific chat group.
+ * Some permissions are simple true/false.
+ * Others need resource data to decide (for example, checking if the user owns a message).
  *
- * @template Res - The resource type key from the ChatRegistry
- * @param {Express.User & { chatRole?: ChatRole }} user - The user with their chat role
- * @param {Res} resource - The resource type being accessed
- * @param {ChatRegistry[Res]["action"][number]} action - The action being performed
- * @param {ChatRegistry[Res]["datatype"]} [data] - Optional resource data for evaluation
- * @returns {boolean} True if the user has permission, false otherwise
+ * Important:
+ * The user object must include circleRole.
+ * This is usually added earlier by middleware.
  *
- * @example
- * const user = { id: "u1", role: "STUDENT", chatRole: "OWNER" };
- * hasChatPermission(user, "chatGroups", "delete") // => true
- * hasChatPermission(user, "chatMessages", "delete", messageData) // => true/false
+ * @template Res - The resource type (example: "circles", "circleMessages")
+ * @param user - The user, including their circleRole
+ * @param resource - The resource the user wants to access
+ * @param action - The action the user wants to perform (example: "delete", "send")
+ * @param data - Optional data used to help decide permission
+ *
+ * @returns true if the user is allowed, false if not allowed
+ *
+ * Example:
+ * const user = { id: "u1", role: "STUDENT", circleRole: "OWNER" };
+ *
+ * hasCirclePermission(user, "circles", "delete")
+ * // returns true
+ *
+ * hasCirclePermission(user, "circleMessages", "delete", messageData)
+ * // returns true or false depending on the message
  */
-const hasChatPermission = <Res extends keyof ChatRegistry>(
-  user: Omit<Express.User, "email"> & { chatRole?: ChatRole },
+const hasCirclePermission = <Res extends keyof CircleRegistry>(
+  user: Omit<Express.User, "email"> & { circleRole?: CircleRole },
   resource: Res,
-  action: ChatRegistry[Res]["action"][number],
-  data?: ChatRegistry[Res]["datatype"],
+  action: CircleRegistry[Res]["action"][number],
+  data?: CircleRegistry[Res]["datatype"],
 ): boolean => {
-  // User must have a chat role to access chat resources
-  if (!user.chatRole) return false;
+  // If the user has no circleRole, they are not allowed
+  if (!user.circleRole) return false;
 
-  const permission = CHAT_POLICY[user.chatRole]?.[resource]?.[action];
+  // Get the permission rule for this role, resource, and action
+  const permission = CIRCLE_POLICY[user.circleRole]?.[resource]?.[action];
+
+  // If no rule exists, the action is not allowed
   if (permission === undefined) return false;
+
+  // If the rule is true or false, return it directly
   if (typeof permission === "boolean") return permission;
+
+  // If the rule is a function, use the data to decide
+  // If no data is provided, deny access
   return data ? permission(user, data) : false;
 };
 
 /**
- * Asserts that a user has permission to perform an action on a chat resource.
+ * Makes sure a user is allowed to do something in a circle.
  *
- * Throws an AuthorizationError if the user lacks the required permission.
- * Use this function to enforce permissions in chat-related routes or operations.
+ * If the user is NOT allowed, it throws an AuthorizationError.
+ * This stops the action immediately.
  *
- * **Important**: The user object must have a `chatRole` property populated,
- * typically by middleware that fetches the user's role in the specific chat group.
+ * Use this in routes or services where permission is required.
  *
- * @template Res - The resource type key from the ChatRegistry
- * @param {Express.User & { chatRole?: ChatRole }} user - The user with their chat role
- * @param {Res} resource - The resource type being accessed
- * @param {ChatRegistry[Res]["action"][number]} action - The action being performed
- * @param {ChatRegistry[Res]["datatype"]} [data] - Optional resource data for evaluation
- * @throws {AuthorizationError} When the user lacks permission for the specified action
- * @returns {void}
+ * Important:
+ * The user object must include circleRole.
  *
- * @example
- * const user = { id: "u1", role: "STUDENT", chatRole: "MEMBER" };
- * assertChatPermission(user, "chatMessages", "delete", messageData) // may throw
- * assertChatPermission(user, "chatMessages", "send") // passes if member
+ * @template Res - The resource type
+ * @param user - The user, including their circleRole
+ * @param resource - The resource being accessed
+ * @param action - The action being performed
+ * @param data - Optional data used to help decide permission
+ *
+ * @throws AuthorizationError if the user is not allowed
+ *
+ * Example:
+ * const user = { id: "u1", role: "STUDENT", circleRole: "MEMBER" };
+ *
+ * assertCirclePermission(user, "circleMessages", "delete", messageData)
+ * // throws error if not allowed
+ *
+ * assertCirclePermission(user, "circleMessages", "send")
+ * // continues if allowed
  */
-const assertChatPermission = <Res extends keyof ChatRegistry>(
-  user: Omit<Express.User, "email"> & { chatRole?: ChatRole },
+const assertCirclePermission = <Res extends keyof CircleRegistry>(
+  user: Omit<Express.User, "email"> & { circleRole?: CircleRole },
   resource: Res,
-  action: ChatRegistry[Res]["action"][number],
-  data?: ChatRegistry[Res]["datatype"],
+  action: CircleRegistry[Res]["action"][number],
+  data?: CircleRegistry[Res]["datatype"],
 ): void => {
-  if (!hasChatPermission(user, resource, action, data)) {
-    const roleInfo = user.chatRole
-      ? ` with role ${user.chatRole}`
-      : " (no chat role)";
+  // Check permission
+  if (!hasCirclePermission(user, resource, action, data)) {
+    // Prepare role info for the error message
+    const roleInfo = user.circleRole
+      ? ` with role ${user.circleRole}`
+      : " (no circle role)";
+
+    // Throw error if not allowed
     throw new AuthorizationError(
       `User ${user.id}${roleInfo} not permitted to ${action} ${resource}`,
     );
   }
 };
 
-export { hasChatPermission, assertChatPermission };
+export { hasCirclePermission, assertCirclePermission };

@@ -27,7 +27,7 @@ const sendMessage = async (req: Request, res: Response, next: NextFunction) => {
       {
         content,
         senderId: user.id,
-        chatGroupId: circleId,
+        circleId,
       },
       user,
     );
@@ -45,7 +45,7 @@ const sendMessage = async (req: Request, res: Response, next: NextFunction) => {
     actionLogger.info(
       {
         messageId: message.id,
-        groupId: circleId,
+        circleId,
         senderId: user.id,
       },
       "Message sent successfully",
@@ -76,7 +76,7 @@ const getMessages = async (req: Request, res: Response, next: NextFunction) => {
 
     actionLogger.info(
       {
-        groupId: circleId,
+        circleId,
         messageCount: result.data.length,
         hasMore: result.pagination.hasMore,
         nextCursor: result.pagination.nextCursor,

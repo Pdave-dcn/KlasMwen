@@ -44,7 +44,7 @@ export class CircleValidationService {
   static async ensureMemberNotMuted(data: SendMessageData) {
     const membership = await CircleRepository.getMembership(
       data.senderId,
-      data.chatGroupId,
+      data.circleId,
     );
 
     const mutedUntil = membership?.mutedUntil;
@@ -53,7 +53,7 @@ export class CircleValidationService {
       return;
     }
 
-    throw new UserMutedError(data.senderId, data.chatGroupId, mutedUntil);
+    throw new UserMutedError(data.senderId, data.circleId, mutedUntil);
   }
 
   /**

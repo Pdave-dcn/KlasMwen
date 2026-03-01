@@ -6,7 +6,7 @@ import {
   sendMessage,
 } from "../../controllers/circle/index.js";
 import {
-  enrichChatRole,
+  enrichCircleRole,
   requireMembership,
 } from "../../features/chat/security/middleware.js";
 
@@ -14,6 +14,6 @@ const router = Router();
 
 router.post("/:circleId/message", requireMembership, sendMessage);
 router.get("/:circleId/messages", requireMembership, getMessages);
-router.delete("/:circleId/messages/:id", enrichChatRole, deleteMessage);
+router.delete("/:circleId/messages/:id", enrichCircleRole, deleteMessage);
 
 export default router;

@@ -33,7 +33,7 @@ const PaginationSchema = z.object({
 const CircleMessageDataSchema = z.object({
   id: z.number().int(),
   content: z.string(),
-  chatGroupId: z.uuid(),
+  circleId: z.uuid(),
   createdAt: z.string(),
   sender: UserBasicSchema,
 });

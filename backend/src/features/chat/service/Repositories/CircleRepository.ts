@@ -15,14 +15,14 @@ class CircleRepository {
 
   /** Find a single circle by ID */
   static async findCircleById(circleId: string) {
-    return await prisma.chatGroup.findUnique({
+    return await prisma.circle.findUnique({
       where: { id: circleId },
       select: BaseSelectors.circleWithMembers,
     });
   }
 
   static async getCircleDetails(circleId: string) {
-    return await prisma.chatGroup.findUnique({
+    return await prisma.circle.findUnique({
       where: { id: circleId },
       select: BaseSelectors.circlePreviewDetail,
     });
@@ -33,7 +33,7 @@ class CircleRepository {
     userId: string,
     pagination: CirclePaginationCursor,
   ) {
-    return await prisma.chatGroup.findMany({
+    return await prisma.circle.findMany({
       where: {
         isPrivate: false,
         members: {
@@ -57,7 +57,7 @@ class CircleRepository {
     userId: string,
     limit: number = 8,
   ) {
-    return await prisma.chatGroup.findMany({
+    return await prisma.circle.findMany({
       where: {
         members: {
           some: { userId },
@@ -75,7 +75,7 @@ class CircleRepository {
 
   /** Create a new circle and add creator as owner */
   static async createCircle(data: CreateCircleFinalData) {
-    return await prisma.chatGroup.create({
+    return await prisma.circle.create({
       data: {
         name: data.name,
         description: data.description ?? null,
@@ -88,7 +88,7 @@ class CircleRepository {
             role: "OWNER",
           },
         },
-        chatGroupTags: {
+        circleTags: {
           create:
             data.tagIds.map((tagId) => ({
               tagId,
@@ -101,7 +101,7 @@ class CircleRepository {
 
   /** Update circle details */
   static async updateCircle(circleId: string, data: UpdateCircleData) {
-    return await prisma.chatGroup.update({
+    return await prisma.circle.update({
       where: { id: circleId },
       data: {
         name: data.name,
@@ -114,7 +114,7 @@ class CircleRepository {
 
   /** Delete a circle (cascades to members and messages) */
   static async deleteCircle(circleId: string) {
-    return await prisma.chatGroup.delete({
+    return await prisma.circle.delete({
       where: { id: circleId },
       select: BaseSelectors.circle,
     });
@@ -122,7 +122,7 @@ class CircleRepository {
 
   /** Find all circles a user is a member of */
   static async findUserCircles(userId: string) {
-    return await prisma.chatGroup.findMany({
+    return await prisma.circle.findMany({
       where: {
         members: {
           some: {
@@ -147,11 +147,11 @@ class CircleRepository {
 
   /** Check if a user is a member of a circle */
   static async isMember(userId: string, circleId: string) {
-    const member = await prisma.chatMember.findUnique({
+    const member = await prisma.circleMember.findUnique({
       where: {
-        userId_chatGroupId: {
+        userId_circleId: {
           userId,
-          chatGroupId: circleId,
+          circleId,
         },
       },
     });
@@ -161,11 +161,11 @@ class CircleRepository {
 
   /** Get a user's membership details in a circle */
   static async getMembership(userId: string, circleId: string) {
-    return await prisma.chatMember.findUnique({
+    return await prisma.circleMember.findUnique({
       where: {
-        userId_chatGroupId: {
+        userId_circleId: {
           userId,
-          chatGroupId: circleId,
+          circleId,
         },
       },
       select: BaseSelectors.circleMember,
@@ -174,9 +174,9 @@ class CircleRepository {
 
   /** Get multiple user memberships in a specific circle*/
   static async getMemberships(userIds: string[], circleId: string) {
-    return await prisma.chatMember.findMany({
+    return await prisma.circleMember.findMany({
       where: {
-        chatGroupId: circleId,
+        circleId,
         userId: {
           in: userIds,
         },
@@ -187,10 +187,10 @@ class CircleRepository {
 
   /** Add a user to a circle */
   static async addMember(data: JoinCircleData) {
-    return await prisma.chatMember.create({
+    return await prisma.circleMember.create({
       data: {
         userId: data.userId,
-        chatGroupId: data.chatGroupId,
+        circleId: data.circleId,
         role: data.role ?? "MEMBER",
       },
       select: BaseSelectors.circleMember,
@@ -199,11 +199,11 @@ class CircleRepository {
 
   /** Remove a user from a circle */
   static async removeMember(userId: string, circleId: string) {
-    return await prisma.chatMember.delete({
+    return await prisma.circleMember.delete({
       where: {
-        userId_chatGroupId: {
+        userId_circleId: {
           userId,
-          chatGroupId: circleId,
+          circleId,
         },
       },
       select: BaseSelectors.circleMember,
@@ -216,11 +216,11 @@ class CircleRepository {
     circleId: string,
     data: UpdateMemberRoleData,
   ) {
-    return await prisma.chatMember.update({
+    return await prisma.circleMember.update({
       where: {
-        userId_chatGroupId: {
+        userId_circleId: {
           userId,
-          chatGroupId: circleId,
+          circleId,
         },
       },
       data: {
@@ -232,8 +232,8 @@ class CircleRepository {
 
   /** Get all members of a circle */
   static async getGroupMembers(circleId: string) {
-    return await prisma.chatMember.findMany({
-      where: { chatGroupId: circleId },
+    return await prisma.circleMember.findMany({
+      where: { circleId },
       select: BaseSelectors.circleMember,
       orderBy: [{ role: "asc" }, { joinedAt: "asc" }],
     });
@@ -241,22 +241,22 @@ class CircleRepository {
 
   /** Count members in a circle */
   static async countMembers(circleId: string) {
-    return await prisma.chatMember.count({
-      where: { chatGroupId: circleId },
+    return await prisma.circleMember.count({
+      where: { circleId },
     });
   }
 
   /** find users sharing circles with a specific user */
   static async findAllContacts(userId: string) {
-    const members = await prisma.chatMember.findMany({
+    const members = await prisma.circleMember.findMany({
       where: {
-        chatGroupId: {
-          in: await prisma.chatMember
+        circleId: {
+          in: await prisma.circleMember
             .findMany({
               where: { userId },
-              select: { chatGroupId: true },
+              select: { circleId: true },
             })
-            .then((groups) => groups.map((g) => g.chatGroupId)),
+            .then((groups) => groups.map((g) => g.circleId)),
         },
         NOT: { userId },
       },
@@ -266,9 +266,9 @@ class CircleRepository {
     return members.map((m) => m.userId);
   }
 
-  static async updateLastReadAt(userId: string, chatGroupId: string) {
-    return await prisma.chatMember.update({
-      where: { userId_chatGroupId: { userId, chatGroupId } },
+  static async updateLastReadAt(userId: string, circleId: string) {
+    return await prisma.circleMember.update({
+      where: { userId_circleId: { userId, circleId } },
       data: { lastReadAt: new Date() },
     });
   }
@@ -277,11 +277,11 @@ class CircleRepository {
 
   /** Send a message to a circle */
   static async createMessage(data: SendMessageData) {
-    return await prisma.chatMessage.create({
+    return await prisma.circleMessage.create({
       data: {
         content: data.content,
         senderId: data.senderId,
-        chatGroupId: data.chatGroupId,
+        circleId: data.circleId,
       },
       select: BaseSelectors.circleMessage,
     });
@@ -295,8 +295,8 @@ class CircleRepository {
     const limit = pagination?.limit ?? 50;
     const cursor = pagination?.cursor;
 
-    return await prisma.chatMessage.findMany({
-      where: { chatGroupId: circleId },
+    return await prisma.circleMessage.findMany({
+      where: { circleId },
       select: BaseSelectors.circleMessage,
       orderBy: { createdAt: "desc" },
       take: limit + 1,
@@ -309,19 +309,19 @@ class CircleRepository {
 
   /** Find a message by ID */
   static async findMessageById(messageId: number) {
-    return await prisma.chatMessage.findUnique({
+    return await prisma.circleMessage.findUnique({
       where: { id: messageId },
       select: {
         ...BaseSelectors.circleMessage,
-        chatGroupId: true,
+        circleId: true,
       },
     });
   }
 
   static async countUnreadMessages(circleId: string, lastReadAt?: Date) {
-    return await prisma.chatMessage.count({
+    return await prisma.circleMessage.count({
       where: {
-        chatGroupId: circleId,
+        circleId,
         createdAt: lastReadAt ? { gt: lastReadAt } : undefined,
       },
     });
@@ -329,7 +329,7 @@ class CircleRepository {
 
   /** Delete a message */
   static async deleteMessage(messageId: number) {
-    return await prisma.chatMessage.delete({
+    return await prisma.circleMessage.delete({
       where: { id: messageId },
       select: BaseSelectors.circleMessage,
     });
@@ -337,8 +337,8 @@ class CircleRepository {
 
   /** Get the latest message in a circle */
   static async getLatestMessage(circleId: string) {
-    return await prisma.chatMessage.findFirst({
-      where: { chatGroupId: circleId },
+    return await prisma.circleMessage.findFirst({
+      where: { circleId },
       select: BaseSelectors.circleMessage,
       orderBy: { createdAt: "desc" },
     });
@@ -350,7 +350,7 @@ class CircleRepository {
     const [activeGroupsCount, unreadResult, studyPartnersCount] =
       await Promise.all([
         // Active Circles: Count circles user belongs to with activity in last 7 days
-        prisma.chatGroup.count({
+        prisma.circle.count({
           where: {
             members: { some: { userId } },
             messages: {
@@ -364,19 +364,19 @@ class CircleRepository {
         }),
 
         // Unread Messages: Sum of messages since user's lastReadAt in each circle
-        prisma.chatMember.findMany({
+        prisma.circleMember.findMany({
           where: { userId },
           select: {
-            chatGroupId: true,
+            circleId: true,
             lastReadAt: true,
           },
         }),
 
         // Study Partners: Unique users who share at least one circle with this user
-        prisma.chatMember
+        prisma.circleMember
           .findMany({
             where: {
-              chatGroup: {
+              circle: {
                 members: { some: { userId } },
               },
               NOT: { userId },
@@ -390,9 +390,9 @@ class CircleRepository {
     // For Unread calculation (Step 2 follow-up)
     let totalUnread = 0;
     for (const membership of unreadResult) {
-      const count = await prisma.chatMessage.count({
+      const count = await prisma.circleMessage.count({
         where: {
-          chatGroupId: membership.chatGroupId,
+          circleId: membership.circleId,
           createdAt: { gt: membership.lastReadAt ?? new Date(0) },
           NOT: { senderId: userId },
         },

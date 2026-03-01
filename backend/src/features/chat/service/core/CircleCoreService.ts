@@ -3,14 +3,14 @@ import {
   AlreadyMemberError,
   ChatGroupNotFoundError,
 } from "../../../../core/error/custom/chat.error.js";
-import { getRandomChatGroupAvatar } from "../../../avatar/avatarService.js";
-import { assertChatPermission } from "../../security/rbac.js";
+import { getRandomCircleAvatar } from "../../../avatar/avatarService.js";
+import { assertCirclePermission } from "../../security/rbac.js";
 import CircleEnricher from "../CircleEnrichers.js";
 import CircleTransformers from "../CircleTransformers.js";
 import CircleRepository from "../Repositories/CircleRepository.js";
 
 import type { CreateCircleData, UpdateCircleData } from "../CircleTypes.js";
-import type { ChatRole } from "@prisma/client";
+import type { CircleRole } from "@prisma/client";
 
 /**
  * Service for circle operations (CRUD).
@@ -23,12 +23,12 @@ export class CircleCoreService {
    * @returns The newly created circle with member count and user role
    */
   static async createCircle(data: CreateCircleData) {
-    const avatar = await getRandomChatGroupAvatar();
-    const group = await CircleRepository.createCircle({
+    const avatar = await getRandomCircleAvatar();
+    const circle = await CircleRepository.createCircle({
       ...data,
       avatarId: avatar.id,
     });
-    return CircleEnricher.enrichCircle(group, data.creatorId);
+    return CircleEnricher.enrichCircle(circle, data.creatorId);
   }
 
   /**
@@ -56,7 +56,7 @@ export class CircleCoreService {
 
     await CircleRepository.addMember({
       userId,
-      chatGroupId: circleId,
+      circleId,
       role: "MEMBER",
     });
 
@@ -70,10 +70,10 @@ export class CircleCoreService {
    * @throws {ChatGroupNotFoundError} If the group does not exist
    */
   static async getCircleById(circleId: string, userId?: string) {
-    const group = await CircleRepository.findCircleById(circleId);
-    if (!group) throw new ChatGroupNotFoundError(circleId);
+    const circle = await CircleRepository.findCircleById(circleId);
+    if (!circle) throw new ChatGroupNotFoundError(circleId);
 
-    return CircleEnricher.enrichCircle(group, userId);
+    return CircleEnricher.enrichCircle(circle, userId);
   }
 
   /**
@@ -152,13 +152,13 @@ export class CircleCoreService {
    */
   static async updateCircle(
     circleId: string,
-    user: Express.User & { chatRole?: ChatRole },
+    user: Express.User & { circleRole?: CircleRole },
     data: UpdateCircleData,
   ) {
     const group = await CircleRepository.findCircleById(circleId);
     if (!group) throw new ChatGroupNotFoundError(circleId);
 
-    assertChatPermission(user, "chatGroups", "update", group);
+    assertCirclePermission(user, "circles", "update", group);
 
     const updatedGroup = await CircleRepository.updateCircle(circleId, data);
     return CircleEnricher.enrichCircle(updatedGroup, user.id);
@@ -172,12 +172,12 @@ export class CircleCoreService {
    */
   static async deleteCircle(
     circleId: string,
-    user: Express.User & { chatRole?: ChatRole },
+    user: Express.User & { circleRole?: CircleRole },
   ) {
     const group = await CircleRepository.findCircleById(circleId);
     if (!group) throw new ChatGroupNotFoundError(circleId);
 
-    assertChatPermission(user, "chatGroups", "delete", group);
+    assertCirclePermission(user, "circles", "delete", group);
 
     return await CircleRepository.deleteCircle(circleId);
   }

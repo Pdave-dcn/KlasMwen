@@ -29,14 +29,14 @@ import type { Request, Response, NextFunction } from "express";
  * router.delete(
  *   "/:circleId",
  *   requireAuth,
- *   enrichChatRole,
+ *   enrichCircleRole,
  *   async (req, res) => {
- *     // req.user.chatRole is now available
- *     await ChatService.deleteGroup(req.params.circleId, req.user);
+ *     // req.user.circleRole is now available
+ *     await CircleService.deleteGroup(req.params.circleId, req.user);
  *   }
  * );
  */
-const enrichChatRole = async (
+const enrichCircleRole = async (
   req: Request,
   _res: Response,
   next: NextFunction,
@@ -61,8 +61,8 @@ const enrichChatRole = async (
         result.data.circleId,
       );
 
-      // Attach chat role to user object (can be undefined if not a member)
-      req.user.chatRole = membership?.role ?? undefined;
+      // Attach circle role to user object (can be undefined if not a member)
+      req.user.circleRole = membership?.role ?? undefined;
     }
 
     next();
@@ -84,17 +84,17 @@ const enrichChatRole = async (
  * @param {Response} res - Express response object
  * @param {NextFunction} next - Express next function
  *
- * @throws {ChatGroupNotFoundError} If the chat group does not exist
- * @throws {NotAMemberError} If the user is not a member of the group
+ * @throws {ChatGroupNotFoundError} If the study circle does not exist
+ * @throws {NotAMemberError} If the user is not a member of the study circle
  *
  * @example
  * router.get(
- *   "/:chatGroupId/messages",
+ *   "/:circleId/messages",
  *   requireAuth,
  *   requireMembership,
  *   async (req, res) => {
  *     // User is confirmed to be a member
- *     const messages = await ChatService.getMessages(
+ *     const messages = await CircleService.getMessages(
  *       req.params.circleId,
  *       req.user
  *     );
@@ -127,11 +127,11 @@ const requireMembership = async (
         result.data.circleId,
       );
 
-      req.user.chatRole = membership?.role ?? undefined;
+      req.user.circleRole = membership?.role ?? undefined;
     }
 
-    // Check if user has a chat role (is a member)
-    if (!req.user?.chatRole) {
+    // Check if user has a circle role (is a member)
+    if (!req.user?.circleRole) {
       throw new NotAMemberError(
         req.user?.id ?? "unknown",
         result.data.circleId,
@@ -144,4 +144,4 @@ const requireMembership = async (
   }
 };
 
-export { enrichChatRole, requireMembership };
+export { enrichCircleRole, requireMembership };

@@ -57,27 +57,22 @@ export const useSendCircleMessageMutation = (
       if (!currentUser) return;
 
       await queryClient.cancelQueries({
-        queryKey: ["chat", "groups", circleId, "messages"],
+        queryKey: ["circles", circleId, "messages"],
       });
-      await queryClient.cancelQueries({ queryKey: ["chat", "groups", "list"] });
+      await queryClient.cancelQueries({ queryKey: ["circles", "list"] });
 
       const previousMessages = queryClient.getQueryData([
-        "chat",
-        "groups",
+        "circles",
         circleId,
         "messages",
       ]);
-      const previousGroups = queryClient.getQueryData([
-        "chat",
-        "groups",
-        "list",
-      ]);
+      const previousCircles = queryClient.getQueryData(["circles", "list"]);
 
       // Temporary optimistic message
       const optimisticMessage: CircleMessage = {
         id: Math.random() * -1,
         content: newMessageData.content,
-        chatGroupId: circleId,
+        circleId,
         createdAt: new Date().toISOString(),
         sender: {
           id: currentUser.id,
@@ -107,15 +102,15 @@ export const useSendCircleMessageMutation = (
       // Optimistically update the sidebar preview
       queryClient.setQueryData<StudyCircle[]>(
         ["circles", "list"],
-        (oldGroups) => {
-          if (!oldGroups) return oldGroups;
-          return oldGroups.map((g) =>
+        (oldCircles) => {
+          if (!oldCircles) return oldCircles;
+          return oldCircles.map((g) =>
             g.id === circleId ? { ...g, latestMessage: optimisticMessage } : g,
           );
         },
       );
 
-      return { previousMessages, previousGroups };
+      return { previousMessages, previousGroups: previousCircles };
     },
 
     onError: (_err, _newMessage, context) => {

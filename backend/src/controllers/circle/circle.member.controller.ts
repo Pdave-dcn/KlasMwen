@@ -25,7 +25,7 @@ const addMember = async (req: Request, res: Response, next: NextFunction) => {
     const member = await CircleService.addMember(
       {
         userId,
-        chatGroupId: circleId,
+        circleId,
         role,
       },
       user,
@@ -49,14 +49,14 @@ const addMember = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-const getGroupMembers = async (
+const getCircleMembers = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
-    "getGroupMembers",
+    "getCircleMembers",
     req,
   );
 
@@ -212,7 +212,7 @@ const updateLastReadAt = async (
 
 export {
   addMember,
-  getGroupMembers,
+  getCircleMembers,
   removeMember,
   updateMemberRole,
   updateLastReadAt,

@@ -110,12 +110,12 @@ class CircleTransformers {
   static transformCircleForDiscovery(
     circle: CircleForDiscovery,
   ): TransformedCircleForDiscovery {
-    const { _count, chatGroupTags, ...circleData } = circle;
+    const { _count, circleTags, ...circleData } = circle;
 
     return {
       ...circleData,
       memberCount: _count.members,
-      tags: chatGroupTags.map((cgt) => cgt.tag),
+      tags: circleTags.map((cgt) => cgt.tag),
     };
   }
 
@@ -172,7 +172,7 @@ class CircleTransformers {
     circle: CirclePreviewDetail,
   ): TransformedCirclePreviewDetail {
     const { Avatar, ...restCreator } = circle.creator;
-    const { messages, _count, chatGroupTags, ...restData } = circle;
+    const { messages, _count, circleTags, ...restData } = circle;
 
     return {
       ...restData,
@@ -181,7 +181,7 @@ class CircleTransformers {
         avatar: Avatar ?? null,
       },
       lastActivityAt: messages[0].createdAt ?? null,
-      tags: chatGroupTags.map((cgt) => cgt.tag),
+      tags: circleTags.map((cgt) => cgt.tag),
       memberCount: _count.members,
     };
   }

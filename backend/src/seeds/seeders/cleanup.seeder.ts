@@ -15,7 +15,7 @@ const cleanupDatabase = async () => {
   try {
     const postTagDeleteCount = await prisma.postTag.deleteMany();
 
-    const chatGroupTagDeleteCount = await prisma.chatGroupTag.deleteMany();
+    const chatGroupTagDeleteCount = await prisma.circleTag.deleteMany();
 
     const avatarDeleteCount = await prisma.avatar.deleteMany();
 
@@ -27,10 +27,9 @@ const cleanupDatabase = async () => {
 
     const notificationsDeleteCount = await prisma.notification.deleteMany();
 
-    const chatGroupDeleteCount = await prisma.chatGroup.deleteMany();
+    const chatGroupDeleteCount = await prisma.circle.deleteMany();
 
-    const chatGroupAvatarDeleteCount =
-      await prisma.chatGroupAvatar.deleteMany();
+    const chatGroupAvatarDeleteCount = await prisma.circleAvatar.deleteMany();
 
     const userDeleteCount = await prisma.user.deleteMany();
 

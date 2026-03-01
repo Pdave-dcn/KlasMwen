@@ -9,19 +9,19 @@ import type { Prisma } from "@prisma/client";
 const logger = createLogger({ module: "ChatGroupAvatarSeeder" });
 
 /**
- * Seeds the database with a specified number of chat group avatars.
+ * Seeds the database with a specified number of circle avatars.
  * The avatars use the shapes style from DiceBear API for a clean,
  * geometric appearance suitable for group identities.
  *
- * @param {number} [count=50] The number of chat group avatars to create.
- * @return {Promise<import('@prisma/client').ChatGroupAvatar[]>} An array of all chat group avatar objects from the database after seeding.
+ * @param {number} [count=50] The number of circle avatars to create.
+ * @return {Promise<import('@prisma/client').CircleAvatar[]>} An array of all circle avatar objects from the database after seeding.
  */
-const seedChatGroupAvatars = async (count = 50) => {
+const seedCircleAvatars = async (count = 50) => {
   try {
-    logger.info(`Starting chat group avatar seeding process`);
+    logger.info(`Starting circle avatar seeding process`);
     const startTime = Date.now();
 
-    const avatarsData: Prisma.ChatGroupAvatarCreateInput[] = [];
+    const avatarsData: Prisma.CircleAvatarCreateInput[] = [];
 
     const backgroundColors = [
       "FF6B6B", // lively coral red
@@ -46,32 +46,32 @@ const seedChatGroupAvatars = async (count = 50) => {
     }
 
     logger.info(
-      `Inserting ${avatarsData.length} chat group avatars into the database`,
+      `Inserting ${avatarsData.length} circle avatars into the database`,
     );
-    const chatGroupAvatars = await prisma.chatGroupAvatar.createManyAndReturn({
+    const circleAvatars = await prisma.circleAvatar.createManyAndReturn({
       data: avatarsData,
       skipDuplicates: true,
     });
 
     const avatarCreationDuration = Date.now() - startTime;
 
-    const chatGroupAvatarStats = {
-      totalAvatarsCreated: chatGroupAvatars.length,
+    const circleAvatarStats = {
+      totalAvatarsCreated: circleAvatars.length,
       avatarCreationDuration,
     };
 
     logger.info(
-      chatGroupAvatarStats,
-      "Chat group avatar seeding completed successfully",
+      circleAvatarStats,
+      "Circle avatar seeding completed successfully",
     );
 
-    return { chatGroupAvatars, chatGroupAvatarStats };
+    return { circleAvatars, circleAvatarStats };
   } catch (error) {
     return handleSeedingError(
       error,
       logger,
-      "Chat group avatar seeding",
-      "chat_group_avatars",
+      "Circle avatar seeding",
+      "circle_avatars",
       {
         count,
       },
@@ -79,4 +79,4 @@ const seedChatGroupAvatars = async (count = 50) => {
   }
 };
 
-export default seedChatGroupAvatars;
+export default seedCircleAvatars;

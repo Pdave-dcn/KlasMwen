@@ -12,7 +12,7 @@ import type { Namespace, Socket } from "socket.io";
  */
 export const handleDiscoveryWatch = (socket: Socket, nsp: Namespace) => {
   return async (data: { circleIds: string[] }) => {
-    if (!Array.isArray(data?.circleIds)) return;
+    if (!Array.isArray(data?.circleIds) || data.circleIds.length === 0) return;
     for (const circleId of data.circleIds) {
       // Join a passive room dedicated to receiving presence pulses
       await socket.join(`watch:${circleId}`);

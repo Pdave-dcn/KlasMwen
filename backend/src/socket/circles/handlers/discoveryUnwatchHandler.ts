@@ -9,7 +9,7 @@ import type { Socket } from "socket.io";
  */
 export const handleDiscoveryUnwatch = (socket: Socket) => {
   return async (data: { circleIds: string[] }) => {
-    if (!Array.isArray(data?.circleIds)) return;
+    if (!Array.isArray(data?.circleIds) || data.circleIds.length === 0) return;
     for (const circleId of data.circleIds) {
       await socket.leave(`watch:${circleId}`);
     }

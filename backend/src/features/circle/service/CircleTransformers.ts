@@ -9,7 +9,7 @@ import type {
   TransformedCircleSuggestion,
   TransformedCircleMember,
   TransformedCircleMessage,
-} from "./CircleTypes";
+} from "./CircleTypes.js";
 
 /**
  * Transforms raw database data into client-friendly formats.

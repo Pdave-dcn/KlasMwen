@@ -1,8 +1,8 @@
 import {
   handlePresenceConnect,
   handlePresenceDisconnect,
-} from "./presence/presence.handler";
-import { PresenceService } from "./presence/presence.service";
+} from "./presence/presence.handler.js";
+import { PresenceService } from "./presence/presence.service.js";
 
 import type { Server, Socket } from "socket.io";
 

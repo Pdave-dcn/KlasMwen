@@ -1,8 +1,8 @@
-import { createLogger } from "../../core/config/logger";
-import CircleService from "../../features/circle/service/CircleService";
-import createActionLogger from "../../utils/logger.util";
+import { createLogger } from "../../core/config/logger.js";
+import CircleService from "../../features/circle/service/CircleService.js";
+import createActionLogger from "../../utils/logger.util.js";
 
-import type { AuthenticatedRequest } from "../../types/AuthRequest";
+import type { AuthenticatedRequest } from "../../types/AuthRequest.js";
 import type { NextFunction, Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "CircleStatsController" });

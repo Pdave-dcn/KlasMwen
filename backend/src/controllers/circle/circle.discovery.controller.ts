@@ -1,7 +1,7 @@
-import { createLogger } from "../../core/config/logger";
-import CircleService from "../../features/circle/service/CircleService";
-import createActionLogger from "../../utils/logger.util";
-import { createPaginationSchema } from "../../utils/pagination.util";
+import { createLogger } from "../../core/config/logger.js";
+import CircleService from "../../features/circle/service/CircleService.js";
+import createActionLogger from "../../utils/logger.util.js";
+import { createPaginationSchema } from "../../utils/pagination.util.js";
 import {
   StudyCircleIdParamSchema,
   CreatorIdParamSchema,
@@ -9,9 +9,9 @@ import {
   SearchSuggestionQuerySchema,
   SmallCirclesQuerySchema,
   TrendingQuerySchema,
-} from "../../zodSchemas/circle.zod";
+} from "../../zodSchemas/circle.zod.js";
 
-import type { AuthenticatedRequest } from "../../types/AuthRequest";
+import type { AuthenticatedRequest } from "../../types/AuthRequest.js";
 import type { NextFunction, Request, Response } from "express";
 
 const controllerLogger = createLogger({

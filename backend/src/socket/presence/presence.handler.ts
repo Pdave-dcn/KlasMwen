@@ -1,8 +1,8 @@
-import CircleRepository from "../../features/circle/service/Repositories/CircleRepository";
+import CircleRepository from "../../features/circle/service/Repositories/CircleRepository.js";
 
-import { PresenceService } from "./presence.service";
+import { PresenceService } from "./presence.service.js";
 
-import type UserService from "../../features/user/service/UserService";
+import type UserService from "../../features/user/service/UserService.js";
 import type { Socket, Server } from "socket.io";
 
 const handlePresenceConnect = async (io: Server, socket: Socket) => {

@@ -37,13 +37,17 @@ export function MessageBubble({
       >
         {/* Sender name - only for received messages */}
         {!isSent && showSender && (
-          <span className="text-xs font-medium text-muted-foreground mb-1 ml-1">
+          <span
+            data-testid="sender-name"
+            className="text-xs font-medium text-muted-foreground mb-1 ml-1"
+          >
             {message.sender.username}
           </span>
         )}
 
         {/* Bubble */}
         <div
+          data-testid="message-bubble"
           className={cn(
             "px-4 py-2.5 rounded-2xl",
             isSent
@@ -57,7 +61,10 @@ export function MessageBubble({
         </div>
 
         {/* Timestamp */}
-        <span className="text-[10px] text-muted-foreground mt-1 mx-1">
+        <span
+          data-testid="timestamp"
+          className="text-[10px] text-muted-foreground mt-1 mx-1"
+        >
           {timestamp}
         </span>
       </div>

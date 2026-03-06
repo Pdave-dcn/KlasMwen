@@ -9,6 +9,17 @@ import {
 
 import { circleSocketService } from "../../services/socketService";
 
+/**
+ * Listens for real-time member presence updates in a study circle.
+ *
+ * This hook:
+ * - Subscribes to socket events when members join or leave a circle
+ * - Updates the presence state in the circle store
+ * - Clears presence data when the circle changes or the component unmounts
+ *
+ * @param {string | null} groupId - ID of the active circle. If `null`,
+ * presence listeners are not registered.
+ */
 export const useCirclePresence = (groupId: string | null) => {
   useEffect(() => {
     if (!groupId) return;

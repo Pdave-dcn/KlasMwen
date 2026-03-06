@@ -40,7 +40,10 @@ export function UserAvatar({
   ];
 
   return (
-    <div className={cn("relative inline-flex", className)}>
+    <div
+      data-testid="user-avatar"
+      className={cn("relative inline-flex", className)}
+    >
       {user.avatar ? (
         <img
           src={user.avatar.url}
@@ -60,6 +63,7 @@ export function UserAvatar({
       )}
       {showOnlineStatus && (
         <span
+          data-testid="online-status-indicator"
           className={cn(
             "absolute bottom-0 right-0 rounded-full border-background",
             statusSizeClasses[size],

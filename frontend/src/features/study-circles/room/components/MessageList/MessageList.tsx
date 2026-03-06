@@ -8,7 +8,6 @@ import { EmptyState } from "./EmptyState";
 import { groupMessagesByDate } from "./helpers";
 import { LoadingState } from "./LoadingState";
 import { MessageBubble } from "./MessageBubble";
-// 1. Import Shadcn ScrollArea
 
 interface MessageListProps {
   messages: CircleMessage[];

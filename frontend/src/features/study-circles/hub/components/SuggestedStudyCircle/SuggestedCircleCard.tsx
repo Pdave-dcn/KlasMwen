@@ -5,8 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useJoinCircleMutation } from "@/queries/circle";
+import { usePresenceStore } from "@/stores/presence.store";
 import { getGroupInitials } from "@/utils/getInitials.util";
 import type { StudyCircleForDiscovery } from "@/zodSchemas/circle.zod";
+
+import { PresenceIndicator } from "../PresenceIndicator";
 
 interface SuggestedCircleCardProps {
   circle: StudyCircleForDiscovery;
@@ -22,6 +25,10 @@ export const SuggestedCircleCard = ({ circle }: SuggestedCircleCardProps) => {
   const isJoined =
     joinChatGroupMutation.isSuccess &&
     joinChatGroupMutation.variables === circle.id;
+
+  const activeCount = usePresenceStore(
+    (state) => state.circleActivityCounts[circle.id] || 0,
+  );
 
   return (
     <div
@@ -90,7 +97,7 @@ export const SuggestedCircleCard = ({ circle }: SuggestedCircleCardProps) => {
           <span className="text-[11px] text-muted-foreground">
             {circle.memberCount} members
           </span>
-          {/* <PresenceIndicator activeCount={activeCount} /> */}
+          <PresenceIndicator activeCount={activeCount} />
         </div>
       </div>
 

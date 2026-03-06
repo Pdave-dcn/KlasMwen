@@ -7,6 +7,21 @@ import {
   useStudyCirclesQuery,
 } from "@/queries/circle";
 
+/**
+ * Aggregates all data required for the study circle chat UI.
+ *
+ * This hook fetches:
+ * - The list of circles
+ * - The selected circle details
+ * - Circle members
+ * - Circle messages with pagination
+ *
+ * It also flattens and orders the message pages into a single list
+ * that is easier for the UI to render.
+ *
+ * @param {string | null} circleId - ID of the active circle. If `null`,
+ * circle-specific queries are disabled.
+ */
 export const useCircleData = (circleId: string | null) => {
   const { data: groups = [], isLoading: isLoadingCircles } =
     useStudyCirclesQuery();

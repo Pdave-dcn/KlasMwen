@@ -61,7 +61,10 @@ export const MemberItem = ({
 
         {/* Presence Indicator: Pulsing ring around avatar */}
         {isPresent && (
-          <span className="absolute -inset-1 rounded-full border-2 border-primary/40 animate-pulse pointer-events-none" />
+          <span
+            data-testid="presence-indicator"
+            className="absolute -inset-1 rounded-full border-2 border-primary/40 animate-pulse pointer-events-none"
+          />
         )}
       </div>
 
@@ -85,7 +88,10 @@ export const MemberItem = ({
           </div>
 
           {isPresent && !isCurrentUser && (
-            <div className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase tracking-wider animate-in fade-in zoom-in duration-300">
+            <div
+              data-testid="present-text-indicator"
+              className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase tracking-wider animate-in fade-in zoom-in duration-300"
+            >
               <span className="relative flex h-1.5 w-1.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
@@ -95,7 +101,10 @@ export const MemberItem = ({
           )}
         </div>
 
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+        <div
+          data-testid="role-indicator"
+          className="flex items-center gap-1 text-xs text-muted-foreground"
+        >
           <RoleIcon className={cn("h-3 w-3", config.color)} />
           <span>{config.label}</span>
         </div>

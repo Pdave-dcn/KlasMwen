@@ -305,8 +305,8 @@ describe("MemberItem & MemberList", () => {
       ];
       renderMemberList(members, false);
 
-      // Header renders "0 online • 2 total" — match the total count via regex
-      expect(screen.getByText(/2\s+total/)).toBeDefined();
+      // Header renders "2 total" — match the total count via regex
+      expect(screen.getByText(/2\s+total/i)).toBeDefined();
     });
 
     it("renders empty list when members array is empty and not loading", () => {

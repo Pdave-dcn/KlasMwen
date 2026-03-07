@@ -59,11 +59,11 @@ export const RecentActivitySection = () => {
 
       <ScrollArea className="w-full">
         <div className="flex gap-3 pb-4">
-          {groups.map((group) => (
+          {groups.map((circle) => (
             <RecentCircleCard
-              key={group.id}
-              circle={group}
-              onClick={() => navigate(`/chat/groups?group=${group.id}`)}
+              key={circle.id}
+              circle={circle}
+              onClick={() => navigate(`/circles/mine?circle=${circle.id}`)}
             />
           ))}
         </div>

@@ -25,7 +25,7 @@ export const RecentCircleCard = ({
     <button
       onClick={onClick}
       className={cn(
-        "shrink-0 w-64 p-4 rounded-xl border bg-card text-left",
+        "shrink-0 w-64 p-4 rounded-xl border bg-card text-left cursor-pointer",
         "transition-all duration-200 hover:shadow-md hover:border-primary/30",
         "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
       )}

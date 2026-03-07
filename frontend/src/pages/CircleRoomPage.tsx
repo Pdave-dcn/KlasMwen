@@ -1,15 +1,20 @@
+import { useEffect } from "react";
+
+import { useSearchParams } from "react-router-dom";
+
 import { cn } from "@/lib/utils";
 
-import { useCircleRoom } from "../../hooks/useCircleRoom";
-import { useSidebarState } from "../../hooks/useSidebarState";
-import { CircleRoomView } from "../CircleRoomView";
+import { LeftSidebar } from "../features/study-circles/room/components/CircleRoomLayout/LeftSidebar";
+import { MobileHeader } from "../features/study-circles/room/components/CircleRoomLayout/MobileHeader";
+import { MobileOverlay } from "../features/study-circles/room/components/CircleRoomLayout/MobileOverlay";
+import { RightSidebar } from "../features/study-circles/room/components/CircleRoomLayout/RightSidebar";
+import { CircleRoomView } from "../features/study-circles/room/components/CircleRoomView";
+import { useCircleRoom } from "../features/study-circles/room/hooks/useCircleRoom";
+import { useSidebarState } from "../features/study-circles/room/hooks/useSidebarState";
 
-import { LeftSidebar } from "./LeftSidebar";
-import { MobileHeader } from "./MobileHeader";
-import { MobileOverlay } from "./MobileOverlay";
-import { RightSidebar } from "./RightSidebar";
+const CircleRoomPage = () => {
+  const [searchParams] = useSearchParams();
 
-export const CircleRoomLayout = () => {
   const {
     groups,
     selectedCircle,
@@ -53,6 +58,14 @@ export const CircleRoomLayout = () => {
     setShowLeftSidebar(false);
     setShowRightSidebar(false);
   };
+
+  useEffect(() => {
+    const circleId = searchParams.get("circle");
+    if (circleId) {
+      handleCircleSelect(circleId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="h-screen w-full flex bg-background overflow-hidden">
@@ -104,3 +117,5 @@ export const CircleRoomLayout = () => {
     </div>
   );
 };
+
+export default CircleRoomPage;

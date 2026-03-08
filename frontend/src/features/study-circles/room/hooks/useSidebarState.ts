@@ -15,9 +15,16 @@ import debounce from "lodash.debounce";
  * Used to hide the left sidebar on mobile when a chat is open.
  */
 export const useSidebarState = (selectedGroupId: string | null) => {
-  const [showLeftSidebar, setShowLeftSidebar] = useState(true);
-  const [showRightSidebar, setShowRightSidebar] = useState(true);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const initialMobile = window.innerWidth < 768;
+  const initialTablet = window.innerWidth < 1024;
+
+  const [isMobile, setIsMobile] = useState(initialMobile);
+  const [showLeftSidebar, setShowLeftSidebar] = useState(
+    initialMobile ? !selectedGroupId : true,
+  );
+  const [showRightSidebar, setShowRightSidebar] = useState(
+    initialMobile || initialTablet ? false : true,
+  );
 
   const debouncedCheckMobile = useMemo(
     () =>

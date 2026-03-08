@@ -21,8 +21,8 @@ import {
 } from "@/queries/circle";
 import { formatDate } from "@/utils/dateFormatter.util";
 
+import { CircleAvatar } from "../features/study-circles/hub/components/ChatGroupPreview/CircleAvatar";
 import { DetailError } from "../features/study-circles/hub/components/ChatGroupPreview/ErrorState";
-import { GroupAvatar } from "../features/study-circles/hub/components/ChatGroupPreview/GroupAvatar";
 import { DetailSkeleton } from "../features/study-circles/hub/components/ChatGroupPreview/LoadingState";
 import {
   DesktopSidebar,
@@ -36,35 +36,33 @@ const CirclePreviewPage = () => {
   const navigate = useNavigate();
 
   const {
-    data: group,
+    data: circle,
     isLoading,
     isError,
     refetch,
   } = useCirclePreviewDetailsQuery(id ?? "");
-  const joinChatGroupMutation = useJoinCircleMutation();
+  const joinCircleMutation = useJoinCircleMutation();
 
   const isJoining =
-    joinChatGroupMutation.isPending &&
-    joinChatGroupMutation.variables === group?.id;
+    joinCircleMutation.isPending && joinCircleMutation.variables === circle?.id;
   const isJoined =
-    joinChatGroupMutation.isSuccess &&
-    joinChatGroupMutation.variables === group?.id;
+    joinCircleMutation.isSuccess && joinCircleMutation.variables === circle?.id;
 
   const handleShare = () => {
     toast.info("Share feature coming soon!");
   };
 
   if (isLoading) return <DetailSkeleton />;
-  if (isError || !group) return <DetailError onRefetch={refetch} />;
+  if (isError || !circle) return <DetailError onRefetch={refetch} />;
 
-  const createdDate = formatDate(group.createdAt);
-  const lastActivity = formatDate(group.lastActivityAt);
+  const createdDate = formatDate(circle.createdAt);
+  const lastActivity = formatDate(circle.lastActivityAt);
 
   const actionBarProps: ActionBarProps = {
     isJoined,
     isJoining,
-    onJoin: () => joinChatGroupMutation.mutate(group.id),
-    onLaunch: () => navigate(`/circles/${group.id}/public/details`),
+    onJoin: () => joinCircleMutation.mutate(circle.id),
+    onLaunch: () => navigate(`/circles/${circle.id}/public/details`),
     onShare: handleShare,
   };
 
@@ -82,7 +80,7 @@ const CirclePreviewPage = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <span className="text-sm font-medium text-foreground truncate">
-            {group.name}
+            {circle.name}
           </span>
         </div>
       </div>
@@ -93,27 +91,27 @@ const CirclePreviewPage = () => {
           <div className="flex-1 space-y-6">
             {/* Hero header */}
             <div className="flex items-start gap-5">
-              <GroupAvatar name={group.name} avatar={group.avatar?.url} />
+              <CircleAvatar name={circle.name} avatar={circle.avatar?.url} />
               <div className="flex-1 min-w-0 pt-1">
                 <h1 className="text-xl md:text-2xl font-bold text-foreground leading-tight mb-1.5">
-                  {group.name}
+                  {circle.name}
                 </h1>
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge
                     variant="secondary"
                     className={cn(
                       "gap-1 text-xs",
-                      !group.isPrivate
+                      !circle.isPrivate
                         ? "bg-primary/10 text-primary border-primary/20"
                         : "bg-muted text-muted-foreground",
                     )}
                   >
-                    {!group.isPrivate ? (
+                    {!circle.isPrivate ? (
                       <Globe className="w-3 h-3" />
                     ) : (
                       <Lock className="w-3 h-3" />
                     )}
-                    {!group.isPrivate ? "Public" : "Private"}
+                    {!circle.isPrivate ? "Public" : "Private"}
                   </Badge>
                 </div>
               </div>
@@ -125,7 +123,7 @@ const CirclePreviewPage = () => {
                 <CardContent className="p-4 flex flex-col items-center text-center gap-1">
                   <Users className="w-5 h-5 text-primary mb-1" />
                   <span className="text-lg font-bold text-foreground">
-                    {group.memberCount}
+                    {circle.memberCount}
                   </span>
                   <span className="text-[11px] text-muted-foreground">
                     Members
@@ -163,16 +161,16 @@ const CirclePreviewPage = () => {
                   About
                 </h2>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  {group.description ??
-                    "This group hasn't added a description yet, but the curiosity is real!"}
+                  {circle.description ??
+                    "This study circle hasn't added a description yet, but the curiosity is real!"}
                 </p>
               </CardContent>
             </Card>
 
             {/* Tags */}
-            {group.tags && group.tags.length > 0 && (
+            {circle.tags && circle.tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {group.tags.map((tag) => (
+                {circle.tags.map((tag) => (
                   <Badge
                     key={tag.id}
                     variant="secondary"
@@ -192,14 +190,14 @@ const CirclePreviewPage = () => {
                 Created by
               </h2>
               <div className="flex items-center gap-3">
-                <GroupAvatar
-                  name={group.creator.username}
-                  avatar={group.creator.avatar?.url}
+                <CircleAvatar
+                  name={circle.creator.username}
+                  avatar={circle.creator.avatar?.url}
                   size="lg"
                 />
                 <div>
                   <p className="text-sm font-medium text-foreground">
-                    {group.creator.username}
+                    {circle.creator.username}
                   </p>
                   <p className="text-xs text-muted-foreground">Group creator</p>
                 </div>

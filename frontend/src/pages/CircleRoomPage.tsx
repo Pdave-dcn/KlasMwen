@@ -50,8 +50,10 @@ const CircleRoomPage = () => {
   };
 
   const handleMenuClick = () => {
-    setShowLeftSidebar(true);
-    setShowRightSidebar(false);
+    setShowLeftSidebar(!showLeftSidebar);
+    if (showRightSidebar) {
+      setShowRightSidebar(false);
+    }
   };
 
   const closeOverlay = () => {
@@ -75,6 +77,7 @@ const CircleRoomPage = () => {
           showRightSidebar={showRightSidebar}
           onMenuClick={handleMenuClick}
           onMembersClick={toggleMembers}
+          isLeftSidebarOpen={showLeftSidebar}
         />
       )}
 
@@ -108,7 +111,6 @@ const CircleRoomPage = () => {
         isLoading={isLoadingMembers}
         showRightSidebar={showRightSidebar}
         isMobile={isMobile}
-        onClose={() => setShowRightSidebar(false)}
       />
 
       {isMobile && (showLeftSidebar || showRightSidebar) && (

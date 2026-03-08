@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useJoinCircleMutation } from "@/queries/circle";
-import { getGroupInitials } from "@/utils/getInitials.util";
+import { getCircleInitials } from "@/utils/getInitials.util";
 import type { StudyCircleForDiscovery } from "@/zodSchemas/circle.zod";
 
 import type { DiscoveryCategory } from "../../hooks/useCircleDiscoveryCategory";
@@ -70,7 +70,7 @@ export const CircleDiscoveryCard = ({
         {/* Avatar - smaller on mobile */}
         <Avatar className="h-10 w-10 sm:h-12 sm:w-12 shrink-0">
           <AvatarImage src={circle.avatar?.url} alt={circle.name} />
-          <AvatarFallback>{getGroupInitials(circle.name)}</AvatarFallback>
+          <AvatarFallback>{getCircleInitials(circle.name)}</AvatarFallback>
         </Avatar>
 
         {/* Content */}

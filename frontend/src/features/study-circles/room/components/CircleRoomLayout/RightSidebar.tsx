@@ -1,5 +1,3 @@
-import { X } from "lucide-react";
-
 import { cn } from "@/lib/utils";
 import type { StudyCircle, CircleMember } from "@/zodSchemas/circle.zod";
 
@@ -12,7 +10,6 @@ interface RightSidebarProps {
   isLoading: boolean;
   showRightSidebar: boolean;
   isMobile: boolean;
-  onClose: () => void;
 }
 
 export const RightSidebar = ({
@@ -22,7 +19,6 @@ export const RightSidebar = ({
   isLoading,
   showRightSidebar,
   isMobile,
-  onClose,
 }: RightSidebarProps) => (
   <div
     className={cn(
@@ -30,7 +26,9 @@ export const RightSidebar = ({
       isMobile
         ? cn(
             "fixed inset-y-0 right-0 w-72 z-40 pt-14",
-            showRightSidebar ? "translate-x-0" : "translate-x-full",
+            showRightSidebar && selectedCircle
+              ? "translate-x-0"
+              : "translate-x-full",
           )
         : cn(
             "w-72",
@@ -42,14 +40,6 @@ export const RightSidebar = ({
   >
     {selectedCircle && (
       <>
-        {isMobile && (
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 p-1 rounded-lg hover:bg-muted"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        )}
         <MemberList
           members={members}
           isLoading={isLoading}

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useJoinCircleMutation } from "@/queries/circle";
 import { usePresenceStore } from "@/stores/presence.store";
-import { getGroupInitials } from "@/utils/getInitials.util";
+import { getCircleInitials } from "@/utils/getInitials.util";
 import type { StudyCircleForDiscovery } from "@/zodSchemas/circle.zod";
 
 import { PresenceIndicator } from "../PresenceIndicator";
@@ -42,7 +42,7 @@ export const SuggestedCircleCard = ({ circle }: SuggestedCircleCardProps) => {
       <div className="relative shrink-0">
         <Avatar>
           <AvatarImage src={circle.avatar?.url} />
-          <AvatarFallback>{getGroupInitials(circle.name)}</AvatarFallback>
+          <AvatarFallback>{getCircleInitials(circle.name)}</AvatarFallback>
         </Avatar>
         {/* {circle.isTrending && (
           <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center">

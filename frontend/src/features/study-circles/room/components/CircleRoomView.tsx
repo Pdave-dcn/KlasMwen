@@ -1,7 +1,7 @@
 import { Users, Settings, MessageCircle } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getGroupInitials } from "@/utils/getInitials.util";
+import { getCircleInitials } from "@/utils/getInitials.util";
 import type { StudyCircle, CircleMessage } from "@/zodSchemas/circle.zod";
 
 import { MessageInput } from "./MessageInput";
@@ -56,7 +56,7 @@ export const CircleRoomView = ({
           <div className="flex items-center gap-3">
             <Avatar>
               <AvatarImage src={circle.avatar?.url} alt="avatar" />
-              <AvatarFallback>{getGroupInitials(circle.name)}</AvatarFallback>
+              <AvatarFallback>{getCircleInitials(circle.name)}</AvatarFallback>
             </Avatar>
             <div>
               <h2 className="font-semibold text-foreground truncate">

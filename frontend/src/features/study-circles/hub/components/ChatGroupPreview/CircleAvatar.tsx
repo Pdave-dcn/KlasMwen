@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
-import { getGroupInitials } from "@/utils/getInitials.util";
+import { getCircleInitials } from "@/utils/getInitials.util";
 
-export function GroupAvatar({
+export function CircleAvatar({
   name,
   avatar,
   size = "lg",
@@ -28,7 +28,7 @@ export function GroupAvatar({
         sizeClass,
       )}
     >
-      {getGroupInitials(name)}
+      {getCircleInitials(name)}
     </div>
   );
 }

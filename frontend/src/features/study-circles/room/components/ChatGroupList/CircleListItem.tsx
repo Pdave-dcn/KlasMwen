@@ -2,7 +2,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Users } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { getGroupInitials } from "@/utils/getInitials.util";
+import { getCircleInitials } from "@/utils/getInitials.util";
 import type { StudyCircle } from "@/zodSchemas/circle.zod";
 
 interface CircleListItemProps {
@@ -56,7 +56,7 @@ export const CircleListItem = ({
             bgColors[colorIndex],
           )}
         >
-          {getGroupInitials(circle.name)}
+          {getCircleInitials(circle.name)}
         </div>
       )}
 

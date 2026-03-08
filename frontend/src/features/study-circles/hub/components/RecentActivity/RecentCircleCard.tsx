@@ -2,7 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { usePresenceStore } from "@/stores/presence.store";
 import { formatTimeAgo } from "@/utils/dateFormatter.util";
-import { getGroupInitials } from "@/utils/getInitials.util";
+import { getCircleInitials } from "@/utils/getInitials.util";
 import type { StudyCircle } from "@/zodSchemas/circle.zod";
 
 import { PresenceIndicator } from "../PresenceIndicator";
@@ -33,7 +33,7 @@ export const RecentCircleCard = ({
       <div className="flex items-start gap-3">
         <Avatar>
           <AvatarImage src={circle.avatar?.url} />
-          <AvatarFallback>{getGroupInitials(circle.name)}</AvatarFallback>
+          <AvatarFallback>{getCircleInitials(circle.name)}</AvatarFallback>
         </Avatar>
 
         <div className="flex-1 min-w-0">

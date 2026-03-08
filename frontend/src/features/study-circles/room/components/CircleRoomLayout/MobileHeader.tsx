@@ -1,7 +1,9 @@
-import { ArrowLeft, Users, Settings } from "lucide-react";
+import { AvatarFallback } from "@radix-ui/react-avatar";
+import { List, Users, Settings } from "lucide-react";
 
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { getGroupInitials } from "@/utils/getInitials.util";
+import { getCircleInitials } from "@/utils/getInitials.util";
 import type { StudyCircle } from "@/zodSchemas/circle.zod";
 
 interface MobileHeaderProps {
@@ -10,6 +12,7 @@ interface MobileHeaderProps {
   onMenuClick: () => void;
   onMembersClick: () => void;
   onSettingsClick?: () => void;
+  isLeftSidebarOpen: boolean;
 }
 
 export const MobileHeader = ({
@@ -18,28 +21,30 @@ export const MobileHeader = ({
   onMenuClick,
   onMembersClick,
   onSettingsClick,
+  isLeftSidebarOpen,
 }: MobileHeaderProps) => (
   <div className="fixed top-0 left-0 right-0 h-14 bg-card border-b border-border flex items-center justify-between gap-2 px-3 py-8 z-50">
     {/* Back button */}
     <button
       onClick={onMenuClick}
-      className="p-2 rounded-lg hover:bg-muted shrink-0"
+      className={cn("p-2 rounded-lg hover:bg-muted shrink-0")}
       aria-label="Back to groups"
     >
-      <ArrowLeft className="h-5 w-5" />
+      <List className="h-5 w-5" />
     </button>
 
-    {/* Group info - truncates when too long */}
+    {/* Circle info - truncates when too long */}
     <div className="flex items-center gap-2 min-w-0 flex-1">
       {selectedCircle ? (
         <>
           {/* Avatar */}
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-            <span className="text-sm font-semibold text-primary">
-              {getGroupInitials(selectedCircle.name)}
-            </span>
-          </div>
-          {/* Group name with truncation */}
+          <Avatar>
+            <AvatarImage src={selectedCircle.avatar?.url} />
+            <AvatarFallback>
+              {getCircleInitials(selectedCircle.name)}
+            </AvatarFallback>
+          </Avatar>
+          {/* Circle name with truncation */}
           <span className="font-semibold truncate">{selectedCircle.name}</span>
         </>
       ) : (
@@ -54,8 +59,10 @@ export const MobileHeader = ({
           {/* Members button */}
           <button
             onClick={onMembersClick}
+            disabled={isLeftSidebarOpen}
             className={cn(
               "p-2 rounded-lg",
+              isLeftSidebarOpen && "cursor-not-allowed opacity-50",
               showRightSidebar
                 ? "bg-primary text-primary-foreground"
                 : "hover:bg-muted",
@@ -70,7 +77,10 @@ export const MobileHeader = ({
             onClick={() => {
               if (onSettingsClick) onSettingsClick();
             }}
-            className="p-2 rounded-lg hover:bg-muted"
+            className={cn(
+              "p-2 rounded-lg hover:bg-muted",
+              isLeftSidebarOpen && "cursor-not-allowed opacity-50",
+            )}
             aria-label="Settings"
           >
             <Settings className="h-5 w-5" />

@@ -40,17 +40,17 @@ const Layout = ({ children }: LayoutProps) => {
 
   const location = useLocation();
 
-  // Check if current route is moderation dashboard or chat page
+  // Check if current route is moderation dashboard or circle related pages
   const isModDashboard = location.pathname.startsWith("/mod/dashboard");
-  const isChatPage = location.pathname.startsWith("/circles");
+  const isCirclePage = location.pathname.startsWith("/circles");
 
-  const isHidden = isModDashboard || isChatPage;
+  const isHidden = isModDashboard || isCirclePage;
 
   return (
     <div className="flex h-screen w-full">
       <aside
         className={cn(
-          "hidden md:block shrink-0 border-r transition-colors duration-300",
+          "hidden lg:block shrink-0 border-r transition-colors duration-300",
           `${isHidden ? "md:w-auto lg:w-auto" : "md:w-auto lg:w-60"}`,
         )}
       >

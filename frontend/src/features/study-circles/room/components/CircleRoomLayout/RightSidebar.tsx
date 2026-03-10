@@ -9,7 +9,7 @@ interface RightSidebarProps {
   currentUserId?: string;
   isLoading: boolean;
   showRightSidebar: boolean;
-  isMobile: boolean;
+  useOverlay: boolean;
 }
 
 export const RightSidebar = ({
@@ -18,17 +18,16 @@ export const RightSidebar = ({
   currentUserId,
   isLoading,
   showRightSidebar,
-  isMobile,
+  useOverlay,
 }: RightSidebarProps) => (
   <div
     className={cn(
       "bg-card border-l border-border shrink-0 transition-all duration-300",
-      isMobile
+      useOverlay
         ? cn(
-            "fixed inset-y-0 right-0 w-72 z-40 pt-14",
-            showRightSidebar && selectedCircle
-              ? "translate-x-0"
-              : "translate-x-full",
+            "fixed inset-y-0 right-0 w-72 z-40",
+            useOverlay && "pt-14",
+            showRightSidebar ? "translate-x-0" : "translate-x-full",
           )
         : cn(
             "w-72",

@@ -8,6 +8,7 @@ interface ChatHubCardProps {
   icon: LucideIcon;
   onClick: () => void;
   variant?: "default" | "primary" | "accent";
+  classname?: string;
 }
 
 export const CircleHubCard = ({
@@ -16,6 +17,7 @@ export const CircleHubCard = ({
   icon: Icon,
   onClick,
   variant = "default",
+  classname,
 }: ChatHubCardProps) => {
   return (
     <button
@@ -24,6 +26,7 @@ export const CircleHubCard = ({
         "group relative w-full p-6 rounded-2xl border text-left transition-all duration-200",
         "hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]",
         "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+        classname,
         variant === "primary" &&
           "bg-primary text-primary-foreground border-primary hover:bg-primary/90",
         variant === "accent" &&

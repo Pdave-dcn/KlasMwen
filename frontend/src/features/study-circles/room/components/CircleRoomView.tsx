@@ -10,12 +10,11 @@ import { MessageList } from "./MessageList/MessageList";
 interface ChatRoomProps {
   circle: StudyCircle | undefined;
   messages: CircleMessage[];
+  onSendMessage: (content: string) => void;
+  onToggleMembers: () => void;
   currentUserId: string;
   isLoading: boolean;
   isMuted: boolean;
-  isMobile: boolean;
-  onSendMessage: (content: string) => void;
-  onToggleMembers: () => void;
   showMembersButton?: boolean;
 }
 
@@ -25,7 +24,6 @@ export const CircleRoomView = ({
   currentUserId,
   isLoading,
   isMuted,
-  isMobile,
   onSendMessage,
   onToggleMembers,
   showMembersButton = true,
@@ -51,39 +49,37 @@ export const CircleRoomView = ({
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Header */}
-      {!isMobile && (
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
-          <div className="flex items-center gap-3">
-            <Avatar>
-              <AvatarImage src={circle.avatar?.url} alt="avatar" />
-              <AvatarFallback>{getCircleInitials(circle.name)}</AvatarFallback>
-            </Avatar>
-            <div>
-              <h2 className="font-semibold text-foreground truncate">
-                {circle.name}
-              </h2>
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <Users className="h-3 w-3" />
-                {circle.memberCount} members
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {showMembersButton && (
-              <button
-                onClick={onToggleMembers}
-                className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-              >
-                <Users className="h-5 w-5" />
-              </button>
-            )}
-            <button className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
-              <Settings className="h-5 w-5" />
-            </button>
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
+        <div className="flex items-center gap-3">
+          <Avatar>
+            <AvatarImage src={circle.avatar?.url} alt="avatar" />
+            <AvatarFallback>{getCircleInitials(circle.name)}</AvatarFallback>
+          </Avatar>
+          <div>
+            <h2 className="font-semibold text-foreground truncate">
+              {circle.name}
+            </h2>
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              {circle.memberCount} members
+            </p>
           </div>
         </div>
-      )}
+
+        <div className="flex items-center gap-2">
+          {showMembersButton && (
+            <button
+              onClick={onToggleMembers}
+              className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+            >
+              <Users className="h-5 w-5" />
+            </button>
+          )}
+          <button className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
+            <Settings className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
 
       {/* Messages */}
       <MessageList
@@ -93,7 +89,9 @@ export const CircleRoomView = ({
       />
 
       {/* Input */}
-      <MessageInput onSend={onSendMessage} isMuted={isMuted} />
+      <div className="md:mb-12.5 lg:mb-0">
+        <MessageInput onSend={onSendMessage} isMuted={isMuted} />
+      </div>
     </div>
   );
 };

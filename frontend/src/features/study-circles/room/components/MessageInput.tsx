@@ -1,11 +1,12 @@
 import { useState, useRef, useCallback, type KeyboardEvent } from "react";
 
-import { Send, AlertCircle } from "lucide-react";
+import { Send, AlertCircle, Smile, Paperclip } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 interface MessageInputProps {
   onSend: (content: string) => void;
+  onAttach?: (file: File) => void;
   disabled?: boolean;
   isMuted?: boolean;
   placeholder?: string;
@@ -13,12 +14,14 @@ interface MessageInputProps {
 
 export function MessageInput({
   onSend,
+  onAttach,
   disabled = false,
   isMuted = false,
   placeholder = "Type a message...",
 }: MessageInputProps) {
   const [content, setContent] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSend = useCallback(() => {
     const trimmed = content.trim();
@@ -40,11 +43,28 @@ export function MessageInput({
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setContent(e.target.value);
-
-    // Auto-resize textarea
     const textarea = e.target;
     textarea.style.height = "auto";
     textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
+  };
+
+  const handleEmojiClick = () => {
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  };
+
+  const handleAttachClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && onAttach) {
+      onAttach(file);
+    }
+    // Reset so the same file can be selected again
+    e.target.value = "";
   };
 
   const isDisabled = disabled || isMuted;
@@ -60,12 +80,13 @@ export function MessageInput({
 
       <div
         className={cn(
-          "flex items-end gap-3 bg-muted rounded-2xl px-4 py-3 transition-all",
+          "flex items-end gap-2 bg-muted rounded-2xl px-4 py-3 transition-all",
           isDisabled
             ? "opacity-50"
             : "focus-within:ring-2 focus-within:ring-primary/20",
         )}
       >
+        {/* Textarea */}
         <textarea
           ref={textareaRef}
           value={content}
@@ -81,31 +102,66 @@ export function MessageInput({
           )}
         />
 
-        <button
-          onClick={handleSend}
-          disabled={isDisabled || !content.trim()}
-          className={cn(
-            "shrink-0 p-2 rounded-xl transition-all",
-            content.trim() && !isDisabled
-              ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/25"
-              : "bg-muted-foreground/20 text-muted-foreground cursor-not-allowed",
-          )}
-        >
-          <Send className="h-5 w-5" />
-        </button>
+        {/* Action buttons */}
+        <div className="flex items-center gap-1 shrink-0">
+          {/* Emoji — inputmode trick opens native OS picker on mobile */}
+          <button
+            type="button"
+            disabled={isDisabled}
+            onClick={handleEmojiClick}
+            inputMode="none"
+            className={cn(
+              "p-1.5 rounded-lg transition-colors",
+              isDisabled
+                ? "cursor-not-allowed text-muted-foreground/40"
+                : "text-muted-foreground hover:text-foreground hover:bg-background/60",
+            )}
+            aria-label="Insert emoji"
+          >
+            <Smile className="h-5 w-5" />
+          </button>
+
+          {/* Attach file */}
+          <button
+            type="button"
+            disabled={isDisabled}
+            onClick={handleAttachClick}
+            className={cn(
+              "p-1.5 rounded-lg transition-colors",
+              isDisabled
+                ? "cursor-not-allowed text-muted-foreground/40"
+                : "text-muted-foreground hover:text-foreground hover:bg-background/60",
+            )}
+            aria-label="Attach file"
+          >
+            <Paperclip className="h-5 w-5" />
+          </button>
+
+          {/* Send */}
+          <button
+            onClick={handleSend}
+            disabled={isDisabled || !content.trim()}
+            className={cn(
+              "p-2 rounded-xl transition-all",
+              content.trim() && !isDisabled
+                ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/25"
+                : "bg-muted-foreground/20 text-muted-foreground cursor-not-allowed",
+            )}
+            aria-label="Send message"
+          >
+            <Send className="h-5 w-5" />
+          </button>
+        </div>
       </div>
 
-      <p className="text-xs text-muted-foreground mt-2 text-center">
-        Press{" "}
-        <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">
-          Enter
-        </kbd>{" "}
-        to send,{" "}
-        <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">
-          Shift + Enter
-        </kbd>{" "}
-        for new line
-      </p>
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        onChange={handleFileChange}
+        disabled
+      />
     </div>
   );
 }

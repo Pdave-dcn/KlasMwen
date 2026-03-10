@@ -15,10 +15,12 @@ import debounce from "lodash.debounce";
  * Used to hide the left sidebar on mobile when a chat is open.
  */
 export const useSidebarState = (selectedGroupId: string | null) => {
-  const initialMobile = window.innerWidth < 768;
-  const initialTablet = window.innerWidth < 1024;
+  const initialWidth = window.innerWidth;
+  const initialMobile = initialWidth < 768;
+  const initialTablet = initialWidth >= 768 && initialWidth < 1024;
 
   const [isMobile, setIsMobile] = useState(initialMobile);
+  const [isTablet, setIsTablet] = useState(initialTablet);
   const [showLeftSidebar, setShowLeftSidebar] = useState(
     initialMobile ? !selectedGroupId : true,
   );
@@ -31,14 +33,16 @@ export const useSidebarState = (selectedGroupId: string | null) => {
       debounce(() => {
         const width = window.innerWidth;
         const mobile = width < 768;
-        const isTablet = width < 1024;
+        const tablet = width >= 768 && width < 1024;
 
         setIsMobile(mobile);
+        setIsTablet(tablet);
 
         if (mobile) {
           setShowLeftSidebar(!selectedGroupId);
           setShowRightSidebar(false);
-        } else if (isTablet) {
+        } else if (tablet) {
+          setShowLeftSidebar(true);
           setShowRightSidebar(false);
         } else {
           setShowLeftSidebar(true);
@@ -49,12 +53,7 @@ export const useSidebarState = (selectedGroupId: string | null) => {
   );
 
   useEffect(() => {
-    // Run immediately on mount
-    const initialWidth = window.innerWidth;
-    setIsMobile(initialWidth < 768);
-
     window.addEventListener("resize", debouncedCheckMobile);
-
     return () => {
       window.removeEventListener("resize", debouncedCheckMobile);
       debouncedCheckMobile.cancel();
@@ -67,5 +66,6 @@ export const useSidebarState = (selectedGroupId: string | null) => {
     showRightSidebar,
     setShowRightSidebar,
     isMobile,
+    isTablet,
   };
 };

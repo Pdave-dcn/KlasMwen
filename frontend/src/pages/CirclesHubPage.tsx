@@ -26,13 +26,14 @@ const CirclesHubPage = () => {
           <h3 className="text-sm font-medium text-muted-foreground mb-4">
             Quick Actions
           </h3>
-          <div className="grid sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <CircleHubCard
               title="My Groups"
               subtitle="Jump back into your conversations"
               icon={MessageCircle}
               variant="primary"
               onClick={() => navigate("/circles/mine")}
+              classname="sm:col-span-2 lg:col-span-1"
             />
 
             <CircleHubCard

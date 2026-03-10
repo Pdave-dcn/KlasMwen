@@ -2,11 +2,11 @@ import { useEffect } from "react";
 
 import { useSearchParams } from "react-router-dom";
 
+import { MobileTabletHeader } from "@/features/study-circles/room/components/CircleRoomLayout/MobileTabletHeader";
 import { cn } from "@/lib/utils";
 
 import { LeftSidebar } from "../features/study-circles/room/components/CircleRoomLayout/LeftSidebar";
-import { MobileHeader } from "../features/study-circles/room/components/CircleRoomLayout/MobileHeader";
-import { MobileOverlay } from "../features/study-circles/room/components/CircleRoomLayout/MobileOverlay";
+import { MobileTabletOverlay } from "../features/study-circles/room/components/CircleRoomLayout/MobileOverlay";
 import { RightSidebar } from "../features/study-circles/room/components/CircleRoomLayout/RightSidebar";
 import { CircleRoomView } from "../features/study-circles/room/components/CircleRoomView";
 import { useCircleRoom } from "../features/study-circles/room/hooks/useCircleRoom";
@@ -36,11 +36,12 @@ const CircleRoomPage = () => {
     showRightSidebar,
     setShowRightSidebar,
     isMobile,
+    isTablet,
   } = useSidebarState(selectedCircleId);
 
   const handleCircleSelect = (circleId: string) => {
     handleSelectCircle(circleId);
-    if (isMobile) {
+    if (isMobile || isTablet) {
       setShowLeftSidebar(false);
     }
   };
@@ -69,15 +70,16 @@ const CircleRoomPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const useOverlay = isMobile || isTablet;
+
   return (
     <div className="h-screen w-full flex bg-background overflow-hidden">
-      {isMobile && (
-        <MobileHeader
-          selectedCircle={selectedCircle}
-          showRightSidebar={showRightSidebar}
-          onMenuClick={handleMenuClick}
+      {useOverlay && (
+        <MobileTabletHeader
           onMembersClick={toggleMembers}
-          isLeftSidebarOpen={showLeftSidebar}
+          onMenuClick={handleMenuClick}
+          showRightSidebar={showRightSidebar}
+          selectedCircle={selectedCircle}
         />
       )}
 
@@ -87,20 +89,21 @@ const CircleRoomPage = () => {
         onSelectCircle={handleCircleSelect}
         isLoading={isLoadingCircles}
         showLeftSidebar={showLeftSidebar}
-        isMobile={isMobile}
+        useOverlay={useOverlay}
       />
 
-      <div className={cn("flex-1 flex flex-col min-w-0", isMobile && "pt-14")}>
+      <div
+        className={cn("flex-1 flex flex-col min-w-0", useOverlay && "pt-14")}
+      >
         <CircleRoomView
           circle={selectedCircle}
           messages={messages}
           currentUserId={currentUser?.id ?? ""}
           isLoading={isLoadingMessages}
           isMuted={isMuted}
-          isMobile={isMobile}
           onSendMessage={handleSendMessage}
           onToggleMembers={toggleMembers}
-          showMembersButton={!isMobile}
+          showMembersButton={!useOverlay}
         />
       </div>
 
@@ -110,11 +113,11 @@ const CircleRoomPage = () => {
         currentUserId={currentUser?.id}
         isLoading={isLoadingMembers}
         showRightSidebar={showRightSidebar}
-        isMobile={isMobile}
+        useOverlay={useOverlay}
       />
 
-      {isMobile && (showLeftSidebar || showRightSidebar) && (
-        <MobileOverlay onClose={closeOverlay} />
+      {useOverlay && (showLeftSidebar || showRightSidebar) && (
+        <MobileTabletOverlay onClose={closeOverlay} />
       )}
     </div>
   );

@@ -9,7 +9,7 @@ interface LeftSidebarProps {
   onSelectCircle: (id: string) => void;
   isLoading: boolean;
   showLeftSidebar: boolean;
-  isMobile: boolean;
+  useOverlay: boolean;
 }
 
 export const LeftSidebar = ({
@@ -18,14 +18,15 @@ export const LeftSidebar = ({
   onSelectCircle,
   isLoading,
   showLeftSidebar,
-  isMobile,
+  useOverlay,
 }: LeftSidebarProps) => (
   <div
     className={cn(
       "bg-card border-r border-border shrink-0 transition-all duration-300",
-      isMobile
+      useOverlay
         ? cn(
-            "fixed inset-y-0 left-0 w-full z-40 pt-14",
+            "fixed inset-y-0 left-0 z-40 w-80",
+            useOverlay && "pt-14",
             showLeftSidebar ? "translate-x-0" : "-translate-x-full",
           )
         : cn(

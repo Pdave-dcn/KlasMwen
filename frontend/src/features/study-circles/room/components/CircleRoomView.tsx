@@ -12,6 +12,7 @@ interface ChatRoomProps {
   messages: CircleMessage[];
   onSendMessage: (content: string) => void;
   onToggleMembers: () => void;
+  onOpen: () => void;
   currentUserId: string;
   isLoading: boolean;
   isMuted: boolean;
@@ -26,6 +27,7 @@ export const CircleRoomView = ({
   isMuted,
   onSendMessage,
   onToggleMembers,
+  onOpen,
   showMembersButton = true,
 }: ChatRoomProps) => {
   if (!circle) {
@@ -75,7 +77,10 @@ export const CircleRoomView = ({
               <Users className="h-5 w-5" />
             </button>
           )}
-          <button className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
+          <button
+            onClick={onOpen}
+            className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+          >
             <Settings className="h-5 w-5" />
           </button>
         </div>

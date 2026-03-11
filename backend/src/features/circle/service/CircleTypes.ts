@@ -62,6 +62,18 @@ const CircleFragments = {
       },
     },
   } satisfies Prisma.CircleMessageSelect,
+
+  circleLatestMessageBase: {
+    id: true,
+    content: true,
+    createdAt: true,
+    sender: {
+      select: {
+        id: true,
+        username: true,
+      },
+    },
+  },
 } as const;
 
 const BaseSelectors = {
@@ -70,6 +82,8 @@ const BaseSelectors = {
   circleMember: CircleFragments.circleMemberBase,
 
   circleMessage: CircleFragments.circleMessageBase,
+
+  circleLatestMessage: CircleFragments.circleLatestMessageBase,
 
   circleForDiscovery: {
     id: true,
@@ -91,8 +105,8 @@ const BaseSelectors = {
     },
   } satisfies Prisma.CircleSelect,
 
-  // Full circle info with member count
-  circleWithMembers: {
+  // Full circle info with member count and latest message for enrichment
+  circleWithMembersAndLatestMsg: {
     id: true,
     name: true,
     description: true,
@@ -111,8 +125,15 @@ const BaseSelectors = {
     },
     members: {
       select: {
+        userId: true,
+        role: true,
         lastReadAt: true,
       },
+    },
+    messages: {
+      select: CircleFragments.circleLatestMessageBase,
+      orderBy: { createdAt: "desc" },
+      take: 1,
     },
     _count: {
       select: {
@@ -321,8 +342,8 @@ type Circle = Prisma.CircleGetPayload<{
   select: typeof BaseSelectors.circle;
 }>;
 
-type CircleWithMembers = Prisma.CircleGetPayload<{
-  select: typeof BaseSelectors.circleWithMembers;
+type CircleWithMembersAndLatestMsg = Prisma.CircleGetPayload<{
+  select: typeof BaseSelectors.circleWithMembersAndLatestMsg;
 }>;
 
 type CircleForDiscovery = Prisma.CircleGetPayload<{
@@ -379,6 +400,10 @@ type CircleMessage = Prisma.CircleMessageGetPayload<{
   select: typeof BaseSelectors.circleMessage;
 }>;
 
+type CircleLatestMessage = Prisma.CircleMessageGetPayload<{
+  select: typeof BaseSelectors.circleLatestMessage;
+}>;
+
 type TransformedCircleMessage = Omit<CircleMessage, "sender"> & {
   sender: Omit<CircleMessage["sender"], "Avatar"> & {
     avatar: CircleMessage["sender"]["Avatar"];
@@ -399,9 +424,12 @@ type TransformedCirclePreviewDetail = Omit<
 
 // Enriched Types
 
-type EnrichedCircle = Omit<CircleWithMembers, "_count" | "members"> & {
+type EnrichedCircle = Omit<
+  CircleWithMembersAndLatestMsg,
+  "_count" | "members"
+> & {
   memberCount: number;
-  latestMessage: TransformedCircleMessage | null;
+  latestMessage: TransformedCircleMessage | CircleLatestMessage | null;
   unreadCount: number;
   userRole?: CircleRole | null;
 };
@@ -442,7 +470,7 @@ export {
   type CircleSearchPage,
   // Return types
   type Circle,
-  type CircleWithMembers,
+  type CircleWithMembersAndLatestMsg,
   type CircleForDiscovery,
   type CircleForSearch,
   type CircleForTrending,
@@ -454,6 +482,7 @@ export {
   type EnrichedCircleMember,
   type TransformedCircleMember,
   type CircleMessage,
+  type CircleLatestMessage,
   type TransformedCircleMessage,
   type CirclePreviewDetail,
   type TransformedCirclePreviewDetail,

@@ -38,6 +38,13 @@ const CircleMessageDataSchema = z.object({
   sender: UserBasicSchema,
 });
 
+const CircleLatestMessageDataSchema = z.object({
+  id: z.number().int(),
+  content: z.string(),
+  createdAt: z.string(),
+  sender: UserBasicSchema.omit({ avatar: true }),
+});
+
 const CircleMessagesResponseSchema = z.object({
   data: z.array(CircleMessageDataSchema),
   pagination: z.object({
@@ -63,7 +70,7 @@ const StudyCircleDataSchema = z.object({
   memberCount: z.number().int().nonnegative(),
   unreadCount: z.number().int().nonnegative(),
   userRole: CircleRoleSchema.nullable(),
-  latestMessage: CircleMessageDataSchema.nullable(),
+  latestMessage: CircleLatestMessageDataSchema.nullable(),
 });
 
 const StudyCirclePreviewSchema = z.object({

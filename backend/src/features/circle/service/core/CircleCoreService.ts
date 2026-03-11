@@ -66,10 +66,10 @@ export class CircleCoreService {
   /**
    * Retrieves a single circle by ID.
    * @param circleId - The circle ID
-   * @param userId - Optional user ID to include their role in the group
+   * @param userId - User ID to include their role in the group
    * @throws {CircleNotFoundError} If the group does not exist
    */
-  static async getCircleById(circleId: string, userId?: string) {
+  static async getCircleById(circleId: string, userId: string) {
     const circle = await CircleRepository.findCircleById(circleId);
     if (!circle) throw new CircleNotFoundError(circleId);
 

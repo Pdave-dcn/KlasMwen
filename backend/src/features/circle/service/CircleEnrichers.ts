@@ -1,12 +1,10 @@
-import CircleTransformers from "./CircleTransformers.js";
 import CircleRepository from "./Repositories/CircleRepository.js";
 
 import type {
-  CircleWithMembers,
+  CircleWithMembersAndLatestMsg,
   CircleMember,
   EnrichedCircle,
   EnrichedCircleMember,
-  TransformedCircleMessage,
 } from "./CircleTypes.js";
 
 /**
@@ -14,36 +12,26 @@ import type {
  */
 class CircleEnricher {
   /**
-   * Enriches a circle with member count and user's role.
+   * Enriches a circle with member count, latest message, unread count and user role.
    * @param circle - The circle to enrich
-   * @param userId - Optional user ID to include their role
-   * @returns Enriched circle with member count and user role
+   * @param userId - User ID to include their role
+   * @returns Enriched circle with member count, latest message, unread count, and user role
    */
   static async enrichCircle(
-    circle: CircleWithMembers,
-    userId?: string,
+    circle: CircleWithMembersAndLatestMsg,
+    userId: string,
   ): Promise<EnrichedCircle> {
     const memberCount = circle._count.members;
 
-    let userRole = null;
-    if (userId) {
-      const membership = await CircleRepository.getMembership(
-        userId,
-        circle.id,
-      );
-      userRole = membership?.role ?? null;
-    }
+    const membership = circle.members.find((m) => m.userId === userId) ?? null;
 
-    const latestMessage = await CircleRepository.getLatestMessage(circle.id);
+    const userRole = membership ? membership.role : null;
+    const lastReadAt = membership ? membership.lastReadAt : null;
+    const latestMessage = circle.messages[0] ?? null;
 
-    let transformedLatestMessage: TransformedCircleMessage | null = null;
-    if (latestMessage)
-      transformedLatestMessage =
-        CircleTransformers.transformMessage(latestMessage);
-
-    const lastReadAt = circle.members[0]?.lastReadAt ?? null;
     const unreadCount = await CircleRepository.countUnreadMessages(
       circle.id,
+      userId,
       lastReadAt ?? undefined,
     );
 
@@ -52,25 +40,45 @@ class CircleEnricher {
     return {
       ...circleData,
       memberCount,
-      latestMessage: transformedLatestMessage,
+      latestMessage,
       unreadCount,
       userRole,
     };
   }
 
   /**
-   * Enriches multiple chat circles with member counts and user roles.
-   * @param circles - Array of chat circles to enrich
+   * Enriches multiple study circles with member counts and user roles.
+   * @param circles - Array of study circles to enrich
    * @param userId - Optional user ID to include their role
-   * @returns Array of enriched chat circles
+   * @returns Array of enriched study circles
    */
   static async enrichCircles(
-    circles: CircleWithMembers[],
-    userId?: string,
+    circles: CircleWithMembersAndLatestMsg[],
+    userId: string,
   ): Promise<EnrichedCircle[]> {
-    return await Promise.all(
-      circles.map((circle) => this.enrichCircle(circle, userId)),
-    );
+    const unreadCounts =
+      await CircleRepository.countUnreadMessagesBatch(userId);
+
+    return circles.map((circle) => {
+      const memberCount = circle._count.members;
+
+      const membership =
+        circle.members.find((m) => m.userId === userId) ?? null;
+
+      const userRole = membership ? membership.role : null;
+      const latestMessage = circle.messages[0] || null;
+      const unreadCount = unreadCounts[circle.id] ?? 0;
+
+      const { _count, members: _members, ...circleData } = circle;
+
+      return {
+        ...circleData,
+        memberCount,
+        latestMessage,
+        unreadCount,
+        userRole,
+      };
+    });
   }
 
   /**

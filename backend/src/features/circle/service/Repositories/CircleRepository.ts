@@ -17,7 +17,7 @@ class CircleRepository {
   static async findCircleById(circleId: string) {
     return await prisma.circle.findUnique({
       where: { id: circleId },
-      select: BaseSelectors.circleWithMembers,
+      select: BaseSelectors.circleWithMembersAndLatestMsg,
     });
   }
 
@@ -63,7 +63,7 @@ class CircleRepository {
           some: { userId },
         },
       },
-      select: BaseSelectors.circleWithMembers,
+      select: BaseSelectors.circleWithMembersAndLatestMsg,
       orderBy: {
         messages: {
           _count: "desc",
@@ -95,7 +95,7 @@ class CircleRepository {
             })) ?? [],
         },
       },
-      select: BaseSelectors.circleWithMembers,
+      select: BaseSelectors.circleWithMembersAndLatestMsg,
     });
   }
 
@@ -108,7 +108,7 @@ class CircleRepository {
         description: data.description,
         isPrivate: data.isPrivate,
       },
-      select: BaseSelectors.circleWithMembers,
+      select: BaseSelectors.circleWithMembersAndLatestMsg,
     });
   }
 
@@ -130,15 +130,7 @@ class CircleRepository {
           },
         },
       },
-      select: {
-        ...BaseSelectors.circleWithMembers,
-        members: {
-          where: { userId },
-          select: {
-            lastReadAt: true,
-          },
-        },
-      },
+      select: BaseSelectors.circleWithMembersAndLatestMsg,
       orderBy: { createdAt: "desc" },
     });
   }
@@ -318,11 +310,31 @@ class CircleRepository {
     });
   }
 
-  static async countUnreadMessages(circleId: string, lastReadAt?: Date) {
+  static async countUnreadMessagesBatch(userId: string) {
+    const rows = await prisma.$queryRaw<{ circle_id: string; count: bigint }[]>`
+    SELECT cm.circle_id, COUNT(msg.id) as count
+    FROM circle_members cm
+    LEFT JOIN circle_messages msg
+      ON msg.circle_id = cm.circle_id
+      AND msg.sender_id != ${userId}
+      AND msg.created_at > COALESCE(cm.last_read_at, '1970-01-01')
+    WHERE cm.user_id = ${userId}
+    GROUP BY cm.circle_id
+  `;
+
+    return Object.fromEntries(rows.map((r) => [r.circle_id, Number(r.count)]));
+  }
+
+  static async countUnreadMessages(
+    circleId: string,
+    userId: string,
+    lastReadAt?: Date,
+  ) {
     return await prisma.circleMessage.count({
       where: {
         circleId,
-        createdAt: lastReadAt ? { gt: lastReadAt } : undefined,
+        NOT: { senderId: userId },
+        createdAt: { gt: lastReadAt ?? new Date(0) },
       },
     });
   }

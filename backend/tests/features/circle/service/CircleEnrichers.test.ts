@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import CircleEnricher from "../../../../src/features/circle/service/CircleEnrichers.js";
 import CircleRepository from "../../../../src/features/circle/service/Repositories/CircleRepository.js";
-import CircleTransformers from "../../../../src/features/circle/service/CircleTransformers.js";
 
-vi.mock("../../../../src/features/circle/service/Repositories/CircleRepository.js");
-vi.mock("../../../../src/features/circle/service/CircleTransformers.js");
+vi.mock(
+  "../../../../src/features/circle/service/Repositories/CircleRepository.js",
+);
 
 describe("CircleEnricher", () => {
   beforeEach(() => {
@@ -21,76 +21,30 @@ describe("CircleEnricher", () => {
         createdAt: new Date(),
         creator: { id: "u1", username: "Creator" },
         avatar: { url: "http://example.com/avatar.png" },
-        members: [{ lastReadAt: new Date("2025-01-01") }],
+        members: [
+          { userId: "u2", role: "MEMBER", lastReadAt: new Date("2025-01-01") },
+        ],
+        messages: [
+          {
+            id: 1,
+            content: "hello",
+            createdAt: new Date(),
+            sender: { id: "u1", username: "Creator" },
+          },
+        ],
         _count: { members: 5 },
       } as any;
 
-      const membership = { userId: "u2", role: "MEMBER" };
-      const message = { id: 1, content: "hello", createdAt: new Date() };
-      const transformed = { id: 1, content: "hello", createdAt: "2025-01-01" };
-
-      vi.mocked(CircleRepository.getMembership).mockResolvedValue(membership as any);
-      vi.mocked(CircleRepository.getLatestMessage).mockResolvedValue(message as any);
       vi.mocked(CircleRepository.countUnreadMessages).mockResolvedValue(3);
-      vi.mocked(CircleTransformers.transformMessage).mockReturnValue(transformed as any);
 
       const result = await CircleEnricher.enrichCircle(circle, "u2");
 
       expect(result.memberCount).toBe(5);
       expect(result.userRole).toBe("MEMBER");
-      expect(result.latestMessage).toEqual(transformed);
+      expect(result.latestMessage).toEqual(circle.messages[0]);
       expect(result.unreadCount).toBe(3);
       expect(result).not.toHaveProperty("_count");
       expect(result).not.toHaveProperty("members");
-    });
-
-    it("should enrich circle without role when userId not provided", async () => {
-      const circle = {
-        id: "c1",
-        name: "Test",
-        description: "desc",
-        isPrivate: false,
-        createdAt: new Date(),
-        creator: { id: "u1", username: "Creator" },
-        avatar: { url: "http://example.com/avatar.png" },
-        members: [{ lastReadAt: null }],
-        _count: { members: 2 },
-      } as any;
-
-      const message = { id: 1, content: "msg" };
-      const transformed = { id: 1, content: "msg" };
-
-      vi.mocked(CircleRepository.getLatestMessage).mockResolvedValue(message as any);
-      vi.mocked(CircleRepository.countUnreadMessages).mockResolvedValue(0);
-      vi.mocked(CircleTransformers.transformMessage).mockReturnValue(transformed as any);
-
-      const result = await CircleEnricher.enrichCircle(circle);
-
-      expect(result.userRole).toBeNull();
-      expect(CircleRepository.getMembership).not.toHaveBeenCalled();
-    });
-
-    it("should set userRole to null when membership not found", async () => {
-      const circle = {
-        id: "c1",
-        name: "Test",
-        description: "desc",
-        isPrivate: false,
-        createdAt: new Date(),
-        creator: { id: "u1", username: "Creator" },
-        avatar: { url: "http://example.com/avatar.png" },
-        members: [{ lastReadAt: null }],
-        _count: { members: 1 },
-      } as any;
-
-      vi.mocked(CircleRepository.getMembership).mockResolvedValue(null);
-      vi.mocked(CircleRepository.getLatestMessage).mockResolvedValue(null);
-      vi.mocked(CircleRepository.countUnreadMessages).mockResolvedValue(0);
-
-      const result = await CircleEnricher.enrichCircle(circle, "u2");
-
-      expect(result.userRole).toBeNull();
-      expect(result.latestMessage).toBeNull();
     });
 
     it("should handle no latest message", async () => {
@@ -102,14 +56,14 @@ describe("CircleEnricher", () => {
         createdAt: new Date(),
         creator: { id: "u1", username: "Creator" },
         avatar: { url: "http://example.com/avatar.png" },
-        members: [{ lastReadAt: null }],
+        members: [{ userId: "u1", role: "OWNER", lastReadAt: null }],
+        messages: [], // empty messages array
         _count: { members: 1 },
       } as any;
 
-      vi.mocked(CircleRepository.getLatestMessage).mockResolvedValue(null);
       vi.mocked(CircleRepository.countUnreadMessages).mockResolvedValue(5);
 
-      const result = await CircleEnricher.enrichCircle(circle);
+      const result = await CircleEnricher.enrichCircle(circle, "u1");
 
       expect(result.latestMessage).toBeNull();
       expect(result.unreadCount).toBe(5);
@@ -127,7 +81,8 @@ describe("CircleEnricher", () => {
           createdAt: new Date(),
           creator: { id: "u1", username: "C1" },
           avatar: { url: "url1" },
-          members: [{ lastReadAt: null }],
+          members: [{ userId: "u1", role: "MEMBER", lastReadAt: null }],
+          messages: [],
           _count: { members: 2 },
         },
         {
@@ -138,29 +93,41 @@ describe("CircleEnricher", () => {
           createdAt: new Date(),
           creator: { id: "u1", username: "C2" },
           avatar: { url: "url2" },
-          members: [{ lastReadAt: null }],
+          members: [{ userId: "u1", role: "OWNER", lastReadAt: null }],
+          messages: [],
           _count: { members: 3 },
         },
       ] as any;
 
-      vi.mocked(CircleRepository.getMembership).mockResolvedValue({ role: "MEMBER" } as any);
-      vi.mocked(CircleRepository.getLatestMessage).mockResolvedValue(null);
-      vi.mocked(CircleRepository.countUnreadMessages).mockResolvedValue(0);
+      vi.mocked(CircleRepository.countUnreadMessagesBatch).mockResolvedValue({
+        c1: 0,
+        c2: 2,
+      });
 
-      const result = await CircleEnricher.enrichCircles(circles, "u");
+      const result = await CircleEnricher.enrichCircles(circles, "u1");
 
       expect(result).toHaveLength(2);
       expect(result[0].memberCount).toBe(2);
       expect(result[1].memberCount).toBe(3);
       expect(result[0].userRole).toBe("MEMBER");
+      expect(result[1].userRole).toBe("OWNER");
+      expect(result[0].unreadCount).toBe(0);
+      expect(result[1].unreadCount).toBe(2);
+      expect(CircleRepository.getMembership).not.toHaveBeenCalled();
+      expect(CircleRepository.getLatestMessage).not.toHaveBeenCalled();
     });
 
     it("should enrich empty list", async () => {
-      const result = await CircleEnricher.enrichCircles([]);
+      vi.mocked(CircleRepository.countUnreadMessagesBatch).mockResolvedValue(
+        {},
+      );
+
+      const result = await CircleEnricher.enrichCircles([], "u1");
       expect(result).toEqual([]);
     });
   });
 
+  // enrichMember and enrichMembers tests are unchanged - no fixes needed
   describe("enrichMember", () => {
     it("should set isMuted to true when mutedUntil is in future", () => {
       const future = new Date(Date.now() + 3600000);

@@ -10,9 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import type { StudyCircle } from "@/zodSchemas/circle.zod";
 
-import { CircleAvatar } from "../hub/components/ChatGroupPreview/CircleAvatar";
-import { CircleGate } from "../security/CircleGate";
-import { useCirclePermission } from "../security/useCirclePermission";
+import { CircleAvatar } from "../../hub/components/ChatGroupPreview/CircleAvatar";
+import { CircleGate } from "../../security/CircleGate";
+import { useCirclePermission } from "../../security/useCirclePermission";
 
 interface GeneralTabProps {
   circle: StudyCircle;

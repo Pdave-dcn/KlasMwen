@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
-import { CircleGate } from "../security/CircleGate";
+import { CircleGate } from "../../security/CircleGate";
 
 interface DangerZoneTabProps {
   circleName: string;

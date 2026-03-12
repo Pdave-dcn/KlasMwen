@@ -3,31 +3,51 @@ import type { StudyCircleRole as MemberRole } from "@/zodSchemas/circle.zod";
 
 // ─── Resource / Action Types ────────────────────────────────────────────────
 
-type CircleResource = "circles" | "circleMembers" | "circleMessages";
+export type CircleResource = "circles" | "circleMembers" | "circleMessages";
 
-type CircleActions = {
+export type CircleActions = {
   circles: "create" | "read" | "update" | "delete" | "join" | "invite";
   circleMembers: "add" | "remove" | "updateRole" | "view";
   circleMessages: "send" | "read" | "delete";
 };
 
-// ─── Policy Map ─────────────────────────────────────────────────────────────
-//
-// For UI purposes we only need static true/false.
-// Actions that are data-driven functions on the backend (e.g. "can you delete
-// *this specific* message?") are marked as `"data-dependent"`.
-// The Gatekeeper will treat data-dependent actions as *allowed* by default
-// so the button is always visible; the backend is the authoritative check.
+// ─── Data shapes for function-based checks ──────────────────────────────────
 
-type UIPermission = boolean | "data-dependent";
+type CircleMemberData = {
+  role: MemberRole;
+  userId: string;
+};
+
+type CircleMessageData = {
+  senderId: string;
+};
+
+export type ResourceData = {
+  circles: never;
+  circleMembers: CircleMemberData;
+  circleMessages: CircleMessageData;
+};
+
+// ─── Policy Types ────────────────────────────────────────────────────────────
+
+export type UIUser = {
+  id: string;
+  circleRole: MemberRole;
+};
+
+type PermissionCheck<R extends CircleResource> =
+  | boolean
+  | ((user: UIUser, data: ResourceData[R]) => boolean);
 
 type UIPolicy = {
-  [R in MemberRole]: {
-    [Resource in CircleResource]: {
-      [A in CircleActions[Resource]]: UIPermission;
+  [Role in MemberRole]: {
+    [R in CircleResource]: {
+      [A in CircleActions[R]]: PermissionCheck<R>;
     };
   };
 };
+
+// ─── Policy Map ──────────────────────────────────────────────────────────────
 
 const UI_CIRCLE_POLICY: UIPolicy = {
   OWNER: {
@@ -41,8 +61,8 @@ const UI_CIRCLE_POLICY: UIPolicy = {
     },
     circleMembers: {
       add: true,
-      remove: "data-dependent", // Cannot remove other OWNERs — backend enforces
-      updateRole: "data-dependent", // Cannot change other OWNERs' roles
+      remove: (_u, member) => member.role !== "OWNER",
+      updateRole: (_u, member) => member.role !== "OWNER",
       view: true,
     },
     circleMessages: {
@@ -63,7 +83,7 @@ const UI_CIRCLE_POLICY: UIPolicy = {
     },
     circleMembers: {
       add: true,
-      remove: "data-dependent", // Cannot remove OWNERs / other MODERATORs
+      remove: (_u, member) => member.role === "MEMBER",
       updateRole: false,
       view: true,
     },
@@ -85,78 +105,100 @@ const UI_CIRCLE_POLICY: UIPolicy = {
     },
     circleMembers: {
       add: false,
-      remove: "data-dependent", // Can only remove themselves (leave)
+      remove: (u, member) => member.userId === u.id, // leave circle
       updateRole: false,
       view: true,
     },
     circleMessages: {
       send: true,
       read: true,
-      delete: "data-dependent", // Can only delete their own messages
+      delete: (u, message) => message.senderId === u.id,
     },
   },
 };
+
+// ─── Core permission check ───────────────────────────────────────────────────
+
+function checkPermission<R extends CircleResource>(
+  user: UIUser,
+  resource: R,
+  action: CircleActions[R],
+  data?: ResourceData[R],
+): boolean {
+  const permission = (
+    UI_CIRCLE_POLICY[user.circleRole][resource] as Record<
+      string,
+      PermissionCheck<R>
+    >
+  )[action];
+  if (typeof permission === "boolean") return permission;
+  return data ? permission(user, data) : false;
+}
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
 
 /**
  * Returns role-aware permission helpers for the currently selected circle.
  *
- * The hook is intentionally simple: it reflects the *static* part of the
- * backend CIRCLE_POLICY so the UI can show/hide controls without duplicating
- * data-dependent logic (that stays on the server).
- *
  * @example
- * const { can, role, isAtLeast } = useCirclePermission();
+ * const { can, canDefinitely, isAtLeast } = useCirclePermission();
  *
- * // Hide the "Delete circle" button for non-owners
- * {can("circles", "delete") && <DeleteCircleButton />}
+ * // Static check
+ * can("circles", "delete")
  *
- * // Show an action that depends on runtime data — always visible, backend guards it
- * {can("circleMessages", "delete") && <DeleteMessageButton />}
+ * // Data-dependent — pass the resource data as the third argument
+ * can("circleMembers", "remove", { role: member.role, userId: member.userId })
+ * can("circleMessages", "delete", { senderId: message.senderId })
  *
- * // Structural role checks
- * {isAtLeast("MODERATOR") && <ModerationPanel />}
+ * // Hard static guarantee — function-based permissions treated as false
+ * canDefinitely("circles", "delete")
+ *
+ * // Role hierarchy
+ * isAtLeast("MODERATOR")
  */
 export function useCirclePermission() {
-  const role = useCircleStore((s) => s.currentUserMemberRole);
+  const circleRole = useCircleStore((s) => s.currentUserMemberRole);
+  const currentUser = useCircleStore((s) => s.currentUser);
 
   /**
-   * Returns `true` when the current user is statically allowed to perform
-   * `action` on `resource`, OR when the permission is data-dependent
-   * (in which case the UI shows the control and the server makes the final call).
-   *
-   * Returns `false` when:
-   *   - The user has no role in this circle
-   *   - The policy explicitly denies the action
+   * Checks whether the current user can perform `action` on `resource`.
+   * For function-based permissions pass the resource data as the third argument.
+   * Omitting data on a function permission returns false, mirroring the backend.
    */
   function can<R extends CircleResource>(
     resource: R,
     action: CircleActions[R],
+    data?: ResourceData[R],
   ): boolean {
-    if (!role) return false;
-    const permission = (
-      UI_CIRCLE_POLICY[role][resource] as Record<string, UIPermission>
-    )[action];
-    // data-dependent → optimistically show UI; server is the real guard
-    return permission === true || permission === "data-dependent";
+    if (!circleRole || !currentUser) return false;
+    return checkPermission(
+      { id: currentUser.id, circleRole },
+      resource,
+      action,
+      data,
+    );
   }
 
   /**
-   * Returns `true` only for hard-`true` policy entries.
-   * Use this when you want to hide a control even for data-dependent cases
-   * (e.g. a bulk-action that requires unconditional permission).
+   * Like `can`, but function-based permissions always return false.
+   * Use for bulk actions or any UI that requires an unconditional static guarantee.
+   *
+   * @example
+   * // "Delete circle" is only true for OWNER — no data needed, no ambiguity
+   * canDefinitely("circles", "delete")
    */
   function canDefinitely<R extends CircleResource>(
     resource: R,
     action: CircleActions[R],
   ): boolean {
-    if (!role) return false;
-    return (
-      (UI_CIRCLE_POLICY[role][resource] as Record<string, UIPermission>)[
-        action
-      ] === true
-    );
+    if (!circleRole || !currentUser) return false;
+    const permission = (
+      UI_CIRCLE_POLICY[circleRole][resource] as Record<
+        string,
+        PermissionCheck<R>
+      >
+    )[action];
+    return permission === true;
   }
 
   /** Role hierarchy: OWNER > MODERATOR > MEMBER */
@@ -173,29 +215,18 @@ export function useCirclePermission() {
    * isAtLeast("MODERATOR") // true for OWNER and MODERATOR
    */
   function isAtLeast(minRole: MemberRole): boolean {
-    if (!role) return false;
-    return ROLE_RANK[role] >= ROLE_RANK[minRole];
+    if (!circleRole) return false;
+    return ROLE_RANK[circleRole] >= ROLE_RANK[minRole];
   }
 
-  /** Convenience shortcuts */
-  const isOwner = role === "OWNER";
-  const isModerator = role === "MODERATOR";
-  const isMember = role === "MEMBER";
-  const hasRole = role !== null;
-
   return {
-    /** The user's current circle role, or `null` if not a member */
-    role,
-    /** Check a specific resource/action (data-dependent → true) */
+    role: circleRole,
     can,
-    /** Check a specific resource/action (data-dependent → false) */
     canDefinitely,
-    /** Role hierarchy check */
     isAtLeast,
-    // Convenience booleans
-    isOwner,
-    isModerator,
-    isMember,
-    hasRole,
+    isOwner: circleRole === "OWNER",
+    isModerator: circleRole === "MODERATOR",
+    isMember: circleRole === "MEMBER",
+    hasRole: circleRole !== null,
   };
 }

@@ -1,6 +1,6 @@
 import { MobileTabletHeader } from "@/features/study-circles/room/components/CircleRoomLayout/MobileTabletHeader";
 import { useCircleRoomPage } from "@/features/study-circles/room/hooks/useCircleRoomPage";
-import { CircleSettingsPanel } from "@/features/study-circles/settings/CircleSettingsPanel";
+import { CircleSettingsPanel } from "@/features/study-circles/settings/components/CircleSettingsPanel";
 import { cn } from "@/lib/utils";
 
 import { LeftSidebar } from "../features/study-circles/room/components/CircleRoomLayout/LeftSidebar";

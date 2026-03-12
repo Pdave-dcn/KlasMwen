@@ -13,15 +13,15 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { CircleMember, StudyCircle } from "@/zodSchemas/circle.zod";
 
-import { RoleGate } from "../security/CircleGate";
-import { useCirclePermission } from "../security/useCirclePermission";
+import { RoleGate } from "../../security/CircleGate";
+import { useCirclePermission } from "../../security/useCirclePermission";
 
 import { DangerZoneTab } from "./DangerZoneTab";
 import { GeneralTab } from "./GeneralTab";
-import { MembersTab } from "./MembersTab";
+import { MembersTab } from "./MembersTab/MembersTab";
 import { ModerationTab } from "./ModerationTab";
 
-import type { SettingsTab } from "./types";
+import type { SettingsTab } from "../types";
 
 interface CircleSettingsPanelProps {
   circle: StudyCircle;
@@ -48,7 +48,7 @@ export function CircleSettingsPanel({
   circleMembers,
   onClose,
 }: CircleSettingsPanelProps) {
-  // Role is read from the store via the hook — no need to pass it as a prop
+  // Role is read from the store via the hook
   const { isAtLeast } = useCirclePermission();
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
 
@@ -65,7 +65,6 @@ export function CircleSettingsPanel({
       case "general":
         return (
           // Read is always allowed, but editing is gated inside GeneralTab.
-          // Passing userRole so GeneralTab can disable inputs for MEMBERs.
           <GeneralTab circle={circle} />
         );
 

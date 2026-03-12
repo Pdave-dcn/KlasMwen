@@ -1,46 +1,39 @@
 import type { StudyCircleRole as MemberRole } from "@/zodSchemas/circle.zod";
 
-import { useCirclePermission } from "./useCirclePermission";
+import {
+  useCirclePermission,
+  type CircleActions,
+  type CircleResource,
+  type ResourceData,
+} from "./useCirclePermission";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type CircleResource = "circles" | "circleMembers" | "circleMessages";
-
-type CircleActions = {
-  circles: "create" | "read" | "update" | "delete" | "join" | "invite";
-  circleMembers: "add" | "remove" | "updateRole" | "view";
-  circleMessages: "send" | "read" | "delete";
-};
-
 interface CircleGateProps<R extends CircleResource> {
-  /** The resource being guarded */
   resource: R;
-  /** The action being guarded */
   action: CircleActions[R];
-  /** Content to render when access is granted */
-  children: React.ReactNode;
   /**
-   * Optional fallback content to render when access is denied.
-   * If omitted, nothing is rendered (null).
+   * Resource data for data-dependent permission checks.
+   * Required when the policy entry is a function (e.g. remove, updateRole).
+   * Without it, function-based checks return false.
    */
+  data?: ResourceData[R];
+  children: React.ReactNode;
   fallback?: React.ReactNode;
   /**
-   * When true, uses `canDefinitely` instead of `can`.
-   * Data-dependent permissions will be treated as denied.
-   * Use this for actions that require unconditional permission.
+   * When true, function-based permissions are treated as denied even without data.
+   * Use for bulk/unconditional actions where you need a hard static guarantee.
    */
   strict?: boolean;
 }
 
 interface RoleGateProps {
-  /** Minimum required role (OWNER > MODERATOR > MEMBER) */
   minRole: MemberRole;
   children: React.ReactNode;
   fallback?: React.ReactNode;
 }
 
 interface ExactRoleGateProps {
-  /** Only renders for this exact role */
   role: MemberRole | MemberRole[];
   children: React.ReactNode;
   fallback?: React.ReactNode;
@@ -49,40 +42,46 @@ interface ExactRoleGateProps {
 // ─── Components ──────────────────────────────────────────────────────────────
 
 /**
- * Renders `children` only when the current user has permission to perform
- * `action` on `resource` in the active circle.
+ * Renders `children` only when the current user can perform `action` on `resource`.
  *
- * For data-dependent permissions (e.g. "delete own message") the gate is open
- * by default — the server will perform the authoritative check. Pass
- * `strict` to flip this behaviour.
+ * For static permissions (boolean policy entries) no data is needed.
+ * For data-dependent permissions pass the resource via the `data` prop so the
+ * policy function can evaluate it — same as calling `can(resource, action, data)`.
  *
  * @example
- * // Hide the "Update circle" form section for MEMBERs
+ * // Static — no data needed
  * <CircleGate resource="circles" action="update">
- *   <GeneralSettingsForm />
+ *   <SaveButton />
  * </CircleGate>
  *
- * // Show a fallback instead of nothing
- * <CircleGate resource="circles" action="delete" fallback={<ReadOnlyBadge />}>
+ * // Data-dependent — pass the member so the policy can check their role
+ * <CircleGate resource="circleMembers" action="remove" data={{ role: member.role, userId: member.userId }}>
+ *   <RemoveMemberButton />
+ * </CircleGate>
+ *
+ * // Strict — hard static guarantee, no function pass-through
+ * <CircleGate resource="circles" action="delete" strict>
  *   <DeleteCircleButton />
  * </CircleGate>
  *
- * // Danger: require unconditional permission (no data-dependent pass-through)
- * <CircleGate resource="circleMembers" action="remove" strict>
- *   <BulkRemoveButton />
+ * // With fallback
+ * <CircleGate resource="circles" action="delete" strict fallback={<ReadOnlyNotice />}>
+ *   <DeleteCircleButton />
  * </CircleGate>
  */
 export function CircleGate<R extends CircleResource>({
   resource,
   action,
+  data,
   children,
   fallback = null,
   strict = false,
 }: CircleGateProps<R>) {
   const { can, canDefinitely } = useCirclePermission();
+
   const allowed = strict
     ? canDefinitely(resource, action)
-    : can(resource, action);
+    : can(resource, action, data);
 
   return allowed ? <>{children}</> : <>{fallback}</>;
 }
@@ -91,9 +90,8 @@ export function CircleGate<R extends CircleResource>({
  * Renders `children` only when the current user's role is at least `minRole`.
  *
  * @example
- * // Show moderation tab only to OWNER and MODERATOR
  * <RoleGate minRole="MODERATOR">
- *   <ModerationTab />
+ *   <ModerationPanel />
  * </RoleGate>
  */
 export function RoleGate({

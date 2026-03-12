@@ -8,23 +8,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { type StudyCircleRole as MemberRole } from "@/zodSchemas/circle.zod";
+import type { StudyCircle } from "@/zodSchemas/circle.zod";
 
-import type { CircleSettings } from "./types";
+import { CircleAvatar } from "../hub/components/ChatGroupPreview/CircleAvatar";
+import { CircleGate } from "../security/CircleGate";
+import { useCirclePermission } from "../security/useCirclePermission";
 
 interface GeneralTabProps {
-  settings: CircleSettings;
-  userRole: MemberRole;
+  circle: StudyCircle;
 }
 
-const NAME_MAX = 50;
-const DESC_MAX = 300;
+const NAME_MAX = 100;
+const DESC_MAX = 500;
 
-export function GeneralTab({ settings, userRole }: GeneralTabProps) {
-  const [name, setName] = useState(settings.name);
-  const [description, setDescription] = useState(settings.description);
-  const [isPublic, setIsPublic] = useState(settings.isPublic);
-  const canEdit = userRole === "OWNER" || userRole === "MODERATOR";
+export function GeneralTab({ circle }: GeneralTabProps) {
+  const [name, setName] = useState(circle.name);
+  const [description, setDescription] = useState(circle.description ?? "");
+  const [isPrivate, setIsPrivate] = useState(circle.isPrivate);
+
+  // Single source of truth for edit permission
+  const { can } = useCirclePermission();
+  const canEdit = can("circles", "update");
 
   const handleSave = () => {
     toast.success("Circle settings saved!");
@@ -35,19 +39,13 @@ export function GeneralTab({ settings, userRole }: GeneralTabProps) {
       {/* Avatar */}
       <div className="flex items-center gap-5">
         <div className="relative group">
-          <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
-            {name
-              .split(" ")
-              .map((w) => w[0])
-              .join("")
-              .slice(0, 2)
-              .toUpperCase()}
-          </div>
-          {canEdit && (
+          <CircleAvatar name={circle.name} avatar={circle.avatar?.url} />
+          {/* Camera overlay only visible to editors */}
+          <CircleGate resource="circles" action="update">
             <button className="absolute inset-0 rounded-2xl bg-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <Camera className="h-5 w-5 text-primary-foreground" />
             </button>
-          )}
+          </CircleGate>
         </div>
         <div>
           <h3 className="font-semibold text-foreground">
@@ -55,7 +53,7 @@ export function GeneralTab({ settings, userRole }: GeneralTabProps) {
           </h3>
           <p className="text-sm text-muted-foreground">
             Active since{" "}
-            {new Date(settings.createdAt).toLocaleDateString("en-US", {
+            {new Date(circle.createdAt).toLocaleDateString("en-US", {
               month: "short",
               year: "numeric",
             })}
@@ -139,10 +137,10 @@ export function GeneralTab({ settings, userRole }: GeneralTabProps) {
             <button
               key={String(opt.value)}
               disabled={!canEdit}
-              onClick={() => setIsPublic(opt.value)}
+              onClick={() => setIsPrivate(opt.value)}
               className={cn(
                 "flex flex-col items-start gap-2 p-4 rounded-xl border-2 transition-all text-left",
-                isPublic === opt.value
+                isPrivate === opt.value
                   ? "border-primary bg-primary/5"
                   : "border-border hover:border-muted-foreground/30",
                 !canEdit && "opacity-60 cursor-not-allowed",
@@ -151,7 +149,7 @@ export function GeneralTab({ settings, userRole }: GeneralTabProps) {
               <opt.icon
                 className={cn(
                   "h-5 w-5",
-                  isPublic === opt.value
+                  isPrivate === opt.value
                     ? "text-primary"
                     : "text-muted-foreground",
                 )}
@@ -167,12 +165,13 @@ export function GeneralTab({ settings, userRole }: GeneralTabProps) {
         </div>
       </div>
 
-      {canEdit && (
+      {/* Save button — only rendered for editors */}
+      <CircleGate resource="circles" action="update">
         <Button onClick={handleSave} className="w-full rounded-xl gap-2">
           <Save className="h-4 w-4" />
           Save Changes
         </Button>
-      )}
+      </CircleGate>
     </div>
   );
 }

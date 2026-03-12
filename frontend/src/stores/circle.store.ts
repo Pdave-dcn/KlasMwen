@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
 import type { User } from "@/types/auth.type";
+import type { StudyCircleRole as MemberRole } from "@/zodSchemas/circle.zod";
 
 interface CircleStoreState {
   // Selection state
@@ -11,6 +12,11 @@ interface CircleStoreState {
   currentUser: User | null;
   setCurrentUser: (user: User) => void;
 
+  // Current user's role in the selected circle (OWNER, MODERATOR, MEMBER, or null if not a member)
+  currentUserMemberRole: MemberRole | null;
+  setCurrentUserMemberRole: (role: MemberRole | null) => void;
+
+  // Room online state
   onlineMemberIds: Set<string>;
   setOnlineMembers: (userIds: string[]) => void;
   clearOnlineMembers: () => void;
@@ -32,6 +38,8 @@ export const useCircleStore = create<CircleStoreState>((set) => ({
 
   // Current user
   currentUser: null,
+  currentUserMemberRole: null,
+  setCurrentUserMemberRole: (role) => set({ currentUserMemberRole: role }),
   setCurrentUser: (user) => set({ currentUser: user }),
 
   // Room online state

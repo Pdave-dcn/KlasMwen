@@ -9,7 +9,12 @@ import { useCirclePresence } from "./useCirclePresence";
 import { useCircleSync } from "./useCircleSync";
 
 export const useCircleRoom = () => {
-  const { selectedCircleId, selectCircle, setCurrentUser } = useCircleStore();
+  const {
+    selectedCircleId,
+    selectCircle,
+    setCurrentUser,
+    setCurrentUserMemberRole,
+  } = useCircleStore();
   const currentUser = useAuthStore((state) => state.user);
 
   useEffect(() => {
@@ -31,6 +36,10 @@ export const useCircleRoom = () => {
     isFetchingNextPage,
     pagination,
   } = useCircleData(selectedCircleId);
+
+  useEffect(() => {
+    setCurrentUserMemberRole(selectedCircle?.userRole ?? null);
+  }, [selectedCircle?.userRole, setCurrentUserMemberRole]);
 
   const isMuted = useMemo(() => {
     const me = members.find((m) => m.userId === currentUser?.id);

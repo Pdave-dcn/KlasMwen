@@ -37,14 +37,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { type StudyCircleRole as MemberRole } from "@/zodSchemas/circle.zod";
+import { useCircleStore } from "@/stores/circle.store";
+import { usePresenceStore } from "@/stores/presence.store";
+import {
+  type CircleMember,
+  type StudyCircleRole as MemberRole,
+} from "@/zodSchemas/circle.zod";
 
-import { type SettingsMember, MUTE_DURATIONS } from "./types";
+import { CircleGate, ExactRoleGate } from "../security/CircleGate";
+import { useCirclePermission } from "../security/useCirclePermission";
+
+import { MUTE_DURATIONS } from "./types";
 
 interface MembersTabProps {
-  members: SettingsMember[];
-  userRole: MemberRole;
-  currentUserId: string;
+  members: CircleMember[];
 }
 
 const roleConfig: Record<
@@ -56,38 +62,51 @@ const roleConfig: Record<
   MEMBER: { icon: Users, label: "Member", color: "text-muted-foreground" },
 };
 
-export function MembersTab({
-  members,
-  userRole,
-  currentUserId,
-}: MembersTabProps) {
+export function MembersTab({ members }: MembersTabProps) {
   const [search, setSearch] = useState("");
-  const [muteTarget, setMuteTarget] = useState<SettingsMember | null>(null);
-  const canManage = userRole === "OWNER" || userRole === "MODERATOR";
+  const [muteTarget, setMuteTarget] = useState<CircleMember | null>(null);
+
+  const onlineUsers = usePresenceStore((state) => state.onlineUsers);
+  const onlineMembers = useCircleStore((state) => state.onlineMemberIds);
+  const currentUserId = useCircleStore((state) => state.currentUser?.id);
+
+  const { isAtLeast, isOwner } = useCirclePermission();
 
   const filtered = members.filter((m) =>
-    m.username.toLowerCase().includes(search.toLowerCase()),
+    m.user.username.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const canActOn = (target: SettingsMember) => {
-    if (!canManage) return false;
-    if (target.id === currentUserId) return false;
+  /**
+   * Whether the current user can act on a specific member row.
+   *
+   * The static permission check (can "circleMembers" "remove") already
+   * gates the dropdown at the role level. This helper adds the
+   * data-dependent checks that mirror the backend policy:
+   * - Cannot act on yourself
+   * - Cannot act on another OWNER
+   * - MODERATORs cannot act on other MODERATORs
+   */
+  const canActOn = (target: CircleMember): boolean => {
+    if (!isAtLeast("MODERATOR")) return false;
+    if (target.userId === currentUserId) return false;
     if (target.role === "OWNER") return false;
-    if (userRole === "MODERATOR" && target.role === "MODERATOR") return false;
+    if (!isOwner && target.role === "MODERATOR") return false;
     return true;
   };
 
-  const handleKick = (member: SettingsMember) => {
-    toast.success(`${member.username} has been removed from the circle.`);
+  const handleKick = (member: CircleMember) => {
+    toast.success(`${member.user.username} has been removed from the circle.`);
   };
 
-  const handleRoleChange = (member: SettingsMember, newRole: MemberRole) => {
-    toast.success(`${member.username} is now a ${roleConfig[newRole].label}.`);
+  const handleRoleChange = (member: CircleMember, newRole: MemberRole) => {
+    toast.success(
+      `${member.user.username} is now a ${roleConfig[newRole].label}.`,
+    );
   };
 
-  const handleMute = (member: SettingsMember, duration: number | null) => {
+  const handleMute = (member: CircleMember, duration: number | null) => {
     const label = duration ? `${duration} minutes` : "indefinitely";
-    toast.success(`${member.username} has been muted ${label}.`);
+    toast.success(`${member.user.username} has been muted ${label}.`);
     setMuteTarget(null);
   };
 
@@ -98,8 +117,8 @@ export function MembersTab({
 
   return (
     <div className="space-y-6">
-      {/* Invite Section */}
-      {canManage && (
+      {/* Invite Section — OWNER and MODERATOR only (circles.invite) */}
+      <CircleGate resource="circles" action="invite">
         <div className="p-4 rounded-xl border border-border bg-muted/30 space-y-3">
           <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
             <Mail className="h-4 w-4 text-primary" />
@@ -122,7 +141,7 @@ export function MembersTab({
             Copy invite link
           </button>
         </div>
-      )}
+      </CircleGate>
 
       {/* Search */}
       <div className="relative">
@@ -148,18 +167,19 @@ export function MembersTab({
 
           return (
             <div
-              key={member.id}
+              key={member.userId}
               className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors group"
             >
               {/* Avatar */}
               <div className="relative shrink-0">
                 <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary">
-                  {member.username[0].toUpperCase()}
+                  {member.user.username[0].toUpperCase()}
                 </div>
                 <div
                   className={cn(
                     "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-card",
-                    member.isOnline
+                    onlineUsers.has(member.userId) ||
+                      onlineMembers.has(member.userId)
                       ? "bg-[hsl(var(--chat-online))]"
                       : "bg-[hsl(var(--chat-offline))]",
                   )}
@@ -170,8 +190,8 @@ export function MembersTab({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-foreground truncate">
-                    {member.username}
-                    {member.id === currentUserId && (
+                    {member.user.username}
+                    {member.userId === currentUserId && (
                       <span className="text-primary ml-1">(You)</span>
                     )}
                   </span>
@@ -199,7 +219,11 @@ export function MembersTab({
                 {config.label}
               </Badge>
 
-              {/* Actions */}
+              {/*
+               * Actions dropdown — data-dependent gate:
+               * `can("circleMembers", "remove")` is true for MODERATOR+ but the
+               * row-level canActOn() provides the runtime data check.
+               */}
               {canActOn(member) && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -208,32 +232,28 @@ export function MembersTab({
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48 rounded-xl">
-                    {/* Role changes */}
-                    {userRole === "OWNER" && (
-                      <>
-                        {member.role === "MEMBER" && (
-                          <DropdownMenuItem
-                            onClick={() =>
-                              handleRoleChange(member, "MODERATOR")
-                            }
-                          >
-                            <ShieldPlus className="h-4 w-4 mr-2" />
-                            Promote to Mod
-                          </DropdownMenuItem>
-                        )}
-                        {member.role === "MODERATOR" && (
-                          <DropdownMenuItem
-                            onClick={() => handleRoleChange(member, "MEMBER")}
-                          >
-                            <ShieldMinus className="h-4 w-4 mr-2" />
-                            Demote to Member
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuSeparator />
-                      </>
-                    )}
+                    {/* Role changes — OWNER only (circleMembers.updateRole) */}
+                    <ExactRoleGate role="OWNER">
+                      {member.role === "MEMBER" && (
+                        <DropdownMenuItem
+                          onClick={() => handleRoleChange(member, "MODERATOR")}
+                        >
+                          <ShieldPlus className="h-4 w-4 mr-2" />
+                          Promote to Mod
+                        </DropdownMenuItem>
+                      )}
+                      {member.role === "MODERATOR" && (
+                        <DropdownMenuItem
+                          onClick={() => handleRoleChange(member, "MEMBER")}
+                        >
+                          <ShieldMinus className="h-4 w-4 mr-2" />
+                          Demote to Member
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                    </ExactRoleGate>
 
-                    {/* Mute */}
+                    {/* Mute — MODERATOR+ */}
                     <DropdownMenuSub>
                       <DropdownMenuSubTrigger>
                         <VolumeX className="h-4 w-4 mr-2" />
@@ -253,7 +273,7 @@ export function MembersTab({
 
                     <DropdownMenuSeparator />
 
-                    {/* Kick */}
+                    {/* Remove — MODERATOR+ with data-dependent check already done by canActOn() */}
                     <DropdownMenuItem
                       onClick={() => handleKick(member)}
                       className="text-destructive focus:text-destructive"
@@ -269,11 +289,11 @@ export function MembersTab({
         })}
       </div>
 
-      {/* Mute Dialog (kept for potential direct mute action) */}
+      {/* Mute Dialog */}
       <Dialog open={!!muteTarget} onOpenChange={() => setMuteTarget(null)}>
         <DialogContent className="rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Mute {muteTarget?.username}</DialogTitle>
+            <DialogTitle>Mute {muteTarget?.user.username}</DialogTitle>
             <DialogDescription>
               Choose how long to mute this member. They won't be able to send
               messages.

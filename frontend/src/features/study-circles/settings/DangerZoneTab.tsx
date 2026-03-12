@@ -13,21 +13,17 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { type StudyCircleRole as MemberRole } from "@/zodSchemas/circle.zod";
+
+import { CircleGate } from "../security/CircleGate";
 
 interface DangerZoneTabProps {
-  userRole: MemberRole;
   circleName: string;
   onClose: () => void;
 }
 
 const DELETE_CONFIRM = "DELETE MY CIRCLE";
 
-export function DangerZoneTab({
-  userRole,
-  circleName,
-  onClose,
-}: DangerZoneTabProps) {
+export function DangerZoneTab({ circleName, onClose }: DangerZoneTabProps) {
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
@@ -58,7 +54,7 @@ export function DangerZoneTab({
         </p>
       </div>
 
-      {/* Leave Circle */}
+      {/* Leave Circle — available to all members (circleMembers.remove is data-dependent: self-removal) */}
       <div className="flex items-center justify-between p-4 rounded-xl border border-border">
         <div>
           <p className="text-sm font-medium text-foreground">Leave Circle</p>
@@ -77,8 +73,12 @@ export function DangerZoneTab({
         </Button>
       </div>
 
-      {/* Delete Circle (OWNER only) */}
-      {userRole === "OWNER" && (
+      {/* Delete Circle — OWNER only (circles.delete = true only for OWNER) */}
+      <CircleGate
+        resource="circles"
+        action="delete"
+        strict // use canDefinitely: false for MODERATORs and MEMBERs, no pass-through
+      >
         <div className="flex items-center justify-between p-4 rounded-xl border-2 border-destructive/30 bg-destructive/5">
           <div>
             <p className="text-sm font-medium text-destructive">
@@ -98,7 +98,7 @@ export function DangerZoneTab({
             Delete
           </Button>
         </div>
-      )}
+      </CircleGate>
 
       {/* Leave Confirmation */}
       <Dialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>

@@ -11,19 +11,21 @@ import { AnimatePresence, motion } from "motion/react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { type StudyCircleRole as MemberRole } from "@/zodSchemas/circle.zod";
+import type { CircleMember, StudyCircle } from "@/zodSchemas/circle.zod";
+
+import { RoleGate } from "../security/CircleGate";
+import { useCirclePermission } from "../security/useCirclePermission";
 
 import { DangerZoneTab } from "./DangerZoneTab";
 import { GeneralTab } from "./GeneralTab";
 import { MembersTab } from "./MembersTab";
-import { mockCircleSettings, mockSettingsMembers } from "./mockSettingsData";
 import { ModerationTab } from "./ModerationTab";
 
 import type { SettingsTab } from "./types";
 
 interface CircleSettingsPanelProps {
-  userRole?: MemberRole;
-  currentUserId?: string;
+  circle: StudyCircle;
+  circleMembers: CircleMember[];
   onClose: () => void;
 }
 
@@ -31,73 +33,60 @@ interface TabDef {
   id: SettingsTab;
   label: string;
   icon: typeof Settings2;
-  roles: MemberRole[];
 }
 
+// All tabs are defined here — visibility is controlled by CircleGate / RoleGate
 const tabs: TabDef[] = [
-  {
-    id: "general",
-    label: "General",
-    icon: Settings2,
-    roles: ["OWNER", "MODERATOR", "MEMBER"],
-  },
-  {
-    id: "members",
-    label: "Members",
-    icon: Users,
-    roles: ["OWNER", "MODERATOR", "MEMBER"],
-  },
-  {
-    id: "moderation",
-    label: "Moderation",
-    icon: Shield,
-    roles: ["OWNER", "MODERATOR"],
-  },
-  {
-    id: "danger",
-    label: "Danger Zone",
-    icon: AlertTriangle,
-    roles: ["OWNER", "MODERATOR", "MEMBER"],
-  },
+  { id: "general", label: "General", icon: Settings2 },
+  { id: "members", label: "Members", icon: Users },
+  { id: "moderation", label: "Moderation", icon: Shield },
+  { id: "danger", label: "Danger Zone", icon: AlertTriangle },
 ];
 
 export function CircleSettingsPanel({
-  userRole = "OWNER",
-  currentUserId = "user-1",
+  circle,
+  circleMembers,
   onClose,
 }: CircleSettingsPanelProps) {
+  // Role is read from the store via the hook — no need to pass it as a prop
+  const { isAtLeast } = useCirclePermission();
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
 
-  const visibleTabs = tabs.filter((t) => t.roles.includes(userRole));
+  // Filter tabs based on role:
+  // - "moderation" requires MODERATOR or above
+  // - all other tabs are visible to all members
+  const visibleTabs = tabs.filter((tab) => {
+    if (tab.id === "moderation") return isAtLeast("MODERATOR");
+    return true;
+  });
 
   const renderContent = () => {
     switch (activeTab) {
       case "general":
-        return <GeneralTab settings={mockCircleSettings} userRole={userRole} />;
+        return (
+          // Read is always allowed, but editing is gated inside GeneralTab.
+          // Passing userRole so GeneralTab can disable inputs for MEMBERs.
+          <GeneralTab circle={circle} />
+        );
+
       case "members":
-        return (
-          <MembersTab
-            members={mockSettingsMembers}
-            userRole={userRole}
-            currentUserId={currentUserId}
-          />
-        );
+        return <MembersTab members={circleMembers} />;
+
       case "moderation":
+        // Extra safety: if somehow a MEMBER lands here, render nothing
         return (
-          <ModerationTab
-            members={mockSettingsMembers}
-            slowMode={mockCircleSettings.slowMode}
-            slowModeInterval={mockCircleSettings.slowModeInterval}
-          />
+          <RoleGate minRole="MODERATOR">
+            <ModerationTab
+              members={circleMembers}
+              slowMode={false}
+              slowModeInterval={5}
+            />
+          </RoleGate>
         );
+
       case "danger":
-        return (
-          <DangerZoneTab
-            userRole={userRole}
-            circleName={mockCircleSettings.name}
-            onClose={onClose}
-          />
-        );
+        return <DangerZoneTab circleName={circle.name} onClose={onClose} />;
+
       default:
         return null;
     }
@@ -120,13 +109,13 @@ export function CircleSettingsPanel({
             Circle Settings
           </h2>
           <p className="text-xs text-muted-foreground truncate">
-            {mockCircleSettings.name}
+            {circle.name}
           </p>
         </div>
       </div>
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar Tabs (desktop) / Horizontal Tabs (mobile) */}
+        {/* Sidebar Tabs (desktop) */}
         <nav className="hidden md:flex flex-col w-56 border-r border-border bg-card p-3 gap-1 shrink-0">
           {visibleTabs.map((tab) => {
             const Icon = tab.icon;

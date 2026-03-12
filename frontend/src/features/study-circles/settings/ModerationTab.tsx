@@ -6,7 +6,6 @@ import {
   Timer,
   Trash2,
   AlertTriangle,
-  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -22,11 +21,10 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-
-import type { SettingsMember } from "./types";
+import type { CircleMember } from "@/zodSchemas/circle.zod";
 
 interface ModerationTabProps {
-  members: SettingsMember[];
+  members: CircleMember[];
   slowMode: boolean;
   slowModeInterval: number;
 }
@@ -41,8 +39,8 @@ export function ModerationTab({
 
   const mutedMembers = members.filter((m) => m.isMuted);
 
-  const handleUnmute = (member: SettingsMember) => {
-    toast.success(`${member.username} has been unmuted.`);
+  const handleUnmute = (member: CircleMember) => {
+    toast.success(`${member.user.username} has been unmuted.`);
   };
 
   const handleClearChat = () => {
@@ -74,23 +72,25 @@ export function ModerationTab({
           <div className="space-y-2">
             {mutedMembers.map((member) => (
               <div
-                key={member.id}
+                key={member.userId}
                 className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/30"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center text-sm font-semibold text-destructive">
-                    {member.username[0].toUpperCase()}
+                    {member.user.username[0].toUpperCase()}
                   </div>
                   <div>
                     <p className="text-sm font-medium text-foreground">
-                      {member.username}
+                      {member.user.username}
                     </p>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {member.mutedUntil
-                        ? `Until ${new Date(member.mutedUntil).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
-                        : "Indefinitely"}
-                    </p>
+                    {/* {member.isMuted && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {member.mutedUntil
+                          ? `Until ${new Date(member.mutedUntil).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+                          : "Indefinitely"}
+                      </p>
+                    )} */}
                   </div>
                 </div>
                 <Button

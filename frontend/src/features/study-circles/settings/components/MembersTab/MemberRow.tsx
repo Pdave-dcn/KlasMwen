@@ -9,6 +9,7 @@ import {
   Crown,
 } from "lucide-react";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -23,18 +24,18 @@ import {
 import { cn } from "@/lib/utils";
 import { useCircleStore } from "@/stores/circle.store";
 import { usePresenceStore } from "@/stores/presence.store";
+import { getInitials } from "@/utils/getInitials.util";
 import {
   type CircleMember,
   type StudyCircleRole as MemberRole,
 } from "@/zodSchemas/circle.zod";
 
 import { useCircleMemberPermissions } from "../../../security/useCircleMemberPermission";
+import { useMemberRow } from "../../hooks/useMemberRow";
 import { MUTE_DURATIONS } from "../../types";
 
 interface MemberRowProps {
   member: CircleMember;
-  onKick: (member: CircleMember) => void;
-  onRoleChange: (member: CircleMember, role: MemberRole) => void;
   onMute: (member: CircleMember, duration: number | null) => void;
 }
 
@@ -47,12 +48,7 @@ const roleConfig: Record<
   MEMBER: { icon: Users, label: "Member", color: "text-muted-foreground" },
 };
 
-export function MemberRow({
-  member,
-  onKick,
-  onRoleChange,
-  onMute,
-}: MemberRowProps) {
+export function MemberRow({ member, onMute }: MemberRowProps) {
   const config = roleConfig[member.role];
   const RoleIcon = config.icon;
 
@@ -63,17 +59,22 @@ export function MemberRow({
   const isOnline =
     onlineUsers.has(member.userId) || onlineMembers.has(member.userId);
 
-  // All permission decisions for this specific member come from the hook
   const { canRemove, canUpdateRole, canMute } =
     useCircleMemberPermissions(member);
+
+  const { handlers, pending } = useMemberRow(member);
 
   return (
     <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors group">
       {/* Avatar */}
       <div className="relative shrink-0">
-        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary">
-          {member.user.username[0].toUpperCase()}
-        </div>
+        <Avatar>
+          <AvatarImage
+            src={member.user.avatar?.url}
+            alt={member.user.username}
+          />
+          <AvatarFallback>{getInitials(member.user.username)}</AvatarFallback>
+        </Avatar>
         <div
           className={cn(
             "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-card",
@@ -115,7 +116,7 @@ export function MemberRow({
         {config.label}
       </Badge>
 
-      {/* Actions — only rendered when at least one action is available */}
+      {/* Actions */}
       {canRemove && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -124,12 +125,12 @@ export function MemberRow({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 rounded-xl">
-            {/* Role changes — OWNER only */}
             {canUpdateRole && (
               <>
                 {member.role === "MEMBER" && (
                   <DropdownMenuItem
-                    onClick={() => onRoleChange(member, "MODERATOR")}
+                    onClick={() => handlers.handleRoleChange("MODERATOR")}
+                    disabled={pending.updatingRole}
                   >
                     <ShieldPlus className="h-4 w-4 mr-2" />
                     Promote to Mod
@@ -137,7 +138,8 @@ export function MemberRow({
                 )}
                 {member.role === "MODERATOR" && (
                   <DropdownMenuItem
-                    onClick={() => onRoleChange(member, "MEMBER")}
+                    onClick={() => handlers.handleRoleChange("MEMBER")}
+                    disabled={pending.updatingRole}
                   >
                     <ShieldMinus className="h-4 w-4 mr-2" />
                     Demote to Member
@@ -147,7 +149,6 @@ export function MemberRow({
               </>
             )}
 
-            {/* Mute */}
             {canMute && (
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
@@ -170,8 +171,9 @@ export function MemberRow({
             <DropdownMenuSeparator />
 
             <DropdownMenuItem
-              onClick={() => onKick(member)}
+              onClick={handlers.handleKick}
               className="text-destructive focus:text-destructive"
+              disabled={pending.kicking}
             >
               <UserMinus className="h-4 w-4 mr-2" />
               Remove from Circle

@@ -1,7 +1,4 @@
-import { useState } from "react";
-
-import { Crown, Shield, Users, Search, Link, Mail } from "lucide-react";
-import { toast } from "sonner";
+import { Search, Link, Mail } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -14,11 +11,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { CircleGate } from "@/features/study-circles/security/CircleGate";
-import {
-  type CircleMember,
-  type StudyCircleRole as MemberRole,
-} from "@/zodSchemas/circle.zod";
+import { type CircleMember } from "@/zodSchemas/circle.zod";
 
+import { useMembersTab } from "../../hooks/useMembersTab";
 import { MUTE_DURATIONS } from "../../types";
 
 import { MemberRow } from "./MemberRow";
@@ -27,43 +22,10 @@ interface MembersTabProps {
   members: CircleMember[];
 }
 
-const roleConfig: Record<
-  MemberRole,
-  { icon: typeof Crown; label: string; color: string }
-> = {
-  OWNER: { icon: Crown, label: "Owner", color: "text-amber-500" },
-  MODERATOR: { icon: Shield, label: "Mod", color: "text-primary" },
-  MEMBER: { icon: Users, label: "Member", color: "text-muted-foreground" },
-};
-
 export const MembersTab = ({ members }: MembersTabProps) => {
-  const [search, setSearch] = useState("");
-  const [muteTarget, setMuteTarget] = useState<CircleMember | null>(null);
-
-  const filtered = members.filter((m) =>
-    m.user.username.toLowerCase().includes(search.toLowerCase()),
-  );
-
-  const handleKick = (member: CircleMember) => {
-    toast.success(`${member.user.username} has been removed from the circle.`);
-  };
-
-  const handleRoleChange = (member: CircleMember, newRole: MemberRole) => {
-    toast.success(
-      `${member.user.username} is now a ${roleConfig[newRole].label}.`,
-    );
-  };
-
-  const handleMute = (member: CircleMember, duration: number | null) => {
-    const label = duration ? `${duration} minutes` : "indefinitely";
-    toast.success(`${member.user.username} has been muted ${label}.`);
-    setMuteTarget(null);
-  };
-
-  const handleCopyInvite = async () => {
-    await navigator.clipboard.writeText(`https://studychat.app/invite/abc123`);
-    toast.success("Invite link copied!");
-  };
+  const { search, setSearch, muteTarget, filtered, handlers } = useMembersTab({
+    members,
+  });
 
   return (
     <div className="space-y-6">
@@ -84,7 +46,7 @@ export const MembersTab = ({ members }: MembersTabProps) => {
             </Button>
           </div>
           <button
-            onClick={handleCopyInvite}
+            onClick={handlers.handleCopyInvite}
             className="flex items-center gap-2 text-xs text-primary hover:underline"
           >
             <Link className="h-3 w-3" />
@@ -115,15 +77,13 @@ export const MembersTab = ({ members }: MembersTabProps) => {
           <MemberRow
             key={member.userId}
             member={member}
-            onKick={handleKick}
-            onRoleChange={handleRoleChange}
-            onMute={handleMute}
+            onMute={handlers.handleMute}
           />
         ))}
       </div>
 
       {/* Mute Dialog */}
-      <Dialog open={!!muteTarget} onOpenChange={() => setMuteTarget(null)}>
+      <Dialog open={!!muteTarget} onOpenChange={handlers.handleCloseMuteDialog}>
         <DialogContent className="rounded-2xl">
           <DialogHeader>
             <DialogTitle>Mute {muteTarget?.user.username}</DialogTitle>
@@ -138,7 +98,9 @@ export const MembersTab = ({ members }: MembersTabProps) => {
                 key={d.label}
                 variant="outline"
                 className="rounded-xl"
-                onClick={() => muteTarget && handleMute(muteTarget, d.value)}
+                onClick={() =>
+                  muteTarget && handlers.handleMute(muteTarget, d.value)
+                }
               >
                 {d.label}
               </Button>
@@ -147,7 +109,7 @@ export const MembersTab = ({ members }: MembersTabProps) => {
           <DialogFooter>
             <Button
               variant="ghost"
-              onClick={() => setMuteTarget(null)}
+              onClick={handlers.handleCloseMuteDialog}
               className="rounded-xl"
             >
               Cancel

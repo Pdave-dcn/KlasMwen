@@ -185,6 +185,12 @@ const UpdateMemberRoleSchema = z.object({
   role: CircleRoleSchema,
 });
 
+const UpdateMemberRoleMutationSchema = z.object({
+  userId: z.uuid(),
+  circleId: z.uuid(),
+  data: UpdateMemberRoleSchema,
+});
+
 const SendMessageSchema = z.object({
   content: z.string().min(1).max(1000),
 });
@@ -254,6 +260,7 @@ export {
   UpdateStudyCircleSchema,
   AddMemberSchema,
   UpdateMemberRoleSchema,
+  UpdateMemberRoleMutationSchema,
   SendMessageSchema,
   SocketMemberJoinedDataSchema,
   SocketMemberLeftDataSchema,

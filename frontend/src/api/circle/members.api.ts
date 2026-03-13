@@ -4,6 +4,7 @@ import {
   CircleMemberResponseSchema,
   type AddMemberData,
   type UpdateMemberRoleData,
+  UpdateMemberRoleMutationSchema,
 } from "@/zodSchemas/circle.zod";
 
 import api from "../api";
@@ -48,6 +49,7 @@ export const updateCircleMemberRole = async (
   data: UpdateMemberRoleData,
 ) => {
   try {
+    UpdateMemberRoleMutationSchema.parse({ userId, circleId, data });
     const res = await api.patch(`/circles/${circleId}/members/${userId}`, data);
     const validatedData = CircleMemberResponseSchema.parse(res.data);
     return validatedData.data;

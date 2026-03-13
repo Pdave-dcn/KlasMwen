@@ -1,7 +1,4 @@
-import { useState } from "react";
-
 import { LogOut, Trash2, AlertTriangle } from "lucide-react";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
-import { CircleGate } from "../../security/CircleGate";
+import { useDangerZoneTab } from "../hooks/useDangerZoneTab";
 
 interface DangerZoneTabProps {
   circleName: string;
@@ -24,21 +21,17 @@ interface DangerZoneTabProps {
 const DELETE_CONFIRM = "DELETE MY CIRCLE";
 
 export function DangerZoneTab({ circleName, onClose }: DangerZoneTabProps) {
-  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState("");
-
-  const handleLeave = () => {
-    toast.success("You have left the circle.");
-    setShowLeaveDialog(false);
-    onClose();
-  };
-
-  const handleDelete = () => {
-    toast.success("Circle has been permanently deleted.");
-    setShowDeleteDialog(false);
-    onClose();
-  };
+  const {
+    showLeaveDialog,
+    setShowLeaveDialog,
+    showDeleteDialog,
+    setShowDeleteDialog,
+    deleteConfirm,
+    setDeleteConfirm,
+    canLeave,
+    canDelete,
+    handlers,
+  } = useDangerZoneTab({ onClose });
 
   return (
     <div className="space-y-6">
@@ -54,31 +47,29 @@ export function DangerZoneTab({ circleName, onClose }: DangerZoneTabProps) {
         </p>
       </div>
 
-      {/* Leave Circle — available to all members (circleMembers.remove is data-dependent: self-removal) */}
-      <div className="flex items-center justify-between p-4 rounded-xl border border-border">
-        <div>
-          <p className="text-sm font-medium text-foreground">Leave Circle</p>
-          <p className="text-xs text-muted-foreground">
-            You will lose access to all messages and need a new invite to
-            rejoin.
-          </p>
+      {/* Leave Circle — not available to OWNER */}
+      {canLeave && (
+        <div className="flex items-center justify-between p-4 rounded-xl border border-border">
+          <div>
+            <p className="text-sm font-medium text-foreground">Leave Circle</p>
+            <p className="text-xs text-muted-foreground">
+              You will lose access to all messages and need a new invite to
+              rejoin.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            className="rounded-xl border-destructive/30 text-destructive hover:bg-destructive hover:text-destructive-foreground gap-2"
+            onClick={() => setShowLeaveDialog(true)}
+          >
+            <LogOut className="h-4 w-4" />
+            Leave
+          </Button>
         </div>
-        <Button
-          variant="outline"
-          className="rounded-xl border-destructive/30 text-destructive hover:bg-destructive hover:text-destructive-foreground gap-2"
-          onClick={() => setShowLeaveDialog(true)}
-        >
-          <LogOut className="h-4 w-4" />
-          Leave
-        </Button>
-      </div>
+      )}
 
-      {/* Delete Circle — OWNER only (circles.delete = true only for OWNER) */}
-      <CircleGate
-        resource="circles"
-        action="delete"
-        strict // use canDefinitely: false for MODERATORs and MEMBERs, no pass-through
-      >
+      {/* Delete Circle — OWNER only */}
+      {canDelete && (
         <div className="flex items-center justify-between p-4 rounded-xl border-2 border-destructive/30 bg-destructive/5">
           <div>
             <p className="text-sm font-medium text-destructive">
@@ -98,7 +89,7 @@ export function DangerZoneTab({ circleName, onClose }: DangerZoneTabProps) {
             Delete
           </Button>
         </div>
-      </CircleGate>
+      )}
 
       {/* Leave Confirmation */}
       <Dialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
@@ -120,7 +111,7 @@ export function DangerZoneTab({ circleName, onClose }: DangerZoneTabProps) {
             </Button>
             <Button
               variant="destructive"
-              onClick={handleLeave}
+              onClick={handlers.handleLeave}
               className="rounded-xl"
             >
               Leave Circle
@@ -159,7 +150,7 @@ export function DangerZoneTab({ circleName, onClose }: DangerZoneTabProps) {
             <Button
               variant="destructive"
               disabled={deleteConfirm !== DELETE_CONFIRM}
-              onClick={handleDelete}
+              onClick={handlers.handleDelete}
               className="rounded-xl"
             >
               Permanently Delete

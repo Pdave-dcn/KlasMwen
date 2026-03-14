@@ -78,6 +78,7 @@ export const MembersTab = ({ members }: MembersTabProps) => {
             key={member.userId}
             member={member}
             onMute={handlers.handleMute}
+            onUnmute={handlers.handleUnmute}
           />
         ))}
       </div>

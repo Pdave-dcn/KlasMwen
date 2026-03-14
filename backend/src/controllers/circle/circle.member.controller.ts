@@ -3,6 +3,7 @@ import CircleService from "../../features/circle/service/CircleService.js";
 import createActionLogger from "../../utils/logger.util.js";
 import {
   AddMemberDataSchema,
+  MuteMemberDataSchema,
   StudyCircleIdParamSchema,
   UpdateMemberRoleDataSchema,
   UserIdParamSchema,
@@ -210,10 +211,57 @@ const updateLastReadAt = async (
   }
 };
 
+const setMemberMute = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const actionLogger = createActionLogger(
+    controllerLogger,
+    "setMemberMute",
+    req,
+  );
+
+  try {
+    const { user } = req as AuthenticatedRequest;
+    const { circleId } = StudyCircleIdParamSchema.parse(req.params);
+    const { userId } = UserIdParamSchema.parse(req.params);
+    const parsed = MuteMemberDataSchema.parse(req.body);
+
+    actionLogger.info(
+      { circleId, targetUserId: userId, muted: parsed.muted },
+      parsed.muted ? "Muting circle member" : "Unmuting circle member",
+    );
+
+    const updatedMember = parsed.muted
+      ? await CircleService.muteMember(user, circleId, userId, parsed.duration)
+      : await CircleService.unmuteMember(user, circleId, userId);
+
+    actionLogger.info(
+      {
+        circleId,
+        targetUserId: userId,
+        requesterId: user.id,
+        isMuted: updatedMember.isMuted,
+      },
+      parsed.muted
+        ? "Member muted successfully"
+        : "Member unmuted successfully",
+    );
+
+    return res.status(200).json({
+      data: updatedMember,
+    });
+  } catch (error: unknown) {
+    return next(error);
+  }
+};
+
 export {
   addMember,
   getCircleMembers,
   removeMember,
   updateMemberRole,
+  setMemberMute,
   updateLastReadAt,
 };

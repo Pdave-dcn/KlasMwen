@@ -1,3 +1,4 @@
+import type { MuteDuration } from "@/features/study-circles/settings/types";
 import handleZodValidationError from "@/utils/zodErrorHandler.util";
 import {
   CircleMembersResponseSchema,
@@ -64,6 +65,27 @@ export const updateCircleMemberLastReadAt = async (circleId: string) => {
     await api.post(`/circles/${circleId}/members/me/read`);
   } catch (error) {
     handleZodValidationError(error, "updateCircleMemberLastReadAt");
+    throw error;
+  }
+};
+
+export const setCircleMemberMute = async (
+  circleId: string,
+  userId: string,
+  muted: boolean,
+  duration?: MuteDuration["value"],
+) => {
+  try {
+    const res = await api.patch(`/circles/${circleId}/members/${userId}/mute`, {
+      muted,
+      duration,
+    });
+
+    const validatedData = CircleMemberResponseSchema.parse(res.data);
+
+    return validatedData.data;
+  } catch (error) {
+    handleZodValidationError(error, "setCircleMemberMute");
     throw error;
   }
 };

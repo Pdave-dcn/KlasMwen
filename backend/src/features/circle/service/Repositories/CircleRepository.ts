@@ -177,6 +177,24 @@ class CircleRepository {
     });
   }
 
+  /** Mute a member until a given date, or unmute by passing null */
+  static async setMemberMute(
+    userId: string,
+    circleId: string,
+    mutedUntil: Date | null,
+  ) {
+    return await prisma.circleMember.update({
+      where: {
+        userId_circleId: {
+          userId,
+          circleId,
+        },
+      },
+      data: { mutedUntil },
+      select: BaseSelectors.circleMember,
+    });
+  }
+
   /** Add a user to a circle */
   static async addMember(data: JoinCircleData) {
     return await prisma.circleMember.create({
@@ -242,13 +260,8 @@ class CircleRepository {
   static async findAllContacts(userId: string) {
     const members = await prisma.circleMember.findMany({
       where: {
-        circleId: {
-          in: await prisma.circleMember
-            .findMany({
-              where: { userId },
-              select: { circleId: true },
-            })
-            .then((groups) => groups.map((g) => g.circleId)),
+        circle: {
+          members: { some: { userId } },
         },
         NOT: { userId },
       },
@@ -359,9 +372,8 @@ class CircleRepository {
   // Statistics Operations
 
   static async getQuickStats(userId: string) {
-    const [activeGroupsCount, unreadResult, studyPartnersCount] =
+    const [activeGroupsCount, memberships, studyPartnersCount, unreadBatch] =
       await Promise.all([
-        // Active Circles: Count circles user belongs to with activity in last 7 days
         prisma.circle.count({
           where: {
             members: { some: { userId } },
@@ -375,42 +387,29 @@ class CircleRepository {
           },
         }),
 
-        // Unread Messages: Sum of messages since user's lastReadAt in each circle
         prisma.circleMember.findMany({
           where: { userId },
-          select: {
-            circleId: true,
-            lastReadAt: true,
-          },
+          select: { circleId: true },
         }),
 
-        // Study Partners: Unique users who share at least one circle with this user
         prisma.circleMember
           .findMany({
             where: {
-              circle: {
-                members: { some: { userId } },
-              },
+              circle: { members: { some: { userId } } },
               NOT: { userId },
             },
             distinct: ["userId"],
             select: { userId: true },
           })
-          .then((results) => results.length),
+          .then((r) => r.length),
+
+        this.countUnreadMessagesBatch(userId),
       ]);
 
-    // For Unread calculation (Step 2 follow-up)
-    let totalUnread = 0;
-    for (const membership of unreadResult) {
-      const count = await prisma.circleMessage.count({
-        where: {
-          circleId: membership.circleId,
-          createdAt: { gt: membership.lastReadAt ?? new Date(0) },
-          NOT: { senderId: userId },
-        },
-      });
-      totalUnread += count;
-    }
+    const totalUnread = memberships.reduce(
+      (sum, { circleId }) => sum + (unreadBatch[circleId] ?? 0),
+      0,
+    );
 
     return {
       activeGroups: activeGroupsCount,

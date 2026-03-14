@@ -299,6 +299,16 @@ interface SendMessageData {
   circleId: string;
 }
 
+const MUTE_DURATION_MS = {
+  15: 15 * 60 * 1000,
+  30: 30 * 60 * 1000,
+  60: 60 * 60 * 1000,
+  360: 360 * 60 * 1000,
+  1440: 1440 * 60 * 1000,
+} as const;
+
+type MuteDurationMinutes = keyof typeof MUTE_DURATION_MS;
+
 // Pagination Types
 
 interface MessagePaginationCursor {
@@ -453,6 +463,7 @@ interface CircleSearchPage {
 
 export {
   BaseSelectors,
+  MUTE_DURATION_MS,
   // Input types
   type CreateCircleData,
   type CreateCircleFinalData,
@@ -460,6 +471,7 @@ export {
   type JoinCircleData,
   type UpdateMemberRoleData,
   type SendMessageData,
+  type MuteDurationMinutes,
   // Pagination types
   type MessagePaginationCursor,
   type CirclePaginationCursor,

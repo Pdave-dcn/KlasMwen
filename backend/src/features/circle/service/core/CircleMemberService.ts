@@ -6,9 +6,16 @@ import {
 import { assertCirclePermission } from "../../security/rbac.js";
 import CircleEnricher from "../CircleEnrichers.js";
 import CircleTransformers from "../CircleTransformers.js";
+import {
+  MUTE_DURATION_MS,
+  type JoinCircleData,
+  type MuteDurationMinutes,
+  type UpdateMemberRoleData,
+} from "../CircleTypes.js";
 import CircleRepository from "../Repositories/CircleRepository.js";
 
-import type { JoinCircleData, UpdateMemberRoleData } from "../CircleTypes.js";
+import { CircleValidationService } from "./CircleValidationService.js";
+
 import type { CircleRole } from "@prisma/client";
 
 /**
@@ -81,6 +88,87 @@ export class CircleMemberService {
     const enrichedMember = CircleEnricher.enrichMember(member);
 
     return CircleTransformers.transformMember(enrichedMember);
+  }
+
+  /**
+   * Mutes a circle member for a given duration or indefinitely.
+   *
+   * Permissions:
+   * - OWNER can mute any MODERATOR or MEMBER
+   * - MODERATOR can only mute MEMBERs
+   *
+   * @param actor     - The user performing the mute
+   * @param circleId  - The circle in which the mute applies
+   * @param targetUserId - The user to mute
+   * @param durationMinutes - Duration in minutes, or "indefinite" for indefinite mute
+   */
+  static async muteMember(
+    actor: Omit<Express.User, "email"> & { circleRole?: CircleRole },
+    circleId: string,
+    targetUserId: string,
+    durationMinutes: MuteDurationMinutes | "indefinite",
+  ) {
+    await CircleValidationService.verifyCircleExists(circleId);
+
+    // Fetch the target's membership to run the data-dependent permission check
+    const targetMember = await CircleValidationService.verifyMembership(
+      targetUserId,
+      circleId,
+    );
+
+    // OWNER can mute anyone below OWNER, MODERATOR can only mute MEMBERs
+    assertCirclePermission(actor, "circleMembers", "mute", {
+      role: targetMember.role,
+      userId: targetMember.userId,
+    });
+
+    const mutedUntil =
+      durationMinutes !== "indefinite"
+        ? new Date(Date.now() + MUTE_DURATION_MS[durationMinutes])
+        : new Date("9999-12-31T23:59:59Z"); // sentinel for indefinite
+
+    const updated = await CircleRepository.setMemberMute(
+      targetUserId,
+      circleId,
+      mutedUntil,
+    );
+
+    return CircleEnricher.enrichMember(updated);
+  }
+
+  /**
+   * Unmutes a circle member.
+   *
+   * Permissions: same hierarchy as muteMember.
+   *
+   * @param actor        - The user performing the unmute
+   * @param circleId     - The circle in which the unmute applies
+   * @param targetUserId - The user to unmute
+   */
+  static async unmuteMember(
+    actor: Omit<Express.User, "email"> & { circleRole?: CircleRole },
+    circleId: string,
+    targetUserId: string,
+  ) {
+    await CircleValidationService.verifyCircleExists(circleId);
+
+    const targetMember = await CircleValidationService.verifyMembership(
+      targetUserId,
+      circleId,
+    );
+
+    assertCirclePermission(actor, "circleMembers", "mute", {
+      role: targetMember.role,
+      userId: targetMember.userId,
+    });
+
+    const updated = await CircleRepository.setMemberMute(
+      targetUserId,
+      circleId,
+      null, // clear the mute
+    );
+
+    return CircleEnricher.enrichMember(updated);
   }
 
   /**

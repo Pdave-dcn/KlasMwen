@@ -41,6 +41,7 @@ export const CIRCLE_POLICY: ChatPolicyMap = {
       remove: (u, m) => !hasRole({ ...u, circleRole: m.role }, "OWNER"), // Cannot remove other owners
       updateRole: (u, m) => !hasRole({ ...u, circleRole: m.role }, "OWNER"), // Cannot change other owners' roles
       view: true, // Owner can view all members
+      mute: (u, m) => !hasRole({ ...u, circleRole: m.role }, "OWNER"), // Cannot mute other owners
     },
     circleMessages: {
       send: true, // Owner can send messages
@@ -64,6 +65,8 @@ export const CIRCLE_POLICY: ChatPolicyMap = {
         !hasRole({ ...u, circleRole: m.role }, ["OWNER", "MODERATOR"]), // Cannot remove owners or other moderators
       updateRole: false, // Only owner can change roles
       view: true, // Moderator can view all members
+      mute: (u, m) =>
+        !hasRole({ ...u, circleRole: m.role }, ["OWNER", "MODERATOR"]), // Cannot mute owners or other moderators
     },
     circleMessages: {
       send: true,
@@ -86,6 +89,7 @@ export const CIRCLE_POLICY: ChatPolicyMap = {
       remove: isMemberUser, // Members can only remove themselves (leave)
       updateRole: false, // Members cannot change roles
       view: true, // Members can view other members
+      mute: false, // Members cannot mute anyone
     },
     circleMessages: {
       send: true,

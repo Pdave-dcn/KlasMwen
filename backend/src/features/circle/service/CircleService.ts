@@ -40,6 +40,8 @@ export class CircleService {
   static getMemberInfo: typeof CircleMemberService.getMemberInfo;
   static isMember: typeof CircleMemberService.isMember;
   static updateLastReadAt: typeof CircleMemberService.updateLastReadAt;
+  static muteMember: typeof CircleMemberService.muteMember;
+  static unmuteMember: typeof CircleMemberService.unmuteMember;
 
   // Message Operations
   static sendMessage: typeof CircleMessageService.sendMessage;
@@ -93,6 +95,8 @@ export class CircleService {
         "getMemberInfo",
         "isMember",
         "updateLastReadAt",
+        "muteMember",
+        "unmuteMember",
       ]),
       // Bind message operations
       bindMethods(CircleMessageService, [

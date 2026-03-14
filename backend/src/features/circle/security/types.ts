@@ -35,7 +35,7 @@ const circleRegistry = {
   },
   circleMembers: {
     datatype: {} as CircleMemberForPolicy,
-    action: ["add", "remove", "updateRole", "view"],
+    action: ["add", "remove", "updateRole", "view", "mute"],
   },
   circleMessages: {
     datatype: {} as CircleMessageForPolicy,

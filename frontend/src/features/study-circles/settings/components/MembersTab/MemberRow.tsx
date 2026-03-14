@@ -7,6 +7,7 @@ import {
   Users,
   Shield,
   Crown,
+  Volume2,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -32,11 +33,12 @@ import {
 
 import { useCircleMemberPermissions } from "../../../security/useCircleMemberPermission";
 import { useMemberRow } from "../../hooks/useMemberRow";
-import { MUTE_DURATIONS } from "../../types";
+import { MUTE_DURATIONS, type MuteDuration } from "../../types";
 
 interface MemberRowProps {
   member: CircleMember;
-  onMute: (member: CircleMember, duration: number | null) => void;
+  onMute: (member: CircleMember, duration: MuteDuration["value"]) => void;
+  onUnmute: (member: CircleMember) => void;
 }
 
 const roleConfig: Record<
@@ -48,7 +50,7 @@ const roleConfig: Record<
   MEMBER: { icon: Users, label: "Member", color: "text-muted-foreground" },
 };
 
-export function MemberRow({ member, onMute }: MemberRowProps) {
+export function MemberRow({ member, onMute, onUnmute }: MemberRowProps) {
   const config = roleConfig[member.role];
   const RoleIcon = config.icon;
 
@@ -149,24 +151,30 @@ export function MemberRow({ member, onMute }: MemberRowProps) {
               </>
             )}
 
-            {canMute && (
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                  <VolumeX className="h-4 w-4 mr-2" />
-                  Mute
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent className="rounded-xl">
-                  {MUTE_DURATIONS.map((d) => (
-                    <DropdownMenuItem
-                      key={d.label}
-                      onClick={() => onMute(member, d.value)}
-                    >
-                      {d.label}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-            )}
+            {canMute &&
+              (member.isMuted ? (
+                <DropdownMenuItem onClick={() => onUnmute(member)}>
+                  <Volume2 className="h-4 w-4 mr-2" />
+                  Unmute
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <VolumeX className="h-4 w-4 mr-2" />
+                    Mute
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent className="rounded-xl">
+                    {MUTE_DURATIONS.map((d) => (
+                      <DropdownMenuItem
+                        key={d.label}
+                        onClick={() => onMute(member, d.value)}
+                      >
+                        {d.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              ))}
 
             <DropdownMenuSeparator />
 

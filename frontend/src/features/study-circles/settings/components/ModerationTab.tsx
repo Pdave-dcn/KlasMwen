@@ -1,12 +1,6 @@
 import { useState } from "react";
 
-import {
-  VolumeX,
-  Volume2,
-  Timer,
-  Trash2,
-  AlertTriangle,
-} from "lucide-react";
+import { VolumeX, Volume2, Timer, Trash2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +15,8 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { useSetCircleMemberMuteMutation } from "@/queries/circle";
+import { useCircleStore } from "@/stores/circle.store";
 import type { CircleMember } from "@/zodSchemas/circle.zod";
 
 interface ModerationTabProps {
@@ -34,15 +30,21 @@ export function ModerationTab({
   slowMode: initialSlowMode,
   slowModeInterval: _initialInterval,
 }: ModerationTabProps) {
+  // todo: implement slow mode interval setting and replace the hardcoded "5 seconds" text with the actual interval
   const [slowMode, setSlowMode] = useState(initialSlowMode);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+
+  const currentCircleId =
+    useCircleStore((state) => state.selectedCircleId) ?? "";
+  const setMuteMutation = useSetCircleMemberMuteMutation(currentCircleId);
 
   const mutedMembers = members.filter((m) => m.isMuted);
 
   const handleUnmute = (member: CircleMember) => {
-    toast.success(`${member.user.username} has been unmuted.`);
+    setMuteMutation.mutate({ userId: member.user.id, muted: false });
   };
 
+  // todo: implement actual chat clearing functionality and remove the toast
   const handleClearChat = () => {
     toast.success("Chat history has been cleared.");
     setShowClearConfirm(false);

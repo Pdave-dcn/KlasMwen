@@ -6,7 +6,9 @@ import {
   removeCircleMember,
   updateCircleMemberRole,
   updateCircleMemberLastReadAt,
+  setCircleMemberMute,
 } from "@/api/circle";
+import type { MuteDuration } from "@/features/study-circles/settings/types";
 import type {
   AddMemberData,
   UpdateMemberRoleData,
@@ -78,5 +80,25 @@ export const useUpdateCircleMemberRoleMutation = (circleId: string) => {
 export const useUpdateCircleMemberLastReadAtMutation = () => {
   return useMutation({
     mutationFn: (circleId: string) => updateCircleMemberLastReadAt(circleId),
+  });
+};
+
+export const useSetCircleMemberMuteMutation = (circleId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      userId,
+      muted,
+      duration,
+    }: {
+      userId: string;
+      muted: boolean;
+      duration?: MuteDuration["value"];
+    }) => setCircleMemberMute(circleId, userId, muted, duration),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["circles", circleId, "members"],
+      });
+    },
   });
 };

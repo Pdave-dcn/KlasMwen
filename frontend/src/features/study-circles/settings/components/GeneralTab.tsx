@@ -122,13 +122,13 @@ export function GeneralTab({ circle }: GeneralTabProps) {
         <div className="grid grid-cols-2 gap-3">
           {[
             {
-              value: true,
+              value: false,
               icon: Globe,
               label: "Public",
               desc: "Appears in search & discovery",
             },
             {
-              value: false,
+              value: true,
               icon: Lock,
               label: "Private",
               desc: "Invite-only, hidden from search",

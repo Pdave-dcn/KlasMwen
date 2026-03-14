@@ -62,6 +62,23 @@ const UpdateMemberRoleDataSchema = z.object({
   role: z.enum(CircleRole),
 });
 
+const MuteMemberDataSchema = z.discriminatedUnion("muted", [
+  z.object({
+    muted: z.literal(true),
+    duration: z.union([
+      z.literal(15),
+      z.literal(30),
+      z.literal(60),
+      z.literal(360),
+      z.literal(1440),
+      z.literal("indefinite"),
+    ]),
+  }),
+  z.object({
+    muted: z.literal(false),
+  }),
+]);
+
 // Circle Message Schemas
 
 const SendMessageDataSchema = z.object({
@@ -156,6 +173,7 @@ type UpdateStudyCircleData = z.infer<typeof UpdateStudyCircleDataSchema>;
 type AddMemberData = z.infer<typeof AddMemberDataSchema>;
 type UpdateMemberRoleData = z.infer<typeof UpdateMemberRoleDataSchema>;
 type SendMessageData = z.infer<typeof SendMessageDataSchema>;
+type MuteMemberData = z.infer<typeof MuteMemberDataSchema>;
 
 export {
   CreateStudyCircleDataSchema,
@@ -164,6 +182,7 @@ export {
   StudyCircleIdParamSchema,
   CreatorIdParamSchema,
   UserIdParamSchema,
+  MuteMemberDataSchema,
   AddMemberDataSchema,
   UpdateMemberRoleDataSchema,
   SendMessageDataSchema,
@@ -176,4 +195,5 @@ export {
   type AddMemberData,
   type UpdateMemberRoleData,
   type SendMessageData,
+  type MuteMemberData,
 };

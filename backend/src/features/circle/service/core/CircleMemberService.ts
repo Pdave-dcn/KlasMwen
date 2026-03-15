@@ -71,8 +71,8 @@ export class CircleMemberService {
     circleId: string,
     requester: Express.User & { circleRole?: CircleRole },
   ) {
-    const group = await CircleRepository.findCircleById(circleId);
-    if (!group) throw new CircleNotFoundError(circleId);
+    const circle = await CircleRepository.findCircleById(circleId);
+    if (!circle) throw new CircleNotFoundError(circleId);
 
     const membership = await CircleRepository.getMembership(
       targetUserId,

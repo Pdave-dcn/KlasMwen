@@ -1,6 +1,10 @@
 import { useState } from "react";
 
-import { toast } from "sonner";
+import {
+  useDeleteCircleMutation,
+  useRemoveCircleMemberMutation,
+} from "@/queries/circle";
+import { useCircleStore } from "@/stores/circle.store";
 
 import { useCirclePermission } from "../../security/useCirclePermission";
 
@@ -13,6 +17,13 @@ export function useDangerZoneTab({ onClose }: UseDangerZoneTabProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
 
+  const currentCircleId =
+    useCircleStore((state) => state.selectedCircleId) ?? "";
+  const currentUserId = useCircleStore((state) => state.currentUser?.id) ?? "";
+
+  const deleteCircleMutation = useDeleteCircleMutation();
+  const leaveCircleMutation = useRemoveCircleMemberMutation(currentCircleId);
+
   const { isOwner, canDefinitely } = useCirclePermission();
 
   // Owners cannot leave — they must delete or transfer ownership first
@@ -21,13 +32,13 @@ export function useDangerZoneTab({ onClose }: UseDangerZoneTabProps) {
   const canDelete = canDefinitely("circles", "delete");
 
   const handleLeave = () => {
-    toast.success("You have left the circle.");
+    leaveCircleMutation.mutate(currentUserId);
     setShowLeaveDialog(false);
     onClose();
   };
 
   const handleDelete = () => {
-    toast.success("Circle has been permanently deleted.");
+    deleteCircleMutation.mutate(currentCircleId);
     setShowDeleteDialog(false);
     onClose();
   };

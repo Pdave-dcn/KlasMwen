@@ -174,10 +174,10 @@ export class CircleCoreService {
     circleId: string,
     user: Express.User & { circleRole?: CircleRole },
   ) {
-    const group = await CircleRepository.findCircleById(circleId);
-    if (!group) throw new CircleNotFoundError(circleId);
+    const circle = await CircleRepository.findCircleById(circleId);
+    if (!circle) throw new CircleNotFoundError(circleId);
 
-    assertCirclePermission(user, "circles", "delete", group);
+    assertCirclePermission(user, "circles", "delete", circle);
 
     return await CircleRepository.deleteCircle(circleId);
   }

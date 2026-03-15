@@ -98,18 +98,16 @@ const removeMember = async (
   try {
     actionLogger.info("Removing member from study circle");
     const { user } = req as AuthenticatedRequest;
-    const { circleId: chatGroupId } = StudyCircleIdParamSchema.parse(
-      req.params,
-    );
+    const { circleId } = StudyCircleIdParamSchema.parse(req.params);
     const { userId } = UserIdParamSchema.parse(req.params);
 
-    await CircleService.removeMember(userId, chatGroupId, user);
+    await CircleService.removeMember(userId, circleId, user);
 
     const isSelfRemoval = user.id === userId;
 
     actionLogger.info(
       {
-        groupId: chatGroupId,
+        circleId,
         removedUserId: userId,
         requesterId: user.id,
         isSelfRemoval,
@@ -143,22 +141,20 @@ const updateMemberRole = async (
   try {
     actionLogger.info("Updating member role");
     const { user } = req as AuthenticatedRequest;
-    const { circleId: chatGroupId } = StudyCircleIdParamSchema.parse(
-      req.params,
-    );
+    const { circleId } = StudyCircleIdParamSchema.parse(req.params);
     const { userId } = UserIdParamSchema.parse(req.params);
     const { role } = UpdateMemberRoleDataSchema.parse(req.body);
 
     const updatedMember = await CircleService.updateMemberRole(
       userId,
-      chatGroupId,
+      circleId,
       { role },
       user,
     );
 
     actionLogger.info(
       {
-        groupId: chatGroupId,
+        circleId,
         targetUserId: userId,
         newRole: role,
         requesterId: user.id,

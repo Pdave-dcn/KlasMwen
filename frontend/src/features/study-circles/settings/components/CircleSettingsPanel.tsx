@@ -19,7 +19,7 @@ import { useCirclePermission } from "../../security/useCirclePermission";
 import { DangerZoneTab } from "./DangerZoneTab";
 import { GeneralTab } from "./GeneralTab";
 import { MembersTab } from "./MembersTab/MembersTab";
-import { ModerationTab } from "./ModerationTab";
+import { ModerationTab } from "./ModerationTab/ModerationTab";
 
 import type { SettingsTab } from "../types";
 

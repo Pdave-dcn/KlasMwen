@@ -1,3 +1,4 @@
+import type { UpdateStudyCircleData } from "../../../zodSchemas/circle.zod";
 import type { Prisma, CircleRole } from "@prisma/client";
 
 const CircleFragments = {
@@ -134,6 +135,9 @@ const BaseSelectors = {
       select: CircleFragments.circleLatestMessageBase,
       orderBy: { createdAt: "desc" },
       take: 1,
+    },
+    circleTags: {
+      include: { tag: true },
     },
     _count: {
       select: {
@@ -276,12 +280,7 @@ interface CreateCircleFinalData extends CreateCircleData {
   avatarId: number;
 }
 
-interface UpdateCircleData {
-  name?: string;
-  description?: string;
-  isPrivate?: boolean;
-  avatarId?: number;
-}
+type UpdateCircleData = UpdateStudyCircleData;
 
 interface JoinCircleData {
   userId: string;
@@ -436,11 +435,12 @@ type TransformedCirclePreviewDetail = Omit<
 
 type EnrichedCircle = Omit<
   CircleWithMembersAndLatestMsg,
-  "_count" | "members"
+  "_count" | "members" | "circleTags"
 > & {
   memberCount: number;
   latestMessage: TransformedCircleMessage | CircleLatestMessage | null;
   unreadCount: number;
+  tags: { id: number; name: string }[];
   userRole?: CircleRole | null;
 };
 

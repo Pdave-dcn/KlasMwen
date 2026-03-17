@@ -35,7 +35,7 @@ class CircleEnricher {
       lastReadAt ?? undefined,
     );
 
-    const { _count, members: _members, ...circleData } = circle;
+    const { _count, members: _members, circleTags, ...circleData } = circle;
 
     return {
       ...circleData,
@@ -43,6 +43,7 @@ class CircleEnricher {
       latestMessage,
       unreadCount,
       userRole,
+      tags: circleTags.map((cgt) => cgt.tag),
     };
   }
 
@@ -69,7 +70,7 @@ class CircleEnricher {
       const latestMessage = circle.messages[0] || null;
       const unreadCount = unreadCounts[circle.id] ?? 0;
 
-      const { _count, members: _members, ...circleData } = circle;
+      const { _count, members: _members, circleTags, ...circleData } = circle;
 
       return {
         ...circleData,
@@ -77,6 +78,7 @@ class CircleEnricher {
         latestMessage,
         unreadCount,
         userRole,
+        tags: circleTags.map((cgt) => cgt.tag),
       };
     });
   }

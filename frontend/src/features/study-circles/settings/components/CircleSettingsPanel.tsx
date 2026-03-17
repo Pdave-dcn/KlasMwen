@@ -17,7 +17,7 @@ import { RoleGate } from "../../security/CircleGate";
 import { useCirclePermission } from "../../security/useCirclePermission";
 
 import { DangerZoneTab } from "./DangerZoneTab";
-import { GeneralTab } from "./GeneralTab";
+import { GeneralTab } from "./GeneralTab/GeneralTab";
 import { MembersTab } from "./MembersTab/MembersTab";
 import { ModerationTab } from "./ModerationTab/ModerationTab";
 

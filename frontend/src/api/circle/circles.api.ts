@@ -3,8 +3,9 @@ import {
   StudyCirclesResponseSchema,
   StudyCircleResponseSchema,
   type CreateStudyCircleData,
-  type UpdateStudyCircleData,
+  type EditCircleInfoValues,
   StudyCirclePreviewResponseSchema,
+  CircleAvatarsResponseSchema,
 } from "@/zodSchemas/circle.zod";
 
 import api from "../api";
@@ -79,7 +80,7 @@ export const getCirclePreviewDetails = async (circleId: string) => {
 
 export const updateStudyCircle = async (
   circleId: string,
-  data: UpdateStudyCircleData,
+  data: EditCircleInfoValues,
 ) => {
   try {
     const res = await api.put(`/circles/${circleId}`, data);
@@ -96,6 +97,22 @@ export const deleteStudyCircle = async (circleId: string) => {
     await api.delete(`/circles/${circleId}`);
   } catch (error) {
     handleZodValidationError(error, "deleteStudyCircle");
+    throw error;
+  }
+};
+
+export const getCircleAvatars = async (
+  limit: number,
+  cursor?: number | string,
+) => {
+  try {
+    const res = await api.get("/circles/avatars", {
+      params: { limit, cursor },
+    });
+    const validatedData = CircleAvatarsResponseSchema.parse(res.data);
+    return validatedData;
+  } catch (error) {
+    handleZodValidationError(error, "getCircleAvatars");
     throw error;
   }
 };

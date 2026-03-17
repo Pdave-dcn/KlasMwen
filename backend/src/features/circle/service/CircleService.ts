@@ -31,6 +31,7 @@ export class CircleService {
   static deleteCircle: typeof CircleCoreService.deleteCircle;
   static joinCircle: typeof CircleCoreService.joinCircle;
   static getRecentActivityCircles: typeof CircleCoreService.getRecentActivityCircles;
+  static getCircleAvatars: typeof CircleCoreService.getCircleAvatars;
 
   // Member Operations
   static addMember: typeof CircleMemberService.addMember;
@@ -85,6 +86,7 @@ export class CircleService {
         "updateCircle",
         "deleteCircle",
         "getRecentActivityCircles",
+        "getCircleAvatars",
       ]),
       // Bind member operations
       bindMethods(CircleMemberService, [

@@ -3,6 +3,7 @@ import {
   useMutation,
   useQueryClient,
   type InfiniteData,
+  useInfiniteQuery,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -15,10 +16,11 @@ import {
   getRecentActivityCircles,
   createStudyCircle,
   joinStudyCircle,
+  getCircleAvatars,
 } from "@/api/circle";
 import type {
   CreateStudyCircleData,
-  UpdateStudyCircleData,
+  EditCircleInfoValues,
   StudyCirclesForDiscoveryResponseSchema,
 } from "@/zodSchemas/circle.zod";
 
@@ -51,6 +53,20 @@ export const useCirclePreviewDetailsQuery = (circleId: string) => {
     queryKey: ["circles", circleId, "preview"],
     queryFn: () => getCirclePreviewDetails(circleId),
     enabled: !!circleId,
+  });
+};
+
+export const useCircleAvatarsQuery = (limit = 20) => {
+  return useInfiniteQuery({
+    queryKey: ["circles", "avatars", limit],
+    queryFn: ({ pageParam }: { pageParam?: number | string }) =>
+      getCircleAvatars(limit, pageParam),
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination.hasMore
+        ? lastPage.pagination.nextCursor
+        : undefined;
+    },
   });
 };
 
@@ -103,7 +119,7 @@ export const useUpdateCircleMutation = (circleId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: UpdateStudyCircleData) =>
+    mutationFn: (data: EditCircleInfoValues) =>
       updateStudyCircle(circleId, data),
     onSuccess: async () => {
       await queryClient.invalidateQueries({

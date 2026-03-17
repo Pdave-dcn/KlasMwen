@@ -46,6 +46,7 @@ const UpdateStudyCircleDataSchema = z
       .optional(),
     isPrivate: z.boolean().optional(),
     avatarId: z.number().int().positive(),
+    tagIds: z.array(z.number().int().positive()).max(10).optional().default([]),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: "At least one field must be provided for update",

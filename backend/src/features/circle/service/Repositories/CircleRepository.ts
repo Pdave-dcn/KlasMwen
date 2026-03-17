@@ -1,4 +1,5 @@
 import prisma from "../../../../core/config/db.js";
+import { buildPaginatedQuery } from "../../../../utils/pagination.util.js";
 import {
   BaseSelectors,
   type UpdateCircleData,
@@ -9,6 +10,8 @@ import {
   type CreateCircleFinalData,
   type CirclePaginationCursor,
 } from "../CircleTypes.js";
+
+import type { Prisma } from "@prisma/client";
 
 class CircleRepository {
   //Circle Operations
@@ -101,14 +104,35 @@ class CircleRepository {
 
   /** Update circle details */
   static async updateCircle(circleId: string, data: UpdateCircleData) {
-    return await prisma.circle.update({
-      where: { id: circleId },
-      data: {
-        name: data.name,
-        description: data.description,
-        isPrivate: data.isPrivate,
-      },
-      select: BaseSelectors.circleWithMembersAndLatestMsg,
+    return await prisma.$transaction(async (tx) => {
+      // Update circle fields
+      const circle = await tx.circle.update({
+        where: { id: circleId },
+        data: {
+          name: data.name,
+          description: data.description,
+          isPrivate: data.isPrivate,
+          avatarId: data.avatarId,
+        },
+        select: BaseSelectors.circleWithMembersAndLatestMsg,
+      });
+
+      // Sync tags only if tagIds were provided
+      if (data.tagIds !== undefined) {
+        // Delete all existing tags for this circle
+        await tx.circleTag.deleteMany({
+          where: { circleId },
+        });
+
+        // Insert the new set
+        if (data.tagIds.length > 0) {
+          await tx.circleTag.createMany({
+            data: data.tagIds.map((tagId) => ({ circleId, tagId })),
+          });
+        }
+      }
+
+      return circle;
     });
   }
 
@@ -133,6 +157,23 @@ class CircleRepository {
       select: BaseSelectors.circleWithMembersAndLatestMsg,
       orderBy: { createdAt: "desc" },
     });
+  }
+
+  static async getCircleAvatars(limit = 20, cursor?: number) {
+    const baseQuery: Prisma.CircleAvatarFindManyArgs = {
+      select: {
+        id: true,
+        url: true,
+      },
+    };
+
+    const paginatedQuery = buildPaginatedQuery<"circleAvatar">(baseQuery, {
+      limit,
+      cursor,
+      cursorField: "id",
+    });
+
+    return await prisma.circleAvatar.findMany(paginatedQuery);
   }
 
   // Circle Member Operations

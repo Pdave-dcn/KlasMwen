@@ -3,6 +3,7 @@ import {
   AlreadyMemberError,
   CircleNotFoundError,
 } from "../../../../core/error/custom/circle.error.js";
+import { processPaginatedResults } from "../../../../utils/pagination.util.js";
 import { getRandomCircleAvatar } from "../../../avatar/avatarService.js";
 import { assertCirclePermission } from "../../security/rbac.js";
 import CircleEnricher from "../CircleEnrichers.js";
@@ -95,13 +96,11 @@ export class CircleCoreService {
   /**
    * Retrieves all circles a user is a member of.
    * @param userId - The user ID
-   * @returns Array of groups with member counts and user's role
+   * @returns Array of circles with member counts and user's role
    */
   static async getUserCircles(userId: string) {
-    const groups = await CircleRepository.findUserCircles(userId);
-    return Promise.all(
-      groups.map((group) => CircleEnricher.enrichCircle(group, userId)),
-    );
+    const circles = await CircleRepository.findUserCircles(userId);
+    return await CircleEnricher.enrichCircles(circles, userId);
   }
 
   static async getRecentActivityCircles(userId: string, limit = 8) {
@@ -155,13 +154,13 @@ export class CircleCoreService {
     user: Express.User & { circleRole?: CircleRole },
     data: UpdateCircleData,
   ) {
-    const group = await CircleRepository.findCircleById(circleId);
-    if (!group) throw new CircleNotFoundError(circleId);
+    const circle = await CircleRepository.findCircleById(circleId);
+    if (!circle) throw new CircleNotFoundError(circleId);
 
-    assertCirclePermission(user, "circles", "update", group);
+    assertCirclePermission(user, "circles", "update", circle);
 
-    const updatedGroup = await CircleRepository.updateCircle(circleId, data);
-    return CircleEnricher.enrichCircle(updatedGroup, user.id);
+    const updatedCircle = await CircleRepository.updateCircle(circleId, data);
+    return CircleEnricher.enrichCircle(updatedCircle, user.id);
   }
 
   /**
@@ -180,5 +179,10 @@ export class CircleCoreService {
     assertCirclePermission(user, "circles", "delete", circle);
 
     return await CircleRepository.deleteCircle(circleId);
+  }
+
+  static async getCircleAvatars(limit = 20, cursor?: number) {
+    const avatars = await CircleRepository.getCircleAvatars(limit, cursor);
+    return processPaginatedResults(avatars, limit, "id");
   }
 }

@@ -1,6 +1,7 @@
 import { createLogger } from "../../core/config/logger.js";
 import CircleService from "../../features/circle/service/CircleService.js";
 import createActionLogger from "../../utils/logger.util.js";
+import { createPaginationSchema } from "../../utils/pagination.util.js";
 import {
   StudyCircleIdParamSchema,
   CreateStudyCircleDataSchema,
@@ -283,6 +284,43 @@ const deleteCircle = async (
   }
 };
 
+const getCircleAvatars = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const actionLogger = createActionLogger(
+    controllerLogger,
+    "getCircleAvatars",
+    req,
+  );
+
+  try {
+    actionLogger.info("Fetching study circle avatars");
+    const { user } = req as AuthenticatedRequest;
+
+    const customSchema = createPaginationSchema(20, 60, "number");
+    const { limit, cursor } = customSchema.parse(req.query);
+
+    const result = await CircleService.getCircleAvatars(
+      limit,
+      cursor as number | undefined,
+    );
+
+    actionLogger.info(
+      {
+        userId: user.id,
+        avatarCount: result.data.length,
+      },
+      "Study circle avatars retrieved successfully",
+    );
+
+    return res.status(200).json(result);
+  } catch (error: unknown) {
+    return next(error);
+  }
+};
+
 export {
   createStudyCircle,
   getCircleById,
@@ -292,4 +330,5 @@ export {
   joinCircle,
   getRecentActivityCircles,
   getCirclePreviewDetails,
+  getCircleAvatars,
 };

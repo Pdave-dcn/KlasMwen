@@ -71,6 +71,7 @@ const StudyCircleDataSchema = z.object({
   unreadCount: z.number().int().nonnegative(),
   userRole: CircleRoleSchema.nullable(),
   latestMessage: CircleLatestMessageDataSchema.nullable(),
+  tags: z.array(TagSchema),
 });
 
 const StudyCirclePreviewSchema = z.object({
@@ -158,10 +159,10 @@ const CreateStudyCircleSchema = z.object({
   name: z
     .string()
     .min(3, "Study circle name must be at least 3 characters")
-    .max(50, "Study circle name must be less than 50 characters"),
+    .max(100, "Study circle name must be less than 100 characters"),
   description: z
     .string()
-    .max(200, "Description must be less than 200 characters")
+    .max(500, "Description must be less than 500 characters")
     .optional(),
   isPrivate: z.boolean(),
   tagIds: z
@@ -170,10 +171,22 @@ const CreateStudyCircleSchema = z.object({
     .optional(),
 });
 
-const UpdateStudyCircleSchema = z.object({
-  name: z.string().min(1).max(100).optional(),
-  description: z.string().max(500).nullish(),
+const EditCircleInfoSchema = z.object({
+  name: z
+    .string()
+    .min(3, "Study circle name must be at least 3 characters")
+    .max(100, "Study circle name must be less than 100 characters")
+    .optional(),
+  description: z
+    .string()
+    .max(500, "Description must be less than 500 characters")
+    .optional(),
   isPrivate: z.boolean().optional(),
+  avatarId: z.number().int().positive().optional(),
+  tagIds: z
+    .array(z.number().int().positive())
+    .max(10, "Maximum 10 tags allowed")
+    .optional(),
 });
 
 const AddMemberSchema = z.object({
@@ -207,6 +220,21 @@ const QuickStatsResponseSchema = z.object({
   data: QuickStatsSchema,
 });
 
+// Avatars
+
+const CircleAvatarDataSchema = z.object({
+  id: z.number().int().positive(),
+  url: z.url(),
+});
+
+const CircleAvatarsResponseSchema = z.object({
+  data: z.array(CircleAvatarDataSchema),
+  pagination: z.object({
+    nextCursor: z.number().int().positive().nullable(),
+    hasMore: z.boolean(),
+  }),
+});
+
 // Exported Types
 
 export type CircleAttachedUser = z.infer<typeof UserBasicSchema>;
@@ -234,7 +262,7 @@ export type SearchSuggestion = z.infer<
 >;
 
 export type CreateStudyCircleData = z.infer<typeof CreateStudyCircleSchema>;
-export type UpdateStudyCircleData = z.infer<typeof UpdateStudyCircleSchema>;
+export type EditCircleInfoValues = z.infer<typeof EditCircleInfoSchema>;
 export type AddMemberData = z.infer<typeof AddMemberSchema>;
 export type UpdateMemberRoleData = z.infer<typeof UpdateMemberRoleSchema>;
 export type SendMessageData = z.infer<typeof SendMessageSchema>;
@@ -257,7 +285,7 @@ export {
   CircleMessagesResponseSchema,
   CircleMessageResponseSchema,
   CreateStudyCircleSchema,
-  UpdateStudyCircleSchema,
+  EditCircleInfoSchema,
   AddMemberSchema,
   UpdateMemberRoleSchema,
   UpdateMemberRoleMutationSchema,
@@ -270,4 +298,5 @@ export {
   StudyCirclesSearchResponseSchema,
   StudyCirclePreviewSchema,
   StudyCirclePreviewResponseSchema,
+  CircleAvatarsResponseSchema,
 };

@@ -22,12 +22,13 @@ import type {
 // Queries
 
 export const useCircleMessagesQuery = (
-  circleId: string,
+  circleId: string | null,
   limit: number = 50,
 ) => {
   return useInfiniteQuery({
     queryKey: ["circles", circleId, "messages"],
-    queryFn: ({ pageParam }) => getCircleMessages(circleId, pageParam, limit),
+    queryFn: ({ pageParam }) =>
+      getCircleMessages(circleId as string, pageParam, limit),
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.hasMore
         ? lastPage.pagination.nextCursor

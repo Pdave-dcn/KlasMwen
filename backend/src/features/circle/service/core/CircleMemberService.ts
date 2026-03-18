@@ -133,7 +133,9 @@ export class CircleMemberService {
       mutedUntil,
     );
 
-    return CircleEnricher.enrichMember(updated);
+    const enriched = CircleEnricher.enrichMember(updated);
+
+    return CircleTransformers.transformMember(enriched);
   }
 
   /**
@@ -168,7 +170,9 @@ export class CircleMemberService {
       null, // clear the mute
     );
 
-    return CircleEnricher.enrichMember(updated);
+    const enriched = CircleEnricher.enrichMember(updated);
+
+    return CircleTransformers.transformMember(enriched);
   }
 
   /**

@@ -1,7 +1,9 @@
 import { VolumeX, Volume2 } from "lucide-react";
 
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getInitials } from "@/utils/getInitials.util";
 import type { CircleMember } from "@/zodSchemas/circle.zod";
 
 interface MutedMembersListProps {
@@ -39,9 +41,15 @@ export function MutedMembersList({
               className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/30"
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center text-sm font-semibold text-destructive">
-                  {member.user.username[0].toUpperCase()}
-                </div>
+                <Avatar>
+                  <AvatarImage
+                    src={member.user.avatar?.url}
+                    alt={member.user.username}
+                  />
+                  <AvatarFallback>
+                    {getInitials(member.user.username)}
+                  </AvatarFallback>
+                </Avatar>
                 <p className="text-sm font-medium text-foreground">
                   {member.user.username}
                 </p>

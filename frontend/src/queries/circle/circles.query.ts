@@ -33,10 +33,10 @@ export const useStudyCirclesQuery = () => {
   });
 };
 
-export const useStudyCircleQuery = (circleId: string) => {
+export const useStudyCircleQuery = (circleId: string | null) => {
   return useQuery({
     queryKey: ["circles", "single", circleId],
-    queryFn: () => getStudyCircleById(circleId),
+    queryFn: () => getStudyCircleById(circleId as string),
     enabled: !!circleId,
   });
 };

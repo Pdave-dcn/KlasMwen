@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import {
   addCircleMember,
@@ -11,15 +12,16 @@ import {
 import type { MuteDuration } from "@/features/study-circles/settings/types";
 import type {
   AddMemberData,
+  CircleMember,
   UpdateMemberRoleData,
 } from "@/zodSchemas/circle.zod";
 
 // Queries
 
-export const useCircleMembersQuery = (circleId: string) => {
+export const useCircleMembersQuery = (circleId: string | null) => {
   return useQuery({
     queryKey: ["circles", circleId, "members"],
-    queryFn: () => getCircleMembers(circleId),
+    queryFn: () => getCircleMembers(circleId as string),
     enabled: !!circleId,
   });
 };
@@ -69,6 +71,41 @@ export const useUpdateCircleMemberRoleMutation = (circleId: string) => {
       userId: string;
       data: UpdateMemberRoleData;
     }) => updateCircleMemberRole(circleId, userId, data),
+
+    onMutate: async ({ userId, data: { role } }) => {
+      await queryClient.cancelQueries({
+        queryKey: ["circles", circleId, "members"],
+      });
+
+      const previousMembers = queryClient.getQueryData<CircleMember[]>([
+        "circles",
+        circleId,
+        "members",
+      ]);
+
+      queryClient.setQueryData<CircleMember[]>(
+        ["circles", circleId, "members"],
+        (old) => {
+          if (!old) return old;
+          return old.map((member) =>
+            member.userId === userId ? { ...member, role } : member,
+          );
+        },
+      );
+
+      return { previousMembers };
+    },
+
+    onError: (_error, _variables, context) => {
+      if (context?.previousMembers) {
+        queryClient.setQueryData(
+          ["circles", circleId, "members"],
+          context.previousMembers,
+        );
+      }
+      toast.error("Failed to update member role. Please try again.");
+    },
+
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["circles", circleId, "members"],
@@ -85,6 +122,7 @@ export const useUpdateCircleMemberLastReadAtMutation = () => {
 
 export const useSetCircleMemberMuteMutation = (circleId: string) => {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: ({
       userId,
@@ -95,6 +133,41 @@ export const useSetCircleMemberMuteMutation = (circleId: string) => {
       muted: boolean;
       duration?: MuteDuration["value"];
     }) => setCircleMemberMute(circleId, userId, muted, duration),
+
+    onMutate: async ({ userId, muted }) => {
+      await queryClient.cancelQueries({
+        queryKey: ["circles", circleId, "members"],
+      });
+
+      const previousMembers = queryClient.getQueryData<CircleMember[]>([
+        "circles",
+        circleId,
+        "members",
+      ]);
+
+      queryClient.setQueryData<CircleMember[]>(
+        ["circles", circleId, "members"],
+        (old) => {
+          if (!old) return old;
+          return old.map((member) =>
+            member.userId === userId ? { ...member, isMuted: muted } : member,
+          );
+        },
+      );
+
+      return { previousMembers };
+    },
+
+    onError: (_error, _variables, context) => {
+      if (context?.previousMembers) {
+        queryClient.setQueryData(
+          ["circles", circleId, "members"],
+          context.previousMembers,
+        );
+      }
+      toast.error("Failed to update mute status. Please try again.");
+    },
+
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["circles", circleId, "members"],

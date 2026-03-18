@@ -27,10 +27,10 @@ export const useCircleData = (circleId: string | null) => {
     useStudyCirclesQuery();
 
   const { data: selectedCircle, isLoading: isLoadingCircle } =
-    useStudyCircleQuery(circleId ?? "");
+    useStudyCircleQuery(circleId);
 
   const { data: members = [], isLoading: isLoadingMembers } =
-    useCircleMembersQuery(circleId ?? "");
+    useCircleMembersQuery(circleId);
 
   const {
     data: messagesData,
@@ -38,7 +38,7 @@ export const useCircleData = (circleId: string | null) => {
     isFetchingNextPage,
     fetchNextPage,
     hasNextPage,
-  } = useCircleMessagesQuery(circleId ?? "");
+  } = useCircleMessagesQuery(circleId);
 
   const messages = useMemo(
     () =>

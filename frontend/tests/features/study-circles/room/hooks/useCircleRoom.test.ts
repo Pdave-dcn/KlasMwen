@@ -5,6 +5,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockSetCurrentUser = vi.hoisted(() => vi.fn());
 const mockSelectCircle = vi.hoisted(() => vi.fn());
+const mockSetCurrentUserMemberRole = vi.hoisted(() => vi.fn());
 const mockFetchNextPage = vi.hoisted(() => vi.fn());
 const mockMutateAsync = vi.hoisted(() => vi.fn());
 
@@ -12,6 +13,7 @@ const mockCircleStore = vi.hoisted(() => ({
   selectedCircleId: "circle-1",
   selectCircle: mockSelectCircle,
   setCurrentUser: mockSetCurrentUser,
+  setCurrentUserMemberRole: mockSetCurrentUserMemberRole,
 }));
 
 const mockCurrentUser = vi.hoisted(() => ({
@@ -89,6 +91,7 @@ describe("useCircleRoom hook", () => {
     mockCircleStore.selectedCircleId = "circle-1";
     mockCircleStore.selectCircle = mockSelectCircle;
     mockCircleStore.setCurrentUser = mockSetCurrentUser;
+    mockCircleStore.setCurrentUserMemberRole = mockSetCurrentUserMemberRole;
 
     // Reset circle data mock
     mockCircleData.groups = [];
@@ -131,6 +134,22 @@ describe("useCircleRoom hook", () => {
 
       render();
       expect(mockSetCurrentUser).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── member role sync ───────────────────────────────────────────────────────
+
+  describe("member role sync", () => {
+    it("calls setCurrentUserMemberRole with userRole when selectedCircle changes", () => {
+      mockCircleData.selectedCircle = { userRole: "MODERATOR" } as any;
+      render();
+      expect(mockSetCurrentUserMemberRole).toHaveBeenCalledWith("MODERATOR");
+    });
+
+    it("calls setCurrentUserMemberRole with null when selectedCircle is null", () => {
+      mockCircleData.selectedCircle = null;
+      render();
+      expect(mockSetCurrentUserMemberRole).toHaveBeenCalledWith(null);
     });
   });
 

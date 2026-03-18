@@ -123,7 +123,7 @@ describe("PostEditForm Component", () => {
       render(
         <TestWrapper>
           <PostEditForm open onClose={mockOnClose} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       expect(screen.getByTestId("post-edit-loading")).toBeInTheDocument();
@@ -138,7 +138,7 @@ describe("PostEditForm Component", () => {
       render(
         <TestWrapper>
           <PostEditForm open onClose={mockOnClose} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       expect(screen.queryByText("Edit Post")).not.toBeInTheDocument();
@@ -157,17 +157,17 @@ describe("PostEditForm Component", () => {
       render(
         <TestWrapper>
           <PostEditForm open onClose={mockOnClose} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
         expect(screen.getByText("Edit Post")).toBeInTheDocument();
         expect(
-          screen.getByText("Update the post content and tags below.")
+          screen.getByText("Update the post content and tags below."),
         ).toBeInTheDocument();
         expect(screen.getByDisplayValue("Test Post Title")).toBeInTheDocument();
         expect(
-          screen.getByDisplayValue("This is test content for the post")
+          screen.getByDisplayValue("This is test content for the post"),
         ).toBeInTheDocument();
       });
     });
@@ -176,7 +176,7 @@ describe("PostEditForm Component", () => {
       render(
         <TestWrapper>
           <PostEditForm open onClose={mockOnClose} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
@@ -198,13 +198,13 @@ describe("PostEditForm Component", () => {
       render(
         <TestWrapper>
           <PostEditForm open onClose={mockOnClose} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
         expect(screen.getByText("Edit Post")).toBeInTheDocument();
         expect(
-          screen.getByText("Update the post title and tags below.")
+          screen.getByText("Update the post title and tags below."),
         ).toBeInTheDocument();
       });
 
@@ -215,7 +215,7 @@ describe("PostEditForm Component", () => {
       render(
         <TestWrapper>
           <PostEditForm open onClose={mockOnClose} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
@@ -223,7 +223,7 @@ describe("PostEditForm Component", () => {
         expect(screen.getByText("test-document.pdf")).toBeInTheDocument();
         expect(screen.getByText(/Size:/i)).toBeInTheDocument();
         expect(
-          screen.getByText("File cannot be changed when editing a post")
+          screen.getByText("File cannot be changed when editing a post"),
         ).toBeInTheDocument();
       });
     });
@@ -243,7 +243,7 @@ describe("PostEditForm Component", () => {
       render(
         <TestWrapper>
           <PostEditForm open onClose={mockOnClose} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
@@ -258,7 +258,7 @@ describe("PostEditForm Component", () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText("Title must be at least 10 characters")
+          screen.getByText("Title must be at least 10 characters"),
         ).toBeInTheDocument();
       });
 
@@ -271,7 +271,7 @@ describe("PostEditForm Component", () => {
       render(
         <TestWrapper>
           <PostEditForm open onClose={mockOnClose} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
@@ -286,7 +286,7 @@ describe("PostEditForm Component", () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText("Title must not exceed 100 characters")
+          screen.getByText("Title must not exceed 100 characters"),
         ).toBeInTheDocument();
       });
 
@@ -299,7 +299,7 @@ describe("PostEditForm Component", () => {
       render(
         <TestWrapper>
           <PostEditForm open onClose={mockOnClose} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
@@ -324,17 +324,17 @@ describe("PostEditForm Component", () => {
       render(
         <TestWrapper>
           <PostEditForm open onClose={mockOnClose} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
         expect(
-          screen.getByDisplayValue("This is test content for the post")
+          screen.getByDisplayValue("This is test content for the post"),
         ).toBeInTheDocument();
       });
 
       const markdownEditor = within(
-        screen.getByTestId("content-editor")
+        screen.getByTestId("content-editor"),
       ).getByRole("textbox");
       await user.clear(markdownEditor);
 
@@ -344,7 +344,7 @@ describe("PostEditForm Component", () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText("Content must be at least 20 characters")
+          screen.getByText("Content must be at least 20 characters"),
         ).toBeInTheDocument();
       });
 
@@ -357,17 +357,17 @@ describe("PostEditForm Component", () => {
       render(
         <TestWrapper>
           <PostEditForm open onClose={mockOnClose} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
         expect(
-          screen.getByDisplayValue("This is test content for the post")
+          screen.getByDisplayValue("This is test content for the post"),
         ).toBeInTheDocument();
       });
 
       const markdownEditor = within(
-        screen.getByTestId("content-editor")
+        screen.getByTestId("content-editor"),
       ).getByRole("textbox");
       await user.clear(markdownEditor);
 
@@ -395,7 +395,7 @@ describe("PostEditForm Component", () => {
       render(
         <TestWrapper>
           <PostEditForm open onClose={mockOnClose} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
@@ -417,7 +417,7 @@ describe("PostEditForm Component", () => {
       render(
         <TestWrapper>
           <PostEditForm open onClose={mockOnClose} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
@@ -427,7 +427,7 @@ describe("PostEditForm Component", () => {
       // Find and click remove button for JavaScript tag
       const removeButtons = screen.getAllByRole("button");
       const jsTagRemoveBtn = removeButtons.find((btn) =>
-        btn.textContent?.includes("JavaScript")
+        btn.textContent?.includes("JavaScript"),
       );
 
       if (jsTagRemoveBtn) {
@@ -455,7 +455,7 @@ describe("PostEditForm Component", () => {
       render(
         <TestWrapper>
           <PostEditForm open onClose={mockOnClose} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
@@ -467,7 +467,7 @@ describe("PostEditForm Component", () => {
       await user.type(titleInput, "Updated Post Title");
 
       const markdownEditor = within(
-        screen.getByTestId("content-editor")
+        screen.getByTestId("content-editor"),
       ).getByRole("textbox");
       await user.clear(markdownEditor);
       await user.type(markdownEditor, "Updated content for the post");
@@ -485,7 +485,7 @@ describe("PostEditForm Component", () => {
               tagIds: [1, 2],
             }),
           }),
-          expect.any(Object)
+          expect.any(Object),
         );
       });
     });
@@ -505,7 +505,7 @@ describe("PostEditForm Component", () => {
       render(
         <TestWrapper>
           <PostEditForm open onClose={mockOnClose} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
@@ -529,12 +529,12 @@ describe("PostEditForm Component", () => {
       render(
         <TestWrapper>
           <PostEditForm open onClose={mockOnClose} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
         expect(
-          screen.getByText("Failed to update post. Please try again.")
+          screen.getByText("Failed to update post. Please try again."),
         ).toBeInTheDocument();
       });
     });
@@ -549,7 +549,7 @@ describe("PostEditForm Component", () => {
       render(
         <TestWrapper>
           <PostEditForm open onClose={mockOnClose} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
@@ -578,7 +578,7 @@ describe("PostEditForm Component", () => {
       render(
         <TestWrapper>
           <PostEditForm open onClose={mockOnClose} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
@@ -594,7 +594,7 @@ describe("PostEditForm Component", () => {
       render(
         <TestWrapper>
           <PostEditForm open={false} onClose={mockOnClose} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       expect(screen.queryByText("Edit Post")).not.toBeInTheDocument();

@@ -122,7 +122,7 @@ export function MemberRow({ member, onMute, onUnmute }: MemberRowProps) {
       {canRemove && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-muted transition-all">
+            <button className="p-1.5 rounded-lg opacity-100 lg:opacity-0 lg:group-hover:opacity-100 hover:bg-muted transition-all">
               <MoreVertical className="h-4 w-4 text-muted-foreground" />
             </button>
           </DropdownMenuTrigger>

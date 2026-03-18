@@ -63,10 +63,7 @@ export function CircleSettingsPanel({
   const renderContent = () => {
     switch (activeTab) {
       case "general":
-        return (
-          // Read is always allowed, but editing is gated inside GeneralTab.
-          <GeneralTab circle={circle} />
-        );
+        return <GeneralTab circle={circle} />;
 
       case "members":
         return <MembersTab members={circleMembers} />;
@@ -144,7 +141,7 @@ export function CircleSettingsPanel({
 
         {/* Mobile horizontal tabs */}
         <div
-          className="md:hidden flex border-b border-border bg-card px-2 overflow-x-auto shrink-0 absolute left-0 right-0"
+          className="md:hidden flex border-b border-border bg-card px-2 overflow-x-auto shrink-0 absolute left-0 right-0 z-50"
           style={{ top: "3.5rem" }}
         >
           {visibleTabs.map((tab) => {

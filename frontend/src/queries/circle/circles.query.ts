@@ -21,6 +21,7 @@ import {
 import type {
   CreateStudyCircleData,
   EditCircleInfoValues,
+  StudyCircle,
   StudyCirclesForDiscoveryResponseSchema,
 } from "@/zodSchemas/circle.zod";
 
@@ -137,6 +138,29 @@ export const useDeleteCircleMutation = () => {
 
   return useMutation({
     mutationFn: (circleId: string) => deleteStudyCircle(circleId),
+
+    onMutate: async (circleId) => {
+      await queryClient.cancelQueries({ queryKey: ["circles", "list"] });
+
+      const previousCircles = queryClient.getQueryData<StudyCircle[]>([
+        "circles",
+        "list",
+      ]);
+
+      queryClient.setQueryData<StudyCircle[]>(["circles", "list"], (old) => {
+        if (!old) return old;
+        return old.filter((circle) => circle.id !== circleId);
+      });
+
+      return { previousCircles };
+    },
+
+    onError: (_error, _circleId, context) => {
+      if (context?.previousCircles) {
+        queryClient.setQueryData(["circles", "list"], context.previousCircles);
+      }
+    },
+
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["circles", "list"],

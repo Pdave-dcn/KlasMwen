@@ -13,6 +13,7 @@ import type { MuteDuration } from "@/features/study-circles/settings/types";
 import type {
   AddMemberData,
   CircleMember,
+  StudyCircle,
   UpdateMemberRoleData,
 } from "@/zodSchemas/circle.zod";
 
@@ -44,17 +45,57 @@ export const useAddCircleMemberMutation = (circleId: string) => {
   });
 };
 
-export const useRemoveCircleMemberMutation = (circleId: string) => {
+export const useRemoveCircleMemberMutation = (circleId: string | null) => {
+  if (!circleId) {
+    throw new Error("Circle ID is required to remove a member.");
+  }
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (userId: string) => removeCircleMember(circleId, userId),
+    mutationFn: ({ userId }: { userId: string; isSelfRemoval?: boolean }) =>
+      removeCircleMember(circleId, userId),
+
+    onMutate: async ({ isSelfRemoval, userId: _userId }) => {
+      if (!isSelfRemoval) return;
+
+      await queryClient.cancelQueries({ queryKey: ["circles", "list"] });
+
+      const previousCircles = queryClient.getQueryData<StudyCircle[]>([
+        "circles",
+        "list",
+      ]);
+
+      queryClient.setQueryData<StudyCircle[]>(["circles", "list"], (old) => {
+        if (!old) return old;
+        return old.filter((circle) => circle.id !== circleId);
+      });
+
+      return { previousCircles };
+    },
+
+    onError: (_error, { isSelfRemoval }, context) => {
+      if (isSelfRemoval) {
+        toast.error("Failed to leave the circle. Please try again.");
+      }
+      if (isSelfRemoval && context?.previousCircles) {
+        queryClient.setQueryData(["circles", "list"], context.previousCircles);
+      }
+
+      toast.error("Failed to remove member. Please try again.");
+    },
+
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["circles", circleId, "members"],
       });
       await queryClient.invalidateQueries({
+        queryKey: ["circles", circleId, "messages"],
+      });
+      await queryClient.invalidateQueries({
         queryKey: ["circles", "single", circleId],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["circles", "list"],
       });
     },
   });

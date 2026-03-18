@@ -24,13 +24,16 @@ export function useMemberRow(member: CircleMember) {
   const kickMemberMutation = useRemoveCircleMemberMutation(currentCircleId);
 
   const handleKick = () => {
-    kickMemberMutation.mutate(member.user.id, {
-      onSuccess: () => {
-        toast.success(
-          `${member.user.username} has been removed from the circle.`,
-        );
+    kickMemberMutation.mutate(
+      { userId: member.user.id },
+      {
+        onSuccess: () => {
+          toast.success(
+            `${member.user.username} has been removed from the circle.`,
+          );
+        },
       },
-    });
+    );
   };
 
   const handleRoleChange = (newRole: MemberRole) => {

@@ -17,12 +17,10 @@ export function useDangerZoneTab({ onClose }: UseDangerZoneTabProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
 
-  const currentCircleId =
-    useCircleStore((state) => state.selectedCircleId) ?? "";
-  const currentUserId = useCircleStore((state) => state.currentUser?.id) ?? "";
+  const { selectedCircleId, currentUser, selectCircle } = useCircleStore();
 
   const deleteCircleMutation = useDeleteCircleMutation();
-  const leaveCircleMutation = useRemoveCircleMemberMutation(currentCircleId);
+  const leaveCircleMutation = useRemoveCircleMemberMutation(selectedCircleId);
 
   const { isOwner, canDefinitely } = useCirclePermission();
 
@@ -32,15 +30,24 @@ export function useDangerZoneTab({ onClose }: UseDangerZoneTabProps) {
   const canDelete = canDefinitely("circles", "delete");
 
   const handleLeave = () => {
-    leaveCircleMutation.mutate(currentUserId);
+    if (currentUser) {
+      leaveCircleMutation.mutate({
+        userId: currentUser.id,
+        isSelfRemoval: true,
+      });
+    }
     setShowLeaveDialog(false);
     onClose();
+    selectCircle(null); // Clear circle from store to avoid showing stale data while redirecting
   };
 
   const handleDelete = () => {
-    deleteCircleMutation.mutate(currentCircleId);
+    if (selectedCircleId) {
+      deleteCircleMutation.mutate(selectedCircleId);
+    }
     setShowDeleteDialog(false);
     onClose();
+    selectCircle(null);
   };
 
   return {

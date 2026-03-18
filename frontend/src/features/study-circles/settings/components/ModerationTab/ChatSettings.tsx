@@ -47,17 +47,26 @@ export function ChatSettings({
       </div>
 
       {/* Clear Chat */}
-      <div className="flex items-center justify-between p-4 rounded-xl border border-destructive/20 bg-destructive/5">
+      <div className="flex items-center justify-between p-4 rounded-xl border border-destructive/20 bg-destructive/5 border-dashed opacity-60 cursor-not-allowed select-none">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
             <Trash2 className="h-5 w-5 text-destructive" />
           </div>
           <div>
-            <p className="text-sm font-medium text-foreground">
-              Clear Chat History
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium text-foreground">
+                Clear Chat History
+              </p>
+              <Badge
+                variant="outline"
+                className="gap-1 rounded-md text-[10px] px-1.5 py-0 border-muted-foreground/30 text-muted-foreground"
+              >
+                <Hammer className="h-2.5 w-2.5" />
+                In progress
+              </Badge>
+            </div>
             <p className="text-xs text-muted-foreground">
-              Permanently delete all messages
+              Permanently delete all messages — coming soon
             </p>
           </div>
         </div>
@@ -66,6 +75,7 @@ export function ChatSettings({
           size="sm"
           className="rounded-xl border-destructive/30 text-destructive hover:bg-destructive hover:text-destructive-foreground"
           onClick={onClearChatRequest}
+          disabled
         >
           Clear
         </Button>

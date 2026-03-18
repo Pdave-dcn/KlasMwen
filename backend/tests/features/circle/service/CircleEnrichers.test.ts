@@ -33,6 +33,10 @@ describe("CircleEnricher", () => {
           },
         ],
         _count: { members: 5 },
+        circleTags: [
+          { tag: { id: "t1", name: "math" } },
+          { tag: { id: "t2", name: "science" } },
+        ],
       } as any;
 
       vi.mocked(CircleRepository.countUnreadMessages).mockResolvedValue(3);
@@ -43,8 +47,13 @@ describe("CircleEnricher", () => {
       expect(result.userRole).toBe("MEMBER");
       expect(result.latestMessage).toEqual(circle.messages[0]);
       expect(result.unreadCount).toBe(3);
+      expect(result.tags).toEqual([
+        { id: "t1", name: "math" },
+        { id: "t2", name: "science" },
+      ]);
       expect(result).not.toHaveProperty("_count");
       expect(result).not.toHaveProperty("members");
+      expect(result).not.toHaveProperty("circleTags");
     });
 
     it("should handle no latest message", async () => {
@@ -57,8 +66,9 @@ describe("CircleEnricher", () => {
         creator: { id: "u1", username: "Creator" },
         avatar: { url: "http://example.com/avatar.png" },
         members: [{ userId: "u1", role: "OWNER", lastReadAt: null }],
-        messages: [], // empty messages array
+        messages: [],
         _count: { members: 1 },
+        circleTags: [],
       } as any;
 
       vi.mocked(CircleRepository.countUnreadMessages).mockResolvedValue(5);
@@ -67,6 +77,29 @@ describe("CircleEnricher", () => {
 
       expect(result.latestMessage).toBeNull();
       expect(result.unreadCount).toBe(5);
+      expect(result.tags).toEqual([]);
+    });
+
+    it("should set userRole to null when userId is not a member", async () => {
+      const circle = {
+        id: "c1",
+        name: "Test",
+        description: "desc",
+        isPrivate: false,
+        createdAt: new Date(),
+        creator: { id: "u1", username: "Creator" },
+        avatar: null,
+        members: [],
+        messages: [],
+        _count: { members: 0 },
+        circleTags: [],
+      } as any;
+
+      vi.mocked(CircleRepository.countUnreadMessages).mockResolvedValue(0);
+
+      const result = await CircleEnricher.enrichCircle(circle, "unknown-user");
+
+      expect(result.userRole).toBeNull();
     });
   });
 
@@ -84,6 +117,7 @@ describe("CircleEnricher", () => {
           members: [{ userId: "u1", role: "MEMBER", lastReadAt: null }],
           messages: [],
           _count: { members: 2 },
+          circleTags: [{ tag: { id: "t1", name: "math" } }],
         },
         {
           id: "c2",
@@ -96,6 +130,7 @@ describe("CircleEnricher", () => {
           members: [{ userId: "u1", role: "OWNER", lastReadAt: null }],
           messages: [],
           _count: { members: 3 },
+          circleTags: [],
         },
       ] as any;
 
@@ -113,6 +148,10 @@ describe("CircleEnricher", () => {
       expect(result[1].userRole).toBe("OWNER");
       expect(result[0].unreadCount).toBe(0);
       expect(result[1].unreadCount).toBe(2);
+      expect(result[0].tags).toEqual([{ id: "t1", name: "math" }]);
+      expect(result[1].tags).toEqual([]);
+      expect(result[0]).not.toHaveProperty("circleTags");
+      expect(result[1]).not.toHaveProperty("circleTags");
       expect(CircleRepository.getMembership).not.toHaveBeenCalled();
       expect(CircleRepository.getLatestMessage).not.toHaveBeenCalled();
     });
@@ -125,9 +164,34 @@ describe("CircleEnricher", () => {
       const result = await CircleEnricher.enrichCircles([], "u1");
       expect(result).toEqual([]);
     });
+
+    it("should default unreadCount to 0 when circle id is absent from batch result", async () => {
+      const circles = [
+        {
+          id: "c1",
+          name: "Circle1",
+          description: "desc",
+          isPrivate: false,
+          createdAt: new Date(),
+          creator: { id: "u1", username: "C1" },
+          avatar: null,
+          members: [{ userId: "u1", role: "MEMBER", lastReadAt: null }],
+          messages: [],
+          _count: { members: 1 },
+          circleTags: [],
+        },
+      ] as any;
+
+      vi.mocked(CircleRepository.countUnreadMessagesBatch).mockResolvedValue(
+        {},
+      );
+
+      const result = await CircleEnricher.enrichCircles(circles, "u1");
+
+      expect(result[0].unreadCount).toBe(0);
+    });
   });
 
-  // enrichMember and enrichMembers tests are unchanged - no fixes needed
   describe("enrichMember", () => {
     it("should set isMuted to true when mutedUntil is in future", () => {
       const future = new Date(Date.now() + 3600000);

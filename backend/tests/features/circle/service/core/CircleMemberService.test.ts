@@ -3,6 +3,7 @@ import { CircleMemberService } from "../../../../../src/features/circle/service/
 import CircleRepository from "../../../../../src/features/circle/service/Repositories/CircleRepository.js";
 import CircleEnricher from "../../../../../src/features/circle/service/CircleEnrichers.js";
 import CircleTransformers from "../../../../../src/features/circle/service/CircleTransformers.js";
+import { CircleValidationService } from "../../../../../src/features/circle/service/core/CircleValidationService.js";
 import { assertCirclePermission } from "../../../../../src/features/circle/security/rbac.js";
 import { AuthorizationError } from "../../../../../src/core/error/custom/auth.error.js";
 import {
@@ -10,12 +11,19 @@ import {
   AlreadyMemberError,
   CircleMemberNotFoundError,
 } from "../../../../../src/core/error/custom/circle.error.js";
+import {
+  MUTE_DURATION_MS,
+  MuteDurationMinutes,
+} from "../../../../../src/features/circle/service/CircleTypes.js";
 
 vi.mock(
   "../../../../../src/features/circle/service/Repositories/CircleRepository.js",
 );
 vi.mock("../../../../../src/features/circle/service/CircleEnrichers.js");
 vi.mock("../../../../../src/features/circle/service/CircleTransformers.js");
+vi.mock(
+  "../../../../../src/features/circle/service/core/CircleValidationService.js",
+);
 vi.mock("../../../../../src/features/circle/security/rbac.js");
 
 describe("CircleMemberService", () => {
@@ -340,6 +348,308 @@ describe("CircleMemberService", () => {
     it("should return false when repository says false", async () => {
       vi.mocked(CircleRepository.isMember).mockResolvedValue(false);
       expect(await CircleMemberService.isMember("u", "c")).toBe(false);
+    });
+  });
+
+  describe("muteMember", () => {
+    const actor = { id: "owner", circleRole: "OWNER" } as any;
+    const targetMembership = {
+      userId: "user-2",
+      circleId: "circle-1",
+      role: "MEMBER",
+    } as any;
+    const mutedMembership = {
+      ...mockMembership,
+      mutedUntil: new Date("2099-01-01"),
+    } as any;
+    const mutedEnriched = { ...mutedMembership, isMuted: true } as any;
+    const mutedTransformed = {
+      ...mutedEnriched,
+      user: mockTransformedMember.user,
+    } as any;
+
+    beforeEach(() => {
+      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+        mockCircle,
+      );
+      vi.mocked(CircleValidationService.verifyMembership).mockResolvedValue(
+        targetMembership,
+      );
+      vi.mocked(assertCirclePermission).mockReturnValue(undefined);
+      vi.mocked(CircleRepository.setMemberMute).mockResolvedValue(
+        mutedMembership,
+      );
+      vi.mocked(CircleEnricher.enrichMember).mockResolvedValue(mutedEnriched);
+      vi.mocked(CircleTransformers.transformMember).mockReturnValue(
+        mutedTransformed,
+      );
+    });
+
+    it("should mute a member for a finite duration", async () => {
+      const result = await CircleMemberService.muteMember(
+        actor,
+        "circle-1",
+        "user-2",
+        15,
+      );
+
+      expect(CircleValidationService.verifyCircleExists).toHaveBeenCalledWith(
+        "circle-1",
+      );
+      expect(CircleValidationService.verifyMembership).toHaveBeenCalledWith(
+        "user-2",
+        "circle-1",
+      );
+      expect(assertCirclePermission).toHaveBeenCalledWith(
+        actor,
+        "circleMembers",
+        "mute",
+        {
+          role: "MEMBER",
+          userId: "user-2",
+        },
+      );
+      expect(CircleRepository.setMemberMute).toHaveBeenCalledWith(
+        "user-2",
+        "circle-1",
+        expect.any(Date),
+      );
+      expect(result).toEqual(mutedTransformed);
+    });
+
+    it("should set mutedUntil to the sentinel date for an indefinite mute", async () => {
+      await CircleMemberService.muteMember(
+        actor,
+        "circle-1",
+        "user-2",
+        "indefinite",
+      );
+
+      const [, , mutedUntil] = vi.mocked(CircleRepository.setMemberMute).mock
+        .calls[0];
+      expect((mutedUntil as Date).getFullYear()).toBe(9999);
+    });
+
+    it("should set mutedUntil roughly durationMinutes in the future for a timed mute", async () => {
+      const duration: MuteDurationMinutes = 60;
+      const before = Date.now();
+      await CircleMemberService.muteMember(
+        actor,
+        "circle-1",
+        "user-2",
+        duration,
+      );
+      const after = Date.now();
+
+      const [, , mutedUntil] = vi.mocked(CircleRepository.setMemberMute).mock
+        .calls[0];
+      const ms = (mutedUntil as Date).getTime();
+      expect(ms).toBeGreaterThanOrEqual(before + MUTE_DURATION_MS[duration]);
+      expect(ms).toBeLessThanOrEqual(after + MUTE_DURATION_MS[duration]);
+    });
+
+    it("should throw if the circle does not exist", async () => {
+      vi.mocked(CircleValidationService.verifyCircleExists).mockRejectedValue(
+        new CircleNotFoundError("circle-1"),
+      );
+
+      await expect(
+        CircleMemberService.muteMember(actor, "circle-1", "user-2", 15),
+      ).rejects.toThrow(CircleNotFoundError);
+    });
+
+    it("should throw if the target is not a member", async () => {
+      vi.mocked(CircleValidationService.verifyMembership).mockRejectedValue(
+        new CircleMemberNotFoundError("user-2", "circle-1"),
+      );
+
+      await expect(
+        CircleMemberService.muteMember(actor, "circle-1", "user-2", 15),
+      ).rejects.toThrow(CircleMemberNotFoundError);
+    });
+
+    it("should propagate authorization errors from rbac", async () => {
+      vi.mocked(assertCirclePermission).mockImplementation(() => {
+        throw new AuthorizationError("insufficient role");
+      });
+
+      await expect(
+        CircleMemberService.muteMember(
+          { id: "mod", circleRole: "MODERATOR" } as any,
+          "circle-1",
+          "user-2",
+          15,
+        ),
+      ).rejects.toThrow(AuthorizationError);
+
+      expect(CircleRepository.setMemberMute).not.toHaveBeenCalled();
+    });
+
+    it("should pass target membership to assertCirclePermission for role-hierarchy checks", async () => {
+      const modTarget = {
+        userId: "mod-2",
+        circleId: "circle-1",
+        role: "MODERATOR",
+      } as any;
+      vi.mocked(CircleValidationService.verifyMembership).mockResolvedValue(
+        modTarget,
+      );
+
+      await CircleMemberService.muteMember(actor, "circle-1", "mod-2", 30);
+
+      expect(assertCirclePermission).toHaveBeenCalledWith(
+        actor,
+        "circleMembers",
+        "mute",
+        {
+          role: "MODERATOR",
+          userId: "mod-2",
+        },
+      );
+    });
+
+    it.each([15, 30, 60, 360, 1440] as MuteDurationMinutes[])(
+      "should compute a future mutedUntil for duration %i minutes",
+      async (duration) => {
+        const before = Date.now();
+        await CircleMemberService.muteMember(
+          actor,
+          "circle-1",
+          "user-2",
+          duration,
+        );
+        const after = Date.now();
+
+        const [, , mutedUntil] = vi.mocked(CircleRepository.setMemberMute).mock
+          .calls[0];
+        const ms = (mutedUntil as Date).getTime();
+        expect(ms).toBeGreaterThanOrEqual(before + MUTE_DURATION_MS[duration]);
+        expect(ms).toBeLessThanOrEqual(after + MUTE_DURATION_MS[duration]);
+
+        vi.mocked(CircleRepository.setMemberMute).mockClear();
+      },
+    );
+  });
+
+  describe("unmuteMember", () => {
+    const actor = { id: "owner", circleRole: "OWNER" } as any;
+    const targetMembership = {
+      userId: "user-2",
+      circleId: "circle-1",
+      role: "MEMBER",
+    } as any;
+    const unmutedMembership = { ...mockMembership, mutedUntil: null } as any;
+    const unmutedEnriched = { ...unmutedMembership, isMuted: false } as any;
+    const unmutedTransformed = {
+      ...unmutedEnriched,
+      user: mockTransformedMember.user,
+    } as any;
+
+    beforeEach(() => {
+      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+        mockCircle,
+      );
+      vi.mocked(CircleValidationService.verifyMembership).mockResolvedValue(
+        targetMembership,
+      );
+      vi.mocked(assertCirclePermission).mockReturnValue(undefined);
+      vi.mocked(CircleRepository.setMemberMute).mockResolvedValue(
+        unmutedMembership,
+      );
+      vi.mocked(CircleEnricher.enrichMember).mockResolvedValue(unmutedEnriched);
+      vi.mocked(CircleTransformers.transformMember).mockReturnValue(
+        unmutedTransformed,
+      );
+    });
+
+    it("should clear the mute by passing null to setMemberMute", async () => {
+      const result = await CircleMemberService.unmuteMember(
+        actor,
+        "circle-1",
+        "user-2",
+      );
+
+      expect(CircleValidationService.verifyCircleExists).toHaveBeenCalledWith(
+        "circle-1",
+      );
+      expect(CircleValidationService.verifyMembership).toHaveBeenCalledWith(
+        "user-2",
+        "circle-1",
+      );
+      expect(assertCirclePermission).toHaveBeenCalledWith(
+        actor,
+        "circleMembers",
+        "mute",
+        {
+          role: "MEMBER",
+          userId: "user-2",
+        },
+      );
+      expect(CircleRepository.setMemberMute).toHaveBeenCalledWith(
+        "user-2",
+        "circle-1",
+        null,
+      );
+      expect(result).toEqual(unmutedTransformed);
+    });
+
+    it("should throw if the circle does not exist", async () => {
+      vi.mocked(CircleValidationService.verifyCircleExists).mockRejectedValue(
+        new CircleNotFoundError("circle-1"),
+      );
+
+      await expect(
+        CircleMemberService.unmuteMember(actor, "circle-1", "user-2"),
+      ).rejects.toThrow(CircleNotFoundError);
+    });
+
+    it("should throw if the target is not a member", async () => {
+      vi.mocked(CircleValidationService.verifyMembership).mockRejectedValue(
+        new CircleMemberNotFoundError("user-2", "circle-1"),
+      );
+
+      await expect(
+        CircleMemberService.unmuteMember(actor, "circle-1", "user-2"),
+      ).rejects.toThrow(CircleMemberNotFoundError);
+    });
+
+    it("should propagate authorization errors from rbac", async () => {
+      vi.mocked(assertCirclePermission).mockImplementation(() => {
+        throw new AuthorizationError("insufficient role");
+      });
+
+      await expect(
+        CircleMemberService.unmuteMember(
+          { id: "member", circleRole: "MEMBER" } as any,
+          "circle-1",
+          "user-2",
+        ),
+      ).rejects.toThrow(AuthorizationError);
+
+      expect(CircleRepository.setMemberMute).not.toHaveBeenCalled();
+    });
+
+    it("should pass target membership to assertCirclePermission for role-hierarchy checks", async () => {
+      const modTarget = {
+        userId: "mod-2",
+        circleId: "circle-1",
+        role: "MODERATOR",
+      } as any;
+      vi.mocked(CircleValidationService.verifyMembership).mockResolvedValue(
+        modTarget,
+      );
+
+      await CircleMemberService.unmuteMember(actor, "circle-1", "mod-2");
+
+      expect(assertCirclePermission).toHaveBeenCalledWith(
+        actor,
+        "circleMembers",
+        "mute",
+        {
+          role: "MODERATOR",
+          userId: "mod-2",
+        },
+      );
     });
   });
 });

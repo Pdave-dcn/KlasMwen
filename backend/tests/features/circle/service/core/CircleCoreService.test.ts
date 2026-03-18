@@ -52,6 +52,8 @@ describe("CircleCoreService", () => {
         _count: { members: 0 },
         createdAt: new Date(),
         members: [],
+        messages: [],
+        circleTags: [],
       };
 
       const mockEnrichedCircle = {
@@ -60,6 +62,7 @@ describe("CircleCoreService", () => {
         userRole: "OWNER" as const,
         latestMessage: null,
         unreadCount: 0,
+        tags: [],
       };
 
       vi.mocked(getRandomCircleAvatar).mockResolvedValue(mockAvatar);
@@ -116,6 +119,8 @@ describe("CircleCoreService", () => {
         _count: { members: 0 },
         createdAt: new Date(),
         members: [],
+        messages: [],
+        circleTags: [],
       };
 
       const mockMember = {
@@ -136,6 +141,7 @@ describe("CircleCoreService", () => {
         userRole: "OWNER" as const,
         latestMessage: null,
         unreadCount: 0,
+        tags: [],
       };
 
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue(mockCircle);
@@ -238,12 +244,15 @@ describe("CircleCoreService", () => {
         mockEnrichedCircle,
       );
 
-      const result = await CircleCoreService.getCircleById("circle-1");
+      const result = await CircleCoreService.getCircleById(
+        "circle-1",
+        "user-1",
+      );
 
       expect(CircleRepository.findCircleById).toHaveBeenCalledWith("circle-1");
       expect(CircleEnricher.enrichCircle).toHaveBeenCalledWith(
         mockCircle,
-        undefined,
+        "user-1",
       );
       expect(result).toEqual(mockEnrichedCircle);
     });
@@ -312,21 +321,24 @@ describe("CircleCoreService", () => {
       vi.mocked(CircleRepository.findUserCircles).mockResolvedValue(
         mockCircles,
       );
-      vi.mocked(CircleEnricher.enrichCircle)
-        .mockResolvedValueOnce(mockEnrichedCircles[0])
-        .mockResolvedValueOnce(mockEnrichedCircles[1]);
+      vi.mocked(CircleEnricher.enrichCircles).mockResolvedValueOnce(
+        mockEnrichedCircles,
+      );
 
       const result = await CircleCoreService.getUserCircles("user-1");
 
       expect(CircleRepository.findUserCircles).toHaveBeenCalledWith("user-1");
-      expect(CircleEnricher.enrichCircle).toHaveBeenCalledTimes(2);
+      expect(CircleEnricher.enrichCircles).toHaveBeenCalledTimes(1);
       expect(result).toEqual(mockEnrichedCircles);
     });
 
     it("should return empty array if user has no circles", async () => {
       vi.mocked(CircleRepository.findUserCircles).mockResolvedValue([]);
+      vi.mocked(CircleEnricher.enrichCircles).mockResolvedValueOnce([]);
 
       const result = await CircleCoreService.getUserCircles("user-1");
+
+      expect(CircleEnricher.enrichCircles).toHaveBeenCalled();
 
       expect(result).toEqual([]);
     });
@@ -436,6 +448,8 @@ describe("CircleCoreService", () => {
         name: "New Name",
         description: "New Description",
         isPrivate: true,
+        avatarId: 2,
+        tagIds: [1, 2],
       };
       const mockUpdatedCircle = { ...mockCircle, ...updateData };
       const mockEnrichedCircle = { ...mockUpdatedCircle, userRole: "OWNER" };
@@ -475,6 +489,8 @@ describe("CircleCoreService", () => {
         name: "New Name",
         description: "",
         isPrivate: false,
+        avatarId: 2,
+        tagIds: [1, 2],
       };
 
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue(null);
@@ -495,6 +511,8 @@ describe("CircleCoreService", () => {
         name: "New Name",
         description: "",
         isPrivate: false,
+        avatarId: 2,
+        tagIds: [1, 2],
       };
 
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue(mockCircle);
@@ -563,6 +581,92 @@ describe("CircleCoreService", () => {
       await expect(
         CircleCoreService.deleteCircle("circle-1", mockUser),
       ).rejects.toThrow(AuthorizationError);
+    });
+  });
+
+  describe("getCircleAvatars", () => {
+    const makeAvatars = (count: number) =>
+      Array.from({ length: count }, (_, i) => ({
+        id: i + 1,
+        url: `https://example.com/${i + 1}.png`,
+      }));
+
+    it("should return data and pagination when results are within the limit", async () => {
+      const avatars = makeAvatars(5);
+      vi.mocked(CircleRepository.getCircleAvatars).mockResolvedValue(avatars);
+
+      const result = await CircleCoreService.getCircleAvatars(20);
+
+      expect(CircleRepository.getCircleAvatars).toHaveBeenCalledWith(
+        20,
+        undefined,
+      );
+      expect(result.data).toHaveLength(5);
+      expect(result.data).toEqual(avatars);
+      expect(result.pagination.hasMore).toBe(false);
+      expect(result.pagination.nextCursor).toBeNull();
+    });
+
+    it("should indicate hasMore and set nextCursor when repository returns limit + 1 items", async () => {
+      // repository fetches limit+1 to detect overflow — 21 items for a limit of 20
+      const avatars = makeAvatars(21);
+      vi.mocked(CircleRepository.getCircleAvatars).mockResolvedValue(avatars);
+
+      const result = await CircleCoreService.getCircleAvatars(20);
+
+      expect(result.data).toHaveLength(20);
+      expect(result.pagination.hasMore).toBe(true);
+      expect(result.pagination.nextCursor).toBe(20); // id of the last item in the sliced page
+    });
+
+    it("should pass cursor to the repository", async () => {
+      vi.mocked(CircleRepository.getCircleAvatars).mockResolvedValue([]);
+
+      await CircleCoreService.getCircleAvatars(20, 42);
+
+      expect(CircleRepository.getCircleAvatars).toHaveBeenCalledWith(20, 42);
+    });
+
+    it("should use the default limit of 20 when none is provided", async () => {
+      vi.mocked(CircleRepository.getCircleAvatars).mockResolvedValue([]);
+
+      await CircleCoreService.getCircleAvatars();
+
+      expect(CircleRepository.getCircleAvatars).toHaveBeenCalledWith(
+        20,
+        undefined,
+      );
+    });
+
+    it("should return empty data with no next cursor when repository returns nothing", async () => {
+      vi.mocked(CircleRepository.getCircleAvatars).mockResolvedValue([]);
+
+      const result = await CircleCoreService.getCircleAvatars(20);
+
+      expect(result.data).toEqual([]);
+      expect(result.pagination.hasMore).toBe(false);
+      expect(result.pagination.nextCursor).toBeNull();
+    });
+
+    it("should set nextCursor to the id of the last item on the page, not the overflow item", async () => {
+      const avatars = makeAvatars(11); // limit=10, +1 overflow
+      vi.mocked(CircleRepository.getCircleAvatars).mockResolvedValue(avatars);
+
+      const result = await CircleCoreService.getCircleAvatars(10);
+
+      expect(result.data).toHaveLength(10);
+      expect(result.pagination.nextCursor).toBe(10); // id 10, not 11
+    });
+
+    it("should return exactly limit items when results equal the limit (no overflow)", async () => {
+      const avatars = makeAvatars(20);
+      vi.mocked(CircleRepository.getCircleAvatars).mockResolvedValue(avatars);
+
+      const result = await CircleCoreService.getCircleAvatars(20);
+
+      expect(result.data).toHaveLength(20);
+      expect(result.pagination.hasMore).toBe(false);
+      expect(result.pagination.nextCursor).toBeNull();
     });
   });
 });

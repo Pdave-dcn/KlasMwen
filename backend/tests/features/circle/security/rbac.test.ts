@@ -82,6 +82,13 @@ describe("hasCirclePermission", () => {
       expect(result).toBe(false);
     });
 
+    it("should not allow OWNER to leave circles", () => {
+      const user = createUser("owner-1", "OWNER");
+      const targetMember = createMember("owner-1", "OWNER");
+      const result = hasCirclePermission(user, "circles", "leave");
+      expect(result).toBe(false);
+    });
+
     it("should allow OWNER to invite members", () => {
       const user = createUser("owner-1", "OWNER");
       const result = hasCirclePermission(user, "circles", "invite");
@@ -219,6 +226,13 @@ describe("hasCirclePermission", () => {
       const result = hasCirclePermission(user, "circles", "invite");
       expect(result).toBe(true);
     });
+
+    it("should allow MODERATOR to leave circles", () => {
+      const user = createUser("mod-1", "MODERATOR");
+      const targetMember = createMember("mod-1", "MODERATOR");
+      const result = hasCirclePermission(user, "circles", "leave");
+      expect(result).toBe(true);
+    });
   });
 
   describe("MODERATOR role - circleMembers resource", () => {
@@ -340,6 +354,13 @@ describe("hasCirclePermission", () => {
       expect(result).toBe(true);
     });
 
+    it("should allow MEMBER to leave circles", () => {
+      const user = createUser("member-1", "MEMBER");
+      const targetMember = createMember("member-1", "MEMBER");
+      const result = hasCirclePermission(user, "circles", "leave");
+      expect(result).toBe(true);
+    });
+
     it("should not allow MEMBER to invite others", () => {
       const user = createUser("member-1", "MEMBER");
       const result = hasCirclePermission(user, "circles", "invite");
@@ -352,18 +373,6 @@ describe("hasCirclePermission", () => {
       const user = createUser("member-1", "MEMBER");
       const result = hasCirclePermission(user, "circleMembers", "add");
       expect(result).toBe(false);
-    });
-
-    it("should allow MEMBER to remove themselves (isMemberUser)", () => {
-      const user = createUser("member-1", "MEMBER");
-      const targetMember = createMember("member-1", "MEMBER");
-      const result = hasCirclePermission(
-        user,
-        "circleMembers",
-        "remove",
-        targetMember,
-      );
-      expect(result).toBe(true);
     });
 
     it("should not allow MEMBER to remove other members", () => {
@@ -456,21 +465,6 @@ describe("hasCirclePermission", () => {
   });
 
   describe("edge cases", () => {
-    it("should handle member with nested user object", () => {
-      const user = createUser("member-1", "MEMBER");
-      const memberWithNestedUser = {
-        role: "MEMBER" as CircleRole,
-        user: { id: "member-1" },
-      };
-      const result = hasCirclePermission(
-        user,
-        "circleMembers",
-        "remove",
-        memberWithNestedUser,
-      );
-      expect(result).toBe(true);
-    });
-
     it("should handle message with nested sender object", () => {
       const user = createUser("member-1", "MEMBER");
       const messageWithNestedSender = {

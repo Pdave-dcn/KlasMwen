@@ -9,7 +9,9 @@ import { AuthorizationError } from "../../../../../src/core/error/custom/auth.er
 import {
   CircleNotFoundError,
   AlreadyMemberError,
+  CircleMemberNotFoundError,
 } from "../../../../../src/core/error/custom/circle.error.js";
+import { CircleRole } from "@prisma/client";
 
 vi.mock(
   "../../../../../src/features/circle/service/Repositories/CircleRepository.js",
@@ -201,6 +203,117 @@ describe("CircleCoreService", () => {
       await expect(
         CircleCoreService.joinCircle("circle-1", "user-2"),
       ).rejects.toThrow(AlreadyMemberError);
+    });
+  });
+
+  describe("leaveCircle", () => {
+    const mockRequester = {
+      id: "user-2",
+      username: "TestUser2",
+      email: "testuser2@example.com",
+      role: "STUDENT" as const,
+      circleRole: "MEMBER" as CircleRole,
+    };
+
+    const mockCircle = {
+      id: "circle-1",
+      creator: mockCreator,
+      avatar: mockAvatar,
+      _count: { members: 1 },
+      createdAt: new Date(),
+      members: [],
+      messages: [],
+      circleTags: [],
+      ...mockCircleData,
+    };
+
+    const mockMembership = {
+      userId: "user-2",
+      circleId: "circle-1",
+      role: "MEMBER" as CircleRole,
+      joinedAt: new Date(),
+      mutedUntil: null,
+    } as any;
+
+    it("should allow a member to leave a circle", async () => {
+      vi.mocked(CircleRepository.findCircleById).mockResolvedValue(mockCircle);
+      vi.mocked(CircleRepository.getMembership).mockResolvedValue(
+        mockMembership,
+      );
+      vi.mocked(assertCirclePermission).mockReturnValue(undefined);
+      vi.mocked(CircleRepository.removeMember).mockResolvedValue(
+        mockMembership,
+      );
+
+      const result = await CircleCoreService.leaveCircle(
+        "circle-1",
+        mockRequester,
+      );
+
+      expect(CircleRepository.findCircleById).toHaveBeenCalledWith("circle-1");
+      expect(CircleRepository.getMembership).toHaveBeenCalledWith(
+        "user-2",
+        "circle-1",
+      );
+      expect(assertCirclePermission).toHaveBeenCalledWith(
+        mockRequester,
+        "circles",
+        "leave",
+      );
+      expect(CircleRepository.removeMember).toHaveBeenCalledWith(
+        "user-2",
+        "circle-1",
+      );
+      expect(result).toEqual(mockMembership);
+    });
+
+    it("should throw CircleNotFoundError if circle does not exist", async () => {
+      vi.mocked(CircleRepository.findCircleById).mockResolvedValue(null);
+
+      await expect(
+        CircleCoreService.leaveCircle("circle-1", mockRequester),
+      ).rejects.toThrow(CircleNotFoundError);
+
+      expect(CircleRepository.getMembership).not.toHaveBeenCalled();
+      expect(CircleRepository.removeMember).not.toHaveBeenCalled();
+    });
+
+    it("should throw CircleMemberNotFoundError if user is not a member", async () => {
+      vi.mocked(CircleRepository.findCircleById).mockResolvedValue(mockCircle);
+      vi.mocked(CircleRepository.getMembership).mockResolvedValue(null);
+
+      await expect(
+        CircleCoreService.leaveCircle("circle-1", mockRequester),
+      ).rejects.toThrow(CircleMemberNotFoundError);
+
+      expect(assertCirclePermission).not.toHaveBeenCalled();
+      expect(CircleRepository.removeMember).not.toHaveBeenCalled();
+    });
+
+    it("should throw AuthorizationError if user lacks leave permission", async () => {
+      const ownerRequester = {
+        id: "user-1",
+        username: "OwnerUser",
+        circleRole: "OWNER" as CircleRole,
+      };
+
+      vi.mocked(CircleRepository.findCircleById).mockResolvedValue(mockCircle);
+      vi.mocked(CircleRepository.getMembership).mockResolvedValue({
+        ...mockMembership,
+        userId: "user-1",
+        role: "OWNER" as CircleRole,
+      });
+      vi.mocked(assertCirclePermission).mockImplementation(() => {
+        throw new AuthorizationError(
+          "Owners cannot leave without transferring ownership",
+        );
+      });
+
+      await expect(
+        CircleCoreService.leaveCircle("circle-1", ownerRequester),
+      ).rejects.toThrow(AuthorizationError);
+
+      expect(CircleRepository.removeMember).not.toHaveBeenCalled();
     });
   });
 

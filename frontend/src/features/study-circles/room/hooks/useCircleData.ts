@@ -29,8 +29,13 @@ export const useCircleData = (circleId: string | null) => {
   const { data: selectedCircle, isLoading: isLoadingCircle } =
     useStudyCircleQuery(circleId);
 
-  const { data: members = [], isLoading: isLoadingMembers } =
+  const { data: rawMembers = [], isLoading: isLoadingMembers } =
     useCircleMembersQuery(circleId);
+
+  // React Query keeps stale cache data even when queries are disabled (circleId is null).
+  // Explicitly returning empty arrays when there is no active circle prevents stale
+  // members and messages from remaining visible after leaving or deleting a circle.
+  const members = circleId ? rawMembers : [];
 
   const {
     data: messagesData,
@@ -40,13 +45,18 @@ export const useCircleData = (circleId: string | null) => {
     hasNextPage,
   } = useCircleMessagesQuery(circleId);
 
-  const messages = useMemo(
+  const rawMessages = useMemo(
     () =>
       messagesData
         ? [...messagesData.pages.flatMap((p) => p.data)].reverse()
         : [],
     [messagesData],
   );
+
+  // Same reasoning as members, rawMessages may still hold cached pages from the
+  // previously selected circle, so we clear them immediately when circleId is null
+  // rather than waiting for the cache to be garbage collected.
+  const messages = circleId ? rawMessages : [];
 
   return {
     groups,

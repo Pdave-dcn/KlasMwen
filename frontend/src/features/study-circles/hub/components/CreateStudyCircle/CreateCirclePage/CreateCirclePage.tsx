@@ -48,9 +48,9 @@ export function CreateCirclePage() {
     return (
       <CreateCircleSuccess
         circleName={createdGroupName}
-        onGoToChat={() => navigate("/chat/groups")}
+        onGoToChat={() => navigate("/circles/mine")}
         onCreateAnother={handleCreateAnother}
-        onBackToHub={() => navigate("/chat/hub")}
+        onBackToHub={() => navigate("/circles")}
       />
     );
   }

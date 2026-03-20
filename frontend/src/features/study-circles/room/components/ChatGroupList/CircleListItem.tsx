@@ -85,7 +85,7 @@ export const CircleListItem = ({
             ) : (
               <span className="flex items-center gap-1">
                 <Users className="h-3 w-3" />
-                {circle.memberCount} members
+                {`${circle.memberCount} ${circle.memberCount === 1 ? "member" : "members"}`}
               </span>
             )}
           </p>

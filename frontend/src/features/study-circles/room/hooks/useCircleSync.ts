@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
 
 import { useUpdateCircleMemberLastReadAtMutation } from "@/queries/circle";
+import { useCircleStore } from "@/stores/circle.store";
 import type {
   CircleMessagesResponse,
   StudyCircle,
@@ -29,6 +30,8 @@ export const useCircleSync = (currentCircleId: string | null) => {
   const queryClient = useQueryClient();
   const updateLastReadAtMutation = useUpdateCircleMemberLastReadAtMutation();
 
+  const { resetSelectedCircle } = useCircleStore();
+
   // EFFECT 1: Handle Study Circle Selection (Opening a chat room)
   useEffect(() => {
     if (!currentCircleId) return;
@@ -49,6 +52,7 @@ export const useCircleSync = (currentCircleId: string | null) => {
 
     return () => {
       circleSocketService.leaveCircle(currentCircleId);
+      resetSelectedCircle();
     };
   }, [currentCircleId, queryClient]);
 

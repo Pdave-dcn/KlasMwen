@@ -8,6 +8,9 @@ interface CircleStoreState {
   selectedCircleId: string | null;
   selectCircle: (circleId: string | null) => void;
 
+  // Resets the selected circle (used after leaving, deleting or unmounting a circle to clear stale data)
+  resetSelectedCircle: () => void;
+
   // Current user context
   currentUser: User | null;
   setCurrentUser: (user: User) => void;
@@ -35,6 +38,8 @@ export const useCircleStore = create<CircleStoreState>((set) => ({
   selectCircle: (circleId) => {
     set({ selectedCircleId: circleId, presentMemberIds: new Set() });
   },
+  resetSelectedCircle: () =>
+    set({ selectedCircleId: null, presentMemberIds: new Set() }),
 
   // Current user
   currentUser: null,

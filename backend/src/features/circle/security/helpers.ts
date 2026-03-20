@@ -93,18 +93,18 @@ const isSender = <TResource extends MessageResource>(
   resource: TResource,
 ) => user.id === getSenderId(resource);
 
-/**
- * Checks if a user matches a member resource.
- *
- * @template TResource - A type that extends the base MemberResource structure.
- * @param {{ id: string }} user - The user object with an `id` property.
- * @param {TResource} resource - The member resource to check.
- * @returns {boolean} `true` if the user matches the member, otherwise `false`.
- */
-const isMemberUser = <TResource extends MemberResource>(
-  user: Omit<Express.User, "email">,
-  resource: TResource,
-) => user.id === getMemberId(resource);
+// /**
+//  * Checks if a user matches a member resource.
+//  *
+//  * @template TResource - A type that extends the base MemberResource structure.
+//  * @param {{ id: string }} user - The user object with an `id` property.
+//  * @param {TResource} resource - The member resource to check.
+//  * @returns {boolean} `true` if the user matches the member, otherwise `false`.
+//  */
+// const isMemberUser = <TResource extends MemberResource>(
+//   user: Omit<Express.User, "email">,
+//   resource: TResource,
+// ) => user.id === getMemberId(resource);
 
 /**
  * Checks if a user has a specific circle role.
@@ -122,12 +122,4 @@ const hasRole = (
   return roleArray.includes(user.circleRole);
 };
 
-export {
-  getCreatorId,
-  getSenderId,
-  getMemberId,
-  isCreator,
-  isSender,
-  isMemberUser,
-  hasRole,
-};
+export { getCreatorId, getSenderId, getMemberId, isCreator, isSender, hasRole };

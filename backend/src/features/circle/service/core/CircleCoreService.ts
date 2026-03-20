@@ -1,6 +1,7 @@
 import { AuthorizationError } from "../../../../core/error/custom/auth.error.js";
 import {
   AlreadyMemberError,
+  CircleMemberNotFoundError,
   CircleNotFoundError,
 } from "../../../../core/error/custom/circle.error.js";
 import { processPaginatedResults } from "../../../../utils/pagination.util.js";
@@ -62,6 +63,36 @@ export class CircleCoreService {
     });
 
     return CircleEnricher.enrichCircle(group, userId);
+  }
+
+  /**
+   * Allows a user to leave a circle
+   *
+   * @param {string} circleId - The ID of the circle to leave
+   * @param {(Express.User & { circleRole?: CircleRole })} requester - The user leaving the circle, with their role
+   * @throws {CircleNotFoundError} If the circle does not exist
+   * @throws {CircleMemberNotFoundError} If the user is not a member of the circle
+   * @throws {AuthorizationError} If the user is the owner and cannot leave without transferring ownership
+   * @param {(Express.User & { circleRole?: CircleRole })} requester
+   */
+  static async leaveCircle(
+    circleId: string,
+    requester: Express.User & { circleRole?: CircleRole },
+  ) {
+    const circle = await CircleRepository.findCircleById(circleId);
+    if (!circle) throw new CircleNotFoundError(circleId);
+
+    const membership = await CircleRepository.getMembership(
+      requester.id,
+      circleId,
+    );
+    if (!membership) {
+      throw new CircleMemberNotFoundError(requester.id, circleId);
+    }
+
+    assertCirclePermission(requester, "circles", "leave");
+
+    return await CircleRepository.removeMember(requester.id, circleId);
   }
 
   /**

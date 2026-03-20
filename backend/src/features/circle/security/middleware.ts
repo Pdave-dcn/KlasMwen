@@ -3,6 +3,7 @@ import {
   NotAMemberError,
 } from "../../../core/error/custom/circle.error.js";
 import { StudyCircleIdParamSchema } from "../../../zodSchemas/circle.zod.js";
+import CircleService from "../service/CircleService.js";
 import CircleRepository from "../service/Repositories/CircleRepository.js";
 
 import type { Request, Response, NextFunction } from "express";
@@ -42,6 +43,7 @@ const enrichCircleRole = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
+    req.log.info("Enriching user with circle role if applicable");
     const result = StudyCircleIdParamSchema.safeParse(req.params);
 
     if (!result.success) {
@@ -56,7 +58,7 @@ const enrichCircleRole = async (
 
     // Get user's membership and role
     if (req.user) {
-      const membership = await CircleRepository.getMembership(
+      const membership = await CircleService.verifyMembership(
         req.user.id,
         result.data.circleId,
       );
@@ -64,6 +66,15 @@ const enrichCircleRole = async (
       // Attach circle role to user object (can be undefined if not a member)
       req.user.circleRole = membership?.role ?? undefined;
     }
+
+    req.log.info(
+      {
+        circleId: result.data.circleId,
+        userId: req.user?.id,
+        userCircleRole: req.user?.circleRole,
+      },
+      "Finished enriching user with circle role",
+    );
 
     next();
   } catch (error) {

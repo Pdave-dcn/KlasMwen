@@ -1,4 +1,4 @@
-import { hasRole, isSender, isMemberUser } from "./helpers.js";
+import { hasRole, isSender } from "./helpers.js";
 
 import type { CircleRegistry } from "./types.js";
 import type { CircleRole } from "@prisma/client";
@@ -35,6 +35,7 @@ export const CIRCLE_POLICY: ChatPolicyMap = {
       delete: true, // Owner can delete their circles
       join: false, // Owner is already a member
       invite: true, // Owner can invite others
+      leave: false, // Owner cannot leave its own circle (without transferring ownership first)
     },
     circleMembers: {
       add: true, // Owner can add members
@@ -58,6 +59,7 @@ export const CIRCLE_POLICY: ChatPolicyMap = {
       delete: false, // Only owner can delete
       join: false, // Moderator is already a member
       invite: true, // Moderator can invite others
+      leave: true, // Moderator can leave
     },
     circleMembers: {
       add: true, // Moderator can add members
@@ -83,10 +85,11 @@ export const CIRCLE_POLICY: ChatPolicyMap = {
       delete: false,
       join: true,
       invite: false, // Members cannot invite (unless changed by owner)
+      leave: true,
     },
     circleMembers: {
       add: false, // Members cannot add other members
-      remove: isMemberUser, // Members can only remove themselves (leave)
+      remove: false, // Members cannot remove other members
       updateRole: false, // Members cannot change roles
       view: true, // Members can view other members
       mute: false, // Members cannot mute anyone

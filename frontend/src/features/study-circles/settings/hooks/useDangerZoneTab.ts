@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import {
   useDeleteCircleMutation,
-  useRemoveCircleMemberMutation,
+  useLeaveCircleMutation,
 } from "@/queries/circle";
 import { useCircleStore } from "@/stores/circle.store";
 
@@ -17,10 +17,11 @@ export function useDangerZoneTab({ onClose }: UseDangerZoneTabProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
 
-  const { selectedCircleId, currentUser, selectCircle } = useCircleStore();
+  const { selectedCircleId, currentUser, resetSelectedCircle } =
+    useCircleStore();
 
   const deleteCircleMutation = useDeleteCircleMutation();
-  const leaveCircleMutation = useRemoveCircleMemberMutation(selectedCircleId);
+  const leaveCircleMutation = useLeaveCircleMutation();
 
   const { isOwner, canDefinitely } = useCirclePermission();
 
@@ -30,24 +31,25 @@ export function useDangerZoneTab({ onClose }: UseDangerZoneTabProps) {
   const canDelete = canDefinitely("circles", "delete");
 
   const handleLeave = () => {
-    if (currentUser) {
-      leaveCircleMutation.mutate({
-        userId: currentUser.id,
-        isSelfRemoval: true,
-      });
-    }
-    setShowLeaveDialog(false);
-    onClose();
-    selectCircle(null); // Clear circle from store to avoid showing stale data while redirecting
+    if (!currentUser) return;
+    leaveCircleMutation.mutate(selectedCircleId, {
+      onSuccess: () => {
+        resetSelectedCircle();
+        setShowLeaveDialog(false);
+        onClose();
+      },
+    });
   };
 
   const handleDelete = () => {
-    if (selectedCircleId) {
-      deleteCircleMutation.mutate(selectedCircleId);
-    }
-    setShowDeleteDialog(false);
-    onClose();
-    selectCircle(null);
+    if (!selectedCircleId) return;
+    deleteCircleMutation.mutate(selectedCircleId, {
+      onSuccess: () => {
+        resetSelectedCircle();
+        setShowDeleteDialog(false);
+        onClose();
+      },
+    });
   };
 
   return {
@@ -58,9 +60,17 @@ export function useDangerZoneTab({ onClose }: UseDangerZoneTabProps) {
     setShowDeleteDialog,
     deleteConfirm,
     setDeleteConfirm,
+
     // Permissions
     canLeave,
     canDelete,
+
+    // Mutation
+    pending: {
+      leaving: leaveCircleMutation.isPending,
+      deleting: deleteCircleMutation.isPending,
+    },
+
     // Handlers
     handlers: {
       handleLeave,

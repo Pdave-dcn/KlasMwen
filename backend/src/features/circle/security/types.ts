@@ -31,7 +31,7 @@ type CircleMessageForPolicy = WithSenderId<CircleMessage> & {
 const circleRegistry = {
   circles: {
     datatype: {} as CircleForPolicy,
-    action: ["create", "read", "update", "delete", "join", "invite"],
+    action: ["create", "read", "update", "delete", "join", "invite", "leave"],
   },
   circleMembers: {
     datatype: {} as CircleMemberForPolicy,

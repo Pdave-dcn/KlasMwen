@@ -17,6 +17,7 @@ import {
   createStudyCircle,
   joinStudyCircle,
   getCircleAvatars,
+  leaveStudyCircle,
 } from "@/api/circle";
 import type {
   CreateStudyCircleData,
@@ -44,7 +45,7 @@ export const useStudyCircleQuery = (circleId: string | null) => {
 
 export const useRecentActivityCirclesQuery = (limit = 8) => {
   return useQuery({
-    queryKey: ["circles", "recent-activity", limit],
+    queryKey: ["circles", "recent-activity"],
     queryFn: () => getRecentActivityCircles(limit),
   });
 };
@@ -112,6 +113,52 @@ export const useJoinCircleMutation = () => {
           })),
         };
       });
+
+      await queryClient.invalidateQueries({
+        queryKey: ["circles", "recent-activity"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["circles", "stats", "quick"],
+      });
+    },
+  });
+};
+
+export const useLeaveCircleMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (circleId: string | null) => {
+      if (!circleId) {
+        throw new Error("Circle ID is required to leave a circle.");
+      }
+      return leaveStudyCircle(circleId);
+    },
+    onMutate: async (circleId) => {
+      await queryClient.cancelQueries({ queryKey: ["circles", "list"] });
+
+      const previousCircles = queryClient.getQueryData<StudyCircle[]>([
+        "circles",
+        "list",
+      ]);
+
+      queryClient.setQueryData<StudyCircle[]>(["circles", "list"], (old) => {
+        if (!old) return old;
+        return old.filter((circle) => circle.id !== circleId);
+      });
+
+      return { previousCircles };
+    },
+
+    onError: (_error, _var, context) => {
+      toast.error("Failed to leave the circle. Please try again.");
+      queryClient.setQueryData(["circles", "list"], context?.previousCircles);
+    },
+
+    onSettled: async (_data, _error) => {
+      await queryClient.invalidateQueries({
+        queryKey: ["circles", "list"],
+      });
     },
   });
 };
@@ -161,7 +208,7 @@ export const useDeleteCircleMutation = () => {
       }
     },
 
-    onSuccess: async () => {
+    onSettled: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["circles", "list"],
       });

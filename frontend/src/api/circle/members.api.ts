@@ -36,12 +36,7 @@ export const getCircleMembers = async (circleId: string) => {
 };
 
 export const removeCircleMember = async (circleId: string, userId: string) => {
-  try {
-    await api.delete(`/circles/${circleId}/members/${userId}`);
-  } catch (error) {
-    handleZodValidationError(error, "removeCircleMember");
-    throw error;
-  }
+  await api.delete(`/circles/${circleId}/members/${userId}`);
 };
 
 export const updateCircleMemberRole = async (

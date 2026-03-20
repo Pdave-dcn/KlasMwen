@@ -12,7 +12,7 @@ import statsRoutes from "./stats.route.js";
 
 const router = Router();
 
-router.use(attachLogContext("StudyCircleControllers"));
+router.use(attachLogContext("CirclesRouting"));
 
 router.use(generalApiLimiter);
 router.use(requireAuth);

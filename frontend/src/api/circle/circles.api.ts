@@ -23,13 +23,16 @@ export const createStudyCircle = async (data: CreateStudyCircleData) => {
 
 export const joinStudyCircle = async (circleId: string) => {
   try {
-    const res = await api.post(`/circles/join/${circleId}`);
+    const res = await api.post(`/circles/${circleId}/join`);
     const validatedData = StudyCircleResponseSchema.parse(res.data);
     return validatedData.data;
   } catch (error) {
     handleZodValidationError(error, "joinStudyCircle");
     throw error;
   }
+};
+export const leaveStudyCircle = async (circleId: string) => {
+  await api.post(`/circles/${circleId}/leave`);
 };
 
 export const getUserStudyCircles = async () => {

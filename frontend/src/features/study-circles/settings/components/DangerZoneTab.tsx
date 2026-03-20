@@ -1,4 +1,4 @@
-import { LogOut, Trash2, AlertTriangle } from "lucide-react";
+import { LogOut, Trash2, AlertTriangle, RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +31,7 @@ export function DangerZoneTab({ circleName, onClose }: DangerZoneTabProps) {
     canLeave,
     canDelete,
     handlers,
+    pending,
   } = useDangerZoneTab({ onClose });
 
   return (
@@ -84,6 +85,7 @@ export function DangerZoneTab({ circleName, onClose }: DangerZoneTabProps) {
             variant="destructive"
             className="rounded-xl gap-2"
             onClick={() => setShowDeleteDialog(true)}
+            disabled={pending.leaving || pending.deleting}
           >
             <Trash2 className="h-4 w-4" />
             Delete
@@ -113,8 +115,16 @@ export function DangerZoneTab({ circleName, onClose }: DangerZoneTabProps) {
               variant="destructive"
               onClick={handlers.handleLeave}
               className="rounded-xl"
+              disabled={pending.leaving}
             >
-              Leave Circle
+              {pending.leaving ? (
+                <div className="flex items-center gap-2">
+                  <RotateCcw className="h-4 w-4 animate-spin" />
+                  Leaving...
+                </div>
+              ) : (
+                "Leave Circle"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -149,11 +159,18 @@ export function DangerZoneTab({ circleName, onClose }: DangerZoneTabProps) {
             </Button>
             <Button
               variant="destructive"
-              disabled={deleteConfirm !== DELETE_CONFIRM}
+              disabled={deleteConfirm !== DELETE_CONFIRM || pending.deleting}
               onClick={handlers.handleDelete}
               className="rounded-xl"
             >
-              Permanently Delete
+              {pending.deleting ? (
+                <div className="flex items-center gap-2">
+                  <RotateCcw className="h-4 w-4 animate-spin" />
+                  Deleting...
+                </div>
+              ) : (
+                "Permanently Delete"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -30,6 +30,7 @@ export class CircleService {
   static updateCircle: typeof CircleCoreService.updateCircle;
   static deleteCircle: typeof CircleCoreService.deleteCircle;
   static joinCircle: typeof CircleCoreService.joinCircle;
+  static leaveCircle: typeof CircleCoreService.leaveCircle;
   static getRecentActivityCircles: typeof CircleCoreService.getRecentActivityCircles;
   static getCircleAvatars: typeof CircleCoreService.getCircleAvatars;
 
@@ -80,6 +81,7 @@ export class CircleService {
       bindMethods(CircleCoreService, [
         "createCircle",
         "joinCircle",
+        "leaveCircle",
         "getCircleById",
         "getCirclePreviewDetails",
         "getUserCircles",

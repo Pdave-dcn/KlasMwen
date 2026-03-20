@@ -8,7 +8,10 @@ import {
   UpdateStudyCircleDataSchema,
 } from "../../zodSchemas/circle.zod.js";
 
-import type { AuthenticatedRequest } from "../../types/AuthRequest.js";
+import type {
+  AuthenticatedRequest,
+  AuthenticatedEnrichedRequest,
+} from "../../types/AuthRequest.js";
 import type { NextFunction, Request, Response } from "express";
 
 const controllerLogger = createLogger({
@@ -77,6 +80,34 @@ const joinCircle = async (req: Request, res: Response, next: NextFunction) => {
 
     return res.status(200).json({
       data: group,
+    });
+  } catch (error: unknown) {
+    return next(error);
+  }
+};
+
+const leaveCircle = async (req: Request, res: Response, next: NextFunction) => {
+  const actionLogger = createActionLogger(controllerLogger, "leaveCircle", req);
+
+  try {
+    actionLogger.info("User leaving study circle");
+
+    const { user } = req as AuthenticatedEnrichedRequest;
+    const { circleId } = StudyCircleIdParamSchema.parse(req.params);
+
+    await CircleService.leaveCircle(circleId, user);
+
+    actionLogger.info(
+      {
+        circleId,
+        userId: user.id,
+        userRole: user.circleRole,
+      },
+      "User leaved study circle successfully",
+    );
+
+    return res.status(200).json({
+      message: "User leaved circle successfully",
     });
   } catch (error: unknown) {
     return next(error);
@@ -328,6 +359,7 @@ export {
   updateCircle,
   deleteCircle,
   joinCircle,
+  leaveCircle,
   getRecentActivityCircles,
   getCirclePreviewDetails,
   getCircleAvatars,

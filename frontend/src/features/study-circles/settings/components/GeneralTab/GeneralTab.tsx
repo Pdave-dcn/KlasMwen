@@ -20,12 +20,15 @@ export function GeneralTab({ circle }: GeneralTabProps) {
         onEditClick={() => setEditOpen(true)}
       />
 
-      {/* Edit dialog — only mounts when open */}
-      <EditCircleInfoDialog
-        circle={circle}
-        open={editOpen}
-        onOpenChange={setEditOpen}
-      />
+      {/* Mount only when open — prevents useCircleAvatarsQuery from
+          firing for members who never open the edit dialog */}
+      {editOpen && (
+        <EditCircleInfoDialog
+          circle={circle}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+        />
+      )}
     </div>
   );
 }

@@ -25,26 +25,16 @@ export const useCircleRoom = () => {
 
   useCirclePresence(selectedCircleId);
 
-  const {
-    groups,
-    selectedCircle,
-    members,
-    messages,
-    isLoadingCircles,
-    isLoadingMembers,
-    isLoadingMessages,
-    isFetchingNextPage,
-    pagination,
-  } = useCircleData(selectedCircleId);
+  const { data, loading, pagination } = useCircleData(selectedCircleId);
 
   useEffect(() => {
-    setCurrentUserMemberRole(selectedCircle?.userRole ?? null);
-  }, [selectedCircle?.userRole, setCurrentUserMemberRole]);
+    setCurrentUserMemberRole(data.selectedCircle?.userRole ?? null);
+  }, [data.selectedCircle?.userRole, setCurrentUserMemberRole]);
 
   const isMuted = useMemo(() => {
-    const me = members.find((m) => m.userId === currentUser?.id);
+    const me = data.members.find((m) => m.userId === currentUser?.id);
     return me?.isMuted ?? false;
-  }, [members, currentUser?.id]);
+  }, [data.members, currentUser?.id]);
 
   const sendMessageMutation = useSendCircleMessageMutation(
     selectedCircleId ?? "",
@@ -59,26 +49,14 @@ export const useCircleRoom = () => {
     [selectedCircleId, isMuted, sendMessageMutation],
   );
 
-  const handleLoadMore = useCallback(() => {
-    if (pagination.hasNextPage && !isFetchingNextPage) {
-      void pagination.fetchNextPage();
-    }
-  }, [pagination, isFetchingNextPage]);
-
   return {
-    groups,
-    selectedCircle,
-    messages,
-    members,
+    data,
+    loading,
+    pagination,
     currentUser,
     selectedCircleId,
-    isLoadingCircles,
-    isLoadingMessages,
-    isLoadingMembers,
     isMuted,
-    hasNextPage: pagination.hasNextPage,
     handleSelectCircle: selectCircle,
     handleSendMessage,
-    handleLoadMore,
   };
 };

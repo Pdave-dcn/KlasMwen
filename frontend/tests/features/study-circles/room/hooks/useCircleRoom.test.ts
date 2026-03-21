@@ -23,17 +23,24 @@ const mockCurrentUser = vi.hoisted(() => ({
 }));
 
 const mockCircleData = vi.hoisted(() => ({
-  groups: [],
-  selectedCircle: null,
-  members: [],
-  messages: [],
-  isLoadingCircles: false,
-  isLoadingMembers: false,
-  isLoadingMessages: false,
-  isFetchingNextPage: false,
+  data: {
+    circles: [],
+    selectedCircle: null,
+    members: [],
+    messages: [],
+  },
+  loading: {
+    circles: false,
+    circle: false,
+    members: false,
+    messages: false,
+  },
   pagination: {
-    hasNextPage: false,
-    fetchNextPage: mockFetchNextPage,
+    messages: {
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      fetchNextPage: mockFetchNextPage,
+    },
   },
 }));
 
@@ -87,25 +94,22 @@ describe("useCircleRoom hook", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Reset store mock
     mockCircleStore.selectedCircleId = "circle-1";
     mockCircleStore.selectCircle = mockSelectCircle;
     mockCircleStore.setCurrentUser = mockSetCurrentUser;
     mockCircleStore.setCurrentUserMemberRole = mockSetCurrentUserMemberRole;
 
-    // Reset circle data mock
-    mockCircleData.groups = [];
-    mockCircleData.selectedCircle = null;
-    mockCircleData.members = [];
-    mockCircleData.messages = [];
-    mockCircleData.isLoadingCircles = false;
-    mockCircleData.isLoadingMembers = false;
-    mockCircleData.isLoadingMessages = false;
-    mockCircleData.isFetchingNextPage = false;
-    mockCircleData.pagination = {
-      hasNextPage: false,
-      fetchNextPage: mockFetchNextPage,
-    };
+    mockCircleData.data.circles = [];
+    mockCircleData.data.selectedCircle = null;
+    mockCircleData.data.members = [];
+    mockCircleData.data.messages = [];
+    mockCircleData.loading.circles = false;
+    mockCircleData.loading.circle = false;
+    mockCircleData.loading.members = false;
+    mockCircleData.loading.messages = false;
+    mockCircleData.pagination.messages.hasNextPage = false;
+    mockCircleData.pagination.messages.isFetchingNextPage = false;
+    mockCircleData.pagination.messages.fetchNextPage = mockFetchNextPage;
   });
 
   // ── auth integration ────────────────────────────────────────────────────────
@@ -141,13 +145,13 @@ describe("useCircleRoom hook", () => {
 
   describe("member role sync", () => {
     it("calls setCurrentUserMemberRole with userRole when selectedCircle changes", () => {
-      mockCircleData.selectedCircle = { userRole: "MODERATOR" } as any;
+      mockCircleData.data.selectedCircle = { userRole: "MODERATOR" } as any;
       render();
       expect(mockSetCurrentUserMemberRole).toHaveBeenCalledWith("MODERATOR");
     });
 
     it("calls setCurrentUserMemberRole with null when selectedCircle is null", () => {
-      mockCircleData.selectedCircle = null;
+      mockCircleData.data.selectedCircle = null;
       render();
       expect(mockSetCurrentUserMemberRole).toHaveBeenCalledWith(null);
     });
@@ -157,31 +161,31 @@ describe("useCircleRoom hook", () => {
 
   describe("muting logic", () => {
     it("returns isMuted true when the current user is muted", () => {
-      mockCircleData.members = [makeMember("user-me", true)] as any;
+      mockCircleData.data.members = [makeMember("user-me", true)] as any;
       const { result } = render();
       expect(result.current.isMuted).toBe(true);
     });
 
     it("returns isMuted false when the current user is not muted", () => {
-      mockCircleData.members = [makeMember("user-me", false)] as any;
+      mockCircleData.data.members = [makeMember("user-me", false)] as any;
       const { result } = render();
       expect(result.current.isMuted).toBe(false);
     });
 
     it("returns isMuted false when the current user is not in the members list", () => {
-      mockCircleData.members = [makeMember("user-other", false)] as any;
+      mockCircleData.data.members = [makeMember("user-other", false)] as any;
       const { result } = render();
       expect(result.current.isMuted).toBe(false);
     });
 
     it("returns isMuted false when members list is empty", () => {
-      mockCircleData.members = [];
+      mockCircleData.data.members = [];
       const { result } = render();
       expect(result.current.isMuted).toBe(false);
     });
 
     it("does not call mutateAsync when the user is muted", async () => {
-      mockCircleData.members = [makeMember("user-me", true)] as any;
+      mockCircleData.data.members = [makeMember("user-me", true)] as any;
       const { result } = render();
 
       await act(async () => {
@@ -261,88 +265,6 @@ describe("useCircleRoom hook", () => {
     });
   });
 
-  // ── pagination handoff ──────────────────────────────────────────────────────
-
-  describe("pagination handoff", () => {
-    it("calls fetchNextPage when hasNextPage is true and not already fetching", () => {
-      mockCircleData.pagination = {
-        hasNextPage: true,
-        fetchNextPage: mockFetchNextPage,
-      };
-      mockCircleData.isFetchingNextPage = false;
-      const { result } = render();
-
-      act(() => {
-        result.current.handleLoadMore();
-      });
-
-      expect(mockFetchNextPage).toHaveBeenCalledTimes(1);
-    });
-
-    it("does not call fetchNextPage when hasNextPage is false", () => {
-      mockCircleData.pagination = {
-        hasNextPage: false,
-        fetchNextPage: mockFetchNextPage,
-      };
-      mockCircleData.isFetchingNextPage = false;
-      const { result } = render();
-
-      act(() => {
-        result.current.handleLoadMore();
-      });
-
-      expect(mockFetchNextPage).not.toHaveBeenCalled();
-    });
-
-    it("does not call fetchNextPage when isFetchingNextPage is true", () => {
-      mockCircleData.pagination = {
-        hasNextPage: true,
-        fetchNextPage: mockFetchNextPage,
-      };
-      mockCircleData.isFetchingNextPage = true;
-      const { result } = render();
-
-      act(() => {
-        result.current.handleLoadMore();
-      });
-
-      expect(mockFetchNextPage).not.toHaveBeenCalled();
-    });
-
-    it("does not call fetchNextPage when both hasNextPage is false and isFetchingNextPage is true", () => {
-      mockCircleData.pagination = {
-        hasNextPage: false,
-        fetchNextPage: mockFetchNextPage,
-      };
-      mockCircleData.isFetchingNextPage = true;
-      const { result } = render();
-
-      act(() => {
-        result.current.handleLoadMore();
-      });
-
-      expect(mockFetchNextPage).not.toHaveBeenCalled();
-    });
-
-    it("exposes hasNextPage from pagination", () => {
-      mockCircleData.pagination = {
-        hasNextPage: true,
-        fetchNextPage: mockFetchNextPage,
-      };
-      const { result } = render();
-      expect(result.current.hasNextPage).toBe(true);
-    });
-
-    it("exposes hasNextPage as false when pagination has no more pages", () => {
-      mockCircleData.pagination = {
-        hasNextPage: false,
-        fetchNextPage: mockFetchNextPage,
-      };
-      const { result } = render();
-      expect(result.current.hasNextPage).toBe(false);
-    });
-  });
-
   // ── return shape ────────────────────────────────────────────────────────────
 
   describe("return shape", () => {
@@ -357,21 +279,21 @@ describe("useCircleRoom hook", () => {
     });
 
     it("exposes loading flags from useCircleData", () => {
-      mockCircleData.isLoadingCircles = true;
-      mockCircleData.isLoadingMembers = true;
-      mockCircleData.isLoadingMessages = true;
+      mockCircleData.loading.circles = true;
+      mockCircleData.loading.members = true;
+      mockCircleData.loading.messages = true;
       const { result } = render();
 
-      expect(result.current.isLoadingCircles).toBe(true);
-      expect(result.current.isLoadingMembers).toBe(true);
-      expect(result.current.isLoadingMessages).toBe(true);
+      expect(result.current.loading.circles).toBe(true);
+      expect(result.current.loading.members).toBe(true);
+      expect(result.current.loading.messages).toBe(true);
     });
 
     it("exposes members from useCircleData", () => {
       const members = [makeMember("user-1"), makeMember("user-2")];
-      mockCircleData.members = members as any;
+      mockCircleData.data.members = members as any;
       const { result } = render();
-      expect(result.current.members).toHaveLength(2);
+      expect(result.current.data.members).toHaveLength(2);
     });
   });
 });

@@ -19,15 +19,11 @@ export const useCircleRoomPage = () => {
   const [searchParams] = useSearchParams();
 
   const {
-    groups,
-    selectedCircle,
+    data,
+    loading,
+    pagination,
     selectedCircleId,
-    messages,
-    members,
     currentUser,
-    isLoadingCircles,
-    isLoadingMessages,
-    isLoadingMembers,
     isMuted,
     handleSelectCircle,
     handleSendMessage,
@@ -75,15 +71,18 @@ export const useCircleRoomPage = () => {
   return {
     // Circle data
     circle: {
-      selected: selectedCircle,
+      selected: data.selectedCircle,
       selectedId: selectedCircleId,
-      groups,
-      messages,
-      members,
+      groups: data.circles,
+      messages: data.messages,
+      members: data.members,
       isMuted,
       onSelect: handleCircleSelect,
       onSendMessage: handleSendMessage,
     },
+
+    // Pagination
+    pagination,
 
     // Current user
     user: {
@@ -92,9 +91,9 @@ export const useCircleRoomPage = () => {
 
     // Loading states
     loading: {
-      circles: isLoadingCircles,
-      messages: isLoadingMessages,
-      members: isLoadingMembers,
+      circles: loading.circles,
+      messages: loading.messages,
+      members: loading.members,
     },
 
     // Sidebar state & handlers

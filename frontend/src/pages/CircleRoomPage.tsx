@@ -9,7 +9,8 @@ import { RightSidebar } from "../features/study-circles/room/components/CircleRo
 import { CircleRoomView } from "../features/study-circles/room/components/CircleRoomView";
 
 const CircleRoomPage = () => {
-  const { circle, loading, settings, sidebar, user } = useCircleRoomPage();
+  const { circle, loading, settings, sidebar, user, pagination } =
+    useCircleRoomPage();
 
   return (
     <div className="relative h-screen w-full flex bg-background overflow-hidden">
@@ -45,6 +46,7 @@ const CircleRoomPage = () => {
           isMuted={circle.isMuted}
           onSendMessage={circle.onSendMessage}
           onToggleMembers={sidebar.onToggleMembers}
+          pagination={pagination.messages}
           showMembersButton={!sidebar.useOverlay}
           onOpen={settings.onOpen}
         />

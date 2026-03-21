@@ -23,7 +23,7 @@ import {
  * circle-specific queries are disabled.
  */
 export const useCircleData = (circleId: string | null) => {
-  const { data: groups = [], isLoading: isLoadingCircles } =
+  const { data: circles = [], isLoading: isLoadingCircles } =
     useStudyCirclesQuery();
 
   const { data: selectedCircle, isLoading: isLoadingCircle } =
@@ -43,7 +43,7 @@ export const useCircleData = (circleId: string | null) => {
     isFetchingNextPage,
     fetchNextPage,
     hasNextPage,
-  } = useCircleMessagesQuery(circleId);
+  } = useCircleMessagesQuery(circleId, 50);
 
   const rawMessages = useMemo(
     () =>
@@ -59,15 +59,24 @@ export const useCircleData = (circleId: string | null) => {
   const messages = circleId ? rawMessages : [];
 
   return {
-    groups,
-    selectedCircle,
-    members,
-    messages,
-    isLoadingCircles,
-    isLoadingCircle,
-    isLoadingMembers,
-    isLoadingMessages,
-    isFetchingNextPage,
-    pagination: { fetchNextPage, hasNextPage },
+    data: {
+      circles,
+      selectedCircle,
+      members,
+      messages,
+    },
+    loading: {
+      circles: isLoadingCircles,
+      circle: isLoadingCircle,
+      members: isLoadingMembers,
+      messages: isLoadingMessages,
+    },
+    pagination: {
+      messages: {
+        hasNextPage,
+        fetchNextPage,
+        isFetchingNextPage,
+      },
+    },
   };
 };

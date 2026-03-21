@@ -1,9 +1,21 @@
-import { render, screen, act } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { subDays } from "date-fns";
 import type { CircleMessage } from "@/zodSchemas/circle.zod";
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
+
+// IntersectionObserver is not available in jsdom
+const mockIntersectionObserver = vi.fn(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
+}));
+
+vi.stubGlobal("IntersectionObserver", mockIntersectionObserver);
+
+// scrollIntoView is not implemented in jsdom
+window.HTMLElement.prototype.scrollIntoView = vi.fn();
 
 vi.mock("../UserAvatar", () => ({
   UserAvatar: ({ user }: { user: { username: string } }) => (
@@ -57,6 +69,13 @@ function receivedMessage(
   return makeMessage({ senderId: "user-other", username: "bob", ...overrides });
 }
 
+// Default pagination — no more pages, nothing fetching
+const defaultPagination = {
+  fetchNextPage: vi.fn(),
+  hasNextPage: false,
+  isFetchingNextPage: false,
+};
+
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 function renderList(
@@ -69,6 +88,7 @@ function renderList(
       messages={messages}
       currentUserId={currentUserId}
       isLoading={isLoading}
+      pagination={defaultPagination}
     />,
   );
 }
@@ -92,11 +112,9 @@ function renderBubble(
 describe("MessageList & MessageBubble", () => {
   beforeEach(() => {
     idCounter = 1;
-    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -105,7 +123,6 @@ describe("MessageList & MessageBubble", () => {
   describe("empty / loading states", () => {
     it("renders LoadingState when isLoading is true", () => {
       renderList([], true);
-      // LoadingState is rendered — no message bubbles present
       expect(screen.queryByTestId("message-bubble")).toBeNull();
     });
 
@@ -210,7 +227,6 @@ describe("MessageList & MessageBubble", () => {
 
     it("renders a spacer div instead of avatar when showSender is false", () => {
       const { container } = renderBubble(receivedMessage(), false);
-      // The w-8 spacer should be present
       const spacer = container.querySelector(".w-8");
       expect(spacer).not.toBeNull();
     });
@@ -244,74 +260,49 @@ describe("MessageList & MessageBubble", () => {
   });
 
   // ── auto-scroll ────────────────────────────────────────────────────────────
+  // useLayoutEffect with behavior: "instant" — scroll happens synchronously
+  // before paint, no timer involved.
 
   describe("auto-scroll behavior", () => {
-    it("calls scrollIntoView after the 100ms timer fires on mount", () => {
+    it("calls scrollIntoView synchronously on mount when messages are present", () => {
       const scrollIntoViewMock = vi.fn();
       window.HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
 
       renderList([sentMessage()]);
 
-      expect(scrollIntoViewMock).not.toHaveBeenCalled();
-
-      act(() => {
-        vi.advanceTimersByTime(100);
-      });
-
-      expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: "smooth" });
+      expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: "instant" });
     });
 
-    it("does not call scrollIntoView before the timer fires", () => {
+    it("does not call scrollIntoView when messages array is empty", () => {
       const scrollIntoViewMock = vi.fn();
       window.HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
 
-      renderList([sentMessage()]);
-      act(() => {
-        vi.advanceTimersByTime(99);
-      });
+      renderList([]);
 
       expect(scrollIntoViewMock).not.toHaveBeenCalled();
     });
 
-    it("calls scrollIntoView again when messages prop updates", () => {
+    it("does not call scrollIntoView again when a new message is appended", () => {
       const scrollIntoViewMock = vi.fn();
       window.HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
 
       const initialMessages = [sentMessage()];
       const { rerender } = renderList(initialMessages);
 
-      act(() => {
-        vi.advanceTimersByTime(100);
-      });
       expect(scrollIntoViewMock).toHaveBeenCalledTimes(1);
 
+      // Adding a message does not re-trigger since dependency is messages.length === 0
       const updatedMessages = [...initialMessages, receivedMessage()];
       rerender(
         <MessageList
           messages={updatedMessages}
           currentUserId={CURRENT_USER_ID}
           isLoading={false}
+          pagination={defaultPagination}
         />,
       );
 
-      act(() => {
-        vi.advanceTimersByTime(100);
-      });
-      expect(scrollIntoViewMock).toHaveBeenCalledTimes(2);
-    });
-
-    it("clears the timer on unmount before it fires", () => {
-      const scrollIntoViewMock = vi.fn();
-      window.HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
-
-      const { unmount } = renderList([sentMessage()]);
-      unmount();
-
-      act(() => {
-        vi.advanceTimersByTime(100);
-      });
-
-      expect(scrollIntoViewMock).not.toHaveBeenCalled();
+      expect(scrollIntoViewMock).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -332,8 +323,6 @@ describe("MessageList & MessageBubble", () => {
         receivedMessage({ createdAt: slightly_later.toISOString() }),
       ];
       renderList(messages);
-
-      // Only one sender-name element should appear (showSender=false for second)
       expect(screen.getAllByTestId("sender-name")).toHaveLength(1);
     });
 
@@ -355,8 +344,6 @@ describe("MessageList & MessageBubble", () => {
         }),
       ];
       renderList(messages);
-
-      // alice appears twice — once before and once after the sent message
       expect(screen.getAllByTestId("sender-name")).toHaveLength(2);
     });
 

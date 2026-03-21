@@ -7,9 +7,14 @@ import type { StudyCircle, CircleMessage } from "@/zodSchemas/circle.zod";
 import { MessageInput } from "./MessageInput";
 import { MessageList } from "./MessageList/MessageList";
 
-interface ChatRoomProps {
+interface CircleRoomProps {
   circle: StudyCircle | undefined;
   messages: CircleMessage[];
+  pagination: {
+    fetchNextPage: () => void;
+    hasNextPage: boolean | undefined;
+    isFetchingNextPage: boolean;
+  };
   onSendMessage: (content: string) => void;
   onToggleMembers: () => void;
   onOpen: () => void;
@@ -22,6 +27,7 @@ interface ChatRoomProps {
 export const CircleRoomView = ({
   circle,
   messages,
+  pagination,
   currentUserId,
   isLoading,
   isMuted,
@@ -29,7 +35,7 @@ export const CircleRoomView = ({
   onToggleMembers,
   onOpen,
   showMembersButton = true,
-}: ChatRoomProps) => {
+}: CircleRoomProps) => {
   if (!circle) {
     return (
       <div className="flex flex-col h-full items-center justify-center bg-background text-muted-foreground">
@@ -91,6 +97,7 @@ export const CircleRoomView = ({
         messages={messages}
         currentUserId={currentUserId}
         isLoading={isLoading}
+        pagination={pagination}
       />
 
       {/* Input */}

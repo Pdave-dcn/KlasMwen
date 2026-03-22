@@ -15,7 +15,7 @@ type CursorType = "uuid" | "number";
 const createPaginationSchema = (
   defaultLimit = 10,
   maxLimit = 50,
-  cursorType: CursorType = "uuid"
+  cursorType: CursorType = "uuid",
 ) => {
   const getCursorSchema = () => {
     switch (cursorType) {
@@ -62,22 +62,21 @@ interface PaginationConfig<TOrderBy, TWhere> {
 }
 
 /**
- * Builds a Prisma `findMany` query with cursor-based pagination.
+ * Adds cursor-based pagination to a Prisma findMany query.
  *
- * @template TModel Prisma model name (e.g., "user", "post").
- * @param {Prisma.Args<PrismaClient[TModel], "findMany">} baseQuery Base Prisma query configuration.
- * @param {PaginationConfig<
- *   Prisma.Args<PrismaClient[TModel], "findMany">["orderBy"],
- *   Prisma.Args<PrismaClient[TModel], "findMany">["where"]
- * >} config Pagination options (limit, cursor, orderBy, where).
- * @return {Prisma.Args<PrismaClient[TModel], "findMany">} Modified query with pagination applied.
+ * Fetches one extra item beyond the limit so we can tell if there's a next page.
+ * If a cursor is provided, the query starts after that record.
+ *
+ * @param baseQuery - The base Prisma query to extend.
+ * @param config - Pagination options: limit, cursor, cursorField, orderBy, where.
+ * @returns The same query with pagination fields applied.
  */
 const buildPaginatedQuery = <TModel extends keyof PrismaClient>(
   baseQuery: Prisma.Args<PrismaClient[TModel], "findMany">,
   config: PaginationConfig<
     Prisma.Args<PrismaClient[TModel], "findMany">["orderBy"],
     Prisma.Args<PrismaClient[TModel], "findMany">["where"]
-  >
+  >,
 ): Prisma.Args<PrismaClient[TModel], "findMany"> => {
   const { cursor, limit, cursorField = "id", orderBy, where } = config;
 
@@ -97,29 +96,30 @@ const buildPaginatedQuery = <TModel extends keyof PrismaClient>(
 };
 
 /**
- * Processes a paginated result set and calculates pagination metadata.
+ * Trims the extra item from paginated results and returns the next cursor.
  *
- * @template TResult Shape of individual items in the result set.
- * @param {TResult[]} results Array of query results (with one extra item if more exist).
- * @param {number} limit Number of items requested.
- * @param {keyof TResult} [cursorField="id"] Field used as the cursor.
- * @return {{
- *   data: TResult[],
- *   pagination: { hasMore: boolean, nextCursor: string | number | null }
- * }} Paginated data and pagination info.
+ * Works alongside `buildPaginatedQuery`, which fetches limit+1 items.
+ * If the extra item is present, there are more pages — we strip it and
+ * set the next cursor to the last visible item's cursor field.
+ *
+ * @param results - Raw results from Prisma (may contain the extra item).
+ * @param limit - How many items were requested.
+ * @param cursorField - The field to use as the cursor. Defaults to "id".
+ * @returns The trimmed data and pagination info ({ hasMore, nextCursor }).
  */
-const processPaginatedResults = <TResult extends { id: string | number }>(
+const processPaginatedResults = <
+  TCursorField extends string,
+  TResult extends Record<TCursorField, string | number>,
+>(
   results: TResult[],
   limit: number,
-  cursorField: keyof TResult = "id"
+  cursorField: TCursorField,
 ) => {
   const hasMore = results.length > limit;
   const data = results.slice(0, limit);
 
   const nextCursor =
-    hasMore && data.length > 0
-      ? data[data.length - 1][cursorField] ?? data[data.length - 1].id
-      : null;
+    hasMore && data.length > 0 ? data[data.length - 1][cursorField] : null;
 
   return {
     data,
@@ -130,28 +130,30 @@ const processPaginatedResults = <TResult extends { id: string | number }>(
   };
 };
 
-interface CompoundCursorConfig<TOrderBy, TWhere>
-  extends Omit<PaginationConfig<TOrderBy, TWhere>, "cursorField"> {
-  cursorFields: Record<string, Record<string, string | number>>;
+interface CompoundCursorConfig<TOrderBy, TWhere> extends Omit<
+  PaginationConfig<TOrderBy, TWhere>,
+  "cursorField"
+> {
+  cursorFields?: Record<string, Record<string, string | number>>;
 }
 
 /**
- * Builds a Prisma `findMany` query with **compound cursor** pagination.
+ * Adds compound cursor pagination to a Prisma findMany query.
  *
- * @template TModel Prisma model name (e.g., "bookmark").
- * @param {Prisma.Args<PrismaClient[TModel], "findMany">} baseQuery Base Prisma query configuration.
- * @param {CompoundCursorConfig<
- *   Prisma.Args<PrismaClient[TModel], "findMany">["orderBy"],
- *   Prisma.Args<PrismaClient[TModel], "findMany">["where"]
- * >} config Pagination options with compound cursor fields.
- * @return {Prisma.Args<PrismaClient[TModel], "findMany">} Modified query with compound cursor pagination.
+ * Works the same as `buildPaginatedQuery` but accepts a composite cursor
+ * object instead of a single field — needed when the model's primary key
+ * spans multiple fields.
+ *
+ * @param baseQuery - The base Prisma query to extend.
+ * @param config - Pagination options: limit, cursor, cursorFields, orderBy, where.
+ * @returns The same query with pagination fields applied.
  */
 const buildCompoundCursorQuery = <TModel extends keyof PrismaClient>(
   baseQuery: Prisma.Args<PrismaClient[TModel], "findMany">,
   config: CompoundCursorConfig<
     Prisma.Args<PrismaClient[TModel], "findMany">["orderBy"],
     Prisma.Args<PrismaClient[TModel], "findMany">["where"]
-  >
+  >,
 ): Prisma.Args<PrismaClient[TModel], "findMany"> => {
   const { cursor, limit, cursorFields, orderBy, where } = config;
 

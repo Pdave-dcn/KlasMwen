@@ -421,16 +421,20 @@ describe("CircleCoreService", () => {
   });
 
   describe("getUserCircles", () => {
-    it("should retrieve all circles for a user and enrich them", async () => {
-      const mockCircles = [
-        { id: "circle-1", name: "Circle 1" },
-        { id: "circle-2", name: "Circle 2" },
-      ] as any[];
-      const mockEnrichedCircles = [
-        { ...mockCircles[0], userRole: "MEMBER" },
-        { ...mockCircles[1], userRole: "OWNER" },
-      ];
+    const userId = "user-1";
+    const defaultPagination = { limit: 15, cursor: undefined };
 
+    const mockCircles = [
+      { id: "circle-1", name: "Circle 1" },
+      { id: "circle-2", name: "Circle 2" },
+    ] as any[];
+
+    const mockEnrichedCircles = [
+      { ...mockCircles[0], userRole: "MEMBER" },
+      { ...mockCircles[1], userRole: "OWNER" },
+    ];
+
+    it("should return enriched circles with pagination", async () => {
       vi.mocked(CircleRepository.findUserCircles).mockResolvedValue(
         mockCircles,
       );
@@ -438,22 +442,82 @@ describe("CircleCoreService", () => {
         mockEnrichedCircles,
       );
 
-      const result = await CircleCoreService.getUserCircles("user-1");
+      const result = await CircleCoreService.getUserCircles(
+        userId,
+        defaultPagination,
+      );
 
-      expect(CircleRepository.findUserCircles).toHaveBeenCalledWith("user-1");
-      expect(CircleEnricher.enrichCircles).toHaveBeenCalledTimes(1);
-      expect(result).toEqual(mockEnrichedCircles);
+      expect(CircleRepository.findUserCircles).toHaveBeenCalledWith(
+        userId,
+        defaultPagination,
+      );
+      expect(CircleEnricher.enrichCircles).toHaveBeenCalledWith(
+        mockCircles,
+        userId,
+      );
+      expect(result).toEqual({
+        data: mockEnrichedCircles,
+        pagination: { hasMore: false, nextCursor: null },
+      });
     });
 
-    it("should return empty array if user has no circles", async () => {
+    it("should correctly detect hasMore and return nextCursor when more results exist", async () => {
+      const extraCircle = { id: "circle-3", name: "Circle 3" } as any;
+      const extraEnriched = { ...extraCircle, userRole: "MEMBER" };
+
+      // Return limit+1 to trigger hasMore
+      vi.mocked(CircleRepository.findUserCircles).mockResolvedValue([
+        ...mockCircles,
+        extraCircle,
+      ]);
+      // Enrich only receives the trimmed result (limit=2)
+      vi.mocked(CircleEnricher.enrichCircles).mockResolvedValueOnce(
+        mockEnrichedCircles,
+      );
+
+      const result = await CircleCoreService.getUserCircles(userId, {
+        limit: 2,
+        cursor: undefined,
+      });
+
+      expect(result).toEqual({
+        data: mockEnrichedCircles,
+        pagination: { hasMore: true, nextCursor: "circle-2" },
+      });
+    });
+
+    it("should pass the cursor to the repository on subsequent pages", async () => {
+      vi.mocked(CircleRepository.findUserCircles).mockResolvedValue(
+        mockCircles,
+      );
+      vi.mocked(CircleEnricher.enrichCircles).mockResolvedValueOnce(
+        mockEnrichedCircles,
+      );
+
+      await CircleCoreService.getUserCircles(userId, {
+        limit: 15,
+        cursor: "circle-1",
+      });
+
+      expect(CircleRepository.findUserCircles).toHaveBeenCalledWith(userId, {
+        limit: 15,
+        cursor: "circle-1",
+      });
+    });
+
+    it("should return empty data with no next cursor when user has no circles", async () => {
       vi.mocked(CircleRepository.findUserCircles).mockResolvedValue([]);
       vi.mocked(CircleEnricher.enrichCircles).mockResolvedValueOnce([]);
 
-      const result = await CircleCoreService.getUserCircles("user-1");
+      const result = await CircleCoreService.getUserCircles(
+        userId,
+        defaultPagination,
+      );
 
-      expect(CircleEnricher.enrichCircles).toHaveBeenCalled();
-
-      expect(result).toEqual([]);
+      expect(result).toEqual({
+        data: [],
+        pagination: { hasMore: false, nextCursor: null },
+      });
     });
   });
 

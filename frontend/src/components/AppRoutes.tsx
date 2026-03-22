@@ -4,9 +4,9 @@ import {
   DiscoverCirclesPage,
   CreateCirclePage,
 } from "@/features/study-circles/hub/components";
+import CircleRoomPage from "@/features/study-circles/room/components/CircleRoomPage";
 import AuthForm from "@/pages/AuthForm";
 import CirclePreviewPage from "@/pages/CirclePreviewPage";
-import CircleRoomPage from "@/pages/CircleRoomPage";
 import CirclesHubPage from "@/pages/CirclesHubPage";
 import DiscoverPage from "@/pages/DiscoverPage";
 import HomePage from "@/pages/HomePage";

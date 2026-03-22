@@ -1,6 +1,7 @@
 import { createLogger } from "../../core/config/logger.js";
 import CircleService from "../../features/circle/service/CircleService.js";
 import createActionLogger from "../../utils/logger.util.js";
+import { createPaginationSchema } from "../../utils/pagination.util.js";
 import {
   AddMemberDataSchema,
   MuteMemberDataSchema,
@@ -63,23 +64,28 @@ const getCircleMembers = async (
 
   try {
     actionLogger.info("Fetching study circle members");
+
+    const { user } = req as AuthenticatedRequest;
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
 
-    const members = await CircleService.getCircleMembers(circleId);
+    const customParser = createPaginationSchema(10, 30, "uuid");
+    const { limit, cursor } = customParser.parse(req.query);
+
+    const result = await CircleService.getCircleMembers(user.id, circleId, {
+      limit,
+      cursor: cursor as string,
+    });
 
     actionLogger.info(
       {
         circleId,
-        memberCount: members.length,
+        pageSize: limit,
       },
       "Circle members retrieved successfully",
     );
 
-    return res.status(200).json({
-      data: members,
-    });
+    return res.status(200).json(result);
   } catch (error: unknown) {
-    actionLogger.error({ error }, "Failed to fetch circle members");
     return next(error);
   }
 };

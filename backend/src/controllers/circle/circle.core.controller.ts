@@ -194,19 +194,23 @@ const getUserCircles = async (
     actionLogger.info("Fetching user's study circles");
     const { user } = req as AuthenticatedRequest;
 
-    const groups = await CircleService.getUserCircles(user.id);
+    const customParser = createPaginationSchema(10, 30, "uuid");
+    const { limit, cursor } = customParser.parse(req.query);
+
+    const result = await CircleService.getUserCircles(user.id, {
+      limit,
+      cursor: cursor as string,
+    });
 
     actionLogger.info(
       {
         userId: user.id,
-        groupCount: groups.length,
+        pageSize: limit,
       },
       "User study circles retrieved successfully",
     );
 
-    return res.status(200).json({
-      data: groups,
-    });
+    return res.status(200).json(result);
   } catch (error: unknown) {
     return next(error);
   }

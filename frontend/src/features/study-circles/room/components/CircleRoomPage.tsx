@@ -3,10 +3,10 @@ import { useCircleRoomPage } from "@/features/study-circles/room/hooks/useCircle
 import { CircleSettingsPanel } from "@/features/study-circles/settings/components/CircleSettingsPanel";
 import { cn } from "@/lib/utils";
 
-import { LeftSidebar } from "../features/study-circles/room/components/CircleRoomLayout/LeftSidebar";
-import { MobileTabletOverlay } from "../features/study-circles/room/components/CircleRoomLayout/MobileOverlay";
-import { RightSidebar } from "../features/study-circles/room/components/CircleRoomLayout/RightSidebar";
-import { CircleRoomView } from "../features/study-circles/room/components/CircleRoomView";
+import { LeftSidebar } from "./CircleRoomLayout/LeftSidebar";
+import { MobileTabletOverlay } from "./CircleRoomLayout/MobileOverlay";
+import { RightSidebar } from "./CircleRoomLayout/RightSidebar";
+import { CircleRoomView } from "./CircleRoomView";
 
 const CircleRoomPage = () => {
   const { circle, loading, settings, sidebar, user, pagination } =

@@ -129,9 +129,29 @@ export class CircleCoreService {
    * @param userId - The user ID
    * @returns Array of circles with member counts and user's role
    */
-  static async getUserCircles(userId: string) {
-    const circles = await CircleRepository.findUserCircles(userId);
-    return await CircleEnricher.enrichCircles(circles, userId);
+  static async getUserCircles(
+    userId: string,
+    pagination: { limit?: number; cursor?: string },
+  ) {
+    const limit = pagination.limit ?? 15;
+    const cursor = pagination.cursor ?? undefined;
+
+    const circles = await CircleRepository.findUserCircles(userId, {
+      limit,
+      cursor,
+    });
+
+    const result = processPaginatedResults(circles, limit, "id");
+
+    const enrichedCircles = await CircleEnricher.enrichCircles(
+      result.data,
+      userId,
+    );
+
+    return {
+      data: enrichedCircles,
+      pagination: result.pagination,
+    };
   }
 
   static async getRecentActivityCircles(userId: string, limit = 8) {

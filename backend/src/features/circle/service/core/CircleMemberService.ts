@@ -2,7 +2,9 @@ import {
   AlreadyMemberError,
   CircleNotFoundError,
   CircleMemberNotFoundError,
+  NotAMemberError,
 } from "../../../../core/error/custom/circle.error.js";
+import { processPaginatedResults } from "../../../../utils/pagination.util.js";
 import { assertCirclePermission } from "../../security/rbac.js";
 import CircleEnricher from "../CircleEnrichers.js";
 import CircleTransformers from "../CircleTransformers.js";
@@ -234,15 +236,36 @@ export class CircleMemberService {
    * Retrieves all members of a circle.
    * @throws {CircleNotFoundError} If the circle does not exist
    */
-  static async getCircleMembers(circleId: string) {
-    const group = await CircleRepository.findCircleById(circleId);
-    if (!group) throw new CircleNotFoundError(circleId);
+  static async getCircleMembers(
+    userId: string,
+    circleId: string,
+    pagination: { limit?: number; cursor?: string },
+  ) {
+    const circle = await CircleRepository.findCircleById(circleId);
+    if (!circle) throw new CircleNotFoundError(circleId);
 
-    const members = await CircleRepository.getGroupMembers(circleId);
+    const isMember = await CircleRepository.isMember(userId, circleId);
+    if (!isMember) throw new NotAMemberError(userId, circleId);
 
-    const enrichedMembers = CircleEnricher.enrichMembers(members);
+    const limit = pagination.limit ?? 15;
+    const cursor = pagination.cursor ?? undefined;
 
-    return CircleTransformers.transformMembers(enrichedMembers);
+    const members = await CircleRepository.getGroupMembers(circleId, {
+      limit,
+      cursor,
+    });
+
+    const result = processPaginatedResults(members, limit, "userId");
+
+    const enrichedMembers = CircleEnricher.enrichMembers(result.data);
+
+    const transformedMembers =
+      CircleTransformers.transformMembers(enrichedMembers);
+
+    return {
+      data: transformedMembers,
+      pagination: result.pagination,
+    };
   }
 
   /**

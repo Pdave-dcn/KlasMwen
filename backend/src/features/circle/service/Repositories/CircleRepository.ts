@@ -1,5 +1,8 @@
 import prisma from "../../../../core/config/db.js";
-import { buildPaginatedQuery } from "../../../../utils/pagination.util.js";
+import {
+  buildPaginatedQuery,
+  buildCompoundCursorQuery,
+} from "../../../../utils/pagination.util.js";
 import {
   BaseSelectors,
   type UpdateCircleData,
@@ -145,18 +148,31 @@ class CircleRepository {
   }
 
   /** Find all circles a user is a member of */
-  static async findUserCircles(userId: string) {
-    return await prisma.circle.findMany({
+  static async findUserCircles(
+    userId: string,
+    pagination: { limit?: number; cursor?: string },
+  ) {
+    const select = BaseSelectors.circleWithMembersAndLatestMsg;
+    const limit = pagination.limit ?? 15;
+    const cursor = pagination.cursor ?? undefined;
+
+    const baseQuery: Prisma.CircleFindManyArgs = {
       where: {
         members: {
-          some: {
-            userId,
-          },
+          some: { userId },
         },
       },
-      select: BaseSelectors.circleWithMembersAndLatestMsg,
+      select,
       orderBy: { createdAt: "desc" },
+    };
+
+    const paginatedQuery = buildPaginatedQuery<"circle">(baseQuery, {
+      limit,
+      cursor,
+      cursorField: "id",
     });
+
+    return await prisma.circle.findMany({ ...paginatedQuery, select });
   }
 
   static async getCircleAvatars(limit = 20, cursor?: number) {
@@ -282,12 +298,29 @@ class CircleRepository {
   }
 
   /** Get all members of a circle */
-  static async getGroupMembers(circleId: string) {
-    return await prisma.circleMember.findMany({
+  static async getGroupMembers(
+    circleId: string,
+    pagination: { limit?: number; cursor?: string },
+  ) {
+    const select = BaseSelectors.circleMember;
+    const limit = pagination.limit ?? 15;
+    const cursor = pagination.cursor ?? undefined;
+
+    const baseQuery: Prisma.CircleMemberFindManyArgs = {
       where: { circleId },
-      select: BaseSelectors.circleMember,
+      select,
       orderBy: [{ role: "asc" }, { joinedAt: "asc" }],
+    };
+
+    const paginatedQuery = buildCompoundCursorQuery<"circleMember">(baseQuery, {
+      limit,
+      cursor,
+      cursorFields: cursor
+        ? { userId_circleId: { userId: cursor, circleId } }
+        : undefined,
     });
+
+    return await prisma.circleMember.findMany({ ...paginatedQuery, select });
   }
 
   /** Count members in a circle */

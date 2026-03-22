@@ -10,6 +10,7 @@ import {
   CircleNotFoundError,
   AlreadyMemberError,
   CircleMemberNotFoundError,
+  NotAMemberError,
 } from "../../../../../src/core/error/custom/circle.error.js";
 import {
   MUTE_DURATION_MS,
@@ -291,8 +292,13 @@ describe("CircleMemberService", () => {
   });
 
   describe("getCircleMembers", () => {
-    it("should return transformed members when circle exists", async () => {
+    const userId = "user-1";
+    const circleId = "circle-1";
+    const defaultPagination = { limit: 15, cursor: undefined };
+
+    it("should return transformed members with pagination when circle exists and user is a member", async () => {
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue(mockCircle);
+      vi.mocked(CircleRepository.isMember).mockResolvedValue(true);
       vi.mocked(CircleRepository.getGroupMembers).mockResolvedValue([
         mockMembership,
       ]);
@@ -303,15 +309,94 @@ describe("CircleMemberService", () => {
         mockTransformedMember,
       ]);
 
-      const res = await CircleMemberService.getCircleMembers("circle-1");
-      expect(res).toEqual([mockTransformedMember]);
+      const res = await CircleMemberService.getCircleMembers(
+        userId,
+        circleId,
+        defaultPagination,
+      );
+
+      expect(res).toEqual({
+        data: [mockTransformedMember],
+        pagination: { hasMore: false, nextCursor: null },
+      });
+    });
+
+    it("should correctly detect hasMore and return nextCursor when more results exist", async () => {
+      const extraMember = { ...mockMembership, userId: "user-3" } as any;
+
+      vi.mocked(CircleRepository.findCircleById).mockResolvedValue(mockCircle);
+      vi.mocked(CircleRepository.isMember).mockResolvedValue(true);
+      // Return limit+1 items to trigger hasMore
+      vi.mocked(CircleRepository.getGroupMembers).mockResolvedValue([
+        mockMembership,
+        extraMember,
+      ]);
+      // Enrich and transform only receive the trimmed result (limit=1), not the extra item
+      vi.mocked(CircleEnricher.enrichMembers).mockResolvedValue([
+        mockEnrichedMember,
+      ]);
+      vi.mocked(CircleTransformers.transformMembers).mockReturnValue([
+        mockTransformedMember,
+      ]);
+
+      const res = await CircleMemberService.getCircleMembers(userId, circleId, {
+        limit: 1,
+        cursor: undefined,
+      });
+
+      expect(res).toEqual({
+        data: [mockTransformedMember],
+        pagination: { hasMore: true, nextCursor: "user-2" },
+      });
+    });
+
+    it("should pass the cursor to the repository on subsequent pages", async () => {
+      vi.mocked(CircleRepository.findCircleById).mockResolvedValue(mockCircle);
+      vi.mocked(CircleRepository.isMember).mockResolvedValue(true);
+      vi.mocked(CircleRepository.getGroupMembers).mockResolvedValue([
+        mockMembership,
+      ]);
+      vi.mocked(CircleEnricher.enrichMembers).mockResolvedValue([
+        mockEnrichedMember,
+      ]);
+      vi.mocked(CircleTransformers.transformMembers).mockReturnValue([
+        mockTransformedMember,
+      ]);
+
+      await CircleMemberService.getCircleMembers(userId, circleId, {
+        limit: 15,
+        cursor: "user-2",
+      });
+
+      expect(CircleRepository.getGroupMembers).toHaveBeenCalledWith(circleId, {
+        limit: 15,
+        cursor: "user-2",
+      });
     });
 
     it("should throw CircleNotFoundError if circle does not exist", async () => {
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue(null);
+
       await expect(
-        CircleMemberService.getCircleMembers("circle-1"),
+        CircleMemberService.getCircleMembers(
+          userId,
+          circleId,
+          defaultPagination,
+        ),
       ).rejects.toThrow(CircleNotFoundError);
+    });
+
+    it("should throw NotAMemberError if the user is not a member of the circle", async () => {
+      vi.mocked(CircleRepository.findCircleById).mockResolvedValue(mockCircle);
+      vi.mocked(CircleRepository.isMember).mockResolvedValue(false);
+
+      await expect(
+        CircleMemberService.getCircleMembers(
+          userId,
+          circleId,
+          defaultPagination,
+        ),
+      ).rejects.toThrow(NotAMemberError);
     });
   });
 

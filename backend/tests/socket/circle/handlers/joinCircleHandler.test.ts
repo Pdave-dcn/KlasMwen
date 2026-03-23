@@ -13,7 +13,7 @@ vi.mock("../../../../src/features/circle/service/CircleService.js", () => ({
   default: {
     verifyCircleExists: vi.fn(),
     isMember: vi.fn(),
-    getCircleMembers: vi.fn(),
+    getCircleMemberIds: vi.fn(),
   },
 }));
 
@@ -63,14 +63,13 @@ describe("handleJoinCircle socket handler", () => {
 
   describe("success path", () => {
     it("allows a valid member to join and returns presence lists", async () => {
-      // use a proper UUID so validation passes
       const circleId = "123e4567-e89b-12d3-a456-426614174000";
 
       (CircleService.verifyCircleExists as any).mockResolvedValue(undefined);
       (CircleService.isMember as any).mockResolvedValue(true);
-      (CircleService.getCircleMembers as any).mockResolvedValue([
-        { userId: "user1" },
-        { userId: "user2" },
+      (CircleService.getCircleMemberIds as any).mockResolvedValue([
+        "user1",
+        "user2",
       ]);
       // simulate two sockets from same user (multiple tabs)
       const fakeSockets = [
@@ -186,9 +185,7 @@ describe("handleJoinCircle socket handler", () => {
       // prepare mocks like success path
       (CircleService.verifyCircleExists as any).mockResolvedValue(undefined);
       (CircleService.isMember as any).mockResolvedValue(true);
-      (CircleService.getCircleMembers as any).mockResolvedValue([
-        { userId: "user1" },
-      ]);
+      (CircleService.getCircleMemberIds as any).mockResolvedValue(["user1"]);
       const fakeSockets = [{ data: { user: { id: "user1" } } }];
       (nsp.in(`circle:${circleId}`) as any).fetchSockets.mockResolvedValue(
         fakeSockets,

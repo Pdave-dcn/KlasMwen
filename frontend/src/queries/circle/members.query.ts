@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+  type InfiniteData,
+} from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import {
@@ -13,15 +18,23 @@ import type { MuteDuration } from "@/features/study-circles/settings/types";
 import type {
   AddMemberData,
   CircleMember,
+  CircleMembersResponse,
   UpdateMemberRoleData,
 } from "@/zodSchemas/circle.zod";
 
 // Queries
 
-export const useCircleMembersQuery = (circleId: string | null) => {
-  return useQuery({
+export const useCircleMembersQuery = (circleId: string | null, limit = 15) => {
+  return useInfiniteQuery({
     queryKey: ["circles", circleId, "members"],
-    queryFn: () => getCircleMembers(circleId as string),
+    queryFn: ({ pageParam }) =>
+      getCircleMembers(circleId as string, limit, pageParam),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination.hasMore
+        ? lastPage.pagination.nextCursor
+        : undefined;
+    },
     enabled: !!circleId,
   });
 };
@@ -59,17 +72,21 @@ export const useRemoveCircleMemberMutation = (circleId: string | null) => {
         queryKey: ["circles", circleId, "members"],
       });
 
-      const previousMembers = queryClient.getQueryData<CircleMember[]>([
-        "circles",
-        circleId,
-        "members",
-      ]);
+      const previousMembers = queryClient.getQueryData<
+        InfiniteData<CircleMembersResponse>
+      >(["circles", circleId, "members"]);
 
-      queryClient.setQueryData<CircleMember[]>(
+      queryClient.setQueryData<InfiniteData<CircleMembersResponse>>(
         ["circles", circleId, "members"],
         (old) => {
           if (!old) return old;
-          return old.filter((member) => member.userId !== userId);
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              data: page.data.filter((member) => member.userId !== userId),
+            })),
+          };
         },
       );
 

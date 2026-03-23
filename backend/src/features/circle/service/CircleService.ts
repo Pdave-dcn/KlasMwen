@@ -39,6 +39,7 @@ export class CircleService {
   static removeMember: typeof CircleMemberService.removeMember;
   static updateMemberRole: typeof CircleMemberService.updateMemberRole;
   static getCircleMembers: typeof CircleMemberService.getCircleMembers;
+  static getCircleMemberIds: typeof CircleMemberService.getCircleMemberIds;
   static getMemberInfo: typeof CircleMemberService.getMemberInfo;
   static isMember: typeof CircleMemberService.isMember;
   static updateLastReadAt: typeof CircleMemberService.updateLastReadAt;
@@ -96,6 +97,7 @@ export class CircleService {
         "removeMember",
         "updateMemberRole",
         "getCircleMembers",
+        "getCircleMemberIds",
         "getMemberInfo",
         "isMember",
         "updateLastReadAt",

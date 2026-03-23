@@ -233,7 +233,7 @@ export class CircleMemberService {
   }
 
   /**
-   * Retrieves all members of a circle.
+   * Retrieves a list of members with pagination meta data.
    * @throws {CircleNotFoundError} If the circle does not exist
    */
   static async getCircleMembers(
@@ -266,6 +266,21 @@ export class CircleMemberService {
       data: transformedMembers,
       pagination: result.pagination,
     };
+  }
+
+  /**
+   * Returns the user IDs of all members in a circle without pagination.
+   * Use this only when the full member list is needed at once — for example,
+   * for presence checks in the socket layer. Avoid for display purposes;
+   * use the paginated getCircleMembers instead.
+   *
+   * @throws {CircleNotFoundError} If the circle does not exist
+   */
+  static async getCircleMemberIds(circleId: string) {
+    const circle = await CircleRepository.findCircleById(circleId);
+    if (!circle) throw new CircleNotFoundError(circleId);
+
+    return await CircleRepository.getCircleMemberIds(circleId);
   }
 
   /**

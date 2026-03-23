@@ -24,7 +24,7 @@ const UserBasicSchema = z.object({
 const StudyCircleCreatorSchema = UserBasicSchema.omit({ avatar: true });
 
 const PaginationSchema = z.object({
-  nextCursor: z.string().nullable(),
+  nextCursor: z.uuid().nullable(),
   hasMore: z.boolean(),
 });
 
@@ -147,6 +147,7 @@ const EnrichedCircleMemberDataSchema = CircleMemberDataSchema.extend({
 
 const CircleMembersResponseSchema = z.object({
   data: z.array(CircleMemberDataSchema),
+  pagination: PaginationSchema,
 });
 
 const CircleMemberResponseSchema = z.object({
@@ -240,7 +241,10 @@ const CircleAvatarsResponseSchema = z.object({
 export type CircleAttachedUser = z.infer<typeof UserBasicSchema>;
 export type StudyCircleRole = z.infer<typeof CircleRoleSchema>;
 export type StudyCircle = z.infer<typeof StudyCircleDataSchema>;
+
 export type CircleMember = z.infer<typeof CircleMemberDataSchema>;
+export type CircleMembersResponse = z.infer<typeof CircleMembersResponseSchema>;
+
 export type MemberJoinedData = z.infer<typeof SocketMemberJoinedDataSchema>;
 export type MemberLeftData = z.infer<typeof SocketMemberLeftDataSchema>;
 export type EnrichedCircleMember = z.infer<

@@ -1,4 +1,7 @@
+import { Loader2 } from "lucide-react";
+
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import type { CircleMember } from "@/zodSchemas/circle.zod";
 
 import { Header } from "./Header";
@@ -7,15 +10,27 @@ import { MemberItem } from "./MemberItem";
 
 interface MemberListProps {
   members: CircleMember[];
+  pagination: {
+    fetchNextPage: () => void;
+    hasNextPage: boolean | undefined;
+    isFetchingNextPage: boolean;
+  };
   isLoading: boolean;
   currentUserId?: string;
 }
 
 export const MemberList = ({
   members,
+  pagination,
   isLoading,
   currentUserId,
 }: MemberListProps) => {
+  const bottomSentinelRef = useInfiniteScroll({
+    hasNextPage: pagination.hasNextPage ?? false,
+    isFetchingNextPage: pagination.isFetchingNextPage,
+    fetchNextPage: pagination.fetchNextPage,
+  });
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -35,6 +50,17 @@ export const MemberList = ({
                     isCurrentUser={member.user.id === currentUserId}
                   />
                 ))}
+
+                <div ref={bottomSentinelRef} />
+
+                {pagination.isFetchingNextPage && (
+                  <div
+                    data-testid="loader"
+                    className="flex justify-center py-3"
+                  >
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                )}
               </div>
             )}
           </div>

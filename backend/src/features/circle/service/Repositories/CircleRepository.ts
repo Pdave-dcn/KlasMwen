@@ -297,7 +297,7 @@ class CircleRepository {
     });
   }
 
-  /** Get all members of a circle */
+  /** Get a paginated list of members */
   static async getGroupMembers(
     circleId: string,
     pagination: { limit?: number; cursor?: string },
@@ -321,6 +321,15 @@ class CircleRepository {
     });
 
     return await prisma.circleMember.findMany({ ...paginatedQuery, select });
+  }
+
+  /** Returns the user IDs of all members in a circle */
+  static async getCircleMemberIds(circleId: string): Promise<string[]> {
+    const members = await prisma.circleMember.findMany({
+      where: { circleId },
+      select: { userId: true },
+    });
+    return members.map((m) => m.userId);
   }
 
   /** Count members in a circle */

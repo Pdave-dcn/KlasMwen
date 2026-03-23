@@ -24,11 +24,11 @@ const getMemberPresence = async (
     new Set(socketsInRoom.map((s) => s.data.user.id)),
   );
 
-  const allMembers = await CircleService.getCircleMembers(studyCircleId);
+  const allMemberIds = await CircleService.getCircleMemberIds(studyCircleId);
 
-  const onlineMemberIds = allMembers
-    .filter((member) => PresenceService.isOnline(member.userId))
-    .map((m) => m.userId);
+  const onlineMemberIds = allMemberIds.filter((userId) =>
+    PresenceService.isOnline(userId),
+  );
 
   return { presentMemberIds, onlineMemberIds };
 };

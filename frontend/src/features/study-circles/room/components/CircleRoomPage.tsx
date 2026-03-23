@@ -55,6 +55,7 @@ const CircleRoomPage = () => {
       <RightSidebar
         selectedCircle={circle.selected}
         members={circle.members}
+        pagination={pagination.members}
         currentUserId={user.current?.id}
         isLoading={loading.members}
         showRightSidebar={sidebar.showRight}

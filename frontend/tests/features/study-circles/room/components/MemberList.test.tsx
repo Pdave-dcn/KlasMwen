@@ -25,6 +25,17 @@ vi.mock("@/stores/circle.store", () => ({
   ),
 }));
 
+// IntersectionObserver is not available in jsdom — mock it so useInfiniteScroll
+// doesn't throw when MemberList mounts in tests
+vi.stubGlobal(
+  "IntersectionObserver",
+  vi.fn(() => ({
+    observe: vi.fn(),
+    unobserve: vi.fn(),
+    disconnect: vi.fn(),
+  })),
+);
+
 import { MemberList } from "@/features/study-circles/room/components/MemberList/MemberList";
 import { MemberItem } from "@/features/study-circles/room/components/MemberList/MemberItem";
 import type { CircleMember } from "@/zodSchemas/circle.zod";
@@ -46,6 +57,13 @@ function makeMember(overrides: Partial<CircleMember> = {}): CircleMember {
   } as CircleMember;
 }
 
+// Default pagination — no more pages, nothing fetching
+const defaultPagination = {
+  fetchNextPage: vi.fn(),
+  hasNextPage: false,
+  isFetchingNextPage: false,
+};
+
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 function renderMemberItem(member: CircleMember, isCurrentUser = false) {
@@ -62,6 +80,7 @@ function renderMemberList(
       members={members}
       isLoading={isLoading}
       currentUserId={currentUserId}
+      pagination={defaultPagination}
     />,
   );
 }
@@ -228,12 +247,10 @@ describe("MemberItem & MemberList", () => {
       });
       renderMemberItem(member);
 
-      // getInitials("Alice Smith") returns "AL" (first two chars of first word)
       expect(screen.getByText("AL")).toBeDefined();
     });
 
     it("applies a background color derived from the first character of the username", () => {
-      // 'a'.charCodeAt(0) = 97, 97 % 6 = 1 → bg-emerald-500
       const member = makeMember({
         user: { id: "u1", username: "alice", avatar: null } as any,
       });
@@ -245,7 +262,6 @@ describe("MemberItem & MemberList", () => {
     });
 
     it("applies a different background color for a different starting character", () => {
-      // 'c'.charCodeAt(0) = 99, 99 % 6 = 3 → bg-rose-500
       const member = makeMember({
         user: { id: "u2", username: "carol", avatar: null } as any,
       });
@@ -281,7 +297,6 @@ describe("MemberItem & MemberList", () => {
       const member = makeMember();
       renderMemberList([member], true);
 
-      // Members should not be visible
       expect(screen.queryByTestId("role-indicator")).toBeNull();
     });
 
@@ -305,7 +320,6 @@ describe("MemberItem & MemberList", () => {
       ];
       renderMemberList(members, false);
 
-      // Header renders "2 total" — match the total count via regex
       expect(screen.getByText(/2\s+total/i)).toBeDefined();
     });
 
@@ -313,6 +327,31 @@ describe("MemberItem & MemberList", () => {
       renderMemberList([], false);
 
       expect(screen.queryByTestId("role-indicator")).toBeNull();
+    });
+  });
+
+  // ── pagination ────────────────────────────────────────────────────────────
+
+  describe("pagination", () => {
+    it("renders the loading spinner when isFetchingNextPage is true", () => {
+      render(
+        <MemberList
+          members={[makeMember()]}
+          isLoading={false}
+          pagination={{
+            fetchNextPage: vi.fn(),
+            hasNextPage: true,
+            isFetchingNextPage: true,
+          }}
+        />,
+      );
+
+      expect(screen.getByTestId("loader")).toBeDefined();
+    });
+
+    it("does not render the loading spinner when isFetchingNextPage is false", () => {
+      renderMemberList([makeMember()], false);
+      expect(screen.queryByTestId("loader")).toBeNull();
     });
   });
 
@@ -346,11 +385,8 @@ describe("MemberItem & MemberList", () => {
   describe("muted indicator", () => {
     it("renders VolumeX icon when member is muted", () => {
       const member = makeMember({ isMuted: true });
-      // The VolumeX icon renders as an svg — check it exists via lucide's aria or container
       const { container } = renderMemberItem(member);
-      // Lucide renders SVGs — assert one exists near the username
       const svgs = container.querySelectorAll("svg");
-      // role indicator svg + muted svg = at least 2
       expect(svgs.length).toBeGreaterThanOrEqual(2);
     });
 
@@ -358,7 +394,6 @@ describe("MemberItem & MemberList", () => {
       const member = makeMember({ isMuted: false });
       const { container } = renderMemberItem(member);
       const svgs = container.querySelectorAll("svg");
-      // only the role icon svg
       expect(svgs.length).toBe(1);
     });
   });

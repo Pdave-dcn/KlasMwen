@@ -6,6 +6,11 @@ import { MemberList } from "../MemberList/MemberList";
 interface RightSidebarProps {
   selectedCircle?: StudyCircle;
   members: CircleMember[];
+  pagination: {
+    fetchNextPage: () => void;
+    hasNextPage: boolean | undefined;
+    isFetchingNextPage: boolean;
+  };
   currentUserId?: string;
   isLoading: boolean;
   showRightSidebar: boolean;
@@ -15,6 +20,7 @@ interface RightSidebarProps {
 export const RightSidebar = ({
   selectedCircle,
   members,
+  pagination,
   currentUserId,
   isLoading,
   showRightSidebar,
@@ -41,6 +47,7 @@ export const RightSidebar = ({
       <>
         <MemberList
           members={members}
+          pagination={pagination}
           isLoading={isLoading}
           currentUserId={currentUserId}
         />

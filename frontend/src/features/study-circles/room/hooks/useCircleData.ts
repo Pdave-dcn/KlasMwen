@@ -29,8 +29,18 @@ export const useCircleData = (circleId: string | null) => {
   const { data: selectedCircle, isLoading: isLoadingCircle } =
     useStudyCircleQuery(circleId);
 
-  const { data: rawMembers = [], isLoading: isLoadingMembers } =
-    useCircleMembersQuery(circleId);
+  const {
+    data: membersData,
+    isLoading: isLoadingMembers,
+    isFetchingNextPage: isFetchingNextMembersPage,
+    fetchNextPage: fetchNextMembersPage,
+    hasNextPage: hasNextMembersPage,
+  } = useCircleMembersQuery(circleId);
+
+  const rawMembers = useMemo(
+    () => (membersData ? [...membersData.pages.flatMap((p) => p.data)] : []),
+    [membersData],
+  );
 
   // React Query keeps stale cache data even when queries are disabled (circleId is null).
   // Explicitly returning empty arrays when there is no active circle prevents stale
@@ -40,9 +50,9 @@ export const useCircleData = (circleId: string | null) => {
   const {
     data: messagesData,
     isLoading: isLoadingMessages,
-    isFetchingNextPage,
-    fetchNextPage,
-    hasNextPage,
+    isFetchingNextPage: isFetchingNextMessagesPage,
+    fetchNextPage: fetchNextMessagesPage,
+    hasNextPage: hasNextMessagesPage,
   } = useCircleMessagesQuery(circleId, 50);
 
   const rawMessages = useMemo(
@@ -73,9 +83,14 @@ export const useCircleData = (circleId: string | null) => {
     },
     pagination: {
       messages: {
-        hasNextPage,
-        fetchNextPage,
-        isFetchingNextPage,
+        hasNextPage: hasNextMessagesPage,
+        fetchNextPage: fetchNextMessagesPage,
+        isFetchingNextPage: isFetchingNextMessagesPage,
+      },
+      members: {
+        hasNextPage: hasNextMembersPage,
+        fetchNextPage: fetchNextMembersPage,
+        isFetchingNextPage: isFetchingNextMembersPage,
       },
     },
   };

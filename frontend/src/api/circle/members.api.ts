@@ -24,11 +24,20 @@ export const addCircleMember = async (
   }
 };
 
-export const getCircleMembers = async (circleId: string) => {
+export const getCircleMembers = async (
+  circleId: string,
+  limit = 15,
+  cursor?: string,
+) => {
   try {
-    const res = await api.get(`/circles/${circleId}/members`);
+    const res = await api.get(`/circles/${circleId}/members`, {
+      params: {
+        limit,
+        cursor,
+      },
+    });
     const validatedData = CircleMembersResponseSchema.parse(res.data);
-    return validatedData.data;
+    return validatedData;
   } catch (error) {
     handleZodValidationError(error, "getCircleMembers");
     throw error;

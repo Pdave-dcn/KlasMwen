@@ -150,8 +150,18 @@ const CircleMembersResponseSchema = z.object({
   pagination: PaginationSchema,
 });
 
+const MutedCircleMembersResponseSchema = z.object({
+  data: z.array(CircleMemberDataSchema),
+  mutedTotal: z.number().int().nonnegative().nullable(),
+  pagination: PaginationSchema,
+});
+
 const CircleMemberResponseSchema = z.object({
   data: CircleMemberDataSchema,
+});
+
+const CircleMembersSearchResponseSchema = z.object({
+  data: z.array(CircleMemberDataSchema),
 });
 
 // Request Schemas
@@ -285,6 +295,8 @@ export {
   StudyCircleResponseSchema,
   CircleMembersResponseSchema,
   CircleMemberResponseSchema,
+  CircleMembersSearchResponseSchema,
+  MutedCircleMembersResponseSchema,
   EnrichedCircleMemberDataSchema,
   CircleMessagesResponseSchema,
   CircleMessageResponseSchema,

@@ -5,12 +5,16 @@ import { createPaginationSchema } from "../../utils/pagination.util.js";
 import {
   AddMemberDataSchema,
   MuteMemberDataSchema,
+  SearchCircleMembersQuerySchema,
   StudyCircleIdParamSchema,
   UpdateMemberRoleDataSchema,
   UserIdParamSchema,
 } from "../../zodSchemas/circle.zod.js";
 
-import type { AuthenticatedRequest } from "../../types/AuthRequest.js";
+import type {
+  AuthenticatedEnrichedRequest,
+  AuthenticatedRequest,
+} from "../../types/AuthRequest.js";
 import type { NextFunction, Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "CircleMemberController" });
@@ -85,6 +89,82 @@ const getCircleMembers = async (
     );
 
     return res.status(200).json(result);
+  } catch (error: unknown) {
+    return next(error);
+  }
+};
+const getMutedMembers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const actionLogger = createActionLogger(
+    controllerLogger,
+    "getMutedMembers",
+    req,
+  );
+
+  try {
+    actionLogger.info("Fetching muted circle members");
+
+    const { user } = req as AuthenticatedEnrichedRequest;
+    const { circleId } = StudyCircleIdParamSchema.parse(req.params);
+
+    const customParser = createPaginationSchema(10, 30, "uuid");
+    const { limit, cursor } = customParser.parse(req.query);
+
+    const result = await CircleService.getMutedMembers(user, circleId, {
+      limit,
+      cursor: cursor as string,
+    });
+
+    actionLogger.info(
+      {
+        circleRole: user.circleRole,
+        circleId,
+        pageSize: limit,
+      },
+      "Muted circle members retrieved successfully",
+    );
+
+    return res.status(200).json(result);
+  } catch (error: unknown) {
+    return next(error);
+  }
+};
+
+const searchCircleMembers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const actionLogger = createActionLogger(
+    controllerLogger,
+    "searchCircleMembers",
+    req,
+  );
+
+  try {
+    actionLogger.info("Searching circle members");
+    const { user } = req as AuthenticatedRequest;
+
+    const { circleId } = StudyCircleIdParamSchema.parse(req.params);
+    const { q } = SearchCircleMembersQuerySchema.parse(req.query);
+
+    const result = await CircleService.searchCircleMembers(
+      user.id,
+      circleId,
+      q,
+    );
+
+    actionLogger.info(
+      { circleId, query: q, resultCount: result.length },
+      "Circle member search completed",
+    );
+
+    return res.status(200).json({
+      data: result,
+    });
   } catch (error: unknown) {
     return next(error);
   }
@@ -262,8 +342,10 @@ const setMemberMute = async (
 export {
   addMember,
   getCircleMembers,
+  getMutedMembers,
   removeMember,
   updateMemberRole,
   setMemberMute,
   updateLastReadAt,
+  searchCircleMembers,
 };

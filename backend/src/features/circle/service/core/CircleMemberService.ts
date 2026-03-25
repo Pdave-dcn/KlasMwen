@@ -1,8 +1,6 @@
 import {
   AlreadyMemberError,
-  CircleNotFoundError,
   CircleMemberNotFoundError,
-  NotAMemberError,
 } from "../../../../core/error/custom/circle.error.js";
 import { processPaginatedResults } from "../../../../utils/pagination.util.js";
 import { assertCirclePermission } from "../../security/rbac.js";
@@ -36,11 +34,12 @@ export class CircleMemberService {
     data: JoinCircleData,
     requester?: Express.User & { circleRole?: CircleRole },
   ) {
-    const group = await CircleRepository.findCircleById(data.circleId);
-    if (!group) throw new CircleNotFoundError(data.circleId);
+    const circle = await CircleValidationService.verifyCircleExists(
+      data.circleId,
+    );
 
     // Check if user is already a member
-    const isMember = await CircleRepository.isMember(
+    const isMember = await CircleValidationService.checkMembership(
       data.userId,
       data.circleId,
     );
@@ -49,7 +48,7 @@ export class CircleMemberService {
     }
 
     // For private circles or when adding someone else, check permissions
-    if (group.isPrivate || (requester && requester.id !== data.userId)) {
+    if (circle.isPrivate || (requester && requester.id !== data.userId)) {
       if (requester) {
         assertCirclePermission(requester, "circleMembers", "add");
       }
@@ -73,16 +72,12 @@ export class CircleMemberService {
     circleId: string,
     requester: Express.User & { circleRole?: CircleRole },
   ) {
-    const circle = await CircleRepository.findCircleById(circleId);
-    if (!circle) throw new CircleNotFoundError(circleId);
+    await CircleValidationService.verifyCircleExists(circleId);
 
-    const membership = await CircleRepository.getMembership(
+    const membership = await CircleValidationService.verifyMembership(
       targetUserId,
       circleId,
     );
-    if (!membership) {
-      throw new CircleMemberNotFoundError(targetUserId, circleId);
-    }
 
     assertCirclePermission(requester, "circleMembers", "remove", membership);
 
@@ -190,16 +185,12 @@ export class CircleMemberService {
     data: UpdateMemberRoleData,
     requester: Express.User & { circleRole?: CircleRole },
   ) {
-    const group = await CircleRepository.findCircleById(circleId);
-    if (!group) throw new CircleNotFoundError(circleId);
+    await CircleValidationService.verifyCircleExists(circleId);
 
-    const membership = await CircleRepository.getMembership(
+    const membership = await CircleValidationService.verifyMembership(
       targetUserId,
       circleId,
     );
-    if (!membership) {
-      throw new CircleMemberNotFoundError(targetUserId, circleId);
-    }
 
     assertCirclePermission(
       requester,
@@ -223,11 +214,7 @@ export class CircleMemberService {
    * @throws {CircleMemberNotFoundError} If user is not a member
    */
   static async updateLastReadAt(userId: string, circleId: string) {
-    const membership = await CircleRepository.getMembership(userId, circleId);
-
-    if (!membership) {
-      throw new CircleMemberNotFoundError(userId, circleId);
-    }
+    await CircleValidationService.verifyMembership(userId, circleId);
 
     await CircleRepository.updateLastReadAt(userId, circleId);
   }
@@ -241,19 +228,16 @@ export class CircleMemberService {
     circleId: string,
     pagination: { limit?: number; cursor?: string },
   ) {
-    const circle = await CircleRepository.findCircleById(circleId);
-    if (!circle) throw new CircleNotFoundError(circleId);
+    await CircleValidationService.verifyCircleExists(circleId);
 
-    const isMember = await CircleRepository.isMember(userId, circleId);
-    if (!isMember) throw new NotAMemberError(userId, circleId);
+    await CircleValidationService.verifyIsMember(userId, circleId);
 
     const limit = pagination.limit ?? 15;
-    const cursor = pagination.cursor ?? undefined;
 
-    const members = await CircleRepository.getGroupMembers(circleId, {
-      limit,
-      cursor,
-    });
+    const members = await CircleRepository.getGroupMembers(
+      circleId,
+      pagination,
+    );
 
     const result = processPaginatedResults(members, limit, "userId");
 
@@ -277,10 +261,65 @@ export class CircleMemberService {
    * @throws {CircleNotFoundError} If the circle does not exist
    */
   static async getCircleMemberIds(circleId: string) {
-    const circle = await CircleRepository.findCircleById(circleId);
-    if (!circle) throw new CircleNotFoundError(circleId);
+    await CircleValidationService.verifyCircleExists(circleId);
 
     return await CircleRepository.getCircleMemberIds(circleId);
+  }
+
+  /**
+   * Retrieves a paginated list of muted members in a circle.
+   *
+   * @returns Paginated list of muted members with total count
+   * @throws {CircleNotFoundError} If circle doesn't exist
+   * @throws {NotAMemberError} If requester isn't a member
+   */
+  static async getMutedMembers(
+    requester: Express.User & { circleRole?: CircleRole },
+    circleId: string,
+    pagination: { limit?: number; cursor?: string },
+  ) {
+    await CircleValidationService.verifyCircleExists(circleId);
+    await CircleValidationService.verifyIsMember(requester.id, circleId);
+
+    const limit = pagination.limit ?? 15;
+
+    const { data, totalMuted } = await CircleRepository.getMutedMembers(
+      circleId,
+      pagination,
+    );
+
+    const result = processPaginatedResults(data, limit, "userId");
+
+    const enrichedMembers = CircleEnricher.enrichMembers(result.data);
+
+    const transformedMembers =
+      CircleTransformers.transformMembers(enrichedMembers);
+
+    return {
+      data: transformedMembers,
+      pagination: { ...result.pagination, totalMuted },
+    };
+  }
+
+  /**
+   * Searches for members in a circle by username.
+   *
+   * @param circleId       - The circle to search in
+   * @param query          - Partial username to search for
+   */
+  static async searchCircleMembers(
+    userId: string,
+    circleId: string,
+    query: string,
+  ) {
+    await CircleValidationService.verifyCircleExists(circleId);
+    await CircleValidationService.verifyIsMember(userId, circleId);
+
+    const rows = await CircleRepository.searchCircleMembers(circleId, query);
+
+    const enrichedMembers = CircleEnricher.enrichMembers(rows);
+
+    return CircleTransformers.transformMembers(enrichedMembers);
   }
 
   /**
@@ -295,12 +334,5 @@ export class CircleMemberService {
 
     const enrichedMember = CircleEnricher.enrichMember(membership);
     return CircleTransformers.transformMember(enrichedMember);
-  }
-
-  /**
-   * Checks if a user is a member of a circle.
-   */
-  static async isMember(userId: string, circleId: string): Promise<boolean> {
-    return await CircleRepository.isMember(userId, circleId);
   }
 }

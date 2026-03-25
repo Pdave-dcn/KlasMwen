@@ -84,11 +84,7 @@ export const handleJoinCircle = (socket: Socket, nsp: Namespace) => {
 
       // Validate study circle exists and user is a member
       await CircleService.verifyCircleExists(circleId);
-      const isMember = await CircleService.isMember(user.id, circleId);
-
-      if (!isMember) {
-        throw new NotAMemberError(user.id, circleId);
-      }
+      await CircleService.verifyIsMember(user.id, circleId);
 
       // Join the room
       await socket.join(`circle:${circleId}`);

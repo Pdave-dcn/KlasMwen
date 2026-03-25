@@ -69,7 +69,6 @@ const CircleRoomPage = () => {
       {settings.isOpen && circle.selected && (
         <CircleSettingsPanel
           circle={circle.selected}
-          circleMembers={circle.members}
           onClose={settings.onClose}
         />
       )}

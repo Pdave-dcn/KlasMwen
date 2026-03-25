@@ -1,29 +1,55 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { toast } from "sonner";
 
-import { useSetCircleMemberMuteMutation } from "@/queries/circle/members.query";
+import { useDebouncedValue } from "@/features/search/hooks/useDebouncedValue";
+import {
+  useCircleMembersQuery,
+  useSearchCircleMembersQuery,
+  useSetCircleMemberMuteMutation,
+} from "@/queries/circle/members.query";
 import { useCircleStore } from "@/stores/circle.store";
 import { type CircleMember } from "@/zodSchemas/circle.zod";
 
 import type { MuteDuration } from "../types";
 
-interface UseMembersTabProps {
-  members: CircleMember[];
-}
-
-export function useMembersTab({ members }: UseMembersTabProps) {
+export function useMembersTab() {
   const [search, setSearch] = useState("");
   const [muteTarget, setMuteTarget] = useState<CircleMember | null>(null);
 
-  const currentCircleId =
-    useCircleStore((state) => state.selectedCircleId) ?? "";
+  const currentCircleId = useCircleStore((state) => state.selectedCircleId);
+
+  // Debounce the search input so we don't fire a request on every keystroke
+  const debouncedSearch = useDebouncedValue(search, 400);
+
+  const isSearching = debouncedSearch.trim().length > 0;
+
+  // Base paginated query — used when there's no active search
+  const {
+    data: membersData,
+    isLoading: isLoadingMembers,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useCircleMembersQuery(currentCircleId);
+
+  const allMembers = useMemo(
+    () => membersData?.pages.flatMap((p) => p.data) ?? [],
+    [membersData],
+  );
+
+  // Search query — only fires when debouncedSearch is non-empty
+  const { data: searchResults, isLoading: isLoadingSearch } =
+    useSearchCircleMembersQuery(currentCircleId, debouncedSearch);
+
+  // When searching, use backend results. Otherwise show the paginated list.
+  const members: CircleMember[] = isSearching
+    ? (searchResults ?? [])
+    : allMembers;
+
+  const isLoadingMembers_ = isSearching ? isLoadingSearch : isLoadingMembers;
 
   const setMuteMutation = useSetCircleMemberMuteMutation(currentCircleId);
-
-  const filtered = members.filter((m) =>
-    m.user.username.toLowerCase().includes(search.toLowerCase()),
-  );
 
   const handleMute = (
     member: CircleMember,
@@ -45,11 +71,23 @@ export function useMembersTab({ members }: UseMembersTabProps) {
   const handleCloseMuteDialog = () => setMuteTarget(null);
 
   return {
+    // Data
+    members,
+    isLoadingMembers: isLoadingMembers_,
+    // Search
     search,
     setSearch,
+    isSearching,
+    // Mute dialog
     muteTarget,
     setMuteTarget,
-    filtered,
+    // Pagination — disabled while searching, backend handles filtering
+    pagination: {
+      hasNextPage: isSearching ? false : !!hasNextPage,
+      isFetchingNextPage: isSearching ? false : isFetchingNextPage,
+      fetchNextPage,
+    },
+    // Handlers
     handlers: {
       handleMute,
       handleUnmute,

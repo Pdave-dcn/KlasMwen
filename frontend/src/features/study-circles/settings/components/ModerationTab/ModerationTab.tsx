@@ -1,5 +1,3 @@
-import type { CircleMember } from "@/zodSchemas/circle.zod";
-
 import { useModerationTab } from "../../hooks/useModerationTab";
 
 import { ChatSettings } from "./ChatSettings";
@@ -7,13 +5,11 @@ import { ClearChatDialog } from "./ClearChatDialog";
 import { MutedMembersList } from "./MutedMemberList";
 
 interface ModerationTabProps {
-  members: CircleMember[];
   slowMode: boolean;
   slowModeInterval: number;
 }
 
 export function ModerationTab({
-  members,
   slowMode,
   slowModeInterval: _slowModeInterval,
 }: ModerationTabProps) {
@@ -22,14 +18,18 @@ export function ModerationTab({
     showClearConfirm,
     setShowClearConfirm,
     mutedMembers,
+    mutedTotal,
+    pagination,
     handlers,
-  } = useModerationTab({ members, initialSlowMode: slowMode });
+  } = useModerationTab({ initialSlowMode: slowMode });
 
   return (
     <div className="space-y-8">
       <MutedMembersList
         mutedMembers={mutedMembers}
+        mutedTotal={mutedTotal}
         onUnmute={handlers.handleUnmute}
+        pagination={pagination}
       />
 
       <ChatSettings

@@ -80,6 +80,10 @@ const MuteMemberDataSchema = z.discriminatedUnion("muted", [
   }),
 ]);
 
+const SearchCircleMembersQuerySchema = z.object({
+  q: z.string().trim().min(1).max(50),
+});
+
 // Circle Message Schemas
 
 const SendMessageDataSchema = z.object({
@@ -184,6 +188,7 @@ export {
   CreatorIdParamSchema,
   UserIdParamSchema,
   MuteMemberDataSchema,
+  SearchCircleMembersQuerySchema,
   AddMemberDataSchema,
   UpdateMemberRoleDataSchema,
   SendMessageDataSchema,

@@ -6,6 +6,8 @@ import {
   type AddMemberData,
   type UpdateMemberRoleData,
   UpdateMemberRoleMutationSchema,
+  CircleMembersSearchResponseSchema,
+  MutedCircleMembersResponseSchema,
 } from "@/zodSchemas/circle.zod";
 
 import api from "../api";
@@ -40,6 +42,41 @@ export const getCircleMembers = async (
     return validatedData;
   } catch (error) {
     handleZodValidationError(error, "getCircleMembers");
+    throw error;
+  }
+};
+
+export const getMutedCircleMembers = async (
+  circleId: string,
+  limit = 15,
+  cursor?: string,
+) => {
+  try {
+    const res = await api.get(`/circles/${circleId}/members/muted`, {
+      params: {
+        limit,
+        cursor,
+      },
+    });
+    const validatedData = MutedCircleMembersResponseSchema.parse(res.data);
+    return validatedData;
+  } catch (error) {
+    handleZodValidationError(error, "getMutedCircleMembers");
+    throw error;
+  }
+};
+
+export const searchCircleMembers = async (circleId: string, q: string) => {
+  try {
+    const res = await api.get(`/circles/${circleId}/members/search`, {
+      params: {
+        q,
+      },
+    });
+    const validatedData = CircleMembersSearchResponseSchema.parse(res.data);
+    return validatedData.data;
+  } catch (error) {
+    handleZodValidationError(error, "getMutedCircleMembers");
     throw error;
   }
 };

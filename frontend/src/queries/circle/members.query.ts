@@ -2,6 +2,7 @@ import {
   useMutation,
   useQueryClient,
   useInfiniteQuery,
+  useQuery,
   type InfiniteData,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -13,11 +14,12 @@ import {
   updateCircleMemberRole,
   updateCircleMemberLastReadAt,
   setCircleMemberMute,
+  getMutedCircleMembers,
+  searchCircleMembers,
 } from "@/api/circle";
 import type { MuteDuration } from "@/features/study-circles/settings/types";
 import type {
   AddMemberData,
-  CircleMember,
   CircleMembersResponse,
   UpdateMemberRoleData,
 } from "@/zodSchemas/circle.zod";
@@ -36,6 +38,38 @@ export const useCircleMembersQuery = (circleId: string | null, limit = 15) => {
         : undefined;
     },
     enabled: !!circleId,
+  });
+};
+
+export const useMutedCircleMembersQuery = (
+  circleId: string | null,
+  limit = 15,
+) => {
+  return useInfiniteQuery({
+    queryKey: ["circles", circleId, "members", "muted"],
+    queryFn: ({ pageParam }) =>
+      getMutedCircleMembers(circleId as string, limit, pageParam),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination.hasMore
+        ? lastPage.pagination.nextCursor
+        : undefined;
+    },
+    enabled: !!circleId,
+  });
+};
+
+export const useSearchCircleMembersQuery = (
+  circleId: string | null,
+  q: string,
+) => {
+  return useQuery({
+    queryKey: ["circles", circleId, "members", "search", q],
+    queryFn: () => {
+      if (!circleId) throw new Error("Circle ID is required.");
+      return searchCircleMembers(circleId, q);
+    },
+    enabled: !!circleId && q.trim().length > 0,
   });
 };
 
@@ -107,6 +141,9 @@ export const useRemoveCircleMemberMutation = (circleId: string | null) => {
       await queryClient.invalidateQueries({
         queryKey: ["circles", circleId, "members"],
       });
+      await queryClient.invalidateQueries({
+        queryKey: ["circles", circleId, "members", "muted"],
+      });
     },
   });
 };
@@ -133,19 +170,24 @@ export const useUpdateCircleMemberRoleMutation = (circleId: string | null) => {
         queryKey: ["circles", circleId, "members"],
       });
 
-      const previousMembers = queryClient.getQueryData<CircleMember[]>([
-        "circles",
-        circleId,
-        "members",
-      ]);
+      const previousMembers = queryClient.getQueryData<
+        InfiniteData<CircleMembersResponse>
+      >(["circles", circleId, "members"]);
 
-      queryClient.setQueryData<CircleMember[]>(
+      queryClient.setQueryData<InfiniteData<CircleMembersResponse>>(
         ["circles", circleId, "members"],
+
         (old) => {
           if (!old) return old;
-          return old.map((member) =>
-            member.userId === userId ? { ...member, role } : member,
-          );
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              data: page.data.map((member) =>
+                member.userId === userId ? { ...member, role } : member,
+              ),
+            })),
+          };
         },
       );
 
@@ -166,6 +208,9 @@ export const useUpdateCircleMemberRoleMutation = (circleId: string | null) => {
       await queryClient.invalidateQueries({
         queryKey: ["circles", circleId, "members"],
       });
+      await queryClient.invalidateQueries({
+        queryKey: ["circles", circleId, "members", "muted"],
+      });
     },
   });
 };
@@ -176,7 +221,7 @@ export const useUpdateCircleMemberLastReadAtMutation = () => {
   });
 };
 
-export const useSetCircleMemberMuteMutation = (circleId: string) => {
+export const useSetCircleMemberMuteMutation = (circleId: string | null) => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -188,26 +233,36 @@ export const useSetCircleMemberMuteMutation = (circleId: string) => {
       userId: string;
       muted: boolean;
       duration?: MuteDuration["value"];
-    }) => setCircleMemberMute(circleId, userId, muted, duration),
+    }) => {
+      if (!circleId)
+        throw new Error("Circle ID is required for this mutation.");
+      return setCircleMemberMute(circleId, userId, muted, duration);
+    },
 
     onMutate: async ({ userId, muted }) => {
       await queryClient.cancelQueries({
         queryKey: ["circles", circleId, "members"],
       });
 
-      const previousMembers = queryClient.getQueryData<CircleMember[]>([
-        "circles",
-        circleId,
-        "members",
-      ]);
+      const previousMembers = queryClient.getQueryData<
+        InfiniteData<CircleMembersResponse>
+      >(["circles", circleId, "members"]);
 
-      queryClient.setQueryData<CircleMember[]>(
+      queryClient.setQueryData<InfiniteData<CircleMembersResponse>>(
         ["circles", circleId, "members"],
         (old) => {
           if (!old) return old;
-          return old.map((member) =>
-            member.userId === userId ? { ...member, isMuted: muted } : member,
-          );
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              data: page.data.map((member) =>
+                member.userId === userId
+                  ? { ...member, isMuted: muted }
+                  : member,
+              ),
+            })),
+          };
         },
       );
 
@@ -227,6 +282,9 @@ export const useSetCircleMemberMuteMutation = (circleId: string) => {
     onSettled: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["circles", circleId, "members"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["circles", circleId, "members", "muted"],
       });
     },
   });

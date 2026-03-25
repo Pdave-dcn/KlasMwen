@@ -11,7 +11,7 @@ import { AnimatePresence, motion } from "motion/react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { CircleMember, StudyCircle } from "@/zodSchemas/circle.zod";
+import type { StudyCircle } from "@/zodSchemas/circle.zod";
 
 import { RoleGate } from "../../security/CircleGate";
 import { useCirclePermission } from "../../security/useCirclePermission";
@@ -25,7 +25,6 @@ import type { SettingsTab } from "../types";
 
 interface CircleSettingsPanelProps {
   circle: StudyCircle;
-  circleMembers: CircleMember[];
   onClose: () => void;
 }
 
@@ -45,7 +44,6 @@ const tabs: TabDef[] = [
 
 export function CircleSettingsPanel({
   circle,
-  circleMembers,
   onClose,
 }: CircleSettingsPanelProps) {
   // Role is read from the store via the hook
@@ -66,17 +64,13 @@ export function CircleSettingsPanel({
         return <GeneralTab circle={circle} />;
 
       case "members":
-        return <MembersTab members={circleMembers} />;
+        return <MembersTab />;
 
       case "moderation":
         // Extra safety: if somehow a MEMBER lands here, render nothing
         return (
           <RoleGate minRole="MODERATOR">
-            <ModerationTab
-              members={circleMembers}
-              slowMode={false}
-              slowModeInterval={5}
-            />
+            <ModerationTab slowMode={false} slowModeInterval={5} />
           </RoleGate>
         );
 

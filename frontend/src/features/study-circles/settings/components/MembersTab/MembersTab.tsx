@@ -1,4 +1,4 @@
-import { Search, Link, Mail } from "lucide-react";
+import { Loader2, Search, Link, Mail } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -11,20 +11,32 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { CircleGate } from "@/features/study-circles/security/CircleGate";
-import { type CircleMember } from "@/zodSchemas/circle.zod";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 
 import { useMembersTab } from "../../hooks/useMembersTab";
 import { MUTE_DURATIONS } from "../../types";
 
 import { MemberRow } from "./MemberRow";
 
-interface MembersTabProps {
-  members: CircleMember[];
-}
-
-export const MembersTab = ({ members }: MembersTabProps) => {
-  const { search, setSearch, muteTarget, filtered, handlers } = useMembersTab({
+export const MembersTab = () => {
+  const {
     members,
+    isLoadingMembers,
+    search,
+    setSearch,
+    isSearching,
+    muteTarget,
+    pagination,
+    handlers,
+  } = useMembersTab();
+
+  // Sentinel disabled while searching — backend handles filtering,
+  // pagination of the base list is irrelevant during a search
+  const bottomSentinelRef = useInfiniteScroll({
+    hasNextPage: pagination.hasNextPage,
+    isFetchingNextPage: pagination.isFetchingNextPage,
+    fetchNextPage: pagination.fetchNextPage,
+    enabled: !isSearching,
   });
 
   return (
@@ -68,20 +80,43 @@ export const MembersTab = ({ members }: MembersTabProps) => {
 
       {/* Member Count */}
       <p className="text-xs text-muted-foreground">
-        {filtered.length} member{filtered.length !== 1 ? "s" : ""}
+        {members.length} member{members.length !== 1 ? "s" : ""}
+        {isSearching && " found"}
       </p>
 
       {/* Member List */}
-      <div className="space-y-1">
-        {filtered.map((member) => (
-          <MemberRow
-            key={member.userId}
-            member={member}
-            onMute={handlers.handleMute}
-            onUnmute={handlers.handleUnmute}
-          />
-        ))}
-      </div>
+      {isLoadingMembers ? (
+        <div className="flex justify-center py-8">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <div className="space-y-1">
+          {members.length === 0 && isSearching ? (
+            <p className="text-sm text-center text-muted-foreground py-6">
+              No members found for "{search}"
+            </p>
+          ) : (
+            members.map((member) => (
+              <MemberRow
+                key={member.userId}
+                member={member}
+                onMute={handlers.handleMute}
+                onUnmute={handlers.handleUnmute}
+              />
+            ))
+          )}
+
+          {/* Sentinel — only active when not searching */}
+          <div ref={bottomSentinelRef} />
+
+          {/* Spinner for subsequent page loads */}
+          {pagination.isFetchingNextPage && (
+            <div className="flex justify-center py-3">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Mute Dialog */}
       <Dialog open={!!muteTarget} onOpenChange={handlers.handleCloseMuteDialog}>

@@ -339,6 +339,69 @@ class CircleRepository {
     });
   }
 
+  /**
+   * Returns only the currently muted members of a circle.
+   * Excludes members whose mute period has already expired.
+   */
+  static async getMutedMembers(
+    circleId: string,
+    pagination: { limit?: number; cursor?: string },
+  ) {
+    const select = BaseSelectors.circleMember;
+    const limit = pagination.limit ?? 15;
+    const cursor = pagination.cursor ?? undefined;
+
+    const where: Prisma.CircleMemberWhereInput = {
+      circleId,
+      mutedUntil: {
+        gt: new Date(),
+      },
+    };
+
+    const baseQuery: Prisma.CircleMemberFindManyArgs = {
+      where,
+      select,
+      orderBy: { mutedUntil: "asc" },
+    };
+
+    const paginatedQuery = buildCompoundCursorQuery<"circleMember">(baseQuery, {
+      limit,
+      cursor,
+      cursorFields: cursor
+        ? { userId_circleId: { userId: cursor, circleId } }
+        : undefined,
+    });
+
+    const [data, totalMuted] = await Promise.all([
+      prisma.circleMember.findMany({ ...paginatedQuery, select }),
+      // Only count on the first page — cursor presence means we already have the total
+      cursor ? Promise.resolve(null) : prisma.circleMember.count({ where }),
+    ]);
+
+    return { data, totalMuted };
+  }
+
+  /**
+   * Searches for members in a circle by username.
+   * Case-insensitive partial match on username.
+   */
+  static async searchCircleMembers(circleId: string, query: string) {
+    return await prisma.circleMember.findMany({
+      where: {
+        circleId,
+        user: {
+          username: {
+            contains: query,
+            mode: "insensitive",
+          },
+        },
+      },
+      select: BaseSelectors.circleMember,
+      orderBy: [{ role: "asc" }, { joinedAt: "asc" }],
+      take: 20,
+    });
+  }
+
   /** find users sharing circles with a specific user */
   static async findAllContacts(userId: string) {
     const members = await prisma.circleMember.findMany({

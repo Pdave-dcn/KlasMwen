@@ -40,8 +40,9 @@ export class CircleService {
   static updateMemberRole: typeof CircleMemberService.updateMemberRole;
   static getCircleMembers: typeof CircleMemberService.getCircleMembers;
   static getCircleMemberIds: typeof CircleMemberService.getCircleMemberIds;
+  static getMutedMembers: typeof CircleMemberService.getMutedMembers;
   static getMemberInfo: typeof CircleMemberService.getMemberInfo;
-  static isMember: typeof CircleMemberService.isMember;
+  static searchCircleMembers: typeof CircleMemberService.searchCircleMembers;
   static updateLastReadAt: typeof CircleMemberService.updateLastReadAt;
   static muteMember: typeof CircleMemberService.muteMember;
   static unmuteMember: typeof CircleMemberService.unmuteMember;
@@ -56,6 +57,7 @@ export class CircleService {
   // Validation Operations
   static verifyCircleExists: typeof CircleValidationService.verifyCircleExists;
   static verifyMembership: typeof CircleValidationService.verifyMembership;
+  static verifyIsMember: typeof CircleValidationService.verifyIsMember;
   static verifyMessageExists: typeof CircleValidationService.verifyMessageExists;
   static checkMembership: typeof CircleValidationService.checkMembership;
 
@@ -98,8 +100,9 @@ export class CircleService {
         "updateMemberRole",
         "getCircleMembers",
         "getCircleMemberIds",
+        "getMutedMembers",
         "getMemberInfo",
-        "isMember",
+        "searchCircleMembers",
         "updateLastReadAt",
         "muteMember",
         "unmuteMember",
@@ -116,6 +119,7 @@ export class CircleService {
       bindMethods(CircleValidationService, [
         "verifyCircleExists",
         "verifyMembership",
+        "verifyIsMember",
         "verifyMessageExists",
         "checkMembership",
       ]),

@@ -3,6 +3,7 @@ import {
   CircleMemberNotFoundError,
   MessageNotFoundError,
   UserMutedError,
+  NotAMemberError,
 } from "../../../../core/error/custom/circle.error.js";
 import CircleRepository from "../Repositories/CircleRepository.js";
 
@@ -78,5 +79,17 @@ export class CircleValidationService {
     circleId: string,
   ): Promise<boolean> {
     return await CircleRepository.isMember(userId, circleId);
+  }
+  /**
+   * Verifies that a user is a member of a circle.
+   * @throws {NotAMemberError} If the user is not a member of the circle
+   */
+  static async verifyIsMember(
+    userId: string,
+    circleId: string,
+  ): Promise<boolean> {
+    const isMember = await CircleRepository.isMember(userId, circleId);
+    if (!isMember) throw new NotAMemberError(userId, circleId);
+    return isMember;
   }
 }

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { devtools } from "zustand/middleware";
 
 import type { User } from "@/types/auth.type";
 import type { StudyCircleRole as MemberRole } from "@/zodSchemas/circle.zod";
@@ -32,43 +33,82 @@ interface CircleStoreState {
   clearPresence: () => void;
 }
 
-export const useCircleStore = create<CircleStoreState>((set) => ({
-  // Selection
-  selectedCircleId: null,
-  selectCircle: (circleId) => {
-    set({ selectedCircleId: circleId, presentMemberIds: new Set() });
-  },
-  resetSelectedCircle: () =>
-    set({ selectedCircleId: null, presentMemberIds: new Set() }),
+export const useCircleStore = create<CircleStoreState>()(
+  devtools((set) => ({
+    // Selection
+    selectedCircleId: null,
+    selectCircle: (circleId) => {
+      set(
+        { selectedCircleId: circleId, presentMemberIds: new Set() },
+        false,
+        "CircleStore/selectCircle",
+      );
+    },
+    resetSelectedCircle: () =>
+      set(
+        { selectedCircleId: null, presentMemberIds: new Set() },
+        false,
+        "CircleStore/resetSelectedCircle",
+      ),
 
-  // Current user
-  currentUser: null,
-  currentUserMemberRole: null,
-  setCurrentUserMemberRole: (role) => set({ currentUserMemberRole: role }),
-  setCurrentUser: (user) => set({ currentUser: user }),
+    // Current user
+    currentUser: null,
+    currentUserMemberRole: null,
+    setCurrentUserMemberRole: (role) =>
+      set(
+        { currentUserMemberRole: role },
+        false,
+        "CircleStore/setCurrentUserMemberRole",
+      ),
+    setCurrentUser: (user) =>
+      set({ currentUser: user }, false, "CircleStore/setCurrentUser"),
 
-  // Room online state
-  onlineMemberIds: new Set(),
-  setOnlineMembers(userIds) {
-    set({ onlineMemberIds: new Set(userIds) });
-  },
-  clearOnlineMembers: () => set({ onlineMemberIds: new Set() }),
+    // Room online state
+    onlineMemberIds: new Set(),
+    setOnlineMembers(userIds) {
+      set(
+        { onlineMemberIds: new Set(userIds) },
+        false,
+        "CircleStore/setOnlineMembers",
+      );
+    },
+    clearOnlineMembers: () =>
+      set(
+        { onlineMemberIds: new Set() },
+        false,
+        "CircleStore/clearOnlineMembers",
+      ),
 
-  // Room Presence
-  presentMemberIds: new Set(),
-  setPresentMembers: (userIds) => set({ presentMemberIds: new Set(userIds) }),
+    // Room Presence
+    presentMemberIds: new Set(),
+    setPresentMembers: (userIds) =>
+      set(
+        { presentMemberIds: new Set(userIds) },
+        false,
+        "CircleStore/setPresentMembers",
+      ),
 
-  setMemberJoined: (id) =>
-    set((state) => ({
-      presentMemberIds: new Set(state.presentMemberIds).add(id),
-    })),
+    setMemberJoined: (id) =>
+      set(
+        (state) => ({
+          presentMemberIds: new Set(state.presentMemberIds).add(id),
+        }),
+        false,
+        "CircleStore/setMemberJoined",
+      ),
 
-  setMemberLeft: (id) =>
-    set((state) => {
-      const next = new Set(state.presentMemberIds);
-      next.delete(id);
-      return { presentMemberIds: next };
-    }),
+    setMemberLeft: (id) =>
+      set(
+        (state) => {
+          const next = new Set(state.presentMemberIds);
+          next.delete(id);
+          return { presentMemberIds: next };
+        },
+        false,
+        "CircleStore/setMemberLeft",
+      ),
 
-  clearPresence: () => set({ presentMemberIds: new Set() }),
-}));
+    clearPresence: () =>
+      set({ presentMemberIds: new Set() }, false, "CircleStore/clearPresence"),
+  })),
+);

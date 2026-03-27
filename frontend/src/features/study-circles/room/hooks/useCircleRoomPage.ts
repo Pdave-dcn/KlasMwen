@@ -2,6 +2,8 @@ import { useEffect } from "react";
 
 import { useSearchParams } from "react-router-dom";
 
+import { useCircleStore } from "@/stores/circle.store";
+
 import { useCircleRoom } from "./useCircleRoom";
 import { useCircleRoomSettings } from "./useCircleRoomSettings";
 import { useSidebarState } from "./useSidebarState";
@@ -17,6 +19,8 @@ import { useSidebarState } from "./useSidebarState";
  */
 export const useCircleRoomPage = () => {
   const [searchParams] = useSearchParams();
+
+  const { resetSelectedCircle } = useCircleStore();
 
   const {
     data,
@@ -65,6 +69,10 @@ export const useCircleRoomPage = () => {
   useEffect(() => {
     const circleId = searchParams.get("circle");
     if (circleId) handleCircleSelect(circleId);
+
+    return () => {
+      resetSelectedCircle();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

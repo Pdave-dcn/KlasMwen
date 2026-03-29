@@ -14,6 +14,7 @@ interface CircleRoomProps {
     fetchNextPage: () => void;
     hasNextPage: boolean | undefined;
     isFetchingNextPage: boolean;
+    isFetching: boolean;
   };
   onSendMessage: (content: string) => void;
   onToggleMembers: () => void;

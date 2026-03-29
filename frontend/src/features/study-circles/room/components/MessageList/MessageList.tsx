@@ -20,6 +20,7 @@ interface MessageListProps {
     fetchNextPage: () => void;
     hasNextPage: boolean | undefined;
     isFetchingNextPage: boolean;
+    isFetching: boolean;
   };
 }
 
@@ -67,7 +68,10 @@ export const MessageList = ({
     fetchNextPage: pagination.fetchNextPage,
   });
 
-  if (isLoading) return <LoadingState />;
+  const isLoadingState =
+    isLoading || (pagination.isFetching && messages.length === 0);
+
+  if (isMessagesEmpty) return <EmptyState />;
   if (messages.length === 0) return <EmptyState />;
 
   const groupedMessages = groupMessagesByDate(messages);
@@ -76,32 +80,38 @@ export const MessageList = ({
     <div className="flex-1 min-h-0 w-full relative" ref={scrollAreaRef}>
       <ScrollArea className="h-full w-full">
         <div className="p-4 pb-14">
-          {/* Sentinel — triggers fetchNextPage when scrolled into view */}
-          <div ref={topSentinelRef} />
+          {isLoadingState ? (
+            <LoadingState />
+          ) : (
+            <>
+              {/* Sentinel — triggers fetchNextPage when scrolled into view */}
+              <div ref={topSentinelRef} />
 
-          {/* Loading indicator for older messages */}
-          {pagination.isFetchingNextPage && (
-            <div className="flex justify-center py-3">
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            </div>
+              {/* Loading indicator for older messages */}
+              {pagination.isFetchingNextPage && (
+                <div className="flex justify-center py-3">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
+              )}
+
+              {groupedMessages.map((group, groupIndex) => (
+                <div key={`group-${groupIndex + 1}`}>
+                  <DateDivider date={group.date} />
+                  <div className="space-y-3">
+                    {group.messages.map(({ message, showSender }) => (
+                      <MessageBubble
+                        key={message.id}
+                        message={message}
+                        currentUserId={currentUserId}
+                        showSender={showSender}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <div ref={endRef} className="h-px" />
+            </>
           )}
-
-          {groupedMessages.map((group, groupIndex) => (
-            <div key={`group-${groupIndex + 1}`}>
-              <DateDivider date={group.date} />
-              <div className="space-y-3">
-                {group.messages.map(({ message, showSender }) => (
-                  <MessageBubble
-                    key={message.id}
-                    message={message}
-                    currentUserId={currentUserId}
-                    showSender={showSender}
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
-          <div ref={endRef} className="h-px" />
         </div>
       </ScrollArea>
     </div>

@@ -102,6 +102,7 @@ export const useCircleRoomPage = () => {
       circles: loading.circles,
       messages: loading.messages,
       members: loading.members,
+      circlesFetching: loading.circlesFetching,
     },
 
     // Sidebar state & handlers

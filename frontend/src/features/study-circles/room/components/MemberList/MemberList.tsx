@@ -14,6 +14,7 @@ interface MemberListProps {
     fetchNextPage: () => void;
     hasNextPage: boolean | undefined;
     isFetchingNextPage: boolean;
+    isFetching: boolean;
   };
   isLoading: boolean;
   currentUserId?: string;
@@ -31,6 +32,9 @@ export const MemberList = ({
     fetchNextPage: pagination.fetchNextPage,
   });
 
+  const isLoadingState =
+    isLoading || (pagination.isFetching && members.length === 0);
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -39,7 +43,7 @@ export const MemberList = ({
       <div className="flex-1 min-h-0 w-full overflow-hidden">
         <ScrollArea className="h-full w-full">
           <div className="p-2 w-full flex flex-col min-w-0">
-            {isLoading ? (
+            {isLoadingState ? (
               <LoadingState />
             ) : (
               <div className="space-y-0.5 w-full min-w-0">

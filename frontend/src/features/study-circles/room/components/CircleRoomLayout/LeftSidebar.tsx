@@ -10,6 +10,7 @@ interface LeftSidebarProps {
   isLoading: boolean;
   showLeftSidebar: boolean;
   useOverlay: boolean;
+  isFetching: boolean;
 }
 
 export const LeftSidebar = ({
@@ -19,6 +20,7 @@ export const LeftSidebar = ({
   isLoading,
   showLeftSidebar,
   useOverlay,
+  isFetching,
 }: LeftSidebarProps) => (
   <div
     className={cn(
@@ -40,6 +42,7 @@ export const LeftSidebar = ({
       selectedCircleId={selectedCircleId}
       onSelectCircle={onSelectCircle}
       isLoading={isLoading}
+      isFetching={isFetching}
     />
   </div>
 );

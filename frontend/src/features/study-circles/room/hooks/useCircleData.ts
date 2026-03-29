@@ -23,8 +23,11 @@ import {
  * circle-specific queries are disabled.
  */
 export const useCircleData = (circleId: string | null) => {
-  const { data: circles = [], isLoading: isLoadingCircles } =
-    useStudyCirclesQuery();
+  const {
+    data: circles = [],
+    isLoading: isLoadingCircles,
+    isFetching: isFetchingCircles,
+  } = useStudyCirclesQuery();
 
   const { data: selectedCircle, isLoading: isLoadingCircle } =
     useStudyCircleQuery(circleId);
@@ -35,6 +38,7 @@ export const useCircleData = (circleId: string | null) => {
     isFetchingNextPage: isFetchingNextMembersPage,
     fetchNextPage: fetchNextMembersPage,
     hasNextPage: hasNextMembersPage,
+    isFetching: isFetchingMembers,
   } = useCircleMembersQuery(circleId);
 
   const rawMembers = useMemo(
@@ -53,6 +57,7 @@ export const useCircleData = (circleId: string | null) => {
     isFetchingNextPage: isFetchingNextMessagesPage,
     fetchNextPage: fetchNextMessagesPage,
     hasNextPage: hasNextMessagesPage,
+    isFetching: isFetchingMessages,
   } = useCircleMessagesQuery(circleId, 50);
 
   const rawMessages = useMemo(
@@ -80,17 +85,20 @@ export const useCircleData = (circleId: string | null) => {
       circle: isLoadingCircle,
       members: isLoadingMembers,
       messages: isLoadingMessages,
+      circlesFetching: isFetchingCircles,
     },
     pagination: {
       messages: {
         hasNextPage: hasNextMessagesPage,
         fetchNextPage: fetchNextMessagesPage,
         isFetchingNextPage: isFetchingNextMessagesPage,
+        isFetching: isFetchingMessages,
       },
       members: {
         hasNextPage: hasNextMembersPage,
         fetchNextPage: fetchNextMembersPage,
         isFetchingNextPage: isFetchingNextMembersPage,
+        isFetching: isFetchingMembers,
       },
     },
   };

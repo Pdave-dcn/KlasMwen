@@ -30,6 +30,7 @@ const CircleRoomPage = () => {
         isLoading={loading.circles}
         showLeftSidebar={sidebar.showLeft}
         useOverlay={sidebar.useOverlay}
+        isFetching={loading.circlesFetching}
       />
 
       <div

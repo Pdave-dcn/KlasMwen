@@ -1,6 +1,5 @@
 import { AuthorizationError } from "../../../../core/error/custom/auth.error.js";
 import {
-  AlreadyMemberError,
   CircleMemberNotFoundError,
   CircleNotFoundError,
 } from "../../../../core/error/custom/circle.error.js";
@@ -10,6 +9,8 @@ import { assertCirclePermission } from "../../security/rbac.js";
 import CircleEnricher from "../CircleEnrichers.js";
 import CircleTransformers from "../CircleTransformers.js";
 import CircleRepository from "../Repositories/CircleRepository.js";
+
+import { CircleMemberService } from "./CircleMemberService.js";
 
 import type { CreateCircleData, UpdateCircleData } from "../CircleTypes.js";
 import type { CircleRole } from "@prisma/client";
@@ -35,34 +36,33 @@ export class CircleCoreService {
 
   /**
    * Allows a user to join a public circle.
-   * Private groups require invitation (not handled here).
+   * Private circles require invitation (not handled here).
+   * Sets lastReadAt to current time to prevent pre-join messages from being counted as unread.
+   *
    * @param circleId - The circle ID
-   * @param userId - The user ID joining the group
-   * @throws {CircleNotFoundError} If the group does not exist
-   * @throws {AuthorizationError} If trying to join a private group
+   * @param userId - The user ID joining the circle
+   * @returns Transformed member with user info and role
+   * @throws {CircleNotFoundError} If circle doesn't exist
+   * @throws {AuthorizationError} If trying to join a private circle
+   * @throws {AlreadyMemberError} If user is already a member
    */
   static async joinCircle(circleId: string, userId: string) {
-    const group = await CircleRepository.findCircleById(circleId);
-    if (!group) throw new CircleNotFoundError(circleId);
+    const circle = await CircleRepository.findCircleById(circleId);
+    if (!circle) throw new CircleNotFoundError(circleId);
 
-    if (group.isPrivate) {
+    if (circle.isPrivate) {
       throw new AuthorizationError(
-        "Cannot join private groups without invitation",
+        "Cannot join private circles without invitation",
       );
     }
 
-    const isMember = await CircleRepository.isMember(userId, circleId);
-    if (isMember) {
-      throw new AlreadyMemberError(userId, circleId);
-    }
-
-    await CircleRepository.addMember({
+    // Delegate to unified member addition with no requester (public join)
+    return await CircleMemberService.addMemberToCircle(
       userId,
       circleId,
-      role: "MEMBER",
-    });
-
-    return CircleEnricher.enrichCircle(group, userId);
+      "MEMBER",
+      undefined,
+    );
   }
 
   /**

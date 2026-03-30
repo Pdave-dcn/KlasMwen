@@ -66,20 +66,19 @@ const joinCircle = async (req: Request, res: Response, next: NextFunction) => {
     const { user } = req as AuthenticatedRequest;
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
 
-    const group = await CircleService.joinCircle(circleId, user.id);
+    const member = await CircleService.joinCircle(circleId, user.id);
 
     actionLogger.info(
       {
         circleId,
-        groupName: group.name,
         userId: user.id,
-        userRole: group.userRole,
+        userRole: member.role,
       },
       "User joined study circle successfully",
     );
 
     return res.status(200).json({
-      data: group,
+      data: member,
     });
   } catch (error: unknown) {
     return next(error);

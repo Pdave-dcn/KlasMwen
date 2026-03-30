@@ -92,6 +92,7 @@ class CircleRepository {
           create: {
             userId: data.creatorId,
             role: "OWNER",
+            lastReadAt: new Date(),
           },
         },
         circleTags: {
@@ -253,12 +254,13 @@ class CircleRepository {
   }
 
   /** Add a user to a circle */
-  static async addMember(data: JoinCircleData) {
+  static async addMember(data: JoinCircleData, lastReadAt?: Date) {
     return await prisma.circleMember.create({
       data: {
         userId: data.userId,
         circleId: data.circleId,
         role: data.role ?? "MEMBER",
+        lastReadAt: lastReadAt ?? null,
       },
       select: BaseSelectors.circleMember,
     });

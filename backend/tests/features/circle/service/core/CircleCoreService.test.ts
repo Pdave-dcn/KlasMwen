@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { CircleCoreService } from "../../../../../src/features/circle/service/core/CircleCoreService.js";
+import { CircleMemberService } from "../../../../../src/features/circle/service/core/CircleMemberService.js";
 import CircleRepository from "../../../../../src/features/circle/service/Repositories/CircleRepository.js";
 import CircleEnricher from "../../../../../src/features/circle/service/CircleEnrichers.js";
 import CircleTransformers from "../../../../../src/features/circle/service/CircleTransformers.js";
@@ -20,6 +21,9 @@ vi.mock("../../../../../src/features/circle/service/CircleEnrichers.js");
 vi.mock("../../../../../src/features/circle/service/CircleTransformers.js");
 vi.mock("../../../../../src/features/avatar/avatarService.js");
 vi.mock("../../../../../src/features/circle/security/rbac.js");
+vi.mock(
+  "../../../../../src/features/circle/service/core/CircleMemberService.js",
+);
 
 describe("CircleCoreService", () => {
   beforeEach(() => {
@@ -109,63 +113,40 @@ describe("CircleCoreService", () => {
   });
 
   describe("joinCircle", () => {
-    it("should allow a user to join a public circle", async () => {
+    it("should allow a user to join a public circle by delegating to addMemberToCircle", async () => {
       const mockCircle = {
         id: "circle-1",
-        ...mockCircleData,
         name: "Public Circle",
         isPrivate: false,
-        creatorId: "user-1",
-        creator: mockCreator,
-        avatar: mockAvatar,
-        _count: { members: 0 },
-        createdAt: new Date(),
-        members: [],
-        messages: [],
-        circleTags: [],
-      };
+      } as any;
 
-      const mockMember = {
+      const mockTransformedMember = {
         userId: "user-2",
         role: "MEMBER" as const,
         user: {
           id: "user-2",
           username: "TestUser2",
-          Avatar: null,
+          avatar: null,
         },
         joinedAt: new Date(),
-        mutedUntil: null,
-      };
-
-      const mockEnrichedCircle = {
-        ...mockCircle,
-        memberCount: 1,
-        userRole: "OWNER" as const,
-        latestMessage: null,
-        unreadCount: 0,
-        tags: [],
+        isMuted: false,
       };
 
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue(mockCircle);
-      vi.mocked(CircleRepository.isMember).mockResolvedValue(false);
-      vi.mocked(CircleRepository.addMember).mockResolvedValue(mockMember);
-      vi.mocked(CircleEnricher.enrichCircle).mockResolvedValue(
-        mockEnrichedCircle,
+      vi.mocked(CircleMemberService.addMemberToCircle).mockResolvedValue(
+        mockTransformedMember,
       );
 
       const result = await CircleCoreService.joinCircle("circle-1", "user-2");
 
       expect(CircleRepository.findCircleById).toHaveBeenCalledWith("circle-1");
-      expect(CircleRepository.isMember).toHaveBeenCalledWith(
+      expect(CircleMemberService.addMemberToCircle).toHaveBeenCalledWith(
         "user-2",
         "circle-1",
+        "MEMBER",
+        undefined,
       );
-      expect(CircleRepository.addMember).toHaveBeenCalledWith({
-        userId: "user-2",
-        circleId: "circle-1",
-        role: "MEMBER",
-      });
-      expect(result).toEqual(mockEnrichedCircle);
+      expect(result).toEqual(mockTransformedMember);
     });
 
     it("should throw CircleNotFoundError if circle does not exist", async () => {
@@ -188,21 +169,9 @@ describe("CircleCoreService", () => {
       await expect(
         CircleCoreService.joinCircle("circle-1", "user-2"),
       ).rejects.toThrow(AuthorizationError);
-    });
 
-    it("should throw AlreadyMemberError if user is already a member", async () => {
-      const mockCircle = {
-        id: "circle-1",
-        name: "Public Circle",
-        isPrivate: false,
-      } as any;
-
-      vi.mocked(CircleRepository.findCircleById).mockResolvedValue(mockCircle);
-      vi.mocked(CircleRepository.isMember).mockResolvedValue(true);
-
-      await expect(
-        CircleCoreService.joinCircle("circle-1", "user-2"),
-      ).rejects.toThrow(AlreadyMemberError);
+      // Ensure addMemberToCircle was not called for private circles
+      expect(CircleMemberService.addMemberToCircle).not.toHaveBeenCalled();
     });
   });
 

@@ -24,39 +24,73 @@ import type { CircleRole } from "@prisma/client";
  */
 export class CircleMemberService {
   /**
-   * Adds a user to a circle.
-   * For private circles, only owners and moderators can add members.
-   * @throws {CircleNotFoundError} If the circle does not exist
+   * INTERNAL: Core logic for adding a member to a circle.
+   * Single source of truth for all member additions (user self-join or admin add).
+   * Sets lastReadAt to current time to prevent pre-join messages from being counted as unread.
+   *
+   * @param userId - The user to add
+   * @param circleId - The circle to add user to
+   * @param role - Member role (default: MEMBER)
+   * @param requester - Optional user performing the action (for permission checks). If not provided, public circle join is assumed.
+   * @returns Transformed member with user info and role
+   * @throws {CircleNotFoundError} If circle doesn't exist
    * @throws {AlreadyMemberError} If user is already a member
-   * @throws {AuthorizationError} If adding to private circle without permission
+   * @throws {AuthorizationError} If permissions denied
    */
-  static async addMember(
-    data: JoinCircleData,
+  static async addMemberToCircle(
+    userId: string,
+    circleId: string,
+    role: CircleRole = "MEMBER",
     requester?: Express.User & { circleRole?: CircleRole },
   ) {
-    const circle = await CircleValidationService.verifyCircleExists(
-      data.circleId,
-    );
+    // Validate circle exists
+    const circle = await CircleValidationService.verifyCircleExists(circleId);
 
     // Check if user is already a member
     const isMember = await CircleValidationService.checkMembership(
-      data.userId,
-      data.circleId,
+      userId,
+      circleId,
     );
     if (isMember) {
-      throw new AlreadyMemberError(data.userId, data.circleId);
+      throw new AlreadyMemberError(userId, circleId);
     }
 
-    // For private circles or when adding someone else, check permissions
-    if (circle.isPrivate || (requester && requester.id !== data.userId)) {
+    // Validate permissions based on circle privacy and who is adding
+    if (circle.isPrivate || (requester && requester.id !== userId)) {
       if (requester) {
         assertCirclePermission(requester, "circleMembers", "add");
       }
     }
 
-    const member = await CircleRepository.addMember(data);
+    // Add member with lastReadAt set to current time (prevents pre-join messages from being unread)
+    const member = await CircleRepository.addMember(
+      { userId, circleId, role },
+      new Date(), // lastReadAt
+    );
+
     const enrichedMember = CircleEnricher.enrichMember(member);
     return CircleTransformers.transformMember(enrichedMember);
+  }
+
+  /**
+   * Adds a user to a circle.
+   * For private circles, only owners and moderators can add members.
+   * Sets lastReadAt to prevent pre-join messages from counting as unread.
+   *
+   * @throws {CircleNotFoundError} If the circle does not exist
+   * @throws {AlreadyMemberError} If user is already a member
+   * @throws {AuthorizationError} If adding to private circle without permission
+   */
+  static addMember(
+    data: JoinCircleData,
+    requester?: Express.User & { circleRole?: CircleRole },
+  ) {
+    return this.addMemberToCircle(
+      data.userId,
+      data.circleId,
+      data.role,
+      requester,
+    );
   }
 
   /**

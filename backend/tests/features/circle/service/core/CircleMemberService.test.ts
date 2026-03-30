@@ -87,7 +87,10 @@ describe("CircleMemberService", () => {
         "user-2",
         "circle-1",
       );
-      expect(CircleRepository.addMember).toHaveBeenCalledWith(data);
+      expect(CircleRepository.addMember).toHaveBeenCalledWith(
+        { userId: "user-2", circleId: "circle-1", role: "MEMBER" },
+        expect.any(Date),
+      );
       expect(result).toEqual(mockTransformedMember);
     });
 

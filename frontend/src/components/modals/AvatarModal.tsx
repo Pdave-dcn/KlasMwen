@@ -14,46 +14,42 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useAvatars } from "@/queries/avatar.query";
 
 import LoadMoreButton from "../LoadMoreButton";
+
+export interface AvatarOption {
+  id: number;
+  url: string;
+}
+
+interface AvatarModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirmation: (avatarId: number, avatarUrl: string) => void;
+  currentAvatarUrl?: string;
+  avatars: AvatarOption[];
+  isLoading: boolean;
+  isError: boolean;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  onLoadMore: () => void;
+}
 
 const AvatarModal = ({
   isOpen,
   onClose,
-  currentAvatarUrl,
   onConfirmation,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  currentAvatarUrl?: string;
-  onConfirmation: (avatarId: number, avatarUrl: string) => void;
-}) => {
-  const {
-    data: avatars,
-    isLoading,
-    error,
-    hasNextPage,
-    fetchNextPage,
-    isFetchingNextPage,
-  } = useAvatars(24);
-
-  const [selectedAvatar, setSelectedAvatar] = useState<{
-    id: number;
-    url: string;
-  } | null>(null);
-
-  const allAvatars = avatars?.pages?.flatMap((page) => page.data) ?? [];
-
-  const handleAvatarClick = (avatar: { id: number; url: string }) => {
-    setSelectedAvatar(avatar);
-  };
-
-  const handleLoadMore = async () => {
-    if (hasNextPage && !isFetchingNextPage) {
-      await fetchNextPage();
-    }
-  };
+  currentAvatarUrl,
+  avatars,
+  isLoading,
+  isError,
+  hasNextPage,
+  isFetchingNextPage,
+  onLoadMore,
+}: AvatarModalProps) => {
+  const [selectedAvatar, setSelectedAvatar] = useState<AvatarOption | null>(
+    null,
+  );
 
   const handleClose = () => {
     setSelectedAvatar(null);
@@ -77,13 +73,13 @@ const AvatarModal = ({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="h-[400px] w-full pr-4">
+        <ScrollArea className="h-100 w-full pr-4">
           {isLoading ? (
             <div className="flex items-center justify-center h-32">
               <Loader2 className="w-8 h-8 animate-spin" />
               <span className="ml-2">Loading avatars...</span>
             </div>
-          ) : error ? (
+          ) : isError ? (
             <Alert variant="destructive">
               <AlertDescription>
                 Failed to load avatars. Please try again later.
@@ -92,7 +88,7 @@ const AvatarModal = ({
           ) : (
             <div className="space-y-4">
               <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
-                {allAvatars.map((avatar) => {
+                {avatars.map((avatar) => {
                   const isSelected = selectedAvatar?.id === avatar.id;
                   const isCurrent = currentAvatarUrl === avatar.url;
 
@@ -104,10 +100,10 @@ const AvatarModal = ({
                           ? "ring-2 ring-primary ring-offset-2"
                           : "hover:ring-1 hover:ring-muted-foreground"
                       }`}
-                      onClick={() => handleAvatarClick(avatar)}
+                      onClick={() => setSelectedAvatar(avatar)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
-                          handleAvatarClick(avatar);
+                          setSelectedAvatar(avatar);
                         }
                       }}
                     >
@@ -122,14 +118,12 @@ const AvatarModal = ({
                         </AvatarFallback>
                       </Avatar>
 
-                      {/* Selection indicator */}
                       {isSelected && (
                         <div className="absolute -top-1 -right-1 bg-primary rounded-full p-1">
                           <Check className="w-3 h-3 text-primary-foreground" />
                         </div>
                       )}
 
-                      {/* Current avatar indicator */}
                       {isCurrent && !isSelected && (
                         <div className="absolute -top-1 -right-1 bg-muted-foreground rounded-full p-1">
                           <div className="w-3 h-3 bg-background rounded-full" />
@@ -140,19 +134,17 @@ const AvatarModal = ({
                 })}
               </div>
 
-              {/* Load More Button */}
               {hasNextPage && (
                 <div className="flex justify-center pt-4">
                   <LoadMoreButton
                     isLoading={isFetchingNextPage}
-                    onClick={handleLoadMore}
+                    onClick={onLoadMore}
                     style="max-w-xs"
                   />
                 </div>
               )}
 
-              {/* No more avatars message */}
-              {!hasNextPage && allAvatars.length > 0 && (
+              {!hasNextPage && avatars.length > 0 && (
                 <div className="text-center text-sm text-muted-foreground pt-4">
                   You've reached the end of available avatars.
                 </div>
@@ -172,7 +164,7 @@ const AvatarModal = ({
           <Button
             disabled={!selectedAvatar}
             onClick={handleConfirmation}
-            className="min-w-[100px] cursor-pointer"
+            className="min-w-25 cursor-pointer"
           >
             Confirm
           </Button>

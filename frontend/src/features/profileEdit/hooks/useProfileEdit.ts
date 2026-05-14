@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 
+import { useAvatars } from "@/queries/avatar.query";
 import { useProfileUser as useGetActiveUserInfo } from "@/queries/profile.query";
 import { useUpdateUserInfo } from "@/queries/user.query";
 import { UpdateProfileSchema } from "@/zodSchemas/user.zod";
@@ -32,6 +33,22 @@ export const useProfileEdit = () => {
   const { data: user, isLoading, error } = useGetActiveUserInfo(undefined);
   const mutation = useUpdateUserInfo();
 
+  // Avatar query
+  const {
+    data: avatarData,
+    isLoading: isLoadingAvatars,
+    isError: isAvatarError,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useAvatars(24);
+
+  const avatars = avatarData?.pages.flatMap((page) => page.data) ?? [];
+
+  const handleLoadMoreAvatars = () => {
+    if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+  };
+
   useEffect(() => {
     if (user) {
       reset({
@@ -50,13 +67,8 @@ export const useProfileEdit = () => {
     setValue("avatarId", avatarId, { shouldValidate: true });
   };
 
-  const handleCloseAvatarModal = () => {
-    setIsAvatarModalOpen(false);
-  };
-
-  const handleOpenAvatarModal = () => {
-    setIsAvatarModalOpen(true);
-  };
+  const handleCloseAvatarModal = () => setIsAvatarModalOpen(false);
+  const handleOpenAvatarModal = () => setIsAvatarModalOpen(true);
 
   const handleCancel = async () => {
     await navigate("/profile/me", { replace: true });
@@ -75,12 +87,19 @@ export const useProfileEdit = () => {
     isAvatarModalOpen,
     register,
     errors,
+    // Avatar modal data
+    avatars,
+    isLoadingAvatars,
+    isAvatarError,
+    hasNextPage: !!hasNextPage,
+    isFetchingNextPage,
     handlers: {
       handleSubmit: handleSubmit(onSubmit),
       handleSelectAvatar,
       handleCloseAvatarModal,
       handleOpenAvatarModal,
       handleCancel,
+      handleLoadMoreAvatars,
     },
   };
 };

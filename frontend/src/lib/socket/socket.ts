@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 
-import { registerNotificationListeners } from "./socketListeners";
+import { registerListeners } from "./socketListeners";
 
 let socket: ReturnType<typeof io> | null = null;
 
@@ -12,7 +12,7 @@ export const connectSocket = () => {
     transports: ["websocket"],
   });
 
-  registerNotificationListeners(socket);
+  registerListeners(socket);
 
   return socket;
 };

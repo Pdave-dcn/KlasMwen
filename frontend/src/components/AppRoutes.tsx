@@ -1,6 +1,13 @@
 import { Routes, Route } from "react-router-dom";
 
+import {
+  DiscoverCirclesPage,
+  CreateCirclePage,
+} from "@/features/study-circles/hub/components";
+import CircleRoomPage from "@/features/study-circles/room/components/CircleRoomPage";
 import AuthForm from "@/pages/AuthForm";
+import CirclePreviewPage from "@/pages/CirclePreviewPage";
+import CirclesHubPage from "@/pages/CirclesHubPage";
 import DiscoverPage from "@/pages/DiscoverPage";
 import HomePage from "@/pages/HomePage";
 import LandingPage from "@/pages/LandingPage";
@@ -18,11 +25,13 @@ import ProtectedRoute from "./ProtectedRoute";
 export const AppRoutes = () => {
   return (
     <Routes>
+      {/* Public Routes */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/register" element={<AuthForm defaultMode="signup" />} />
       <Route path="/sign-in" element={<AuthForm />} />
       <Route path="/discover" element={<DiscoverPage />} />
 
+      {/* Main App Routes */}
       <Route
         path="/home"
         element={
@@ -41,6 +50,7 @@ export const AppRoutes = () => {
         }
       />
 
+      {/* Profile Domain */}
       <Route
         path="/profile/me"
         element={
@@ -66,6 +76,7 @@ export const AppRoutes = () => {
         }
       />
 
+      {/* Discovery & Settings */}
       <Route
         path="/search"
         element={
@@ -74,7 +85,6 @@ export const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/settings"
         element={
@@ -83,6 +93,51 @@ export const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+
+      {/* --- Study Circles Domain (/circles) --- */}
+      <Route
+        path="/circles"
+        element={
+          <ProtectedRoute>
+            <CirclesHubPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/circles/mine"
+        element={
+          <ProtectedRoute>
+            <CircleRoomPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/circles/discover"
+        element={
+          <ProtectedRoute>
+            <DiscoverCirclesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/circles/create"
+        element={
+          <ProtectedRoute>
+            <CreateCirclePage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/circles/:id/preview"
+        element={
+          <ProtectedRoute>
+            <CirclePreviewPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* System Routes */}
       <Route
         path="/notifications"
         element={

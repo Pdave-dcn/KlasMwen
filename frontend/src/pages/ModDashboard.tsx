@@ -84,7 +84,7 @@ const ModDashboard = () => {
   };
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background transition-colors duration-300">
       {/* Header */}
       <div className="border-b border-border bg-card">
         <div className="container mx-auto px-6 py-8">

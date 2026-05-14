@@ -1,4 +1,4 @@
-import type { Role } from "@prisma/client";
+import type { CircleRole, Role } from "@prisma/client";
 
 declare global {
   namespace Express {
@@ -7,6 +7,7 @@ declare global {
       username: string;
       email: string;
       role: Role;
+      circleRole?: CircleRole;
     }
 
     interface LogContext {

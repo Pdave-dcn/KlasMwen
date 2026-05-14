@@ -11,11 +11,15 @@ import {
   AvatarIdParamSchema,
 } from "../zodSchemas/avatar.zod.js";
 
-import type { Request, Response, NextFunction} from "express";
+import type { Request, Response, NextFunction } from "express";
 
 const controllerLogger = createLogger({ module: "avatarController" });
 
-const getAvailableAvatars = async (req: Request, res: Response, next: NextFunction) => {
+const getAvailableAvatars = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   const actionLogger = createActionLogger(controllerLogger, "getAvatars", req);
 
   try {
@@ -31,7 +35,7 @@ const getAvailableAvatars = async (req: Request, res: Response, next: NextFuncti
         limit,
         cursor,
         cursorField: "id",
-      }
+      },
     );
 
     actionLogger.debug("Executing database query for available avatars");
@@ -39,7 +43,7 @@ const getAvailableAvatars = async (req: Request, res: Response, next: NextFuncti
     const avatars = await prisma.avatar.findMany(paginatedQuery);
     const dbDuration = Date.now() - dbStartTime;
 
-    const result = processPaginatedResults(avatars, limit);
+    const result = processPaginatedResults(avatars, limit, "id");
 
     const totalDuration = Date.now() - startTime;
 
@@ -51,7 +55,7 @@ const getAvailableAvatars = async (req: Request, res: Response, next: NextFuncti
         dbDuration,
         totalDuration,
       },
-      "Available avatars fetched successfully"
+      "Available avatars fetched successfully",
     );
 
     return res.status(200).json(result);
@@ -76,7 +80,7 @@ const getAvatars = async (req: Request, res: Response, next: NextFunction) => {
         limit,
         cursor,
         cursorField: "id",
-      }
+      },
     );
 
     actionLogger.debug("Executing database query for avatars");
@@ -84,7 +88,7 @@ const getAvatars = async (req: Request, res: Response, next: NextFunction) => {
     const avatars = await prisma.avatar.findMany(paginatedQuery);
     const dbDuration = Date.now() - dbStartTime;
 
-    const result = processPaginatedResults(avatars, limit);
+    const result = processPaginatedResults(avatars, limit, "id");
 
     const totalDuration = Date.now() - startTime;
 
@@ -96,7 +100,7 @@ const getAvatars = async (req: Request, res: Response, next: NextFunction) => {
         dbDuration,
         totalDuration,
       },
-      "Avatars fetched successfully"
+      "Avatars fetched successfully",
     );
 
     return res.status(200).json(result);
@@ -143,7 +147,7 @@ const addAvatar = async (req: Request, res: Response, next: NextFunction) => {
         dbDuration,
         totalDuration,
       },
-      "Avatar(s) added successfully"
+      "Avatar(s) added successfully",
     );
 
     return res.status(201).json({
@@ -155,11 +159,15 @@ const addAvatar = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-const deleteAvatar = async (req: Request, res: Response, next: NextFunction) => {
+const deleteAvatar = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "deleteAvatar",
-    req
+    req,
   );
 
   try {
@@ -192,7 +200,7 @@ const deleteAvatar = async (req: Request, res: Response, next: NextFunction) => 
         dbDuration,
         totalDuration,
       },
-      "Avatar deleted successfully"
+      "Avatar deleted successfully",
     );
 
     return res.status(200).json({

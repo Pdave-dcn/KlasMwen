@@ -77,6 +77,8 @@ It empowers students to learn, share, and grow together in a community **built b
 
 ![Report Dashboard](./docs/screenshots/report-dashboard.png)
 
+![Study Circles](./docs/screenshots/study-circles.png) _(Coming Soon)_
+
 ---
 
 ## Key Features
@@ -91,6 +93,15 @@ KlasMwen includes a rich set of features designed to create a safe, collaborativ
 - Tag-based categorization and filtering
 - Bookmarking and reactions (likes)
 - Real-time notifications
+
+### Study Circles
+
+- Create and join collaborative study groups
+- Real-time group chat with WebSocket messaging
+- Role-based permissions (Owner, Moderator, Member)
+- Unread message tracking and notifications
+- Online presence indicators
+- Group avatars and customizable settings
 
 ### Resource Sharing
 
@@ -313,17 +324,14 @@ KlasMwen is a monorepo with **frontend**, **backend**, and **PostgreSQL** databa
 ### Main Components
 
 1. **Frontend**: React + shadcn UI + TailwindCSS
-
    - UI, routing, forms, markdown editor, state management (Zustand)
    - API communication for CRUD, auth, and resources
 
 2. **Backend API**: Node.js + Express + Prisma ORM
-
    - Business logic, REST endpoints, authentication, file uploads
    - Validates requests and interacts with database and Cloudinary
 
 3. **Database**: PostgreSQL
-
    - Stores users, posts, notes, resources, and metadata
 
 4. **External Services**: Cloudinary for media, Passport.js for authentication
@@ -355,7 +363,7 @@ Authentication state is verified on application startup using `/auth/me` before 
 
 ## Real-Time Overview
 
-KlasMwen uses Socket.IO for authenticated, user-scoped real-time features such as notifications. Socket connections are established only after session verification and are scoped to user-specific rooms. This architecture enables future features like group chats and live collaboration.
+KlasMwen uses Socket.IO for authenticated, user-scoped real-time features including notifications and Study Circle group chats. Socket connections are established only after session verification and are scoped to user-specific rooms and circle namespaces. This architecture enables collaborative features like real-time messaging, presence indicators, and live group interactions.
 
 ## API Documentation
 
@@ -367,18 +375,19 @@ KlasMwen uses Socket.IO for authenticated, user-scoped real-time features such a
 
 ### Key Endpoints
 
-| Module    | Core Functionality                        | Example Endpoints                                        |
-| --------- | ----------------------------------------- | -------------------------------------------------------- |
-| Auth      | Register, login, verify session, logout   | `POST /auth/register`, `GET /auth/me`                    |
-| Posts     | CRUD for posts                            | `GET /posts`, `POST /posts`                              |
-| Comments  | CRUD for comments, fetch parent & replies | `POST /comments/{postId}`, `GET /posts/{id}/comments`    |
-| Users     | Get & update profiles                     | `GET /users/{id}`, `PUT /users/{id}`                     |
-| Bookmarks | Bookmark/unbookmark posts                 | `GET /users/bookmarks`, `POST /bookmarks/{postId}`       |
-| Reactions | Like/unlike posts                         | `POST /reactions/{postId}`                               |
-| Tags      | Fetch tags, admin management              | `GET /tags/popular`, `POST /tags (Admin)`                |
-| Avatars   | Retrieve & manage avatars                 | `GET /avatars/available`, `DELETE /avatars/{id} (Admin)` |
-| Search    | Search posts                              | `GET /search/posts`                                      |
-| Report    | Moderation operations                     | `GET /reports`, `GET /reports/reasons`                   |
+| Module    | Core Functionality                        | Example Endpoints                                             |
+| --------- | ----------------------------------------- | ------------------------------------------------------------- |
+| Auth      | Register, login, verify session, logout   | `POST /auth/register`, `GET /auth/me`                         |
+| Posts     | CRUD for posts                            | `GET /posts`, `POST /posts`                                   |
+| Comments  | CRUD for comments, fetch parent & replies | `POST /comments/{postId}`, `GET /posts/{id}/comments`         |
+| Users     | Get & update profiles                     | `GET /users/{id}`, `PUT /users/{id}`                          |
+| Bookmarks | Bookmark/unbookmark posts                 | `GET /users/bookmarks`, `POST /bookmarks/{postId}`            |
+| Reactions | Like/unlike posts                         | `POST /reactions/{postId}`                                    |
+| Tags      | Fetch tags, admin management              | `GET /tags/popular`, `POST /tags (Admin)`                     |
+| Avatars   | Retrieve & manage avatars                 | `GET /avatars/available`, `DELETE /avatars/{id} (Admin)`      |
+| Search    | Search posts                              | `GET /search/posts`                                           |
+| Report    | Moderation operations                     | `GET /reports`, `GET /reports/reasons`                        |
+| Circles   | Study circle management & messaging       | `GET /circles`, `POST /circles`, `GET /circles/{id}/messages` |
 
 ---
 
@@ -414,19 +423,14 @@ KlasMwen is actively evolving, and several impactful features are planned to ele
 
 ### Upcoming Features
 
-- **Group Chats & Study Circles**
-  Create collaborative group spaces for classes, clubs, or focused study groups.
-
 - **Analytics Dashboard**
   Insights for students, moderators, and admins, including:
-
   - Post and engagement metrics
   - Activity and learning trends
   - Moderation and report statistics
 
 - **Multi-Language Support (i18n)**
   Full internationalization for a more accessible experience, starting with:
-
   - French
   - Haitian Creole
 
@@ -492,3 +496,4 @@ Thanks to the communities behind **React, TailwindCSS, shadcn, Node.js, Express,
 - [Architecture Docs](./docs/architecture.md)
 - [Backend Handbook](./docs/backend-developer-guide.md)
 - [Frontend Handbook](./docs/frontend-developer-guide.md)
+- [Study Circle Documentation](./docs/study-circle/README.md)

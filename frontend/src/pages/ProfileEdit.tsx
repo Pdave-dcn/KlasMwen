@@ -16,6 +16,11 @@ const ProfileEdit = () => {
     error,
     currentAvatarUrl,
     isAvatarModalOpen,
+    avatars,
+    isLoadingAvatars,
+    isAvatarError,
+    hasNextPage,
+    isFetchingNextPage,
     register,
     errors,
     handlers,
@@ -71,6 +76,12 @@ const ProfileEdit = () => {
           onClose={handlers.handleCloseAvatarModal}
           onConfirmation={handlers.handleSelectAvatar}
           currentAvatarUrl={currentAvatarUrl}
+          avatars={avatars}
+          isLoading={isLoadingAvatars}
+          isError={isAvatarError}
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          onLoadMore={handlers.handleLoadMoreAvatars}
         />
       )}
     </main>

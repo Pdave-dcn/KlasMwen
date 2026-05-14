@@ -71,42 +71,33 @@ const mockAvatarData = {
   pages: [
     {
       data: [
-        {
-          id: 1,
-          url: "https://example.com/avatars/avatar-1.jpg",
-        },
-        {
-          id: 2,
-          url: "https://example.com/avatars/avatar-2.png",
-        },
-        {
-          id: 3,
-          url: "https://example.com/avatars/avatar-3.webp",
-        },
+        { id: 1, url: "https://example.com/avatars/avatar-1.jpg" },
+        { id: 2, url: "https://example.com/avatars/avatar-2.png" },
+        { id: 3, url: "https://example.com/avatars/avatar-3.webp" },
       ],
-      pagination: {
-        hasMore: true,
-        nextCursor: 4,
-      },
+      pagination: { hasMore: true, nextCursor: 4 },
     },
     {
       data: [
-        {
-          id: 4,
-          url: "https://example.com/avatars/avatar-4.jpg",
-        },
-        {
-          id: 5,
-          url: "https://example.com/avatars/avatar-5.png",
-        },
+        { id: 4, url: "https://example.com/avatars/avatar-4.jpg" },
+        { id: 5, url: "https://example.com/avatars/avatar-5.png" },
       ],
-      pagination: {
-        hasMore: false,
-        nextCursor: null,
-      },
+      pagination: { hasMore: false, nextCursor: null },
     },
   ],
 };
+
+// Full infinite query shape — useAvatars is now called in useProfileEdit,
+// so it must be mocked for every test that mounts the component
+const mockAvatarsQueryResult = {
+  data: mockAvatarData,
+  isLoading: false,
+  isError: false,
+  error: null,
+  hasNextPage: true,
+  isFetchingNextPage: false,
+  fetchNextPage: vi.fn(),
+} as unknown as ReturnType<typeof useAvatars>;
 
 describe("ProfileEdit Component", () => {
   const mockNavigateFn = vi.fn();
@@ -114,11 +105,15 @@ describe("ProfileEdit Component", () => {
 
   beforeEach(() => {
     mockNavigate.mockReturnValue(mockNavigateFn);
+
     mockUseUpdateUserInfo.mockReturnValue({
       mutate: mockMutate,
       isLoading: false,
       error: null,
     } as unknown as ReturnType<typeof useUpdateUserInfo>);
+
+    // useAvatars is always called now — default to a ready state for all tests
+    mockUseAvatars.mockReturnValue(mockAvatarsQueryResult);
   });
 
   afterEach(() => {
@@ -136,7 +131,7 @@ describe("ProfileEdit Component", () => {
       render(
         <TestWrapper>
           <ProfileEdit />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       expect(screen.getByTestId("spinner")).toBeInTheDocument();
@@ -152,11 +147,11 @@ describe("ProfileEdit Component", () => {
       render(
         <TestWrapper>
           <ProfileEdit />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       expect(
-        screen.getByText("Failed to load user. Please try again later.")
+        screen.getByText("Failed to load user. Please try again later."),
       ).toBeInTheDocument();
     });
   });
@@ -174,14 +169,14 @@ describe("ProfileEdit Component", () => {
       render(
         <TestWrapper>
           <ProfileEdit />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
         expect(screen.getByDisplayValue("Test bio")).toBeInTheDocument();
         expect(screen.getByText("@testUser")).toBeInTheDocument();
         expect(
-          screen.getByText(/member since september 2025/i)
+          screen.getByText(/member since september 2025/i),
         ).toBeInTheDocument();
       });
     });
@@ -190,12 +185,11 @@ describe("ProfileEdit Component", () => {
       render(
         <TestWrapper>
           <ProfileEdit />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
         const bioTextarea = screen.getByLabelText("Bio");
-
         expect(bioTextarea).toHaveValue("Test bio");
       });
     });
@@ -204,7 +198,7 @@ describe("ProfileEdit Component", () => {
       render(
         <TestWrapper>
           <ProfileEdit />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
@@ -213,7 +207,7 @@ describe("ProfileEdit Component", () => {
         if (avatarImage) {
           expect(avatarImage).toHaveAttribute(
             "src",
-            "https://example.com/avatar1.jpg"
+            "https://example.com/avatar1.jpg",
           );
         } else {
           expect(screen.getByText("TE")).toBeInTheDocument();
@@ -230,11 +224,9 @@ describe("ProfileEdit Component", () => {
         error: null,
       } as unknown as ReturnType<typeof useProfileUser>);
 
-      mockUseAvatars.mockReturnValue({
-        data: mockAvatarData,
-        isLoading: false,
-        error: null,
-      } as unknown as ReturnType<typeof useAvatars>);
+      // Avatar data is already set in the top-level beforeEach.
+      // Override here only if a specific test needs a different state,
+      // e.g. loading avatars inside the modal.
     });
 
     it("should open avatar modal when change avatar button is clicked", async () => {
@@ -243,12 +235,11 @@ describe("ProfileEdit Component", () => {
       render(
         <TestWrapper>
           <ProfileEdit />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
-        const changeAvatarButton = screen.getByText("Change Avatar");
-        expect(changeAvatarButton).toBeInTheDocument();
+        expect(screen.getByText("Change Avatar")).toBeInTheDocument();
       });
 
       await user.click(screen.getByText("Change Avatar"));
@@ -261,12 +252,11 @@ describe("ProfileEdit Component", () => {
       render(
         <TestWrapper>
           <ProfileEdit />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
-        const changeAvatarButton = screen.getByText("Change Avatar");
-        expect(changeAvatarButton).toBeInTheDocument();
+        expect(screen.getByText("Change Avatar")).toBeInTheDocument();
       });
 
       await user.click(screen.getByText("Change Avatar"));
@@ -274,8 +264,33 @@ describe("ProfileEdit Component", () => {
 
       await user.click(screen.getByRole("button", { name: /cancel/i }));
       expect(
-        screen.queryByText("Choose your new avatar")
+        screen.queryByText("Choose your new avatar"),
       ).not.toBeInTheDocument();
+    });
+
+    it("should show loading state inside avatar modal when avatars are being fetched", async () => {
+      // Override the default mock to simulate avatars still loading
+      mockUseAvatars.mockReturnValue({
+        ...mockAvatarsQueryResult,
+        data: undefined,
+        isLoading: true,
+      } as unknown as ReturnType<typeof useAvatars>);
+
+      const user = userEvent.setup();
+
+      render(
+        <TestWrapper>
+          <ProfileEdit />
+        </TestWrapper>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Change Avatar")).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByText("Change Avatar"));
+
+      expect(screen.getByText("Loading avatars...")).toBeInTheDocument();
     });
   });
 
@@ -294,7 +309,7 @@ describe("ProfileEdit Component", () => {
       render(
         <TestWrapper>
           <ProfileEdit />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
@@ -311,7 +326,7 @@ describe("ProfileEdit Component", () => {
         expect.objectContaining({
           bio: "Updated bio",
           avatarId: 1,
-        })
+        }),
       );
 
       expect(mockNavigateFn).toHaveBeenCalledWith("/profile/me");
@@ -319,10 +334,7 @@ describe("ProfileEdit Component", () => {
 
     it("should handle form submission with empty optional fields", async () => {
       const user = userEvent.setup();
-      const userWithEmptyFields = {
-        ...mockUser,
-        bio: "",
-      };
+      const userWithEmptyFields = { ...mockUser, bio: "" };
 
       mockUseProfileUser.mockReturnValue({
         data: userWithEmptyFields,
@@ -333,7 +345,7 @@ describe("ProfileEdit Component", () => {
       render(
         <TestWrapper>
           <ProfileEdit />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
@@ -346,7 +358,7 @@ describe("ProfileEdit Component", () => {
         expect.objectContaining({
           bio: "",
           avatarId: 1,
-        })
+        }),
       );
     });
   });
@@ -366,7 +378,7 @@ describe("ProfileEdit Component", () => {
       render(
         <TestWrapper>
           <ProfileEdit />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {
@@ -386,7 +398,7 @@ describe("ProfileEdit Component", () => {
       render(
         <TestWrapper>
           <ProfileEdit />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       await waitFor(() => {

@@ -35,6 +35,13 @@ enum NotificationType {
   REPORT_UPDATE
 }
 
+// User Roles in a study circle
+enum CircleRole {
+  OWNER
+  MODERATOR
+  MEMBER
+}
+
 // Represents a user account with authentication and profile information
 model User {
   id        String   @id @default(uuid())
@@ -52,10 +59,13 @@ model User {
   comments              Comment[]
   likes                 Like[]
   bookmarks             Bookmark[]
-  mentionedInComments   Comment[]      @relation("mentionedUser")
+  mentionedInComments   Comment[]       @relation("mentionedUser")
   reports               Report[]
-  notifications         Notification[] @relation("notificationActor")
-  notificationsReceived Notification[] @relation("notificationReceiver")
+  notifications         Notification[]  @relation("notificationActor")
+  notificationsReceived Notification[]  @relation("notificationReceiver")
+  circles               Circle[]
+  circleMembers         CircleMember[]
+  circleMessages        CircleMessage[]
 
   @@map("users")
 }
@@ -128,9 +138,10 @@ model Comment {
 
 // Represents a category or topic tag that can be attached to posts
 model Tag {
-  id       Int       @id @default(autoincrement())
-  name     String    @unique
-  postTags PostTag[]
+  id         Int         @id @default(autoincrement())
+  name       String      @unique
+  postTags   PostTag[]
+  circleTags CircleTag[]
 
   @@map("tags")
 }
@@ -202,6 +213,7 @@ model Report {
   @@map("reports")
 }
 
+// Represents a notification sent to a user about various events
 model Notification {
   id   Int              @id @default(autoincrement())
   type NotificationType
@@ -224,4 +236,81 @@ model Notification {
   commentId Int?     @map("comment_id")
 
   @@map("notifications")
+}
+
+// Represents a study circle or group chat that users can join for discussions and collaboration
+model Circle {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  isPrivate   Boolean @default(false)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  creatorId String @map("creator_id")
+  avatarId  Int?   @map("avatar_id")
+
+  creator User          @relation(fields: [creatorId], references: [id])
+  avatar  CircleAvatar? @relation(fields: [avatarId], references: [id])
+
+  members    CircleMember[]
+  messages   CircleMessage[]
+  circleTags CircleTag[]
+
+  @@map("circles")
+}
+
+// Junction table for Users and Circles
+model CircleMember {
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @map("user_id")
+
+  circle   Circle @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  circleId String @map("circle_id")
+
+  role CircleRole @default(MEMBER)
+
+  joinedAt   DateTime  @default(now()) @map("joined_at")
+  mutedUntil DateTime? @map("muted_until")
+  lastReadAt DateTime? @map("last_read_at")
+
+  @@id([userId, circleId])
+  @@map("circle_members")
+}
+
+// Represents a message sent within a circle
+model CircleMessage {
+  id        Int      @id @default(autoincrement())
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  sender   User   @relation(fields: [senderId], references: [id])
+  senderId String @map("sender_id")
+
+  circle   Circle @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  circleId String @map("circle_id")
+
+  @@index([circleId, createdAt])
+  @@map("circle_messages")
+}
+
+// Represents an avatar image for circles
+model CircleAvatar {
+  id      Int      @id @default(autoincrement())
+  url     String   @unique
+  circles Circle[]
+
+  @@map("circle_avatars")
+}
+
+// Junction table for Circles and Tags
+model CircleTag {
+  circleId String @map("circle_id") // DB column name updated
+  tagId    Int    @map("tag_id")
+
+  circle Circle @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([circleId, tagId])
+  @@map("circle_tags")
 }

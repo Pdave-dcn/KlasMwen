@@ -17,7 +17,7 @@ const HomePage = () => {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-background">
+      <main className="min-h-screen bg-background transition-colors duration-300">
         <div className="py-8 flex justify-center">
           <div className="w-full max-w-2xl px-4">
             <div className="space-y-6">
@@ -33,7 +33,7 @@ const HomePage = () => {
 
   if (posts?.pages.every((page) => page.data.length === 0)) {
     return (
-      <main className="flex justify-center py-8">
+      <main className="flex justify-center py-8 transition-colors duration-300">
         <Card className="text-center py-12 max-w-md">
           <CardContent>
             <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
@@ -48,14 +48,14 @@ const HomePage = () => {
   }
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background transition-colors duration-300">
       <div className="py-8 flex justify-center">
         <div className="w-full max-w-2xl px-4">
           <div className="space-y-6">
             {/* Posts Feed */}
             <div className="space-y-6">
               {posts?.pages.flatMap((page) =>
-                page.data.map((post) => <PostCard key={post.id} post={post} />)
+                page.data.map((post) => <PostCard key={post.id} post={post} />),
               )}
             </div>
 

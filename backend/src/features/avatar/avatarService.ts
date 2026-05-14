@@ -3,27 +3,10 @@ import { AvatarServiceError } from "../../core/error/custom/avatar.error.js";
 
 /**
  * Retrieves a random default avatar from the database.
+ * Used for assigning default avatars to new users.
  *
- * Fetches all avatars marked as default (isDefault: true) and returns
- * a randomly selected one. Useful for assigning default avatars to new users
- * or when users haven't selected a specific avatar.
- *
- * @async
- * @function getRandomDefaultAvatar
- * @return {Promise<Avatar>} A randomly selected default avatar object
- * @throws {AvatarServiceError} When no default avatars are found (404) or database operation fails (500)
- *
- * @example
- * ```typescript
- * try {
- *   const randomAvatar = await getRandomDefaultAvatar();
- *   console.log(randomAvatar.url); // https://example.com/default-avatar-1.png
- * } catch (error) {
- *   if (error instanceof AvatarServiceError) {
- *     console.error('Avatar service error:', error.message);
- *   }
- * }
- * ```
+ * @return {Promise<Avatar>} A randomly selected default avatar
+ * @throws {AvatarServiceError} When no default avatars found (404) or operation fails (500)
  */
 const getRandomDefaultAvatar = async () => {
   try {
@@ -42,4 +25,26 @@ const getRandomDefaultAvatar = async () => {
   }
 };
 
-export { getRandomDefaultAvatar };
+/**
+ * Retrieves a random circle avatar from the database.
+ * Used for assigning avatars to new circles.
+ *
+ * @return {Promise<CircleAvatar>} A randomly selected circle avatar
+ * @throws {AvatarServiceError} When no circle avatars found (404) or operation fails (500)
+ */
+const getRandomCircleAvatar = async () => {
+  try {
+    const avatars = await prisma.circleAvatar.findMany();
+
+    if (!avatars || avatars.length === 0)
+      throw new AvatarServiceError("No circle avatars found", 404);
+
+    return avatars[Math.floor(Math.random() * avatars.length)];
+  } catch (error: unknown) {
+    if (error instanceof AvatarServiceError) throw error;
+
+    throw new AvatarServiceError("Failed to fetch chat group avatars");
+  }
+};
+
+export { getRandomDefaultAvatar, getRandomCircleAvatar };

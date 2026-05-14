@@ -8,17 +8,23 @@ import type { NAV_ITEMS } from "./constants";
 interface NavItemProps {
   item: (typeof NAV_ITEMS)[number];
   isLabelHidden: boolean;
+  isActive: boolean;
   onCreateClick?: () => void;
 }
 
 export const NavItem = ({
   item,
   isLabelHidden,
+  isActive,
   onCreateClick,
 }: NavItemProps) => {
   const unreadCount = useNotificationStore((state) => state.unreadCount);
   const isNotificationItem = item.title === "Notifications";
   const showBadge = isNotificationItem && unreadCount > 0;
+
+  const activeStyles = isActive
+    ? "text-primary font-medium"
+    : "text-muted-foreground hover:text-foreground";
 
   if (item.action) {
     return (
@@ -37,17 +43,14 @@ export const NavItem = ({
   return (
     <NavLink
       to={item.url as string}
-      className={({ isActive }) =>
-        cn(
-          "flex gap-1.5 items-center transition-colors relative",
-          isActive
-            ? "text-primary font-medium"
-            : "text-muted-foreground hover:text-foreground"
-        )
-      }
+      className={cn(
+        "flex gap-1.5 items-center transition-colors relative",
+        activeStyles,
+      )}
     >
       <div className="relative">
-        <item.icon className="h-7 w-7" />
+        <item.icon className={cn("h-7 w-7", isActive && "text-primary")} />
+
         {showBadge && (
           <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
             {unreadCount > 99 ? "99+" : unreadCount}

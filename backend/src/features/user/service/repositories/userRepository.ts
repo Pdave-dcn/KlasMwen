@@ -27,6 +27,17 @@ export class UserRepository {
   }
 
   /**
+   * Find a user by ID with minimal fields for socket authentication
+   * Only returns essential fields needed for socket operations
+   */
+  static findByIdForSocket(userId: string) {
+    return prisma.user.findUnique({
+      where: { id: userId },
+      select: BaseSelectors.userForSocket,
+    });
+  }
+
+  /**
    * Check if a user exists by ID
    */
   static async exists(userId: string): Promise<boolean> {

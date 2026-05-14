@@ -5,6 +5,7 @@ import prisma from "../core/config/db.js";
 import authRoutes from "./auth.route.js";
 import avatarRoutes from "./avatar.route.js";
 import bookmarkRoutes from "./bookmark.route.js";
+import studyCircleRoutes from "./circle/index.js";
 import commentRoutes from "./comment.route.js";
 import notificationRoutes from "./notification.route.js";
 import postRoutes from "./post.route.js";
@@ -45,6 +46,7 @@ router.get("/status", async (_req, res) => {
 router.use("/api/auth", authRoutes);
 router.use("/api/avatars", avatarRoutes);
 router.use("/api/bookmarks", bookmarkRoutes);
+router.use("/api/circles", studyCircleRoutes);
 router.use("/api/comments", commentRoutes);
 router.use("/api/notifications", notificationRoutes);
 router.use("/api/posts", postRoutes);

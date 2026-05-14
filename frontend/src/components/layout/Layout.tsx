@@ -5,6 +5,7 @@ import PostTypeSelector from "@/features/PostCreation/components/PostTypeSelecto
 import PostEditForm from "@/features/postEdit/components/PostEditForm";
 import { usePostCreationFlow } from "@/hooks/usePostCreationFlow";
 import { useReportSubmission } from "@/hooks/useReportSubmission";
+import { cn } from "@/lib/utils";
 import { usePostEditStore } from "@/stores/postEdit.store";
 import { useReportModalStore } from "@/stores/reportModal.store";
 
@@ -39,16 +40,19 @@ const Layout = ({ children }: LayoutProps) => {
 
   const location = useLocation();
 
-  // Check if current route is moderation dashboard
+  // Check if current route is moderation dashboard or circle related pages
   const isModDashboard = location.pathname.startsWith("/mod/dashboard");
+  const isCirclePage = location.pathname.startsWith("/circles");
+
+  const isHidden = isModDashboard || isCirclePage;
 
   return (
     <div className="flex h-screen w-full">
       <aside
-        className={`
-          hidden md:block shrink-0 border-r
-          ${isModDashboard ? "md:w-auto lg:w-auto" : "md:w-auto lg:w-60"}
-        `}
+        className={cn(
+          "hidden lg:block shrink-0 border-r transition-colors duration-300",
+          `${isHidden ? "md:w-auto lg:w-auto" : "md:w-auto lg:w-60"}`,
+        )}
       >
         <Sidebar onCreateClick={openPostTypeModal} />
       </aside>

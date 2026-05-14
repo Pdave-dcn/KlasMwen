@@ -1,0 +1,66 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
+import { usePresenceStore } from "@/stores/presence.store";
+import { formatTimeAgo } from "@/utils/dateFormatter.util";
+import { getCircleInitials } from "@/utils/getInitials.util";
+import type { StudyCircle } from "@/zodSchemas/circle.zod";
+
+import { PresenceIndicator } from "../PresenceIndicator";
+
+interface RecentCircleCardProps {
+  circle: StudyCircle;
+  onClick: () => void;
+}
+
+export const RecentCircleCard = ({
+  circle,
+  onClick,
+}: RecentCircleCardProps) => {
+  const timeAgo = formatTimeAgo(circle.latestMessage?.createdAt ?? "");
+  const activeCount = usePresenceStore(
+    (state) => state.circleActivityCounts[circle.id] || 0,
+  );
+
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "shrink-0 w-64 p-4 rounded-xl border bg-card text-left cursor-pointer",
+        "transition-all duration-200 hover:shadow-md hover:border-primary/30",
+        "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <Avatar>
+          <AvatarImage src={circle.avatar?.url} />
+          <AvatarFallback>{getCircleInitials(circle.name)}</AvatarFallback>
+        </Avatar>
+
+        <div className="flex-1 min-w-0">
+          {/* Header row */}
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <h4 className="font-medium text-foreground truncate text-sm">
+              {circle.name}
+            </h4>
+            <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+              {timeAgo}
+            </span>
+          </div>
+
+          {/* Message preview */}
+          <p className="text-xs text-muted-foreground truncate mb-2">
+            <span className="font-medium text-foreground/80">
+              {circle.latestMessage
+                ? `${circle.latestMessage.sender.username}:`
+                : "No messages yet"}
+            </span>{" "}
+            {circle.latestMessage?.content ?? ""}
+          </p>
+
+          {/* Presence */}
+          <PresenceIndicator activeCount={activeCount} />
+        </div>
+      </div>
+    </button>
+  );
+};

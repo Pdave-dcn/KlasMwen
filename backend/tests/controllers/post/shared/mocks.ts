@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { vi } from "vitest";
 
 const createMockRequest = (overrides = {}) =>
   ({
@@ -8,7 +9,7 @@ const createMockRequest = (overrides = {}) =>
     user: undefined,
     on: vi.fn(),
     ...overrides,
-  } as unknown as Request);
+  }) as unknown as Request;
 
 const createMockResponse = () => {
   const res = {

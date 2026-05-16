@@ -1,7 +1,7 @@
 import prisma from "../../core/config/db.js";
 import { createLogger } from "../../core/config/logger.js";
 import CommentService from "../../features/comments/service/CommentService.js";
-import { PostService } from "../../features/posts/service/PostService.js";
+import { postService } from "../../features/posts/service/PostService.js";
 import ReportService from "../../features/report/service/ReportService.js";
 import createActionLogger from "../../utils/logger.util.js";
 import {
@@ -221,7 +221,7 @@ const toggleVisibility = async (
 
     actionLogger.debug("Starting database operation");
     if (resourceType === "post") {
-      await PostService.verifyPostExists(resourceId as string);
+      await postService.validate.verifyPostExists(resourceId as string);
       await prisma.post.update({
         where: { id: resourceId as string },
         data: { hidden },

@@ -1,12 +1,7 @@
 import { Request, Response } from "express";
 
 import { updatePost } from "../../../src/controllers/post/post.update.controller";
-import prisma from "../../../src/core/config/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  AuthenticationError,
-  AuthorizationError,
-} from "../../../src/core/error/custom/auth.error";
 import {
   PostNotFoundError,
   PostUpdateFailedError,
@@ -14,6 +9,16 @@ import {
 
 import { createAuthenticatedUser } from "./shared/helpers";
 import { createMockRequest, createMockResponse } from "./shared/mocks";
+
+const mockUpdatePost = vi.fn();
+
+vi.mock("../../../src/features/posts/service/PostService.js", () => ({
+  postService: {
+    command: {
+      updatePost: (...args: unknown[]) => mockUpdatePost(...args),
+    },
+  },
+}));
 
 vi.mock("../../../src/core/config/logger.js", () => ({
   createLogger: vi.fn(() => ({
@@ -46,35 +51,10 @@ vi.mock("../../../src/core/error/index.js", () => ({
   handleError: vi.fn(),
 }));
 
-vi.mock("../../../src/core/config/db.js", () => ({
-  default: {
-    post: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-      delete: vi.fn(),
-      update: vi.fn(),
-    },
-    bookmark: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-    },
-    like: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-    },
-    postTag: {
-      deleteMany: vi.fn(),
-      createMany: vi.fn(),
-    },
-    $transaction: vi.fn(),
-  },
-}));
-
 describe("updatePost controller", () => {
-  const mockUserId = "1";
-  const mockPostId = "c377c8e9-d75d-4f16-9b57-1c64d2e8b2b7";
+  const VALID_UUID = "c377c8e9-d75d-4f16-9b57-1c64d2e8b2b7";
 
-  let mockReq: Request;
+  let mockReq: Request & { user?: unknown };
   let mockRes: Response;
   let mockNext: any;
 
@@ -85,493 +65,153 @@ describe("updatePost controller", () => {
     vi.clearAllMocks();
   });
 
-  const mockRequestData = {
-    title: "Updated Title",
-    content: "Updated Content",
-    type: "NOTE" as const,
-    tagIds: [1, 2],
-  };
+  it("should update a post and return 200", async () => {
+    mockReq.user = createAuthenticatedUser({ id: "u1" });
+    mockReq.params = { id: VALID_UUID };
+    mockReq.body = {
+      title: "Updated Title",
+      content: "Updated Content",
+      type: "NOTE",
+      tagIds: [1, 2],
+    };
 
-  const mockPostInDb = { id: mockPostId, authorId: mockUserId };
+    const mockResult = { id: VALID_UUID, title: "Updated Title" };
+    mockUpdatePost.mockResolvedValue(mockResult);
 
-  const mockUpdateResult = {
-    id: mockPostId,
-    title: "Updated Title",
-    content: "Updated Content",
-    type: "NOTE",
-    fileUrl: null,
-    fileName: null,
-    fileSize: null,
-    mimeType: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    author: { id: mockUserId, username: "author", avatarUrl: null },
-    postTags: [
-      { postId: mockPostId, tagId: 1, tag: { id: 1, name: "tag1" } as any },
-    ],
-    _count: { comments: 0, likes: 0 },
-  };
+    await updatePost(mockReq, mockRes, mockNext);
 
-  describe("Successful Updates", () => {
-    it("should successfully update a NOTE post with tags", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-      mockReq.body = mockRequestData;
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPostInDb as any);
-
-      vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
-        const tx = {
-          post: {
-            update: vi.fn().mockResolvedValue(undefined),
-            findUnique: vi.fn().mockResolvedValue(mockUpdateResult),
-          },
-          postTag: {
-            deleteMany: vi.fn().mockResolvedValue({ count: 2 }),
-            createMany: vi.fn().mockResolvedValue({ count: 2 }),
-          },
-        };
-        return await callback(tx as any);
-      });
-
-      await updatePost(mockReq, mockRes, mockNext);
-
-      expect(mockNext).not.toHaveBeenCalled();
-      expect(prisma.post.findUnique).toHaveBeenCalled();
-
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: "Post updated successfully",
-        data: mockUpdateResult,
-      });
-    });
-
-    it("should successfully update a RESOURCE post (title and fileName only, no content)", async () => {
-      const resourceData = {
-        title: "Updated Resource Title",
-        type: "RESOURCE" as const,
-        tagIds: [1],
-        fileName: "updated-document.pdf",
-      };
-
-      const resourceResult = {
-        ...mockUpdateResult,
-        type: "RESOURCE",
-        title: "Updated Resource Title",
-        content: null,
-        fileName: "updated-document.pdf",
-      };
-
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-      mockReq.body = resourceData;
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPostInDb as any);
-
-      vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
-        const tx = {
-          post: {
-            update: vi.fn((args) => {
-              // Verify that content is NOT in update data for RESOURCE type
-              expect(args.data).not.toHaveProperty("content");
-              expect(args.data).toHaveProperty("title");
-              return Promise.resolve(undefined);
-            }),
-            findUnique: vi.fn().mockResolvedValue(resourceResult),
-          },
-          postTag: {
-            deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
-            createMany: vi.fn().mockResolvedValue({ count: 1 }),
-          },
-        };
-        return await callback(tx as any);
-      });
-
-      await updatePost(mockReq, mockRes, mockNext);
-
-      expect(mockNext).not.toHaveBeenCalled();
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: "Post updated successfully",
-        data: resourceResult,
-      });
-    });
-
-    it("should successfully update a post with empty tags array", async () => {
-      const dataWithNoTags = {
-        ...mockRequestData,
-        tagIds: [],
-      };
-
-      const resultWithNoTags = {
-        ...mockUpdateResult,
-        postTags: [],
-      };
-
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-      mockReq.body = dataWithNoTags;
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPostInDb as any);
-
-      vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
-        const tx = {
-          post: {
-            update: vi.fn().mockResolvedValue(undefined),
-            findUnique: vi.fn().mockResolvedValue(resultWithNoTags),
-          },
-          postTag: {
-            deleteMany: vi.fn().mockResolvedValue({ count: 2 }),
-            createMany: vi.fn(),
-          },
-        };
-        const result = await callback(tx as any);
-
-        // Verify createMany was NOT called when tagIds is empty
-        expect(tx.postTag.createMany).not.toHaveBeenCalled();
-
-        return result;
-      });
-
-      await updatePost(mockReq, mockRes, mockNext);
-
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: "Post updated successfully",
-        data: resultWithNoTags,
-      });
-    });
-
-    it("should successfully update a post with undefined tagIds", async () => {
-      const dataWithUndefinedTags = {
-        title: "Updated Title",
-        content: "Updated Content",
-        type: "NOTE" as const,
-        tagIds: undefined,
-      };
-
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-      mockReq.body = dataWithUndefinedTags;
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPostInDb as any);
-
-      vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
-        const tx = {
-          post: {
-            update: vi.fn().mockResolvedValue(undefined),
-            findUnique: vi.fn().mockResolvedValue(mockUpdateResult),
-          },
-          postTag: {
-            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
-            createMany: vi.fn(),
-          },
-        };
-        const result = await callback(tx as any);
-
-        // Verify createMany was NOT called when tagIds is undefined
-        expect(tx.postTag.createMany).not.toHaveBeenCalled();
-
-        return result;
-      });
-
-      await updatePost(mockReq, mockRes, mockNext);
-
-      expect(mockRes.status).toHaveBeenCalledWith(200);
+    expect(mockUpdatePost).toHaveBeenCalledTimes(1);
+    expect(mockNext).not.toHaveBeenCalled();
+    expect(mockRes.status).toHaveBeenCalledWith(200);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      message: "Post updated successfully",
+      data: mockResult,
     });
   });
 
-  describe("Not Found", () => {
-    it("should call handleError when the post is not found", async () => {
-      const mockMinimalBody = {
-        title: "A valid title",
-        content: "A valid content",
-        type: "NOTE" as const,
-        tagIds: [1, 2],
-      };
+  it("should update a resource post (only title) and return 200", async () => {
+    mockReq.user = createAuthenticatedUser({ id: "u1" });
+    mockReq.params = { id: VALID_UUID };
+    mockReq.body = {
+      title: "Updated Resource Title",
+      type: "RESOURCE",
+      tagIds: [],
+      fileName: "file.pdf",
+    };
 
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: "f34042c4-6143-4c8e-a790-49ba409529e8" };
-      mockReq.body = mockMinimalBody;
+    const mockResult = { id: VALID_UUID, title: "Updated Resource Title" };
+    mockUpdatePost.mockResolvedValue(mockResult);
 
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(null);
+    await updatePost(mockReq, mockRes, mockNext);
 
-      await updatePost(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(expect.any(PostNotFoundError));
-    });
+    expect(mockUpdatePost).toHaveBeenCalled();
+    expect(mockRes.status).toHaveBeenCalledWith(200);
   });
 
-  describe("Validation Errors", () => {
-    it("should call handleError when title is missing", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-      mockReq.body = {
-        content: "Updated Content",
-        type: "NOTE",
-        tagIds: [1, 2],
-      };
+  it("should return early when service returns falsy", async () => {
+    mockReq.user = createAuthenticatedUser({ id: "u1" });
+    mockReq.params = { id: VALID_UUID };
+    mockReq.body = {
+      title: "Post Title Here",
+      type: "NOTE",
+      tagIds: [],
+      content: "This is valid content that is long enough",
+    };
 
-      await updatePost(mockReq, mockRes, mockNext);
+    mockUpdatePost.mockResolvedValue(null);
 
-      expect(mockNext).toHaveBeenCalled();
-    });
+    await updatePost(mockReq, mockRes, mockNext);
 
-    it("should call handleError when type is invalid", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-      mockReq.body = {
-        title: "Updated Title",
-        content: "Updated Content",
-        type: "INVALID_TYPE",
-        tagIds: [1, 2],
-      };
-
-      await updatePost(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalled();
-    });
-
-    it("should call handleError when postId param is invalid", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: "invalid-uuid" };
-      mockReq.body = mockRequestData;
-
-      await updatePost(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalled();
-    });
-
-    it("should call handleError when tagIds contains invalid values", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-      mockReq.body = {
-        title: "Updated Title",
-        content: "Updated Content",
-        type: "NOTE",
-        tagIds: ["invalid", "tags"],
-      };
-
-      await updatePost(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalled();
-    });
+    expect(mockUpdatePost).toHaveBeenCalled();
+    expect(mockRes.json).not.toHaveBeenCalled();
   });
 
-  describe("Database Transaction Errors", () => {
-    it("should call handleError if post lookup fails", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-      mockReq.body = mockRequestData;
+  it("should call next with error when service throws", async () => {
+    mockReq.user = createAuthenticatedUser({ id: "u1" });
+    mockReq.params = { id: VALID_UUID };
+    mockReq.body = {
+      title: "Post Title Here",
+      type: "NOTE",
+      tagIds: [],
+      content: "This is valid content that is long enough",
+    };
 
-      const mockError = new Error("Database lookup error");
-      vi.mocked(prisma.post.findUnique).mockRejectedValue(mockError);
+    const error = new PostUpdateFailedError(VALID_UUID);
+    mockUpdatePost.mockRejectedValue(error);
 
-      await updatePost(mockReq, mockRes, mockNext);
+    await updatePost(mockReq, mockRes, mockNext);
 
-      expect(mockNext).toHaveBeenCalledWith(mockError);
-    });
-
-    it("should call handleError if transaction fails", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-      mockReq.body = mockRequestData;
-
-      const mockError = new Error("Database update error");
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPostInDb as any);
-      vi.mocked(prisma.$transaction).mockRejectedValue(mockError);
-
-      await updatePost(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(mockError);
-    });
-
-    it("should call handleError if post.update fails within transaction", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-      mockReq.body = mockRequestData;
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPostInDb as any);
-
-      const mockError = new Error("Update operation failed");
-      vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
-        const tx = {
-          post: {
-            update: vi.fn().mockRejectedValue(mockError),
-            findUnique: vi.fn(),
-          },
-          postTag: {
-            deleteMany: vi.fn(),
-            createMany: vi.fn(),
-          },
-        };
-        return await callback(tx as any);
-      });
-
-      await updatePost(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(mockError);
-    });
-
-    it("should call handleError if postTag.deleteMany fails within transaction", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-      mockReq.body = mockRequestData;
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPostInDb as any);
-
-      const mockError = new Error("Delete tags failed");
-      vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
-        const tx = {
-          post: {
-            update: vi.fn().mockResolvedValue(undefined),
-            findUnique: vi.fn(),
-          },
-          postTag: {
-            deleteMany: vi.fn().mockRejectedValue(mockError),
-            createMany: vi.fn(),
-          },
-        };
-        return await callback(tx as any);
-      });
-
-      await updatePost(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(mockError);
-    });
-
-    it("should call handleError if postTag.createMany fails within transaction", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-      mockReq.body = mockRequestData;
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPostInDb as any);
-
-      const mockError = new Error("Create tags failed");
-      vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
-        const tx = {
-          post: {
-            update: vi.fn().mockResolvedValue(undefined),
-            findUnique: vi.fn(),
-          },
-          postTag: {
-            deleteMany: vi.fn().mockResolvedValue({ count: 2 }),
-            createMany: vi.fn().mockRejectedValue(mockError),
-          },
-        };
-        return await callback(tx as any);
-      });
-
-      await updatePost(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(mockError);
-    });
+    expect(mockNext).toHaveBeenCalledWith(error);
+    expect(mockRes.status).not.toHaveBeenCalled();
   });
 
-  describe("Service Layer Errors", () => {
-    it("should  call handleError with PostUpdateFailedError if post update failed", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-      mockReq.body = mockRequestData;
+  it("should call next when post not found", async () => {
+    mockReq.user = createAuthenticatedUser({ id: "u1" });
+    mockReq.params = { id: VALID_UUID };
+    mockReq.body = {
+      title: "Post Title Here",
+      type: "NOTE",
+      tagIds: [],
+      content: "This is valid content that is long enough",
+    };
 
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPostInDb as any);
+    mockUpdatePost.mockRejectedValue(new PostNotFoundError(VALID_UUID));
 
-      // Mock transaction to return null
-      vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
-        const tx = {
-          post: {
-            update: vi.fn().mockResolvedValue(undefined),
-            findUnique: vi.fn().mockResolvedValue(null),
-          },
-          postTag: {
-            deleteMany: vi.fn().mockResolvedValue({ count: 2 }),
-            createMany: vi.fn().mockResolvedValue({ count: 2 }),
-          },
-        };
-        return await callback(tx as any);
-      });
+    await updatePost(mockReq, mockRes, mockNext);
 
-      await updatePost(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(expect.any(PostUpdateFailedError));
-    });
+    expect(mockNext).toHaveBeenCalledWith(expect.any(PostNotFoundError));
   });
 
-  describe("Transaction Atomicity", () => {
-    it("should ensure all operations happen within a single transaction", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-      mockReq.body = mockRequestData;
+  it("should call next when params validation fails", async () => {
+    mockReq.user = createAuthenticatedUser({ id: "u1" });
+    mockReq.params = { id: "bad-uuid" };
+    mockReq.body = { title: "Title", type: "NOTE", tagIds: [] };
 
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPostInDb as any);
+    await updatePost(mockReq, mockRes, mockNext);
 
-      const transactionCallback = vi.fn();
-      vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
-        transactionCallback();
-        const tx = {
-          post: {
-            update: vi.fn().mockResolvedValue(undefined),
-            findUnique: vi.fn().mockResolvedValue(mockUpdateResult),
-          },
-          postTag: {
-            deleteMany: vi.fn().mockResolvedValue({ count: 2 }),
-            createMany: vi.fn().mockResolvedValue({ count: 2 }),
-          },
-        };
-        return await callback(tx as any);
-      });
+    expect(mockNext).toHaveBeenCalled();
+    expect(mockUpdatePost).not.toHaveBeenCalled();
+  });
 
-      await updatePost(mockReq, mockRes, mockNext);
+  it("should call next when body validation fails (missing title)", async () => {
+    mockReq.user = createAuthenticatedUser({ id: "u1" });
+    mockReq.params = { id: VALID_UUID };
+    mockReq.body = { type: "NOTE", tagIds: [] };
 
-      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
-      expect(transactionCallback).toHaveBeenCalledTimes(1);
-    });
+    await updatePost(mockReq, mockRes, mockNext);
 
-    it("should verify correct order of operations within transaction", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-      mockReq.body = mockRequestData;
+    expect(mockNext).toHaveBeenCalled();
+    expect(mockUpdatePost).not.toHaveBeenCalled();
+  });
 
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPostInDb as any);
+  it("should call next when body validation fails (missing type)", async () => {
+    mockReq.user = createAuthenticatedUser({ id: "u1" });
+    mockReq.params = { id: VALID_UUID };
+    mockReq.body = { title: "Title", tagIds: [] };
 
-      const operationOrder: string[] = [];
+    await updatePost(mockReq, mockRes, mockNext);
 
-      vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
-        const tx = {
-          post: {
-            update: vi.fn().mockImplementation(() => {
-              operationOrder.push("update");
-              return undefined;
-            }),
-            findUnique: vi.fn().mockImplementation(() => {
-              operationOrder.push("findUnique");
-              return mockUpdateResult;
-            }),
-          },
-          postTag: {
-            deleteMany: vi.fn().mockImplementation(() => {
-              operationOrder.push("deleteMany");
-              return { count: 2 };
-            }),
-            createMany: vi.fn().mockImplementation(() => {
-              operationOrder.push("createMany");
-              return { count: 2 };
-            }),
-          },
-        };
-        return await callback(tx as any);
-      });
+    expect(mockNext).toHaveBeenCalled();
+    expect(mockUpdatePost).not.toHaveBeenCalled();
+  });
 
-      await updatePost(mockReq, mockRes, mockNext);
+  it("should call next when body validation fails (empty title)", async () => {
+    mockReq.user = createAuthenticatedUser({ id: "u1" });
+    mockReq.params = { id: VALID_UUID };
+    mockReq.body = { title: "", type: "NOTE", tagIds: [] };
 
-      // Verify operations happened in correct order: update, deleteMany, createMany, findUnique
-      expect(operationOrder).toEqual([
-        "update",
-        "deleteMany",
-        "createMany",
-        "findUnique",
-      ]);
-    });
+    await updatePost(mockReq, mockRes, mockNext);
+
+    expect(mockNext).toHaveBeenCalled();
+  });
+
+  it("should call next when body validation fails (invalid type)", async () => {
+    mockReq.user = createAuthenticatedUser({ id: "u1" });
+    mockReq.params = { id: VALID_UUID };
+    mockReq.body = { title: "Title", type: "INVALID", tagIds: [] };
+
+    await updatePost(mockReq, mockRes, mockNext);
+
+    expect(mockNext).toHaveBeenCalled();
   });
 });

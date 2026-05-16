@@ -1,15 +1,15 @@
-import FileUploadError from "../../core/error/custom/file.error.js";
+import FileUploadError from "../../../core/error/custom/file.error.js";
 import {
   CompletePostSchema,
   NewPostRequestSchema,
-} from "../../zodSchemas/post.zod.js";
-import CloudinaryService from "../media/CloudinaryService.js";
+} from "../../../zodSchemas/post.zod.js";
+import CloudinaryService from "../../media/CloudinaryService.js";
 
 import type {
   CreatePostInput,
   ResourcePostInput,
   TextPostInput,
-} from "../../types/postTypes.js";
+} from "./types/postTypes.js";
 import type { Request } from "express";
 
 interface FileUploadData {
@@ -20,15 +20,6 @@ interface FileUploadData {
   completeValidatedData: CreatePostInput;
 }
 
-/**
- * Processes post creation requests with validation and optional file upload.
- * Handles both text posts (with content) and resource posts (with files).
- *
- * @param {Request} req - Express request with form data and optional file
- * @param {string} userId - User ID for file organization
- * @returns {Promise<FileUploadData>} Validated data with optional file info
- * @throws {FileUploadError} On validation or upload failures
- */
 const handleRequestValidation = async (
   req: Request,
   userId: string
@@ -52,7 +43,6 @@ const handleRequestValidation = async (
     ...(req.body.content && { content: req.body.content }),
   });
 
-  // Handle resource posts
   if (bodyValidation.type === "RESOURCE") {
     if (!req.file) {
       throw new FileUploadError("File is required for resource posts", 400);
@@ -66,7 +56,6 @@ const handleRequestValidation = async (
         userId
       );
 
-      // Create complete resource data and validate
       const completeValidatedData = CompletePostSchema.parse({
         ...bodyValidation,
         fileUrl: cloudinaryResult.secureUrl,

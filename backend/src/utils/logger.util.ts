@@ -1,4 +1,4 @@
-import type { Request } from "express";
+import type { NextFunction, Request, Response } from "express";
 import type { Logger } from "pino";
 
 /**
@@ -33,5 +33,20 @@ const createActionLogger = (
     requestId: req.logContext?.requestId,
   });
 };
+
+export function withLogging<TReq = Request>(
+  controllerLogger: Logger,
+  action: string,
+  handler: (ctx: { req: TReq; res: Response; log: Logger }) => Promise<void>,
+) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const log = createActionLogger(controllerLogger, action, req);
+    try {
+      await handler({ req: req as TReq, res, log });
+    } catch (error) {
+      next(error);
+    }
+  };
+}
 
 export default createActionLogger;

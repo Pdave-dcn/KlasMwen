@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ZodError } from "zod";
 
-import { ResourcePostInput, TextPostInput } from "../../src/types/postTypes.js";
+import type { ResourcePostInput, TextPostInput } from "../../src/features/posts/service/types/postTypes.js";
 import {
   NewPostRequestSchema,
   CompletePostSchema,

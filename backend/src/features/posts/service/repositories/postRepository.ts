@@ -1,61 +1,34 @@
-import { bindMethods } from "../../../../utils/bindMethods.util.js";
+import {
+  postCommandRepository,
+  type IPostCommandRepository,
+} from "./core/PostCommandRepository.js";
+import {
+  postQueryRepository,
+  type IPostQueryRepository,
+} from "./core/PostQueryRepository.js";
+import {
+  postValidationRepository,
+  type IPostValidationRepository,
+} from "./core/PostValidationRepository.js";
 
-import PostCommandRepository from "./core/PostCommandRepository.js";
-import PostQueryRepository from "./core/PostQueryRepository.js";
-import PostValidationRepository from "./core/PostValidationRepository.js";
-
-/**
- * PostRepository - Main facade for post data access
- * Delegates to specialized repositories for different concerns
- */
-class PostRepository {
-  // Query Operations
-  static findManyPosts: typeof PostQueryRepository.findManyPosts;
-  static countPosts: typeof PostQueryRepository.countPosts;
-  static findPostById: typeof PostQueryRepository.findPostById;
-  static findExtendedPostById: typeof PostQueryRepository.findExtendedPostById;
-  static findPostMetadata: typeof PostQueryRepository.findPostMetadata;
-  static findUserLikes: typeof PostQueryRepository.findUserLikes;
-  static findUserBookmarks: typeof PostQueryRepository.findUserBookmarks;
-  static findBookmarksForPosts: typeof PostQueryRepository.findBookmarksForPosts;
-  static findLikesForPosts: typeof PostQueryRepository.findLikesForPosts;
-  static findBookmark: typeof PostQueryRepository.findBookmark;
-  static findLike: typeof PostQueryRepository.findLike;
-  static findPostForEdit: typeof PostQueryRepository.findPostForEdit;
-
-  // Command Operations
-  static createPost: typeof PostCommandRepository.createPost;
-  static updatePost: typeof PostCommandRepository.updatePost;
-  static delete: typeof PostCommandRepository.delete;
-
-  // Validation Operations
-  static exists: typeof PostValidationRepository.exists;
-
-  static {
-    Object.assign(
-      this,
-      bindMethods(PostQueryRepository, [
-        "findManyPosts",
-        "countPosts",
-        "findPostById",
-        "findExtendedPostById",
-        "findPostMetadata",
-        "findUserLikes",
-        "findUserBookmarks",
-        "findBookmarksForPosts",
-        "findLikesForPosts",
-        "findBookmark",
-        "findLike",
-        "findPostForEdit",
-      ]),
-      bindMethods(PostCommandRepository, [
-        "createPost",
-        "updatePost",
-        "delete",
-      ]),
-      bindMethods(PostValidationRepository, ["exists"])
-    );
-  }
+interface IPostRepository {
+  query: IPostQueryRepository;
+  command: IPostCommandRepository;
+  validate: IPostValidationRepository;
 }
 
-export default PostRepository;
+class PostRepository implements IPostRepository {
+  constructor(
+    readonly query: IPostQueryRepository,
+    readonly command: IPostCommandRepository,
+    readonly validate: IPostValidationRepository,
+  ) {}
+}
+
+const postRepository = new PostRepository(
+  postQueryRepository,
+  postCommandRepository,
+  postValidationRepository,
+);
+
+export { postRepository, type IPostRepository };

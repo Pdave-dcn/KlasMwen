@@ -4,7 +4,7 @@ import { toggleVisibility } from "../../../src/controllers/report/report.moderat
 import prisma from "../../../src/core/config/db.js";
 import { AuthorizationError } from "../../../src/core/error/custom/auth.error";
 import CommentService from "../../../src/features/comments/service/CommentService";
-import PostService from "../../../src/features/posts/service/PostService";
+import { postService } from "../../../src/features/posts/service/PostService";
 
 import { createAuthenticatedUser } from "./shared/helpers";
 import { createMockRequest, createMockResponse } from "./shared/mocks";
@@ -51,14 +51,21 @@ vi.mock("../../../src/core/config/db.js", () => ({
   },
 }));
 
-vi.mock("../../../src/features/posts/service/PostService");
-vi.mock("../../../src/features/comments/service/CommentService");
-
-const mockPostService = vi.mocked(PostService);
-const mockCommentService = vi.mocked(CommentService);
+vi.mock("../../../src/features/posts/service/PostService", () => ({
+  postService: {
+    validate: {
+      verifyPostExists: vi.fn(),
+    },
+  },
+}));
+vi.mock("../../../src/features/comments/service/CommentService", () => ({
+  default: {
+    commentExists: vi.fn(),
+  },
+}));
 
 describe("toggleVisibility controller", () => {
-  let mockRequest: Request;
+  let mockRequest: Request & { user?: { id: string; role: Role } };
   let mockResponse: Response;
   let mockNext: any;
 
@@ -78,14 +85,14 @@ describe("toggleVisibility controller", () => {
     mockResponse = createMockResponse();
     vi.clearAllMocks();
 
-    mockPostService.verifyPostExists.mockResolvedValue({
+    postService.validate.verifyPostExists.mockResolvedValue({
       type: "NOTE" as const,
       id: mockPostId,
       createdAt: new Date(),
       authorId: mockUserId,
       fileUrl: null,
     });
-    mockCommentService.commentExists.mockResolvedValue({
+    CommentService.commentExists.mockResolvedValue({
       id: mockCommentId,
       postId: mockPostId,
       parentId: null,
@@ -115,10 +122,10 @@ describe("toggleVisibility controller", () => {
 
       await toggleVisibility(mockRequest, mockResponse, mockNext);
 
-      expect(mockPostService.verifyPostExists).toHaveBeenCalledWith(
-        mockPostData.resourceId
+      expect(postService.validate.verifyPostExists).toHaveBeenCalledWith(
+        mockPostData.resourceId,
       );
-      expect(mockCommentService.commentExists).not.toHaveBeenCalled();
+      expect(CommentService.commentExists).not.toHaveBeenCalled();
 
       // DB update called
       expect(prisma.post.update).toHaveBeenCalledWith({
@@ -148,9 +155,9 @@ describe("toggleVisibility controller", () => {
 
       await toggleVisibility(mockRequest, mockResponse, mockNext);
 
-      expect(mockPostService.verifyPostExists).not.toHaveBeenCalled();
-      expect(mockCommentService.commentExists).toHaveBeenCalledWith(
-        mockCommentData.resourceId
+      expect(postService.validate.verifyPostExists).not.toHaveBeenCalled();
+      expect(CommentService.commentExists).toHaveBeenCalledWith(
+        mockCommentData.resourceId,
       );
 
       // DB update called
@@ -178,7 +185,7 @@ describe("toggleVisibility controller", () => {
       await toggleVisibility(mockRequest, mockResponse, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith(expect.any(ZodError));
-      expect(mockPostService.verifyPostExists).not.toHaveBeenCalled();
+      expect(postService.validate.verifyPostExists).not.toHaveBeenCalled();
       expect(prisma.post.update).not.toHaveBeenCalled();
     });
 
@@ -194,14 +201,14 @@ describe("toggleVisibility controller", () => {
 
       const notFoundError = new Error("Post not found");
       // Mock existence check to reject
-      mockPostService.verifyPostExists.mockRejectedValue(notFoundError);
+      postService.validate.verifyPostExists.mockRejectedValue(notFoundError);
 
       // Execute
       await toggleVisibility(mockRequest, mockResponse, mockNext);
 
       // Assertions
-      expect(mockPostService.verifyPostExists).toHaveBeenCalledWith(
-        mockPostData.resourceId
+      expect(postService.validate.verifyPostExists).toHaveBeenCalledWith(
+        mockPostData.resourceId,
       );
       expect(prisma.post.update).not.toHaveBeenCalled();
       expect(mockNext).toHaveBeenCalledWith(notFoundError);
@@ -220,14 +227,14 @@ describe("toggleVisibility controller", () => {
 
       const notFoundError = new Error("Comment not found");
       // Mock existence check to reject
-      mockCommentService.commentExists.mockRejectedValue(notFoundError);
+      CommentService.commentExists.mockRejectedValue(notFoundError);
 
       // Execute
       await toggleVisibility(mockRequest, mockResponse, mockNext);
 
       // Assertions
-      expect(mockCommentService.commentExists).toHaveBeenCalledWith(
-        mockCommentData.resourceId
+      expect(CommentService.commentExists).toHaveBeenCalledWith(
+        mockCommentData.resourceId,
       );
       expect(prisma.comment.update).not.toHaveBeenCalled();
       expect(mockNext).toHaveBeenCalledWith(notFoundError);
@@ -252,7 +259,7 @@ describe("toggleVisibility controller", () => {
       await toggleVisibility(mockRequest, mockResponse, mockNext);
 
       // Assertions
-      expect(mockPostService.verifyPostExists).toHaveBeenCalled(); // Existence check passed
+      expect(postService.validate.verifyPostExists).toHaveBeenCalled(); // Existence check passed
       expect(prisma.post.update).toHaveBeenCalled();
       expect(mockNext).toHaveBeenCalledWith(dbError);
       expect(mockResponse.status).not.toHaveBeenCalled();
@@ -276,7 +283,7 @@ describe("toggleVisibility controller", () => {
       await toggleVisibility(mockRequest, mockResponse, mockNext);
 
       // Assertions
-      expect(mockCommentService.commentExists).toHaveBeenCalled(); // Existence check passed
+      expect(CommentService.commentExists).toHaveBeenCalled(); // Existence check passed
       expect(prisma.comment.update).toHaveBeenCalled();
       expect(mockNext).toHaveBeenCalledWith(dbError);
       expect(mockResponse.status).not.toHaveBeenCalled();

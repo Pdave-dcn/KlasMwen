@@ -9,25 +9,54 @@ import {
   bookmarkWithPost,
   type LikeWithPost,
   type BookmarkWithPost,
+  type ExtendedPost,
+  type BasePost,
 } from "../../types/postTypes.js";
 
-import type { Prisma } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 
-/**
- * PostQueryRepository - Read operations only
- */
-class PostQueryRepository {
-  /**
-   * Find posts with filters and pagination
-   */
-  static findManyPosts(
+interface IPostQueryRepository {
+  findManyPosts(
     where: Prisma.PostWhereInput,
     limit: number,
-    cursor?: string
-  ) {
+    cursor?: string,
+  ): Promise<BasePost[]>;
+  countPosts(where: Prisma.PostWhereInput): Promise<number>;
+  findPostById(postId: string): Promise<BasePost | null>;
+  findExtendedPostById(postId: string): Promise<ExtendedPost | null>;
+  findPostMetadata(postId: string): Promise<unknown>;
+  findUserLikes(
+    userId: string,
+    limit: number,
+    cursor?: string,
+  ): Promise<LikeWithPost[]>;
+  findUserBookmarks(
+    userId: string,
+    limit: number,
+    cursor?: string,
+  ): Promise<BookmarkWithPost[]>;
+  findBookmarksForPosts(
+    userId: string,
+    postIds: string[],
+  ): Promise<{ postId: string }[]>;
+  findLikesForPosts(
+    userId: string,
+    postIds: string[],
+  ): Promise<{ postId: string }[]>;
+  findBookmark(userId: string, postId: string): Promise<unknown>;
+  findLike(userId: string, postId: string): Promise<unknown>;
+  findPostForEdit(postId: string): Promise<ExtendedPost | null>;
+}
+
+class PostQueryRepository implements IPostQueryRepository {
+  constructor(private client: PrismaClient) {}
+
+  findManyPosts(where: Prisma.PostWhereInput, limit: number, cursor?: string) {
+    const select = BaseSelectors.post;
+
     const baseQuery: Prisma.PostFindManyArgs = {
       where: { ...where, hidden: false },
-      select: BaseSelectors.post,
+      select,
       orderBy: { createdAt: "desc" },
     };
 
@@ -37,41 +66,32 @@ class PostQueryRepository {
       cursorField: "id",
     });
 
-    return prisma.post.findMany(paginatedQuery);
+    return this.client.post.findMany({
+      ...paginatedQuery,
+      select /** For better type inference */,
+    });
   }
 
-  /**
-   * Count posts matching criteria
-   */
-  static countPosts(where: Prisma.PostWhereInput) {
-    return prisma.post.count({ where });
+  countPosts(where: Prisma.PostWhereInput) {
+    return this.client.post.count({ where });
   }
 
-  /**
-   * Find a single post by ID
-   */
-  static findPostById(postId: string) {
-    return prisma.post.findUnique({
+  findPostById(postId: string) {
+    return this.client.post.findUnique({
       where: { id: postId },
       select: BaseSelectors.lessExtendedPost,
-    });
+    }) as Promise<BasePost | null>;
   }
 
-  /**
-   * Find an extended post by ID (with more metadata)
-   */
-  static findExtendedPostById(postId: string) {
-    return prisma.post.findUnique({
+  findExtendedPostById(postId: string) {
+    return this.client.post.findUnique({
       where: { id: postId },
       select: BaseSelectors.extendedPost,
-    });
+    }) as Promise<ExtendedPost | null>;
   }
 
-  /**
-   * Find post metadata only
-   */
-  static findPostMetadata(postId: string) {
-    return prisma.post.findUnique({
+  findPostMetadata(postId: string) {
+    return this.client.post.findUnique({
       where: { id: postId },
       select: {
         id: true,
@@ -98,13 +118,10 @@ class PostQueryRepository {
     });
   }
 
-  /**
-   * Find user's liked posts
-   */
-  static findUserLikes(
+  findUserLikes(
     userId: string,
     limit: number,
-    cursor?: string
+    cursor?: string,
   ): Promise<LikeWithPost[]> {
     const baseQuery: Prisma.LikeFindManyArgs = {
       where: {
@@ -123,16 +140,13 @@ class PostQueryRepository {
       where: { userId },
     });
 
-    return prisma.like.findMany(queryOptions) as Promise<LikeWithPost[]>;
+    return this.client.like.findMany(queryOptions) as Promise<LikeWithPost[]>;
   }
 
-  /**
-   * Find user's bookmarked posts
-   */
-  static findUserBookmarks(
+  findUserBookmarks(
     userId: string,
     limit: number,
-    cursor?: string
+    cursor?: string,
   ): Promise<BookmarkWithPost[]> {
     const baseQuery: Prisma.BookmarkFindManyArgs = {
       where: {
@@ -153,18 +167,15 @@ class PostQueryRepository {
       orderBy: { createdAt: "desc" },
     });
 
-    return prisma.bookmark.findMany(queryOptions) as Promise<
+    return this.client.bookmark.findMany(queryOptions) as Promise<
       BookmarkWithPost[]
     >;
   }
 
-  /**
-   * Find user's bookmarks for specific posts
-   */
-  static findBookmarksForPosts(userId: string, postIds: string[]) {
-    if (postIds.length === 0) return [];
+  findBookmarksForPosts(userId: string, postIds: string[]) {
+    if (postIds.length === 0) return Promise.resolve([]);
 
-    return prisma.bookmark.findMany({
+    return this.client.bookmark.findMany({
       where: {
         userId,
         postId: { in: postIds },
@@ -173,13 +184,10 @@ class PostQueryRepository {
     });
   }
 
-  /**
-   * Find user's likes for specific posts
-   */
-  static findLikesForPosts(userId: string, postIds: string[]) {
-    if (postIds.length === 0) return [];
+  findLikesForPosts(userId: string, postIds: string[]) {
+    if (postIds.length === 0) return Promise.resolve([]);
 
-    return prisma.like.findMany({
+    return this.client.like.findMany({
       where: {
         userId,
         postId: { in: postIds },
@@ -188,11 +196,8 @@ class PostQueryRepository {
     });
   }
 
-  /**
-   * Find a single bookmark
-   */
-  static findBookmark(userId: string, postId: string) {
-    return prisma.bookmark.findUnique({
+  findBookmark(userId: string, postId: string) {
+    return this.client.bookmark.findUnique({
       where: {
         userId_postId: {
           userId,
@@ -202,11 +207,8 @@ class PostQueryRepository {
     });
   }
 
-  /**
-   * Find a single like
-   */
-  static findLike(userId: string, postId: string) {
-    return prisma.like.findUnique({
+  findLike(userId: string, postId: string) {
+    return this.client.like.findUnique({
       where: {
         userId_postId: {
           userId,
@@ -216,15 +218,14 @@ class PostQueryRepository {
     });
   }
 
-  /**
-   * Find post for editing (with all metadata)
-   */
-  static findPostForEdit(postId: string) {
-    return prisma.post.findUnique({
+  findPostForEdit(postId: string) {
+    return this.client.post.findUnique({
       where: { id: postId },
       select: BaseSelectors.extendedPost,
     });
   }
 }
 
-export default PostQueryRepository;
+const postQueryRepository = new PostQueryRepository(prisma);
+
+export { postQueryRepository, type IPostQueryRepository };

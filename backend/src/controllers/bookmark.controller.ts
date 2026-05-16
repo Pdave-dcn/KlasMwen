@@ -1,6 +1,6 @@
 import prisma from "../core/config/db.js";
 import { createLogger } from "../core/config/logger.js";
-import PostService from "../features/posts/service/PostService.js";
+import { postService } from "../features/posts/service/PostService.js";
 import createActionLogger from "../utils/logger.util.js";
 import { uuidPaginationSchema } from "../utils/pagination.util.js";
 import { PostIdParamSchema } from "../zodSchemas/post.zod.js";
@@ -26,7 +26,7 @@ const getBookmarks = async (req: Request, res: Response, next: NextFunction) => 
 
     actionLogger.debug("Processing user bookmarks request");
     const serviceStartTime = Date.now();
-    const result = await PostService.getUserBookmarkedPosts(
+    const result = await postService.query.getUserBookmarkedPosts(
       user.id,
       limit,
       cursor as string | undefined
@@ -70,7 +70,7 @@ const createBookmark = async (req: Request, res: Response, next: NextFunction) =
     const { id: postId } = PostIdParamSchema.parse(req.params);
 
     actionLogger.debug("Verifying post exists");
-    await PostService.verifyPostExists(postId);
+    await postService.validate.verifyPostExists(postId);
 
     const dbStartTime = Date.now();
     await prisma.bookmark.create({

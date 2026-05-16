@@ -1,4 +1,7 @@
-import PostRepository from "../repositories/postRepository.js";
+import {
+  postRepository,
+  type IPostRepository,
+} from "../repositories/postRepository.js";
 
 import type {
   BookmarkAndLikeStates,
@@ -8,16 +11,34 @@ import type {
   EnrichedPostPreview,
 } from "../types/postTypes.js";
 
-/**
- * PostEnricher - Adds user-specific state (bookmarks, likes) to posts
- */
-class PostEnricher {
-  /**
-   * Fetch bookmark and like states for a list of posts
-   */
-  static async getBookmarkAndLikeStates(
+interface IPostEnricher {
+  getBookmarkAndLikeStates(
     userId: string,
-    postIds: string[]
+    postIds: string[],
+  ): Promise<BookmarkAndLikeStates>;
+  enrichPostsWithStates(
+    posts: TransformedPost[] | PostPreview[],
+    states: BookmarkAndLikeStates,
+    currentUserId: string,
+  ): (EnrichedPost | EnrichedPostPreview)[];
+  enrichSinglePost(
+    post: TransformedPost,
+    currentUserId: string,
+  ): Promise<EnrichedPost>;
+  enrichPostsWithFixedStates(
+    posts: TransformedPost[],
+    isLiked: boolean,
+    isBookmarked: boolean,
+    otherStates: BookmarkAndLikeStates,
+  ): EnrichedPost[];
+}
+
+class PostEnricher implements IPostEnricher {
+  constructor(private repository: IPostRepository) {}
+
+  async getBookmarkAndLikeStates(
+    userId: string,
+    postIds: string[],
   ): Promise<BookmarkAndLikeStates> {
     if (postIds.length === 0) {
       return {
@@ -27,8 +48,8 @@ class PostEnricher {
     }
 
     const [bookmarks, likes] = await Promise.all([
-      PostRepository.findBookmarksForPosts(userId, postIds),
-      PostRepository.findLikesForPosts(userId, postIds),
+      this.repository.query.findBookmarksForPosts(userId, postIds),
+      this.repository.query.findLikesForPosts(userId, postIds),
     ]);
 
     return {
@@ -37,13 +58,10 @@ class PostEnricher {
     };
   }
 
-  /**
-   * Enrich posts with bookmark and like state flags
-   */
-  static enrichPostsWithStates(
+  enrichPostsWithStates(
     posts: TransformedPost[] | PostPreview[],
     states: BookmarkAndLikeStates,
-    currentUserId: string
+    currentUserId: string,
   ): (EnrichedPost | EnrichedPostPreview)[] {
     return posts.map((post) => ({
       ...post,
@@ -54,16 +72,13 @@ class PostEnricher {
     }));
   }
 
-  /**
-   * Enrich a single post with bookmark and like state
-   */
-  static async enrichSinglePost(
+  async enrichSinglePost(
     post: TransformedPost,
-    currentUserId: string
+    currentUserId: string,
   ): Promise<EnrichedPost> {
     const [bookmark, like] = await Promise.all([
-      PostRepository.findBookmark(currentUserId, post.id),
-      PostRepository.findLike(currentUserId, post.id),
+      this.repository.query.findBookmark(currentUserId, post.id),
+      this.repository.query.findLike(currentUserId, post.id),
     ]);
 
     return {
@@ -73,15 +88,11 @@ class PostEnricher {
     };
   }
 
-  /**
-   * Enrich posts with specific states (for liked/bookmarked feeds)
-   * Used when all posts have the same like/bookmark state
-   */
-  static enrichPostsWithFixedStates(
+  enrichPostsWithFixedStates(
     posts: TransformedPost[],
     isLiked: boolean,
     isBookmarked: boolean,
-    otherStates: BookmarkAndLikeStates
+    otherStates: BookmarkAndLikeStates,
   ): EnrichedPost[] {
     return posts.map((post) => ({
       ...post,
@@ -91,4 +102,5 @@ class PostEnricher {
   }
 }
 
-export default PostEnricher;
+const postEnricher = new PostEnricher(postRepository);
+export { postEnricher, type IPostEnricher };

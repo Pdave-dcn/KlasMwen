@@ -1,21 +1,35 @@
-import PostRepository from "../repositories/postRepository.js";
+import {
+  postRepository,
+  type IPostRepository,
+} from "../repositories/postRepository.js";
 
-import { PostQueryService } from "./PostQueryService.js";
+import {
+  postQueryService,
+  type IPostQueryService,
+} from "./PostQueryService.js";
 
 import type { PaginatedPostsResponse } from "../types/postTypes.js";
 import type { Prisma } from "@prisma/client";
 
-/**
- * Handles post search operations.
- * Builds complex search queries and delegates to PostQueryService.
- */
-export class PostSearchService {
-  /**
-   * Build search condition from search term and tag filters.
-   */
-  private static buildSearchCondition(
+interface IPostSearchService {
+  searchPosts(
+    userId: string,
+    limit: number,
     searchTerm?: string,
-    tagIds?: number[]
+    cursor?: string,
+    tagIds?: number[],
+  ): Promise<PaginatedPostsResponse>;
+}
+
+class PostSearchService implements IPostSearchService {
+  constructor(
+    private repository: IPostRepository,
+    private queryService: IPostQueryService,
+  ) {}
+
+  private buildSearchCondition(
+    searchTerm?: string,
+    tagIds?: number[],
   ): Prisma.PostWhereInput {
     const condition: Prisma.PostWhereInput = {};
     const searchClauses: Prisma.PostWhereInput[] = [];
@@ -23,7 +37,7 @@ export class PostSearchService {
     if (searchTerm) {
       searchClauses.push(
         { title: { contains: searchTerm, mode: "insensitive" } },
-        { content: { contains: searchTerm, mode: "insensitive" } }
+        { content: { contains: searchTerm, mode: "insensitive" } },
       );
     }
 
@@ -39,20 +53,17 @@ export class PostSearchService {
     return condition;
   }
 
-  /**
-   * Search posts by term and/or tags.
-   */
-  static async searchPosts(
+  async searchPosts(
     userId: string,
     limit: number,
     searchTerm?: string,
     cursor?: string,
-    tagIds?: number[]
+    tagIds?: number[],
   ): Promise<PaginatedPostsResponse> {
     const where = this.buildSearchCondition(searchTerm, tagIds);
     const [result, totalCount] = await Promise.all([
-      PostQueryService["fetchAndProcessPosts"](where, limit, userId, cursor),
-      PostRepository.countPosts(where),
+      this.queryService.fetchAndProcessPosts(where, limit, userId, cursor),
+      this.repository.query.countPosts(where),
     ]);
 
     return {
@@ -61,3 +72,9 @@ export class PostSearchService {
     };
   }
 }
+
+const postSearchService = new PostSearchService(
+  postRepository,
+  postQueryService,
+);
+export { postSearchService, type IPostSearchService };

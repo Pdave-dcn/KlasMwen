@@ -1,7 +1,7 @@
 import { ReportNotFoundError } from "../../../core/error/custom/report.error.js";
 import { assertPermission } from "../../../core/security/rbac.js";
 import CommentService from "../../comments/service/CommentService.js";
-import PostService from "../../posts/service/PostService.js";
+import { postService } from "../../posts/service/PostService.js";
 import { autoHideContent } from "../helpers/autoHideContent.js";
 
 import ReportEnricher from "./reportEnricher.js";
@@ -43,7 +43,7 @@ class ReportService {
     contentId: string | number
   ) {
     if (contentType === "post") {
-      return await PostService.verifyPostExists(contentId as string);
+      return await postService.validate.verifyPostExists(contentId as string);
     } else if (contentType === "comment") {
       return await CommentService.commentExists(contentId as number);
     }

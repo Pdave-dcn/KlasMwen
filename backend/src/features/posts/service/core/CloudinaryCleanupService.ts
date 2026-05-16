@@ -1,33 +1,24 @@
 import { logger } from "../../../../core/config/logger.js";
 import CloudinaryService from "../../../media/CloudinaryService.js";
 
-/**
- * Handles Cloudinary file cleanup operations.
- * Ensures consistent error handling and logging for file operations.
- */
-export class CloudinaryCleanupService {
-  /**
-   * Clean up uploaded file from Cloudinary.
-   * Logs errors but doesn't throw to prevent blocking main operation.
-   */
-  static async cleanupFile(publicId: string, context: string): Promise<void> {
+interface ICloudinaryCleanupService {
+  cleanupFile(publicId: string, context: string): Promise<void>;
+  handleResourceCleanup(fileUrl: string, context: string): Promise<void>;
+}
+
+class CloudinaryCleanupService implements ICloudinaryCleanupService {
+  async cleanupFile(publicId: string, context: string): Promise<void> {
     try {
       await CloudinaryService.delete(publicId, "raw");
     } catch (error) {
       logger.error(
         { err: error, publicId, context },
-        "Failed to cleanup file from Cloudinary"
+        "Failed to cleanup file from Cloudinary",
       );
     }
   }
 
-  /**
-   * Handle Cloudinary cleanup for resource posts.
-   */
-  static async handleResourceCleanup(
-    fileUrl: string,
-    context: string
-  ): Promise<void> {
+  async handleResourceCleanup(fileUrl: string, context: string): Promise<void> {
     const publicId = CloudinaryService.extractPublicId(fileUrl);
 
     if (!publicId) {
@@ -38,3 +29,7 @@ export class CloudinaryCleanupService {
     await this.cleanupFile(publicId, context);
   }
 }
+
+const cloudinaryCleanupService = new CloudinaryCleanupService();
+
+export { cloudinaryCleanupService, type ICloudinaryCleanupService };

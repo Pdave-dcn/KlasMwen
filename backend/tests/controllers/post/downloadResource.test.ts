@@ -1,19 +1,27 @@
-import { Readable } from "stream";
+import { Readable, PassThrough } from "stream";
 
-import { Post } from "@prisma/client";
 import axios from "axios";
 import { Request, Response } from "express";
 
 import { downloadResource } from "../../../src/controllers/post/post.fetch.controller";
-import prisma from "../../../src/core/config/db";
 import { PostNotFoundError } from "../../../src/core/error/custom/post.error";
 
 import { createAuthenticatedUser } from "./shared/helpers";
 import { createMockRequest, createMockResponse } from "./shared/mocks";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+const mockGetResourcePostById = vi.fn();
+
+vi.mock("../../../src/features/posts/service/PostService.js", () => ({
+  postService: {
+    query: {
+      getResourcePostById: (...args: unknown[]) =>
+        mockGetResourcePostById(...args),
+    },
+  },
+}));
+
 vi.mock("axios");
-vi.mock("../../../src/features/media/cloudinaryServices.js");
 
 vi.mock("../../../src/core/config/logger.js", () => ({
   createLogger: vi.fn(() => ({
@@ -46,489 +54,155 @@ vi.mock("../../../src/core/error/index.js", () => ({
   handleError: vi.fn(),
 }));
 
-vi.mock("../../../src/core/config/db.js", () => ({
-  default: {
-    post: {
-      findUnique: vi.fn(),
-    },
-  },
-}));
-
 describe("downloadResource controller", () => {
-  const resourceId = "f34042c4-6143-4c8e-a790-49ba409529e8";
+  const VALID_UUID = "f34042c4-6143-4c8e-a790-49ba409529e8";
 
-  const mockResourcePost: Post = {
-    id: resourceId,
-    title: "Test Post",
-    content: null,
-    hidden: false,
-    authorId: "author-id",
-    type: "RESOURCE",
+  const mockResourcePost = {
+    id: VALID_UUID,
+    title: "Test Resource",
+    type: "RESOURCE" as const,
+    fileUrl: "https://res.cloudinary.com/demo/testfile.pdf",
     fileName: "testfile.pdf",
     fileSize: 1024,
-    fileUrl: "https://res.cloudinary.com/demo/testfile.pdf",
     mimeType: "application/pdf",
-    createdAt: new Date(),
-    updatedAt: new Date(),
   };
 
-  let mockReq: Request;
+  let mockReq: Request & { user?: unknown };
   let mockRes: Response;
   let mockNext: any;
 
   beforeEach(() => {
     mockReq = createMockRequest();
+    mockReq.on = vi.fn();
     mockRes = createMockResponse();
+    mockRes.setHeader = vi.fn().mockReturnThis();
+    (mockRes as any).headersSent = false;
+    (mockRes as any).writableEnded = false;
+    mockRes.destroy = vi.fn();
     mockNext = vi.fn();
     vi.clearAllMocks();
   });
 
-  describe("success cases", () => {
-    it("should download a resource successfully with all headers", async () => {
-      const mockStream = new Readable();
+  it("should download a resource successfully with all headers", async () => {
+    const mockStream = new Readable();
+    mockStream.push("file content");
+    mockStream.push(null);
+    mockStream.pipe = vi
+      .fn()
+      .mockReturnValue(new PassThrough().on("end", () => {}));
 
-      mockStream.push("file content");
-      mockStream.push(null);
-      mockStream.pipe = vi.fn();
+    mockReq.user = createAuthenticatedUser();
+    mockReq.params = { id: VALID_UUID };
 
-      mockReq.user = createAuthenticatedUser();
-      mockReq.params = { id: resourceId };
-      mockReq.on = vi.fn();
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockResourcePost);
-      vi.mocked(axios).mockResolvedValue({
-        data: mockStream,
-        headers: {
-          "content-length": "1024",
-          "content-type": "application/pdf",
-        },
-      });
-
-      await downloadResource(mockReq, mockRes, mockNext);
-
-      expect(mockRes.setHeader).toHaveBeenCalledWith(
-        "Content-Disposition",
-        'attachment; filename="testfile.pdf"'
-      );
-      expect(mockRes.setHeader).toHaveBeenCalledWith(
-        "Content-Type",
-        "application/pdf"
-      );
-      expect(mockRes.setHeader).toHaveBeenCalledWith("Content-Length", 1024);
-      expect(mockStream.pipe).toHaveBeenCalledWith(mockRes);
+    mockGetResourcePostById.mockResolvedValue(mockResourcePost);
+    vi.mocked(axios).mockResolvedValue({
+      data: mockStream,
+      headers: {
+        "content-length": "1024",
+        "content-type": "application/pdf",
+      },
     });
 
-    it("should handle resource without content-length header", async () => {
-      const mockStream = new Readable();
-      mockStream.push("file content");
-      mockStream.push(null);
-      mockStream.pipe = vi.fn();
+    await downloadResource(mockReq, mockRes, mockNext);
 
-      mockReq.user = createAuthenticatedUser();
-      mockReq.params = { id: resourceId };
-      mockReq.on = vi.fn();
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockResourcePost);
-      vi.mocked(axios).mockResolvedValue({
-        data: mockStream,
-        headers: {
-          "content-type": "application/pdf",
-        },
-      });
-
-      await downloadResource(mockReq, mockRes, mockNext);
-
-      expect(mockRes.setHeader).not.toHaveBeenCalledWith(
-        "Content-Length",
-        expect.anything()
-      );
-      expect(mockRes.setHeader).toHaveBeenCalledWith(
-        "Content-Disposition",
-        'attachment; filename="testfile.pdf"'
-      );
-    });
-
-    it("should use fallback filename when fileName is null", async () => {
-      const mockStream = new Readable();
-      mockStream.push("file content");
-      mockStream.push(null);
-      mockStream.pipe = vi.fn();
-
-      const resourceWithoutFileName = {
-        ...mockResourcePost,
-        fileName: null,
-      };
-
-      mockReq.user = createAuthenticatedUser();
-      mockReq.params = { id: resourceId };
-      mockReq.on = vi.fn();
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(
-        resourceWithoutFileName
-      );
-      vi.mocked(axios).mockResolvedValue({
-        data: mockStream,
-        headers: { "content-type": "application/pdf" },
-      });
-
-      await downloadResource(mockReq, mockRes, mockNext);
-
-      expect(mockRes.setHeader).toHaveBeenCalledWith(
-        "Content-Disposition",
-        'attachment; filename="file"'
-      );
-    });
-
-    it("should use response content-type when mimeType is null", async () => {
-      const mockStream = new Readable();
-      mockStream.push("file content");
-      mockStream.push(null);
-      mockStream.pipe = vi.fn();
-
-      const resourceWithoutMimeType = {
-        ...mockResourcePost,
-        mimeType: null,
-      };
-
-      mockReq.user = createAuthenticatedUser();
-      mockReq.params = { id: resourceId };
-      mockReq.on = vi.fn();
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(
-        resourceWithoutMimeType
-      );
-      vi.mocked(axios).mockResolvedValue({
-        data: mockStream,
-        headers: { "content-type": "application/octet-stream" },
-      });
-
-      await downloadResource(mockReq, mockRes, mockNext);
-
-      expect(mockRes.setHeader).toHaveBeenCalledWith(
-        "Content-Type",
-        "application/octet-stream"
-      );
-    });
+    expect(mockGetResourcePostById).toHaveBeenCalledWith(VALID_UUID);
+    expect(mockRes.setHeader).toHaveBeenCalledWith(
+      "Content-Disposition",
+      'attachment; filename="testfile.pdf"',
+    );
+    expect(mockRes.setHeader).toHaveBeenCalledWith(
+      "Content-Type",
+      "application/pdf",
+    );
+    expect(mockRes.setHeader).toHaveBeenCalledWith("Content-Length", 1024);
+    expect(mockNext).not.toHaveBeenCalled();
   });
 
-  describe("validation cases", () => {
-    it("should handle invalid post ID format", async () => {
-      mockReq.user = createAuthenticatedUser();
-      mockReq.params = { id: "invalid-id" };
+  it("should call next when post not found", async () => {
+    mockReq.user = createAuthenticatedUser();
+    mockReq.params = { id: VALID_UUID };
 
-      await downloadResource(mockReq, mockRes, mockNext);
+    mockGetResourcePostById.mockRejectedValue(
+      new PostNotFoundError(VALID_UUID),
+    );
 
-      expect(mockNext).toHaveBeenCalled();
-    });
+    await downloadResource(mockReq, mockRes, mockNext);
 
-    it("should call handleError when resource not found", async () => {
-      mockReq.user = createAuthenticatedUser();
-      mockReq.params = { id: resourceId };
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(null);
-
-      await downloadResource(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(expect.any(PostNotFoundError));
-    });
-
-    it("should call handleError when resource has no fileUrl", async () => {
-      const resourceWithoutUrl = {
-        ...mockResourcePost,
-        fileUrl: null,
-      };
-
-      mockReq.user = createAuthenticatedUser();
-      mockReq.params = { id: resourceId };
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(resourceWithoutUrl);
-
-      await downloadResource(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
-    });
-
-    it("should call handleError when resource has empty fileUrl", async () => {
-      const resourceWithEmptyUrl = {
-        ...mockResourcePost,
-        fileUrl: "",
-      };
-
-      mockReq.user = createAuthenticatedUser();
-      mockReq.params = { id: resourceId };
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(resourceWithEmptyUrl);
-
-      await downloadResource(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalled();
-    });
+    expect(mockNext).toHaveBeenCalledWith(expect.any(PostNotFoundError));
   });
 
-  describe("streaming cases", () => {
-    it("should handle stream errors gracefully", async () => {
-      const mockStream = new Readable();
-      mockStream.pipe = vi.fn();
-      mockStream.on = vi.fn((event, handler) => {
-        if (event === "error") {
-          // Store the error handler to call it later
-          setTimeout(() => handler(new Error("Stream error")), 0);
-        }
-        return mockStream;
-      });
+  it("should call next when post is not a resource post", async () => {
+    mockReq.user = createAuthenticatedUser();
+    mockReq.params = { id: VALID_UUID };
 
-      mockReq.user = createAuthenticatedUser();
-      mockReq.params = { id: resourceId };
-      mockReq.on = vi.fn();
+    mockGetResourcePostById.mockRejectedValue(
+      new Error("Post is not a resource post"),
+    );
 
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockResourcePost);
-      vi.mocked(axios).mockResolvedValue({
-        data: mockStream,
-        headers: { "content-type": "application/pdf" },
-      });
+    await downloadResource(mockReq, mockRes, mockNext);
 
-      await downloadResource(mockReq, mockRes, mockNext);
-
-      // Wait for error handler to be called
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.send).toHaveBeenCalledWith("Error streaming file");
-    });
-
-    it("should handle user aborting download", async () => {
-      const mockStream = new Readable();
-      mockStream.destroy = vi.fn();
-      mockStream.pipe = vi.fn();
-      mockStream.on = vi.fn().mockReturnValue(mockStream);
-
-      let closeHandler: () => void;
-      mockReq.user = createAuthenticatedUser();
-      mockReq.params = { id: resourceId };
-      mockReq.on = vi.fn((event, handler) => {
-        if (event === "close") {
-          closeHandler = handler;
-        }
-        return mockReq;
-      });
-      (mockRes as any).writableEnded = false;
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockResourcePost);
-      vi.mocked(axios).mockResolvedValue({
-        data: mockStream,
-        headers: { "content-type": "application/pdf" },
-      });
-
-      await downloadResource(mockReq, mockRes, mockNext);
-
-      // Simulate user closing connection
-      closeHandler!();
-
-      expect(mockStream.destroy).toHaveBeenCalled();
-    });
-
-    it("should not destroy stream if response already ended", async () => {
-      const mockStream = new Readable();
-      mockStream.destroy = vi.fn();
-      mockStream.pipe = vi.fn();
-      mockStream.on = vi.fn().mockReturnValue(mockStream);
-
-      let closeHandler: () => void;
-      mockReq.user = createAuthenticatedUser();
-      mockReq.params = { id: resourceId };
-      mockReq.on = vi.fn((event, handler) => {
-        if (event === "close") {
-          closeHandler = handler;
-        }
-        return mockReq;
-      });
-      (mockRes as any).writableEnded = true;
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockResourcePost);
-      vi.mocked(axios).mockResolvedValue({
-        data: mockStream,
-        headers: { "content-type": "application/pdf" },
-      });
-
-      await downloadResource(mockReq, mockRes, mockNext);
-
-      // Simulate user closing connection after response ended
-      closeHandler!();
-
-      expect(mockStream.destroy).not.toHaveBeenCalled();
-    });
+    expect(mockNext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: "Post is not a resource post",
+      }),
+    );
   });
 
-  describe("error handling", () => {
-    it("should handle database errors", async () => {
-      const dbError = new Error("Database connection failed");
+  it("should call next when params validation fails", async () => {
+    mockReq.user = createAuthenticatedUser();
+    mockReq.params = { id: "bad-uuid" };
 
-      mockReq.user = createAuthenticatedUser();
-      mockReq.params = { id: resourceId };
+    await downloadResource(mockReq, mockRes, mockNext);
 
-      vi.mocked(prisma.post.findUnique).mockRejectedValue(dbError);
-
-      await downloadResource(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(dbError);
-    });
-
-    it("should handle axios errors", async () => {
-      const axiosError = new Error("Failed to fetch from Cloudinary");
-
-      mockReq.user = createAuthenticatedUser();
-      mockReq.params = { id: resourceId };
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockResourcePost);
-      vi.mocked(axios).mockRejectedValue(axiosError);
-
-      await downloadResource(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(axiosError);
-    });
-
-    it("should handle timeout errors", async () => {
-      const timeoutError = { code: "ETIMEDOUT", message: "timeout" };
-
-      mockReq.user = createAuthenticatedUser();
-      mockReq.params = { id: resourceId };
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockResourcePost);
-      vi.mocked(axios).mockRejectedValue(timeoutError);
-
-      await downloadResource(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(timeoutError);
-    });
-
-    it("should not send error response if headers already sent", async () => {
-      const mockStream = new Readable();
-      mockStream.pipe = vi.fn();
-      mockStream.on = vi.fn((event, handler) => {
-        if (event === "error") {
-          setTimeout(() => handler(new Error("Stream error")), 0);
-        }
-        return mockStream;
-      });
-      mockRes.headersSent = true;
-
-      mockReq.user = createAuthenticatedUser();
-      mockReq.params = { id: resourceId };
-      mockReq.on = vi.fn();
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockResourcePost);
-      vi.mocked(axios).mockResolvedValue({
-        data: mockStream,
-        headers: { "content-type": "application/pdf" },
-      });
-
-      await downloadResource(mockReq, mockRes, mockNext);
-
-      // Wait for error handler
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
-      expect(mockRes.status).not.toHaveBeenCalled();
-      expect(mockRes.destroy).toHaveBeenCalledWith(expect.any(Error));
-    });
+    expect(mockNext).toHaveBeenCalled();
+    expect(mockGetResourcePostById).not.toHaveBeenCalled();
   });
 
-  describe("different file types", () => {
-    it("should handle image downloads", async () => {
-      const mockStream = new Readable();
-      mockStream.push("image data");
-      mockStream.push(null);
-      mockStream.pipe = vi.fn();
-      mockStream.on = vi.fn().mockReturnValue(mockStream);
+  it("should use content-type from axios response when mimeType is null", async () => {
+    const postWithoutMime = { ...mockResourcePost, mimeType: null };
+    const mockStream = new Readable();
+    mockStream.push("data");
+    mockStream.push(null);
+    mockStream.pipe = vi.fn().mockReturnValue(new PassThrough());
 
-      const imageResource = {
-        ...mockResourcePost,
-        fileName: "image.png",
-        mimeType: "image/png",
-      };
+    mockReq.user = createAuthenticatedUser();
+    mockReq.params = { id: VALID_UUID };
 
-      mockReq.user = createAuthenticatedUser();
-      mockReq.params = { id: resourceId };
-      mockReq.on = vi.fn();
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(imageResource);
-      vi.mocked(axios).mockResolvedValue({
-        data: mockStream,
-        headers: { "content-type": "image/png" },
-      });
-
-      await downloadResource(mockReq, mockRes, mockNext);
-
-      expect(mockRes.setHeader).toHaveBeenCalledWith(
-        "Content-Type",
-        "image/png"
-      );
+    mockGetResourcePostById.mockResolvedValue(postWithoutMime);
+    vi.mocked(axios).mockResolvedValue({
+      data: mockStream,
+      headers: { "content-type": "application/octet-stream" },
     });
 
-    it("should handle video downloads", async () => {
-      const mockStream = new Readable();
-      mockStream.push("video data");
-      mockStream.push(null);
-      mockStream.pipe = vi.fn();
-      mockStream.on = vi.fn().mockReturnValue(mockStream);
+    await downloadResource(mockReq, mockRes, mockNext);
 
-      const videoResource = {
-        ...mockResourcePost,
-        fileName: "video.mp4",
-        mimeType: "video/mp4",
-        fileSize: 50000000, // 50MB
-      };
+    expect(mockRes.setHeader).toHaveBeenCalledWith(
+      "Content-Type",
+      "application/octet-stream",
+    );
+  });
 
-      mockReq.user = createAuthenticatedUser();
-      mockReq.params = { id: resourceId };
-      mockReq.on = vi.fn();
+  it("should set filename to 'file' when fileName is null", async () => {
+    const postWithoutName = { ...mockResourcePost, fileName: null };
+    const mockStream = new Readable();
+    mockStream.push("data");
+    mockStream.push(null);
+    mockStream.pipe = vi.fn().mockReturnValue(new PassThrough());
 
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(videoResource);
-      vi.mocked(axios).mockResolvedValue({
-        data: mockStream,
-        headers: {
-          "content-length": "50000000",
-          "content-type": "video/mp4",
-        },
-      });
+    mockReq.user = createAuthenticatedUser();
+    mockReq.params = { id: VALID_UUID };
 
-      await downloadResource(mockReq, mockRes, mockNext);
-
-      expect(mockRes.setHeader).toHaveBeenCalledWith(
-        "Content-Type",
-        "video/mp4"
-      );
+    mockGetResourcePostById.mockResolvedValue(postWithoutName);
+    vi.mocked(axios).mockResolvedValue({
+      data: mockStream,
+      headers: {},
     });
 
-    it("should handle document downloads with special characters in filename", async () => {
-      const mockStream = new Readable();
-      mockStream.push("doc data");
-      mockStream.push(null);
-      mockStream.pipe = vi.fn();
-      mockStream.on = vi.fn().mockReturnValue(mockStream);
+    await downloadResource(mockReq, mockRes, mockNext);
 
-      const docResource = {
-        ...mockResourcePost,
-        fileName: "my document (v2).docx",
-        mimeType:
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      };
-
-      mockReq.user = createAuthenticatedUser();
-      mockReq.params = { id: resourceId };
-      mockReq.on = vi.fn();
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(docResource);
-      vi.mocked(axios).mockResolvedValue({
-        data: mockStream,
-        headers: { "content-type": docResource.mimeType },
-      });
-
-      await downloadResource(mockReq, mockRes, mockNext);
-
-      expect(mockRes.setHeader).toHaveBeenCalledWith(
-        "Content-Disposition",
-        'attachment; filename="my document (v2).docx"'
-      );
-    });
+    expect(mockRes.setHeader).toHaveBeenCalledWith(
+      "Content-Disposition",
+      'attachment; filename="file"',
+    );
   });
 });

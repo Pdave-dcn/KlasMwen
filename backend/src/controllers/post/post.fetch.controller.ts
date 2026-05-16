@@ -1,158 +1,101 @@
 import axios from "axios";
 
 import { createLogger } from "../../core/config/logger.js";
-import PostService from "../../features/posts/service/PostService.js";
-import createActionLogger from "../../utils/logger.util.js";
+import { postService } from "../../features/posts/service/PostService.js";
+import { withLogging } from "../../utils/logger.util.js";
 import { uuidPaginationSchema } from "../../utils/pagination.util.js";
 import { PostIdParamSchema } from "../../zodSchemas/post.zod.js";
 
 import type { AuthenticatedRequest } from "../../types/AuthRequest.js";
-import type { Request, Response, NextFunction } from "express";
 
 const controllerLogger = createLogger({ module: "PostController" });
 
-const getAllPosts = async (req: Request, res: Response, next: NextFunction) => {
-  const actionLogger = createActionLogger(controllerLogger, "getAllPosts", req);
-
-  try {
-    actionLogger.info("Fetching all posts");
-    const startTime = Date.now();
-
-    const { user } = req as AuthenticatedRequest;
+const getAllPosts = withLogging<AuthenticatedRequest>(
+  controllerLogger, "getAllPosts",
+  async ({ req, res, log }) => {
+    log.info("Fetching all posts");
 
     const { limit, cursor } = uuidPaginationSchema.parse(req.query);
 
-    actionLogger.debug("Processing user posts request");
-    const serviceStartTime = Date.now();
-    const result = await PostService.getAllPosts(
-      user.id,
+    log.debug("Processing user posts request");
+    const result = await postService.query.getAllPosts(
+      req.user.id,
       limit,
-      cursor as string | undefined
+      cursor as string | undefined,
     );
-    const serviceDuration = Date.now() - serviceStartTime;
 
-    const totalDuration = Date.now() - startTime;
-    actionLogger.info(
+    log.info(
       {
         totalPosts: result.posts.length,
         hasMore: result.pagination.hasMore,
         nextCursor: result.pagination.nextCursor,
-        serviceDuration,
-        totalDuration,
       },
-      "All posts fetched successfully"
+      "All posts fetched successfully",
     );
 
-    return res.status(200).json({
+    res.status(200).json({
       data: result.posts,
       pagination: result.pagination,
     });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+  },
+);
 
-const getPostById = async (req: Request, res: Response, next: NextFunction) => {
-  const actionLogger = createActionLogger(controllerLogger, "getPostById", req);
-
-  try {
-    actionLogger.info("Fetching post by ID");
-    const startTime = Date.now();
-
-    const { user } = req as AuthenticatedRequest;
+const getPostById = withLogging<AuthenticatedRequest>(
+  controllerLogger, "getPostById",
+  async ({ req, res, log }) => {
+    log.info("Fetching post by ID");
 
     const { id: postId } = PostIdParamSchema.parse(req.params);
 
-    actionLogger.debug("Processing user post fetching by ID request");
-    const serviceStartTime = Date.now();
-    const post = await PostService.getPostById(postId, user.id);
-    const serviceDuration = Date.now() - serviceStartTime;
+    log.debug("Processing user post fetching by ID request");
+    const post = await postService.query.getPostById(postId, req.user.id);
 
-    const totalDuration = Date.now() - startTime;
-
-    actionLogger.info(
+    log.info(
       {
         postId: post.id,
         postType: post.type,
-        serviceDuration,
-        totalDuration,
       },
-      "Post retrieved successfully"
+      "Post retrieved successfully",
     );
 
-    return res.status(200).json({ data: post });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+    res.status(200).json({ data: post });
+  },
+);
 
-const getPostForEdit = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "getPostForEdit",
-    req
-  );
+const getPostForEdit = withLogging<AuthenticatedRequest>(
+  controllerLogger, "getPostForEdit",
+  async ({ req, res, log }) => {
+    log.info("Fetching post for edit");
 
-  try {
-    actionLogger.info("Fetching post for edit");
-    const startTime = Date.now();
-
-    const { user } = req as AuthenticatedRequest;
     const { id: postId } = PostIdParamSchema.parse(req.params);
 
-    actionLogger.debug("Processing user post fetch request");
-    const serviceStartTime = Date.now();
-    const post = await PostService.getPostForEdit(user, postId);
-    const serviceDuration = Date.now() - serviceStartTime;
+    log.debug("Processing user post fetch request");
+    const post = await postService.command.getPostForEdit(req.user, postId);
 
-    const totalDuration = Date.now() - startTime;
-    actionLogger.info(
+    log.info(
       {
         postId: post.id,
-        userId: user.id,
-        serviceDuration,
-        totalDuration,
+        userId: req.user.id,
       },
-      "Post for edit retrieved successfully"
+      "Post for edit retrieved successfully",
     );
 
-    return res.status(200).json({ data: post });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+    res.status(200).json({ data: post });
+  },
+);
 
-/* eslint-disable-next-line max-lines-per-function */
-const downloadResource = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "downloadResource",
-    req
-  );
-
-  try {
-    actionLogger.info("Downloading post resource");
-    const startTime = Date.now();
-
-    const { user } = req as AuthenticatedRequest;
+const downloadResource = withLogging<AuthenticatedRequest>(
+  controllerLogger, "downloadResource",
+  async ({ req, res, log }) => {
+    log.info("Downloading post resource");
 
     const { id: postId } = PostIdParamSchema.parse(req.params);
 
-    const serviceStartTime = Date.now();
-    const resource = await PostService.getResourcePostById(postId);
-    const serviceDuration = Date.now() - serviceStartTime;
+    const resource = await postService.query.getResourcePostById(postId);
 
-    actionLogger.debug(
+    log.debug(
       { fileUrl: resource.fileUrl },
-      "Fetching file from Cloudinary"
+      "Fetching file from Cloudinary",
     );
     const fileResponse = await axios({
       method: "GET",
@@ -162,10 +105,11 @@ const downloadResource = async (
     });
 
     const fileSize = parseInt(
-      fileResponse.headers["content-length"] ?? "0",
-      10
+      (fileResponse.headers["content-length"] as string) ?? "0",
+      10,
     );
-    const mimeType = resource.mimeType ?? fileResponse.headers["content-type"];
+    const mimeType =
+      resource.mimeType ?? (fileResponse.headers["content-type"] as string);
     const fileName = resource.fileName ?? "file";
 
     res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
@@ -173,9 +117,9 @@ const downloadResource = async (
     if (fileSize > 0) res.setHeader("Content-Length", fileSize);
 
     fileResponse.data.on("error", (err: Error) => {
-      actionLogger.error(
+      log.error(
         { err, postId },
-        "Error while streaming file from Cloudinary"
+        "Error while streaming file from Cloudinary",
       );
       if (!res.headersSent) res.status(500).send("Error streaming file");
       res.destroy(err);
@@ -183,28 +127,22 @@ const downloadResource = async (
 
     req.on("close", () => {
       if (!res.writableEnded) {
-        actionLogger.warn({ postId, userId: user.id }, "User aborted download");
+        log.warn({ postId, userId: req.user.id }, "User aborted download");
         fileResponse.data.destroy();
       }
     });
 
     fileResponse.data.pipe(res).on("end", () => {
-      actionLogger.info(
+      log.info(
         {
           postId: resource.id,
-          userId: user.id,
+          userId: req.user.id,
           fileSize,
-          totalDuration: Date.now() - startTime,
-          serviceDuration,
         },
-        "Post resource streamed successfully"
+        "Post resource streamed successfully",
       );
     });
-
-    return;
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+  },
+);
 
 export { getAllPosts, getPostById, getPostForEdit, downloadResource };

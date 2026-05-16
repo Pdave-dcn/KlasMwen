@@ -1,15 +1,23 @@
 import prisma from "../../../../../core/config/db.js";
 
-import type { Prisma } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 
-/**
- * PostValidationRepository - Validation/existence checks
- */
-class PostValidationRepository {
-  /**
-   * Check if a post exists by ID
-   */
-  static async exists(postId: string): Promise<Prisma.PostGetPayload<{
+interface IPostValidationRepository {
+  exists(postId: string): Promise<Prisma.PostGetPayload<{
+    select: {
+      id: true;
+      authorId: true;
+      type: true;
+      fileUrl: true;
+      createdAt: true;
+    };
+  }> | null>;
+}
+
+class PostValidationRepository implements IPostValidationRepository {
+  constructor(private client: PrismaClient) {}
+
+  async exists(postId: string): Promise<Prisma.PostGetPayload<{
     select: {
       id: true;
       authorId: true;
@@ -18,7 +26,7 @@ class PostValidationRepository {
       createdAt: true;
     };
   }> | null> {
-    const post = await prisma.post.findUnique({
+    const post = await this.client.post.findUnique({
       where: { id: postId },
       select: {
         id: true,
@@ -32,4 +40,5 @@ class PostValidationRepository {
   }
 }
 
-export default PostValidationRepository;
+const postValidationRepository = new PostValidationRepository(prisma);
+export { postValidationRepository, type IPostValidationRepository };

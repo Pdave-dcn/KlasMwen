@@ -1,5 +1,5 @@
 import { createLogger } from "../core/config/logger.js";
-import PostService from "../features/posts/service/PostService.js";
+import { postService } from "../features/posts/service/PostService.js";
 import createActionLogger from "../utils/logger.util.js";
 import { SearchPostsSchema } from "../zodSchemas/search.zod.js";
 
@@ -30,7 +30,7 @@ const searchPosts = async (req: Request, res: Response, next: NextFunction) => {
 
     actionLogger.debug("Executing post search");
     const serviceStartTime = Date.now();
-    const result = await PostService.searchPosts(
+    const result = await postService.search.searchPosts(
       user.id,
       limit,
       sanitizedSearchTerm,

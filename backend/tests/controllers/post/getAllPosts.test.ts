@@ -1,10 +1,20 @@
 import { Request, Response } from "express";
 
 import { getAllPosts } from "../../../src/controllers/post/post.fetch.controller";
-import prisma from "../../../src/core/config/db";
+
 import { createAuthenticatedUser } from "./shared/helpers";
 import { createMockRequest, createMockResponse } from "./shared/mocks";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const mockGetAllPosts = vi.fn();
+
+vi.mock("../../../src/features/posts/service/PostService.js", () => ({
+  postService: {
+    query: {
+      getAllPosts: (...args: unknown[]) => mockGetAllPosts(...args),
+    },
+  },
+}));
 
 vi.mock("../../../src/core/config/logger.js", () => ({
   createLogger: vi.fn(() => ({
@@ -37,26 +47,8 @@ vi.mock("../../../src/core/error/index.js", () => ({
   handleError: vi.fn(),
 }));
 
-vi.mock("../../../src/core/config/db.js", () => ({
-  default: {
-    post: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-      delete: vi.fn(),
-    },
-    bookmark: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-    },
-    like: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-    },
-  },
-}));
-
 describe("getAllPosts", () => {
-  let mockReq: Request;
+  let mockReq: Request & { user?: unknown };
   let mockRes: Response;
   let mockNext: any;
 
@@ -67,105 +59,58 @@ describe("getAllPosts", () => {
     vi.clearAllMocks();
   });
 
-  it("should return a list of posts with default pagination", async () => {
-    mockReq.user = createAuthenticatedUser();
+  it("should return paginated posts with 200", async () => {
+    mockReq.user = createAuthenticatedUser({ id: "u1" });
+    mockReq.query = { limit: "10" };
 
-    const mockPosts = [
-      {
-        id: "postId 1",
-        title: "Post 1",
-        content: "Content 1",
-        type: "NOTE",
-        fileUrl: null,
-        fileName: null,
-        createdAt: new Date(),
-        author: {
-          id: "60676309-9958-4a6a-b4bc-463199dab4ee",
-          username: "testUser",
-          Avatar: { id: 1, url: "https://mock-url.com-avatar.svg" },
-        },
-        postTags: [
-          { postId: "postId 1", tagId: 1, tag: { id: 1, name: "tag1" } },
-        ],
-        _count: { comments: 0, likes: 0 },
-      },
-    ];
-
-    vi.mocked(prisma.post.findMany).mockResolvedValue(mockPosts as any);
-
-    // Handling bookmark and like states
-    vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.like.findMany).mockResolvedValue([]);
+    const paginatedResult = {
+      posts: [{ id: "p1", title: "Post 1" }],
+      pagination: { nextCursor: null, hasMore: false },
+    };
+    mockGetAllPosts.mockResolvedValue(paginatedResult);
 
     await getAllPosts(mockReq, mockRes, mockNext);
 
+    expect(mockGetAllPosts).toHaveBeenCalledWith("u1", 10, undefined);
     expect(mockNext).not.toHaveBeenCalled();
-    expect(prisma.post.findMany).toHaveBeenCalled();
     expect(mockRes.status).toHaveBeenCalledWith(200);
-    expect(mockRes.json).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.arrayContaining([expect.any(Object)]),
-        pagination: {
-          hasMore: false,
-          nextCursor: null,
-        },
-      })
+    expect(mockRes.json).toHaveBeenCalledWith({
+      data: paginatedResult.posts,
+      pagination: paginatedResult.pagination,
+    });
+  });
+
+  it("should pass cursor when provided", async () => {
+    mockReq.user = createAuthenticatedUser({ id: "u1" });
+    mockReq.query = {
+      limit: "5",
+      cursor: "550e8400-e29b-41d4-a716-446655440000",
+    };
+
+    mockGetAllPosts.mockResolvedValue({
+      posts: [],
+      pagination: { nextCursor: null, hasMore: false },
+    });
+
+    await getAllPosts(mockReq, mockRes, mockNext);
+
+    expect(mockGetAllPosts).toHaveBeenCalledWith(
+      "u1",
+      5,
+      "550e8400-e29b-41d4-a716-446655440000",
     );
   });
 
-  it("should handle custom pagination parameters", async () => {
-    mockReq.user = createAuthenticatedUser();
-    mockReq.query = { limit: "2" };
-    const mockPosts = [
-      {
-        id: 6,
-        title: "Post 6",
-        content: "Content 6",
-        type: "NOTE",
-        fileUrl: null,
-        fileName: null,
-        createdAt: new Date(),
-        author: {
-          id: 1,
-          username: "testUser",
-          Avatar: { id: 2, url: "https://mock-url.com-avatar2.svg" },
-        },
-        postTags: [],
-        _count: { comments: 0, likes: 0 },
-      },
-    ];
+  it("should call next when service throws", async () => {
+    mockReq.user = createAuthenticatedUser({ id: "u1" });
+    mockReq.query = { limit: "10" };
 
-    vi.mocked(prisma.post.findMany).mockResolvedValue(mockPosts as any);
-
-    // Handling bookmark and like states
-    vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.like.findMany).mockResolvedValue([]);
+    const error = new Error("DB error");
+    mockGetAllPosts.mockRejectedValue(error);
 
     await getAllPosts(mockReq, mockRes, mockNext);
 
-    expect(mockNext).not.toHaveBeenCalled();
-    expect(prisma.post.findMany).toHaveBeenCalled();
-
-    expect(mockRes.status).toHaveBeenCalledWith(200);
-    expect(mockRes.json).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.arrayContaining([expect.any(Object)]),
-        pagination: {
-          hasMore: false,
-          nextCursor: null,
-        },
-      })
-    );
-  });
-
-  it("should call handleError if database query fails", async () => {
-    mockReq.user = createAuthenticatedUser();
-    const mockError = new Error("Database error");
-
-    vi.mocked(prisma.post.findMany).mockRejectedValue(mockError);
-
-    await getAllPosts(mockReq, mockRes, mockNext);
-
-    expect(mockNext).toHaveBeenCalledWith(mockError);
+    expect(mockNext).toHaveBeenCalledWith(error);
+    expect(mockRes.status).not.toHaveBeenCalled();
   });
 });

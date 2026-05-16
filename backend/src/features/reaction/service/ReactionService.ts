@@ -1,5 +1,5 @@
 import NotificationService from "../../notification/service/NotificationService.js";
-import PostService from "../../posts/service/PostService.js";
+import { postService } from "../../posts/service/PostService.js";
 
 import ReactionRepository from "./ReactionRepository.js";
 
@@ -24,7 +24,7 @@ class ReactionService {
     app?: Application
   ): Promise<ToggleLikeResult> {
     // Verify post exists and get author
-    const post = await PostService.verifyPostExists(postId);
+    const post = await postService.validate.verifyPostExists(postId);
 
     // Check if like already exists
     const existingLike = await ReactionRepository.findLike(userId, postId);

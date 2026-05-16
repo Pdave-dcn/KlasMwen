@@ -1,12 +1,5 @@
 import { Prisma } from "@prisma/client";
 
-import type {
-  RawPost,
-  TransformedPost,
-  CreatePostInput,
-} from "../../../../types/postTypes.js";
-import type { PostPreview } from "../../postContentValueFormatter.js";
-
 const PostFragments = {
   author: {
     select: {
@@ -103,6 +96,73 @@ const bookmarkWithPost = Prisma.validator<Prisma.BookmarkFindManyArgs>()({
 
 type BookmarkWithPost = Prisma.BookmarkGetPayload<typeof bookmarkWithPost>;
 
+type ExtendedPost = Prisma.PostGetPayload<{
+  select: typeof BaseSelectors.extendedPost;
+}>;
+
+type BasePost = Prisma.PostGetPayload<{
+  select: typeof BaseSelectors.post;
+}>;
+
+type TransformedPost = Omit<ExtendedPost, "postTags"> & {
+  tags: { id: number; name: string }[];
+};
+
+interface ResourcePost extends TransformedPost {
+  type: "RESOURCE";
+  fileUrl: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+}
+
+interface TextPost extends TransformedPost {
+  type: "QUESTION" | "NOTE";
+  content: string;
+}
+
+type PostPreview = Omit<
+  TransformedPost,
+  "updatedAt" | "mimeType" | "fileSize" | "comments"
+>;
+
+type EditResponse = {
+  id: string;
+  title: string;
+  tags: TransformedPost["tags"];
+  hasFile: boolean;
+} & (
+  | {
+      hasFile: true;
+      fileName: string;
+      fileSize: number;
+    }
+  | {
+      hasFile: false;
+      content: string;
+    }
+);
+
+interface BasePostInput {
+  title: string;
+  tagIds: number[];
+}
+
+interface TextPostInput extends BasePostInput {
+  type: "QUESTION" | "NOTE";
+  content: string;
+}
+
+interface ResourcePostInput extends BasePostInput {
+  type: "RESOURCE";
+  fileUrl: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+}
+
+type CreatePostInput = TextPostInput | ResourcePostInput;
+
 interface BookmarkAndLikeStates {
   bookmarkedPostIds: Set<string>;
   likedPostIds: Set<string>;
@@ -140,9 +200,15 @@ export type {
   EnrichedPost,
   EnrichedPostPreview,
   PostPreview,
-  RawPost,
+  EditResponse,
+  TextPost,
+  ResourcePost,
   TransformedPost,
   CreatePostInput,
+  TextPostInput,
+  ResourcePostInput,
   UploadedFileInfo,
+  ExtendedPost,
+  BasePost,
 };
 export { likeWithPost, bookmarkWithPost, BaseSelectors };

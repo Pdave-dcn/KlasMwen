@@ -1,6 +1,6 @@
 import { createLogger } from "../../core/config/logger.js";
 import CommentService from "../../features/comments/service/CommentService.js";
-import PostService from "../../features/posts/service/PostService.js";
+import { postService } from "../../features/posts/service/PostService.js";
 import UserService from "../../features/user/service/UserService.js";
 import createActionLogger from "../../utils/logger.util.js";
 import {
@@ -27,7 +27,7 @@ const getMyPosts = async (req: Request, res: Response, next: NextFunction) => {
 
     actionLogger.debug("Processing user posts request");
     const serviceStartTime = Date.now();
-    const result = await PostService.getUserPosts(
+    const result = await postService.query.getUserPosts(
       user.id,
       limit,
       cursor as string | undefined
@@ -74,7 +74,7 @@ const getPostsLikedByMe = async (req: Request, res: Response, next: NextFunction
 
     actionLogger.debug("Fetching and processing user liked posts");
     const serviceStartTime = Date.now();
-    const result = await PostService.getUserLikedPosts(
+    const result = await postService.query.getUserLikedPosts(
       user.id,
       limit,
       cursor as string | undefined
@@ -124,7 +124,7 @@ const getUserPosts = async (req: Request, res: Response, next: NextFunction) => 
 
     actionLogger.debug("Processing user posts request");
     const serviceStartTime = Date.now();
-    const result = await PostService.getUserPosts(
+    const result = await postService.query.getUserPosts(
       userId,
       limit,
       cursor as string | undefined
@@ -225,7 +225,7 @@ const getUserMediaPosts = async (req: Request, res: Response, next: NextFunction
 
     actionLogger.debug("Processing user posts request");
     const serviceStartTime = Date.now();
-    const result = await PostService.getUserMediaPosts(
+    const result = await postService.query.getUserMediaPosts(
       userId,
       limit,
       cursor as string | undefined

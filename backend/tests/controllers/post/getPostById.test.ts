@@ -1,12 +1,21 @@
 import { Request, Response } from "express";
 
 import { getPostById } from "../../../src/controllers/post/post.fetch.controller";
-import prisma from "../../../src/core/config/db";
 import { PostNotFoundError } from "../../../src/core/error/custom/post.error";
 
 import { createAuthenticatedUser } from "./shared/helpers";
 import { createMockRequest, createMockResponse } from "./shared/mocks";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const mockGetPostById = vi.fn();
+
+vi.mock("../../../src/features/posts/service/PostService.js", () => ({
+  postService: {
+    query: {
+      getPostById: (...args: unknown[]) => mockGetPostById(...args),
+    },
+  },
+}));
 
 vi.mock("../../../src/core/config/logger.js", () => ({
   createLogger: vi.fn(() => ({
@@ -39,26 +48,8 @@ vi.mock("../../../src/core/error/index.js", () => ({
   handleError: vi.fn(),
 }));
 
-vi.mock("../../../src/core/config/db.js", () => ({
-  default: {
-    post: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-      delete: vi.fn(),
-    },
-    bookmark: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-    },
-    like: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-    },
-  },
-}));
-
 describe("getPostById", () => {
-  let mockReq: Request;
+  let mockReq: Request & { user?: unknown };
   let mockRes: Response;
   let mockNext: any;
 
@@ -69,56 +60,43 @@ describe("getPostById", () => {
     vi.clearAllMocks();
   });
 
-  it("should return a specific post", async () => {
-    mockReq.user = createAuthenticatedUser();
-    mockReq.params = { id: "60676309-9958-4a6a-b4bc-463199dab4ee" };
+  const VALID_UUID = "550e8400-e29b-41d4-a716-446655440000";
 
-    const mockPost = {
-      id: "postId-1",
-      title: "Test",
-      content: "Test content",
-      type: "NOTE",
-      fileUrl: null,
-      fileName: null,
-      fileSize: null,
-      createdAt: new Date(),
-      author: {
-        id: "authorId-1",
-        username: "testUser",
-        Avatar: { id: 56, url: "mock-url-56.com" },
-      },
-      postTags: [],
-      _count: { comments: 1, likes: 0 },
-    };
+  it("should return a specific post with 200", async () => {
+    const userId = "u1";
+    mockReq.user = createAuthenticatedUser({ id: userId });
+    mockReq.params = { id: VALID_UUID };
 
-    vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPost as any);
-
-    // For "isLiked" state in each post
-    vi.mocked(prisma.like.findUnique).mockResolvedValue(null);
-    // For "isBookmark" state in each post
-    vi.mocked(prisma.bookmark.findUnique).mockResolvedValue(null);
+    const mockPost = { id: VALID_UUID, title: "Test", type: "NOTE" };
+    mockGetPostById.mockResolvedValue(mockPost);
 
     await getPostById(mockReq, mockRes, mockNext);
 
+    expect(mockGetPostById).toHaveBeenCalledWith(VALID_UUID, userId);
     expect(mockNext).not.toHaveBeenCalled();
-    expect(prisma.post.findUnique).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: "60676309-9958-4a6a-b4bc-463199dab4ee" },
-      })
-    );
-
     expect(mockRes.status).toHaveBeenCalledWith(200);
-    expect(mockRes.json).toHaveBeenCalled();
+    expect(mockRes.json).toHaveBeenCalledWith({ data: mockPost });
   });
 
-  it("should call handleError with PostNotFoundError if post is not found", async () => {
+  it("should call next with PostNotFoundError if post is not found", async () => {
     mockReq.user = createAuthenticatedUser();
-    mockReq.params = { id: "60676309-9958-4a6a-b4bc-463199dab4ee" };
+    mockReq.params = { id: VALID_UUID };
 
-    vi.mocked(prisma.post.findUnique).mockResolvedValue(null);
+    mockGetPostById.mockRejectedValue(new PostNotFoundError(VALID_UUID));
 
     await getPostById(mockReq, mockRes, mockNext);
 
     expect(mockNext).toHaveBeenCalledWith(expect.any(PostNotFoundError));
+    expect(mockRes.status).not.toHaveBeenCalled();
+  });
+
+  it("should call next when params validation fails", async () => {
+    mockReq.user = createAuthenticatedUser();
+    mockReq.params = { id: "bad-uuid" };
+
+    await getPostById(mockReq, mockRes, mockNext);
+
+    expect(mockNext).toHaveBeenCalled();
+    expect(mockGetPostById).not.toHaveBeenCalled();
   });
 });

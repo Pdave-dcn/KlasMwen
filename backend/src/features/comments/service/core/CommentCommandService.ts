@@ -1,7 +1,7 @@
 import { PostNotFoundError } from "../../../../core/error/custom/post.error.js";
 import { assertPermission } from "../../../../core/security/rbac.js";
 import NotificationService from "../../../notification/service/NotificationService.js";
-import { PostValidationService } from "../../../posts/service/core/PostValidationService.js";
+import { postService } from "../../../posts/service/PostService.js";
 import CommentRepository from "../commentRepository.js";
 
 import CommentValidationService from "./CommentValidationService.js";
@@ -50,7 +50,7 @@ class CommentCommandService {
       postId: string;
       commentId: number;
     },
-    app?: Application
+    app?: Application,
   ) {
     if (data.isReply && data.parentAuthorId) {
       // Notify parent comment author
@@ -62,7 +62,7 @@ class CommentCommandService {
           postId: data.postId,
           commentId: data.commentId,
         },
-        app
+        app,
       );
     } else {
       // Notify post author
@@ -74,7 +74,7 @@ class CommentCommandService {
           postId: data.postId,
           commentId: data.commentId,
         },
-        app
+        app,
       );
     }
   }
@@ -84,7 +84,7 @@ class CommentCommandService {
    */
   static async createComment(data: CreateCommentData, app?: Application) {
     // Verify post exists
-    const post = await PostValidationService.verifyPostExists(data.postId);
+    const post = await postService.validate.verifyPostExists(data.postId);
     if (!post) {
       throw new PostNotFoundError(data.postId);
     }
@@ -98,7 +98,7 @@ class CommentCommandService {
       const parentComment =
         await CommentValidationService.validateParentComment(
           data.parentId,
-          data.postId
+          data.postId,
         );
 
       const hierarchy = this.resolveCommentHierarchy(parentComment);
@@ -128,7 +128,7 @@ class CommentCommandService {
         postId: data.postId,
         commentId: newComment.id,
       },
-      app
+      app,
     );
 
     return newComment;

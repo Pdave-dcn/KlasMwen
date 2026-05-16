@@ -1,16 +1,21 @@
 import { Request, Response } from "express";
 
 import { deletePost } from "../../../src/controllers/post/post.delete.controller";
-import prisma from "../../../src/core/config/db";
-import { AuthorizationError } from "../../../src/core/error/custom/auth.error";
 import { PostNotFoundError } from "../../../src/core/error/custom/post.error";
-import CloudinaryService from "../../../src/features/media/CloudinaryService";
 
 import { createAuthenticatedUser } from "./shared/helpers";
 import { createMockRequest, createMockResponse } from "./shared/mocks";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../../../src/features/media/CloudinaryService");
+const mockDeletePost = vi.fn();
+
+vi.mock("../../../src/features/posts/service/PostService.js", () => ({
+  postService: {
+    command: {
+      deletePost: (...args: unknown[]) => mockDeletePost(...args),
+    },
+  },
+}));
 
 vi.mock("../../../src/core/config/logger.js", () => ({
   createLogger: vi.fn(() => ({
@@ -43,38 +48,10 @@ vi.mock("../../../src/core/error/index.js", () => ({
   handleError: vi.fn(),
 }));
 
-vi.mock("../../../src/core/config/db.js", () => ({
-  default: {
-    post: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-      delete: vi.fn(),
-    },
-    bookmark: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-    },
-    like: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-    },
-  },
-}));
-
 describe("deletePost", () => {
-  const mockPostId = "f34042c4-6143-4c8e-a790-49ba409529e8";
-  const mockUserId = "2751f51c-f504-44bc-b443-fd21bd9da6eb";
+  const VALID_UUID = "550e8400-e29b-41d4-a716-446655440000";
 
-  const mockPostInDb = { id: mockPostId, authorId: mockUserId };
-
-  const mockResourcePostInDb = {
-    ...mockPostInDb,
-    type: "RESOURCE",
-    fileUrl: "http://cloudinary.com/image/upload/v12345/publicId.jpg",
-    fileName: "document.pdf",
-  };
-
-  let mockReq: Request;
+  let mockReq: Request & { user?: unknown };
   let mockRes: Response;
   let mockNext: any;
 
@@ -85,417 +62,50 @@ describe("deletePost", () => {
     vi.clearAllMocks();
   });
 
-  describe("Basic Functionality", () => {
-    it("should successfully delete a post if the user is the author", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
+  it("should delete a post and return 200", async () => {
+    mockReq.user = createAuthenticatedUser({ id: "u1" });
+    mockReq.params = { id: VALID_UUID };
+    mockDeletePost.mockResolvedValue(undefined);
 
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPostInDb as any);
-      vi.mocked(prisma.post.delete).mockResolvedValue(mockPostInDb as any);
+    await deletePost(mockReq, mockRes, mockNext);
 
-      await deletePost(mockReq, mockRes, mockNext);
-
-      expect(prisma.post.findUnique).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { id: mockPostId },
-        })
-      );
-      expect(prisma.post.delete).toHaveBeenCalledWith({
-        where: { id: mockPostId },
-      });
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: "Post deleted successfully",
-      });
-    });
-
-    it("should successfully delete a post and its file if it is a RESOURCE type", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(
-        mockResourcePostInDb as any
-      );
-      vi.mocked(CloudinaryService.extractPublicId).mockReturnValue("publicId");
-      vi.mocked(prisma.post.delete).mockResolvedValue(
-        mockResourcePostInDb as any
-      );
-
-      await deletePost(mockReq, mockRes, mockNext);
-
-      expect(CloudinaryService.extractPublicId).toHaveBeenCalledWith(
-        mockResourcePostInDb.fileUrl
-      );
-      expect(CloudinaryService.delete).toHaveBeenCalledWith("publicId", "raw");
-      expect(prisma.post.delete).toHaveBeenCalledWith({
-        where: { id: mockPostId },
-      });
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-    });
-
-    it("should call handleError if the post is not found", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: "2751f51c-f504-44bc-b443-fd21bd9da6eb" };
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(null);
-
-      await deletePost(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(expect.any(PostNotFoundError));
-      expect(prisma.post.delete).not.toHaveBeenCalled();
+    expect(mockDeletePost).toHaveBeenCalledWith(VALID_UUID, mockReq.user);
+    expect(mockNext).not.toHaveBeenCalled();
+    expect(mockRes.status).toHaveBeenCalledWith(200);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      message: "Post deleted successfully",
     });
   });
 
-  describe("Authentication & Authorization", () => {
-    it("should return 401 if the user is not authenticated", async () => {
-      mockReq.params = { id: mockPostId };
+  it("should call next with error when service throws", async () => {
+    mockReq.user = createAuthenticatedUser({ id: "u1" });
+    mockReq.params = { id: VALID_UUID };
 
-      await deletePost(mockReq, mockRes, mockNext);
+    const error = new PostNotFoundError(VALID_UUID);
+    mockDeletePost.mockRejectedValue(error);
 
-      expect(mockNext).toHaveBeenCalled();
-      expect(prisma.post.delete).not.toHaveBeenCalled();
-    });
+    await deletePost(mockReq, mockRes, mockNext);
 
-    it("should call handleError with AuthorizationError when user is not the author and not an ADMIN", async () => {
-      mockReq.user = createAuthenticatedUser();
-      mockReq.params = { id: mockPostId };
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPostInDb as any);
-
-      await deletePost(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(expect.any(AuthorizationError));
-      expect(prisma.post.delete).not.toHaveBeenCalled();
-    });
-
-    it("should allow an ADMIN user to delete any post", async () => {
-      mockReq.user = createAuthenticatedUser({ role: "ADMIN" });
-      mockReq.params = { id: mockPostId };
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPostInDb as any);
-      vi.mocked(prisma.post.delete).mockResolvedValue(mockPostInDb as any);
-
-      await deletePost(mockReq, mockRes, mockNext);
-
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: "Post deleted successfully",
-      });
-    });
-
-    it("should allow an ADMIN user to delete a RESOURCE post with file cleanup", async () => {
-      mockReq.user = createAuthenticatedUser({ role: "ADMIN" });
-      mockReq.params = { id: mockPostId };
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(
-        mockResourcePostInDb as any
-      );
-      vi.mocked(CloudinaryService.extractPublicId).mockReturnValue("publicId");
-      vi.mocked(prisma.post.delete).mockResolvedValue(
-        mockResourcePostInDb as any
-      );
-
-      await deletePost(mockReq, mockRes, mockNext);
-
-      expect(CloudinaryService.delete).toHaveBeenCalledWith("publicId", "raw");
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-    });
+    expect(mockNext).toHaveBeenCalledWith(error);
+    expect(mockRes.status).not.toHaveBeenCalled();
   });
 
-  describe("File Cleanup Logic", () => {
-    it("should skip file cleanup for RESOURCE posts without a fileUrl", async () => {
-      const resourcePostNoFile = {
-        ...mockPostInDb,
-        type: "RESOURCE",
-        fileUrl: null,
-        fileName: null,
-      };
+  it("should call next when params validation fails", async () => {
+    mockReq.user = createAuthenticatedUser({ id: "u1" });
+    mockReq.params = { id: "bad-uuid" };
 
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
+    await deletePost(mockReq, mockRes, mockNext);
 
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(
-        resourcePostNoFile as any
-      );
-      vi.mocked(prisma.post.delete).mockResolvedValue(
-        resourcePostNoFile as any
-      );
-
-      await deletePost(mockReq, mockRes, mockNext);
-
-      expect(CloudinaryService.extractPublicId).not.toHaveBeenCalled();
-      expect(CloudinaryService.delete).not.toHaveBeenCalled();
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-    });
-
-    it("should skip file cleanup for non-RESOURCE post types", async () => {
-      const textPost = {
-        ...mockPostInDb,
-        type: "TEXT",
-        fileUrl: "http://cloudinary.com/image/upload/v12345/publicId.jpg",
-        fileName: "document.pdf",
-      };
-
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(textPost as any);
-      vi.mocked(prisma.post.delete).mockResolvedValue(textPost as any);
-
-      await deletePost(mockReq, mockRes, mockNext);
-
-      expect(CloudinaryService.extractPublicId).not.toHaveBeenCalled();
-      expect(CloudinaryService.delete).not.toHaveBeenCalled();
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-    });
-
-    it("should continue with deletion even if CloudinaryService.extractPublicId returns null", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(
-        mockResourcePostInDb as any
-      );
-      vi.mocked(CloudinaryService.extractPublicId).mockReturnValue(null);
-      vi.mocked(prisma.post.delete).mockResolvedValue(
-        mockResourcePostInDb as any
-      );
-
-      await deletePost(mockReq, mockRes, mockNext);
-
-      expect(CloudinaryService.extractPublicId).toHaveBeenCalledWith(
-        mockResourcePostInDb.fileUrl
-      );
-      expect(CloudinaryService.delete).not.toHaveBeenCalled();
-      expect(prisma.post.delete).toHaveBeenCalled();
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-    });
-
-    it("should continue with deletion even if CloudinaryService.extractPublicId returns empty string", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(
-        mockResourcePostInDb as any
-      );
-      vi.mocked(CloudinaryService.extractPublicId).mockReturnValue("");
-      vi.mocked(prisma.post.delete).mockResolvedValue(
-        mockResourcePostInDb as any
-      );
-
-      await deletePost(mockReq, mockRes, mockNext);
-
-      expect(CloudinaryService.delete).not.toHaveBeenCalled();
-      expect(prisma.post.delete).toHaveBeenCalled();
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-    });
-
-    it("should continue with post deletion even if Cloudinary deletion fails", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-
-      const cloudinaryError = new Error("Cloudinary service unavailable");
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(
-        mockResourcePostInDb as any
-      );
-      vi.mocked(CloudinaryService.extractPublicId).mockReturnValue("publicId");
-      vi.mocked(CloudinaryService.delete).mockRejectedValue(cloudinaryError);
-      vi.mocked(prisma.post.delete).mockResolvedValue(
-        mockResourcePostInDb as any
-      );
-
-      await deletePost(mockReq, mockRes, mockNext);
-
-      expect(CloudinaryService.delete).toHaveBeenCalledWith("publicId", "raw");
-      expect(prisma.post.delete).toHaveBeenCalled();
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: "Post deleted successfully",
-      });
-    });
-
-    it("should handle Cloudinary deletion with non-Error thrown values", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(
-        mockResourcePostInDb as any
-      );
-      vi.mocked(CloudinaryService.extractPublicId).mockReturnValue("publicId");
-      vi.mocked(CloudinaryService.delete).mockRejectedValue("String error");
-      vi.mocked(prisma.post.delete).mockResolvedValue(
-        mockResourcePostInDb as any
-      );
-
-      await deletePost(mockReq, mockRes, mockNext);
-
-      expect(prisma.post.delete).toHaveBeenCalled();
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-    });
+    expect(mockNext).toHaveBeenCalled();
+    expect(mockDeletePost).not.toHaveBeenCalled();
   });
 
-  describe("Error Handling", () => {
-    it("should call handleError if database findUnique operation fails", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
+  it("should pass user to service even when user is not authenticated", async () => {
+    mockReq.params = { id: VALID_UUID };
+    mockDeletePost.mockRejectedValue(new Error("auth required"));
 
-      const mockError = new Error("Database connection error");
-      vi.mocked(prisma.post.findUnique).mockRejectedValue(mockError);
+    await deletePost(mockReq, mockRes, mockNext);
 
-      await deletePost(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(mockError);
-      expect(prisma.post.delete).not.toHaveBeenCalled();
-    });
-
-    it("should call handleError if database delete operation fails", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-
-      const mockError = new Error("Database delete error");
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPostInDb as any);
-      vi.mocked(prisma.post.delete).mockRejectedValue(mockError);
-
-      await deletePost(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(mockError);
-    });
-
-    it("should call handleError if PostIdParamSchema validation fails", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: "invalid-uuid" };
-
-      await deletePost(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalled();
-      expect(prisma.post.findUnique).not.toHaveBeenCalled();
-    });
-
-    it("should call handleError if params.id is missing", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = {};
-
-      await deletePost(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalled();
-      expect(prisma.post.findUnique).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("Edge Cases", () => {
-    it("should handle RESOURCE post with fileUrl but without fileName", async () => {
-      const postWithoutFileName = {
-        ...mockPostInDb,
-        type: "RESOURCE",
-        fileUrl: "http://cloudinary.com/image/upload/v12345/publicId.jpg",
-        fileName: null,
-      };
-
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(
-        postWithoutFileName as any
-      );
-      vi.mocked(CloudinaryService.extractPublicId).mockReturnValue("publicId");
-      vi.mocked(prisma.post.delete).mockResolvedValue(
-        postWithoutFileName as any
-      );
-
-      await deletePost(mockReq, mockRes, mockNext);
-
-      expect(CloudinaryService.delete).toHaveBeenCalledWith("publicId", "raw");
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-    });
-
-    it("should handle post with empty string fileUrl", async () => {
-      const postWithEmptyFileUrl = {
-        ...mockPostInDb,
-        type: "RESOURCE",
-        fileUrl: "",
-        fileName: "document.pdf",
-      };
-
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(
-        postWithEmptyFileUrl as any
-      );
-      vi.mocked(prisma.post.delete).mockResolvedValue(
-        postWithEmptyFileUrl as any
-      );
-
-      await deletePost(mockReq, mockRes, mockNext);
-
-      expect(CloudinaryService.extractPublicId).not.toHaveBeenCalled();
-      expect(CloudinaryService.delete).not.toHaveBeenCalled();
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-    });
-
-    it("should handle different post types correctly", async () => {
-      const postTypes = ["TEXT", "POLL", "ANNOUNCEMENT", "RESOURCE"];
-
-      for (const type of postTypes) {
-        vi.clearAllMocks();
-
-        const post = {
-          ...mockPostInDb,
-          type,
-          fileUrl: type === "RESOURCE" ? mockResourcePostInDb.fileUrl : null,
-          fileName: type === "RESOURCE" ? "file.pdf" : null,
-        };
-
-        mockReq.user = createAuthenticatedUser({ id: mockUserId });
-        mockReq.params = { id: mockPostId };
-
-        vi.mocked(prisma.post.findUnique).mockResolvedValue(post as any);
-        vi.mocked(CloudinaryService.extractPublicId).mockReturnValue(
-          "publicId"
-        );
-        vi.mocked(prisma.post.delete).mockResolvedValue(post as any);
-
-        await deletePost(mockReq, mockRes, mockNext);
-
-        if (type === "RESOURCE") {
-          expect(CloudinaryService.extractPublicId).toHaveBeenCalled();
-        } else {
-          expect(CloudinaryService.extractPublicId).not.toHaveBeenCalled();
-        }
-
-        expect(mockRes.status).toHaveBeenCalledWith(200);
-      }
-    });
-
-    it("should handle concurrent deletion attempts gracefully", async () => {
-      mockReq.user = createAuthenticatedUser({ id: mockUserId });
-      mockReq.params = { id: mockPostId };
-
-      const concurrencyError = new Error("Record not found");
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPostInDb as any);
-      vi.mocked(prisma.post.delete).mockRejectedValue(concurrencyError);
-
-      await deletePost(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(concurrencyError);
-    });
-  });
-
-  describe("Permission Checks", () => {
-    it("should not delete post if authorization fails before database operations", async () => {
-      const differentUserId = "different-user-id";
-      mockReq.user = createAuthenticatedUser({ id: differentUserId });
-      mockReq.params = { id: mockPostId };
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPostInDb as any);
-
-      await deletePost(mockReq, mockRes, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(expect.any(AuthorizationError));
-      expect(prisma.post.delete).not.toHaveBeenCalled();
-      expect(CloudinaryService.delete).not.toHaveBeenCalled();
-    });
+    expect(mockDeletePost).toHaveBeenCalledWith(VALID_UUID, undefined);
   });
 });

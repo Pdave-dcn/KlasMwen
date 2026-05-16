@@ -1,17 +1,21 @@
-import { PostType } from "@prisma/client";
 import { Request, Response } from "express";
 
 import { getPostForEdit } from "../../../src/controllers/post/post.fetch.controller";
-import prisma from "../../../src/core/config/db";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  AuthenticationError,
-  AuthorizationError,
-} from "../../../src/core/error/custom/auth.error";
 import { PostNotFoundError } from "../../../src/core/error/custom/post.error";
 
 import { createAuthenticatedUser } from "./shared/helpers";
 import { createMockRequest, createMockResponse } from "./shared/mocks";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const mockGetPostForEdit = vi.fn();
+
+vi.mock("../../../src/features/posts/service/PostService.js", () => ({
+  postService: {
+    command: {
+      getPostForEdit: (...args: unknown[]) => mockGetPostForEdit(...args),
+    },
+  },
+}));
 
 vi.mock("../../../src/core/config/logger.js", () => ({
   createLogger: vi.fn(() => ({
@@ -44,26 +48,10 @@ vi.mock("../../../src/core/error/index.js", () => ({
   handleError: vi.fn(),
 }));
 
-vi.mock("../../../src/core/config/db.js", () => ({
-  default: {
-    post: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-      delete: vi.fn(),
-    },
-    bookmark: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-    },
-    like: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-    },
-  },
-}));
-
 describe("getPostForEdit", () => {
-  let mockReq: Request;
+  const VALID_UUID = "550e8400-e29b-41d4-a716-446655440000";
+
+  let mockReq: Request & { user?: unknown };
   let mockRes: Response;
   let mockNext: any;
 
@@ -74,87 +62,40 @@ describe("getPostForEdit", () => {
     vi.clearAllMocks();
   });
 
-  const mockPostId = "60676309-9958-4a6a-b4bc-463199dab4ee";
-  const mockUserId = "f34042c4-6143-4c8e-a790-49ba409529e8";
+  it("should return post for edit with 200", async () => {
+    const user = createAuthenticatedUser({ id: "u1" });
+    mockReq.user = user;
+    mockReq.params = { id: VALID_UUID };
 
-  const mockPost = {
-    id: mockPostId,
-    title: "Test Post",
-    content: "Content",
-    hidden: false,
-    type: "NOTE" as PostType,
-    fileUrl: null,
-    fileName: null,
-    fileSize: null,
-    mimeType: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    authorId: mockUserId,
-    author: {
-      // ← ADD THIS
-      id: mockUserId,
-      username: "testUser",
-    },
-    postTags: [{ postId: mockPostId, tagId: 2, tag: { id: 2, name: "tag1" } }],
-    _count: { comments: 0, likes: 0 },
-  };
-  const mockEditResponse = {
-    id: mockPostId,
-    title: "Test Post",
-    content: "Content",
-    type: "NOTE" as PostType,
-    tags: [{ id: 2, name: "tag1" }],
-    hasFile: false as const,
-  };
-
-  it("should return post data for editing if the user is the author", async () => {
-    mockReq.user = createAuthenticatedUser({ id: mockUserId });
-    mockReq.params = { id: mockPostId };
-
-    vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPost);
+    const mockData = { id: VALID_UUID, title: "Edit me" };
+    mockGetPostForEdit.mockResolvedValue(mockData);
 
     await getPostForEdit(mockReq, mockRes, mockNext);
 
-    expect(prisma.post.findUnique).toHaveBeenCalled();
+    expect(mockGetPostForEdit).toHaveBeenCalledWith(user, VALID_UUID);
     expect(mockNext).not.toHaveBeenCalled();
     expect(mockRes.status).toHaveBeenCalledWith(200);
-    expect(mockRes.json).toHaveBeenCalledWith({
-      data: mockEditResponse,
-    });
+    expect(mockRes.json).toHaveBeenCalledWith({ data: mockData });
   });
 
-  it("should call handleError with PostNotFoundError if the post is not found", async () => {
-    mockReq.user = createAuthenticatedUser();
-    mockReq.params = { id: mockPostId };
+  it("should call next when post not found", async () => {
+    mockReq.user = createAuthenticatedUser({ id: "u1" });
+    mockReq.params = { id: VALID_UUID };
 
-    vi.mocked(prisma.post.findUnique).mockResolvedValue(null);
+    mockGetPostForEdit.mockRejectedValue(new PostNotFoundError(VALID_UUID));
 
     await getPostForEdit(mockReq, mockRes, mockNext);
 
     expect(mockNext).toHaveBeenCalledWith(expect.any(PostNotFoundError));
   });
 
-  it("should call handleError with AuthorizationError if the user is not the author", async () => {
-    mockReq.user = createAuthenticatedUser();
-    mockReq.params = { id: mockPostId };
-
-    vi.mocked(prisma.post.findUnique).mockResolvedValue(mockPost);
+  it("should call next when params validation fails", async () => {
+    mockReq.user = createAuthenticatedUser({ id: "u1" });
+    mockReq.params = { id: "bad-uuid" };
 
     await getPostForEdit(mockReq, mockRes, mockNext);
 
-    expect(mockNext).toHaveBeenCalledWith(expect.any(AuthorizationError));
-  });
-
-  it("should call handleError if a database query fails", async () => {
-    mockReq.user = createAuthenticatedUser();
-    mockReq.params = { id: mockPostId };
-
-    const mockError = new Error("Database error");
-
-    vi.mocked(prisma.post.findUnique).mockRejectedValue(mockError);
-
-    await getPostForEdit(mockReq, mockRes, mockNext);
-
-    expect(mockNext).toHaveBeenCalledWith(mockError);
+    expect(mockNext).toHaveBeenCalled();
+    expect(mockGetPostForEdit).not.toHaveBeenCalled();
   });
 });

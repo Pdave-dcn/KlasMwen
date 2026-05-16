@@ -4,88 +4,108 @@ import {
   PostUpdateFailedError,
 } from "../../../../core/error/custom/post.error.js";
 import { assertPermission } from "../../../../core/security/rbac.js";
-import createEditResponse from "../../createEditResponse.js";
-import transformPostTagsToFlat from "../../postTagFlattener.js";
-import PostRepository from "../repositories/postRepository.js";
+import {
+  postRepository,
+  type IPostRepository,
+} from "../repositories/postRepository.js";
+import {
+  postTransformer,
+  type IPostTransformer,
+} from "../transformers/postTransformers.js";
 
-import { CloudinaryCleanupService } from "./CloudinaryCleanupService.js";
-import { PostValidationService } from "./PostValidationService.js";
+import {
+  cloudinaryCleanupService,
+  type ICloudinaryCleanupService,
+} from "./CloudinaryCleanupService.js";
+import {
+  postValidationService,
+  type IPostValidationService,
+} from "./PostValidationService.js";
 
 import type { ValidatedPostUpdateData } from "../../../../zodSchemas/post.zod.js";
 import type {
+  BasePost,
   CreatePostInput,
-  RawPost,
+  EditResponse,
+  TransformedPost,
   UploadedFileInfo,
 } from "../types/postTypes.js";
 
-/**
- * Handles all write operations (create, update, delete) for posts.
- * Ensures consistency and business rules for post mutations.
- */
-export class PostCommandService {
-  /**
-   * Create a new post.
-   * Handles file cleanup on failure.
-   */
-  static async createPost(
+interface IPostCommandService {
+  createPost(
     input: CreatePostInput,
     userId: string,
-    uploadedFile: UploadedFileInfo | null
-  ): Promise<Partial<RawPost>> {
-    const newPost = await PostRepository.createPost(input, userId);
+    uploadedFile: UploadedFileInfo | null,
+  ): Promise<TransformedPost>;
+  deletePost(postId: string, user: Express.User): Promise<void>;
+  updatePost(
+    validatedData: ValidatedPostUpdateData,
+    postId: string,
+    user: Express.User,
+  ): Promise<BasePost>;
+  getPostForEdit(user: Express.User, postId: string): Promise<EditResponse>;
+}
+
+class PostCommandService implements IPostCommandService {
+  constructor(
+    private repository: IPostRepository,
+    private validationService: IPostValidationService,
+    private cloudinary: ICloudinaryCleanupService,
+    private transformer: IPostTransformer,
+  ) {}
+
+  async createPost(
+    input: CreatePostInput,
+    userId: string,
+    uploadedFile: UploadedFileInfo | null,
+  ): Promise<TransformedPost> {
+    const newPost = await this.repository.command.createPost(input, userId);
 
     if (!newPost) {
       if (uploadedFile) {
-        await CloudinaryCleanupService.cleanupFile(
+        await this.cloudinary.cleanupFile(
           uploadedFile.publicId,
-          "PostCommandService.createPost"
+          "PostCommandService.createPost",
         );
       }
       throw new PostCreationFailedError();
     }
 
-    return transformPostTagsToFlat(newPost as RawPost);
+    return this.transformer.transformPost(newPost);
   }
 
-  /**
-   * Delete a post and associated resources.
-   */
-  static async deletePost(postId: string, user: Express.User): Promise<void> {
-    const post = await PostValidationService.verifyPostExists(postId);
+  async deletePost(postId: string, user: Express.User): Promise<void> {
+    const post = await this.validationService.verifyPostExists(postId);
     assertPermission(user, "posts", "delete", post);
 
     if (post.type === "RESOURCE" && post.fileUrl) {
-      await CloudinaryCleanupService.handleResourceCleanup(
+      await this.cloudinary.handleResourceCleanup(
         post.fileUrl,
-        "PostCommandService.deletePost"
+        "PostCommandService.deletePost",
       );
     }
 
-    await PostRepository.delete(postId);
+    await this.repository.command.delete(postId);
   }
 
-  /**
-   * Update post with validation and permission checks.
-   * @throws {PostUpdateFailedError} if update fails or time window expired
-   */
-  static async updatePost(
+  async updatePost(
     validatedData: ValidatedPostUpdateData,
     postId: string,
-    user: Express.User
+    user: Express.User,
   ) {
-    const post = await PostValidationService.verifyPostExists(postId);
+    const post = await this.validationService.verifyPostExists(postId);
     assertPermission(user, "posts", "update", post);
-    PostValidationService.validateEditTimeWindow(post.createdAt, postId);
+    this.validationService.validateEditTimeWindow(post.createdAt, postId);
 
     const updateData =
       validatedData.type === "RESOURCE"
         ? { title: validatedData.title }
         : { title: validatedData.title, content: validatedData.content };
 
-    const updatedPost = await PostRepository.updatePost(
+    const updatedPost = await this.repository.command.updatePost(
       postId,
       updateData,
-      validatedData.tagIds || []
+      validatedData.tagIds || [],
     );
 
     if (!updatedPost) {
@@ -95,12 +115,11 @@ export class PostCommandService {
     return updatedPost;
   }
 
-  /**
-   * Get post for editing with permission check.
-   * @throws {PostNotFoundError} if not found
-   */
-  static async getPostForEdit(user: Express.User, postId: string) {
-    const post = await PostRepository.findPostForEdit(postId);
+  async getPostForEdit(
+    user: Express.User,
+    postId: string,
+  ): Promise<EditResponse> {
+    const post = await this.repository.query.findPostForEdit(postId);
 
     if (!post) {
       throw new PostNotFoundError(postId);
@@ -108,7 +127,16 @@ export class PostCommandService {
 
     assertPermission(user, "posts", "update", post);
 
-    const transformedPost = transformPostTagsToFlat(post);
-    return createEditResponse(transformedPost);
+    const transformedPost = this.transformer.transformPost(post);
+    return this.transformer.toEditResponse(transformedPost);
   }
 }
+
+const postCommandService = new PostCommandService(
+  postRepository,
+  postValidationService,
+  cloudinaryCleanupService,
+  postTransformer,
+);
+
+export { postCommandService, type IPostCommandService };

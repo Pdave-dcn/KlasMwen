@@ -1,19 +1,31 @@
 import prisma from "../../../../../core/config/db.js";
-import { BaseSelectors, type CreatePostInput } from "../../types/postTypes.js";
+import {
+  BaseSelectors,
+  type CreatePostInput,
+  type ExtendedPost,
+  type BasePost,
+} from "../../types/postTypes.js";
 
-/**
- * PostCommandRepository - Write operations only
- */
-class PostCommandRepository {
-  /**
-   * Create a new post record within a single transactional operation
-   */
-  static async createPost(
+import type { PrismaClient } from "@prisma/client";
+
+interface IPostCommandRepository {
+  createPost(
     completeValidatedData: CreatePostInput,
-    userId: string
-  ) {
-    return await prisma.$transaction(async (tx) => {
-      // Build post data based on type
+    userId: string,
+  ): Promise<ExtendedPost | null>;
+  updatePost(
+    postId: string,
+    updateData: { title: string; content?: string },
+    tagIds: number[],
+  ): Promise<BasePost | null>;
+  delete(postId: string): Promise<unknown>;
+}
+
+class PostCommandRepository implements IPostCommandRepository {
+  constructor(private client: PrismaClient) {}
+
+  async createPost(completeValidatedData: CreatePostInput, userId: string) {
+    return await this.client.$transaction(async (tx) => {
       const baseData = {
         title: completeValidatedData.title,
         type: completeValidatedData.type,
@@ -39,10 +51,8 @@ class PostCommandRepository {
               mimeType: null,
             };
 
-      // Create the post
       const post = await tx.post.create({ data: postData });
 
-      // Create PostTag relationships if tags are provided
       if (completeValidatedData.tagIds?.length > 0) {
         await tx.postTag.createMany({
           data: completeValidatedData.tagIds.map((tagId) => ({
@@ -52,7 +62,6 @@ class PostCommandRepository {
         });
       }
 
-      // Fetch and return the complete post with all relations
       return await tx.post.findUnique({
         where: { id: post.id },
         select: BaseSelectors.extendedPost,
@@ -60,22 +69,17 @@ class PostCommandRepository {
     });
   }
 
-  /**
-   * Update a post with transaction support
-   */
-  static updatePost(
+  updatePost(
     postId: string,
     updateData: { title: string; content?: string },
-    tagIds: number[]
+    tagIds: number[],
   ) {
-    return prisma.$transaction(async (tx) => {
-      // Update post fields
+    return this.client.$transaction(async (tx) => {
       await tx.post.update({
         where: { id: postId },
         data: updateData,
       });
 
-      // Replace tags
       await tx.postTag.deleteMany({
         where: { postId },
       });
@@ -89,7 +93,6 @@ class PostCommandRepository {
         });
       }
 
-      // Return updated post
       return tx.post.findUnique({
         where: { id: postId },
         select: BaseSelectors.post,
@@ -97,14 +100,12 @@ class PostCommandRepository {
     });
   }
 
-  /**
-   * Delete a post by ID
-   */
-  static async delete(postId: string) {
-    return await prisma.post.delete({
+  async delete(postId: string) {
+    return await this.client.post.delete({
       where: { id: postId },
     });
   }
 }
 
-export default PostCommandRepository;
+const postCommandRepository = new PostCommandRepository(prisma);
+export { postCommandRepository, type IPostCommandRepository };

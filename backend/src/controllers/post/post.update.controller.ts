@@ -1,23 +1,19 @@
 import { createLogger } from "../../core/config/logger.js";
-import PostService from "../../features/posts/service/PostService.js";
-import createActionLogger from "../../utils/logger.util.js";
+import { postService } from "../../features/posts/service/PostService.js";
+import { withLogging } from "../../utils/logger.util.js";
 import {
   PostIdParamSchema,
   UpdatedPostSchema,
 } from "../../zodSchemas/post.zod.js";
 
 import type { AuthenticatedRequest } from "../../types/AuthRequest.js";
-import type { Request, Response, NextFunction} from "express";
 
 const controllerLogger = createLogger({ module: "PostController" });
 
-const updatePost = async (req: Request, res: Response, next: NextFunction) => {
-  const actionLogger = createActionLogger(controllerLogger, "updatePost", req);
-  try {
-    actionLogger.info("Post update attempt started");
-    const startTime = Date.now();
-
-    const { user } = req as AuthenticatedRequest;
+const updatePost = withLogging<AuthenticatedRequest>(
+  controllerLogger, "updatePost",
+  async ({ req, res, log }) => {
+    log.info("Post update attempt started");
 
     const { id: postId } = PostIdParamSchema.parse(req.params);
 
@@ -29,31 +25,26 @@ const updatePost = async (req: Request, res: Response, next: NextFunction) => {
       ...(req.body.fileName !== undefined && { fileName: req.body.fileName }),
     });
 
-    actionLogger.debug("Executing post update");
-    const serviceStartTime = Date.now();
-    const result = await PostService.updatePost(validatedData, postId, user);
-    if (!result) return;
-    const serviceDuration = Date.now() - serviceStartTime;
-
-    const totalDuration = Date.now() - startTime;
-
-    actionLogger.info(
-      {
-        postId: result.id,
-        userId: user.id,
-        serviceDuration,
-        totalDuration,
-      },
-      "Post updated successfully"
+    log.debug("Executing post update");
+    const result = await postService.command.updatePost(
+      validatedData,
+      postId,
+      req.user,
     );
 
-    return res.status(200).json({
+    log.info(
+      {
+        postId: result.id,
+        userId: req.user.id,
+      },
+      "Post updated successfully",
+    );
+
+    res.status(200).json({
       message: "Post updated successfully",
       data: result,
     });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+  },
+);
 
 export { updatePost };

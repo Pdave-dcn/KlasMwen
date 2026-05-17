@@ -1,6 +1,6 @@
 import { createLogger } from "../core/config/logger.js";
-import CommentService from "../features/comments/service/CommentService.js";
-import createActionLogger from "../utils/logger.util.js";
+import { commentService } from "../features/comment/service/index.js";
+import { withLogging } from "../utils/logger.util.js";
 import { createPaginationSchema } from "../utils/pagination.util.js";
 import {
   CommentIdParamSchema,
@@ -9,199 +9,88 @@ import {
 import { PostIdParamSchema } from "../zodSchemas/post.zod.js";
 
 import type { AuthenticatedRequest } from "../types/AuthRequest.js";
-import type { Request, Response, NextFunction } from "express";
 
 const controllerLogger = createLogger({ module: "CommentController" });
 
-const createComment = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "createComment",
-    req
-  );
-
-  try {
-    actionLogger.info("Comment creation attempt started");
-    const startTime = Date.now();
-
-    const { user } = req as AuthenticatedRequest;
-
+const createComment = withLogging<AuthenticatedRequest>(
+  controllerLogger, "createComment",
+  async ({ req, res, log }) => {
     const { id: postId } = PostIdParamSchema.parse(req.params);
     const { content, parentId } = CreateCommentSchema.parse(req.body);
 
-    actionLogger.debug("Processing comment creation");
-    const serviceStartTime = Date.now();
-    const newComment = await CommentService.createComment(
-      {
-        content,
-        authorId: user.id,
-        postId,
-        parentId,
-      },
-      req.app
-    );
-    if (!newComment) return;
-
-    const serviceDuration = Date.now() - serviceStartTime;
-    const totalDuration = Date.now() - startTime;
-
-    actionLogger.info(
-      {
-        commentId: newComment.id,
-        authorId: user.id,
-        postId,
-        parentId,
-        contentLength: content.length,
-        serviceDuration,
-        totalDuration,
-      },
-      "Comment created successfully"
+    log.debug({ postId, hasParent: !!parentId, contentLength: content.length }, "Processing comment creation");
+    const newComment = await commentService.command.createComment(
+      { content, authorId: req.user.id, postId, parentId },
+      req.app,
     );
 
-    return res.status(201).json({
+    log.info({ commentId: newComment.id, postId }, "Comment created successfully");
+    res.status(201).json({
       message: "Comment created successfully",
       data: newComment,
     });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+  },
+);
 
-const getParentComments = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "getParentComments",
-    req
-  );
-
-  try {
-    actionLogger.info("Fetching parent comments for post");
-    const startTime = Date.now();
-
+const getParentComments = withLogging<AuthenticatedRequest>(
+  controllerLogger, "getParentComments",
+  async ({ req, res, log }) => {
     const { id: postId } = PostIdParamSchema.parse(req.params);
 
     const customRepliesSchema = createPaginationSchema(10, 40, "number");
     const { limit, cursor } = customRepliesSchema.parse(req.query);
 
-    actionLogger.debug("Processing post parent comments fetch request");
-    const serviceStartTime = Date.now();
-    const result = await CommentService.getParentComments(
+    log.debug({ postId }, "Fetching parent comments for post");
+    const result = await commentService.query.getParentComments(
       postId,
       limit,
-      cursor as number
-    );
-    const serviceDuration = Date.now() - serviceStartTime;
-
-    const totalDuration = Date.now() - startTime;
-
-    actionLogger.info(
-      {
-        postId,
-        totalComments: result.pagination.totalComments,
-        nextCursor: result.pagination.nextCursor,
-        serviceDuration,
-        totalDuration,
-      },
-      "Parent comments fetched successfully"
+      cursor as number,
     );
 
-    return res.status(200).json({
-      data: result.comments,
-      pagination: result.pagination,
-    });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+    log.info(
+      { postId, totalComments: result.pagination.totalComments },
+      "Parent comments fetched successfully",
+    );
 
-const getReplies = async (req: Request, res: Response, next: NextFunction) => {
-  const actionLogger = createActionLogger(controllerLogger, "getReplies", req);
+    res.status(200).json(result);
+  },
+);
 
-  try {
-    actionLogger.info("Fetching replies for comment");
-    const startTime = Date.now();
-
+const getReplies = withLogging<AuthenticatedRequest>(
+  controllerLogger, "getReplies",
+  async ({ req, res, log }) => {
     const { id: parentId } = CommentIdParamSchema.parse(req.params);
 
     const customRepliesSchema = createPaginationSchema(10, 40, "number");
     const { limit, cursor } = customRepliesSchema.parse(req.query);
 
-    actionLogger.debug("Processing replies fetch request");
-    const serviceStartTime = Date.now();
-    const result = await CommentService.getReplies(
+    log.debug({ parentId }, "Fetching replies for comment");
+    const result = await commentService.query.getReplies(
       parentId,
       limit,
-      cursor as number
-    );
-    const serviceDuration = Date.now() - serviceStartTime;
-
-    const totalDuration = Date.now() - startTime;
-    actionLogger.info(
-      {
-        parentId,
-        repliesReturned: result.replies.length,
-        hasMore: result.pagination.hasMore,
-        nextCursor: result.pagination.nextCursor,
-        serviceDuration,
-        totalDuration,
-      },
-      "Replies fetched successfully"
+      cursor as number,
     );
 
-    return res.status(200).json({
-      data: result.replies,
-      pagination: result.pagination,
-    });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+    log.info(
+      { parentId, repliesReturned: result.data.length, hasMore: result.pagination.hasMore },
+      "Replies fetched successfully",
+    );
 
-const deleteComment = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "deleteComment",
-    req
-  );
+    res.status(200).json(result);
+  },
+);
 
-  try {
-    actionLogger.info("Comment deletion attempt started");
-    const startTime = Date.now();
-
-    const { user } = req as AuthenticatedRequest;
+const deleteComment = withLogging<AuthenticatedRequest>(
+  controllerLogger, "deleteComment",
+  async ({ req, res, log }) => {
     const { id: commentId } = CommentIdParamSchema.parse(req.params);
 
-    actionLogger.debug("Processing comment deletion");
-    const serviceStartTime = Date.now();
-    await CommentService.deleteComment(commentId, user);
-    const serviceDuration = Date.now() - serviceStartTime;
+    log.debug({ commentId }, "Processing comment deletion");
+    await commentService.command.deleteComment(commentId, req.user);
 
-    const totalDuration = Date.now() - startTime;
-    actionLogger.info(
-      {
-        commentId,
-        serviceDuration,
-        totalDuration,
-      },
-      "Comment deleted successfully"
-    );
-
-    return res.status(200).json({ message: "Comment deleted successfully" });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+    log.info({ commentId }, "Comment deleted successfully");
+    res.status(200).json({ message: "Comment deleted successfully" });
+  },
+);
 
 export { createComment, deleteComment, getReplies, getParentComments };

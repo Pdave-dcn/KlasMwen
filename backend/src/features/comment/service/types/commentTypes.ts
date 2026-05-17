@@ -1,6 +1,5 @@
 import { Prisma } from "@prisma/client";
 
-// Fragment definitions for reusable select objects
 const CommentFragments = {
   commentAuthor: {
     select: {
@@ -57,7 +56,6 @@ const CommentFragments = {
   },
 } as const;
 
-// Base selectors for different query types
 const BaseSelectors = {
   comment: {
     id: true,
@@ -86,7 +84,6 @@ const BaseSelectors = {
   },
 } as const;
 
-// Prisma type validators
 const commentWithRelations = Prisma.validator<Prisma.CommentFindManyArgs>()({
   include: BaseSelectors.commentRelations,
 });
@@ -95,7 +92,6 @@ type CommentWithRelations = Prisma.CommentGetPayload<
   typeof commentWithRelations
 >;
 
-// DTOs and interfaces
 interface CreateCommentData {
   content: string;
   authorId: string;
@@ -103,21 +99,6 @@ interface CreateCommentData {
   parentId?: number;
 }
 
-interface PaginationParams {
-  limit?: number;
-  cursor?: number | string;
-}
-
-interface CommentPaginationResult<T> {
-  data: T[];
-  pagination: {
-    nextCursor: number | string | null;
-    hasMore: boolean;
-    totalComments?: number;
-  };
-}
-
-// Transformed response types
 interface TransformedComment {
   id: number;
   content: string;
@@ -153,6 +134,4 @@ export {
   BaseSelectors,
   CommentWithRelations,
   CreateCommentData,
-  PaginationParams,
-  CommentPaginationResult,
 };

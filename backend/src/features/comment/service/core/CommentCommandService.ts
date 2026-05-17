@@ -2,34 +2,30 @@ import { PostNotFoundError } from "../../../../core/error/custom/post.error.js";
 import { assertPermission } from "../../../../core/security/rbac.js";
 import NotificationService from "../../../notification/service/NotificationService.js";
 import { postService } from "../../../posts/service/PostService.js";
-import CommentRepository from "../commentRepository.js";
 
-import CommentValidationService from "./CommentValidationService.js";
-
-import type { CreateCommentData } from "../types.js";
+import type { CommentValidationService } from "./CommentValidationService.js";
+import type { CommentRepository } from "../repositories/commentRepository.js";
+import type { CreateCommentData } from "../types/commentTypes.js";
 import type { Application } from "express";
 
-/**
- * CommentCommandService - Write operations only
- */
 class CommentCommandService {
-  /**
-   * Determines the final parent ID and mentioned user for nested replies
-   */
-  private static resolveCommentHierarchy(parentComment: {
+  constructor(
+    private readonly validation: CommentValidationService,
+    private readonly repo: typeof CommentRepository,
+  ) {}
+
+  private resolveCommentHierarchy(parentComment: {
     id: number;
     parentId: number | null;
     authorId: string;
   }) {
     if (parentComment.parentId) {
-      // Reply to a reply - flatten to 2 levels
       return {
         finalParentId: parentComment.parentId,
         mentionedUserId: parentComment.authorId,
         parentAuthorId: parentComment.authorId,
       };
     } else {
-      // Reply to a root comment
       return {
         finalParentId: parentComment.id,
         mentionedUserId: undefined,
@@ -38,10 +34,7 @@ class CommentCommandService {
     }
   }
 
-  /**
-   * Sends appropriate notification based on comment type
-   */
-  private static async sendCommentNotification(
+  private async sendCommentNotification(
     data: {
       isReply: boolean;
       postAuthorId: string;
@@ -53,7 +46,6 @@ class CommentCommandService {
     app?: Application,
   ) {
     if (data.isReply && data.parentAuthorId) {
-      // Notify parent comment author
       await NotificationService.createNotification(
         {
           type: "REPLY_TO_COMMENT",
@@ -65,7 +57,6 @@ class CommentCommandService {
         app,
       );
     } else {
-      // Notify post author
       await NotificationService.createNotification(
         {
           type: "COMMENT_ON_POST",
@@ -79,11 +70,7 @@ class CommentCommandService {
     }
   }
 
-  /**
-   * Create a new comment with validation
-   */
-  static async createComment(data: CreateCommentData, app?: Application) {
-    // Verify post exists
+  async createComment(data: CreateCommentData, app?: Application) {
     const post = await postService.validate.verifyPostExists(data.postId);
     if (!post) {
       throw new PostNotFoundError(data.postId);
@@ -93,10 +80,9 @@ class CommentCommandService {
     let mentionedUserId: string | undefined;
     let parentAuthorId: string | undefined;
 
-    // Handle parent comment logic if this is a reply
     if (data.parentId) {
       const parentComment =
-        await CommentValidationService.validateParentComment(
+        await this.validation.validateParentComment(
           data.parentId,
           data.postId,
         );
@@ -107,8 +93,7 @@ class CommentCommandService {
       parentAuthorId = hierarchy.parentAuthorId;
     }
 
-    // Create the comment
-    const newComment = await CommentRepository.create({
+    const newComment = await this.repo.create({
       content: data.content,
       author: { connect: { id: data.authorId } },
       post: { connect: { id: data.postId } },
@@ -118,7 +103,6 @@ class CommentCommandService {
       }),
     });
 
-    // Send notification
     await this.sendCommentNotification(
       {
         isReply: !!data.parentId,
@@ -134,16 +118,13 @@ class CommentCommandService {
     return newComment;
   }
 
-  /**
-   * Delete a comment with permission checks
-   */
-  static async deleteComment(commentId: number, user: Express.User) {
-    const comment = await CommentValidationService.commentExists(commentId);
+  async deleteComment(commentId: number, user: Express.User) {
+    const comment = await this.validation.commentExists(commentId);
 
     assertPermission(user, "comments", "delete", comment);
 
-    await CommentRepository.delete(commentId);
+    await this.repo.delete(commentId);
   }
 }
 
-export default CommentCommandService;
+export { CommentCommandService };

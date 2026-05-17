@@ -1,5 +1,5 @@
 import { createLogger } from "../../core/config/logger.js";
-import CommentService from "../../features/comments/service/CommentService.js";
+import { commentService } from "../../features/comment/service/index.js";
 import { postService } from "../../features/posts/service/PostService.js";
 import { userQueryService } from "../../features/user/service/index.js";
 import { withLogging } from "../../utils/logger.util.js";
@@ -123,7 +123,7 @@ const getUserComments = withLogging<AuthenticatedRequest>(
     log.debug("Verifying user exists");
     await userQueryService.userExists(userId);
 
-    const result = await CommentService.getUserCommentsWithRelations(
+    const result = await commentService.query.getUserCommentsWithRelations(
       userId,
       limit,
       cursor as string | undefined,
@@ -134,17 +134,14 @@ const getUserComments = withLogging<AuthenticatedRequest>(
         requestedUserId: userId,
         limit,
         cursor,
-        commentsCount: result.comments.length,
+        commentsCount: result.data.length,
         hasMore: result.pagination.hasMore,
         nextCursor: result.pagination.nextCursor,
       },
       "User comments and replies fetched successfully",
     );
 
-    res.status(200).json({
-      data: result.comments,
-      pagination: result.pagination,
-    });
+    res.status(200).json(result);
   },
 );
 

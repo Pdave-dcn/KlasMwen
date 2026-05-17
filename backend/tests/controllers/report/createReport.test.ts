@@ -5,7 +5,7 @@ import prisma from "../../../src/core/config/db.js";
 import { CommentNotFoundError } from "../../../src/core/error/custom/comment.error";
 import { PostNotFoundError } from "../../../src/core/error/custom/post.error";
 import { assertPermission } from "../../../src/core/security/rbac";
-import CommentService from "../../../src/features/comments/service/CommentService";
+import { commentService } from "../../../src/features/comment/service/index.js";
 import { postService } from "../../../src/features/posts/service/PostService";
 import { autoHideContent } from "../../../src/features/report/helpers/autoHideContent";
 
@@ -71,9 +71,11 @@ vi.mock("../../../src/features/posts/service/PostService", () => ({
   },
 }));
 
-vi.mock("../../../src/features/comments/service/CommentService", () => ({
-  default: {
-    commentExists: vi.fn(),
+vi.mock("../../../src/features/comment/service/index", () => ({
+  commentService: {
+    validate: {
+      commentExists: vi.fn(),
+    },
   },
 }));
 
@@ -180,7 +182,7 @@ describe("createReport controller", () => {
         reasonId: mockReasonId,
       };
 
-      vi.mocked(CommentService.commentExists).mockResolvedValue({
+      vi.mocked(commentService.validate.commentExists).mockResolvedValue({
         id: mockCommentId,
         postId: mockPostId,
         parentId: null,
@@ -204,7 +206,7 @@ describe("createReport controller", () => {
 
       await createReport(mockRequest, mockResponse, mockNext);
 
-      expect(CommentService.commentExists).toHaveBeenCalledWith(mockCommentId);
+      expect(commentService.validate.commentExists).toHaveBeenCalledWith(mockCommentId);
       expect(autoHideContent).toHaveBeenCalledWith({
         resourceType: "comment",
         resourceId: mockCommentId,
@@ -290,7 +292,7 @@ describe("createReport controller", () => {
         reasonId: mockReasonId,
       };
 
-      vi.mocked(CommentService.commentExists).mockRejectedValue(
+      vi.mocked(commentService.validate.commentExists).mockRejectedValue(
         new CommentNotFoundError(mockCommentId),
       );
 
@@ -343,7 +345,7 @@ describe("createReport controller", () => {
 
       expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
       expect(postService.validate.verifyPostExists).not.toHaveBeenCalled();
-      expect(CommentService.commentExists).not.toHaveBeenCalled();
+      expect(commentService.validate.commentExists).not.toHaveBeenCalled();
     });
 
     it("should handle invalid request body (both postId and commentId provided)", async () => {
@@ -383,7 +385,7 @@ describe("createReport controller", () => {
       await createReport(mockRequest, mockResponse, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
-      expect(CommentService.commentExists).not.toHaveBeenCalled();
+      expect(commentService.validate.commentExists).not.toHaveBeenCalled();
     });
 
     it("should handle invalid reasonId type", async () => {
@@ -596,7 +598,7 @@ describe("createReport controller", () => {
         reasonId: mockReasonId,
       };
 
-      vi.mocked(CommentService.commentExists).mockResolvedValue({
+      vi.mocked(commentService.validate.commentExists).mockResolvedValue({
         id: mockCommentId,
         postId: mockPostId,
         parentId: null,
@@ -664,14 +666,14 @@ describe("createReport controller", () => {
       expect(postService.validate.verifyPostExists).toHaveBeenCalledTimes(1);
     });
 
-    it("should call CommentService.commentExists with correct commentId", async () => {
+    it("should call commentService.validate.commentExists with correct commentId", async () => {
       mockRequest.user = createAuthenticatedUser({ id: mockUserId });
       mockRequest.body = {
         commentId: mockCommentId,
         reasonId: mockReasonId,
       };
 
-      vi.mocked(CommentService.commentExists).mockResolvedValue({
+      vi.mocked(commentService.validate.commentExists).mockResolvedValue({
         id: mockCommentId,
         postId: mockPostId,
         parentId: null,
@@ -694,8 +696,8 @@ describe("createReport controller", () => {
 
       await createReport(mockRequest, mockResponse, mockNext);
 
-      expect(CommentService.commentExists).toHaveBeenCalledWith(mockCommentId);
-      expect(CommentService.commentExists).toHaveBeenCalledTimes(1);
+      expect(commentService.validate.commentExists).toHaveBeenCalledWith(mockCommentId);
+      expect(commentService.validate.commentExists).toHaveBeenCalledTimes(1);
     });
 
     it("should call autoHideContent with correct parameters for post", async () => {
@@ -744,7 +746,7 @@ describe("createReport controller", () => {
         reasonId: mockReasonId,
       };
 
-      vi.mocked(CommentService.commentExists).mockResolvedValue({
+      vi.mocked(commentService.validate.commentExists).mockResolvedValue({
         id: mockCommentId,
         postId: mockPostId,
         parentId: null,

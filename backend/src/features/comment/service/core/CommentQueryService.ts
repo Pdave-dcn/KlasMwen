@@ -3,23 +3,23 @@ import {
   buildPaginatedQuery,
   processPaginatedResults,
 } from "../../../../utils/pagination.util.js";
-import CommentRepository from "../commentRepository.js";
-import CommentTransformer from "../commentTransformer.js";
+import { postService } from "../../../posts/service/PostService.js";
 
-import type { CommentWithRelations } from "../types.js";
+import type { CommentTransformer } from "../commentTransformer.js";
+import type { CommentRepository } from "../repositories/commentRepository.js";
+import type { CommentWithRelations } from "../types/commentTypes.js";
 import type { Prisma } from "@prisma/client";
 
-/**
- * CommentQueryService - Read operations only
- */
 class CommentQueryService {
-  /**
-   * Get user's comments with all related data
-   */
-  static async getUserCommentsWithRelations(
+  constructor(
+    private readonly repo: typeof CommentRepository,
+    private readonly transformer: typeof CommentTransformer,
+  ) {}
+
+  async getUserCommentsWithRelations(
     userId: string,
     limit = 10,
-    cursor?: string
+    cursor?: string,
   ) {
     const baseQuery: Prisma.CommentFindManyArgs = {};
 
@@ -29,27 +29,21 @@ class CommentQueryService {
       cursorField: "id",
     });
 
-    const comments = (await CommentRepository.findByUserWithRelations(
+    const comments = (await this.repo.findByUserWithRelations(
       userId,
-      paginatedQuery
+      paginatedQuery,
     )) as CommentWithRelations[];
 
     const { data, pagination } = processPaginatedResults(comments, limit, "id");
 
     const transformedComments =
-      CommentTransformer.transformCommentsForResponse(data);
+      this.transformer.transformCommentsForResponse(data);
 
-    return {
-      comments: transformedComments,
-      pagination,
-    };
+    return { data: transformedComments, pagination };
   }
 
-  /**
-   * Get parent comments for a post
-   */
-  static async getParentComments(postId: string, limit = 10, cursor?: number) {
-    const post = await CommentRepository.postExists(postId);
+  async getParentComments(postId: string, limit = 10, cursor?: number) {
+    const post = await postService.validate.verifyPostExists(postId);
     if (!post) {
       throw new PostNotFoundError(postId);
     }
@@ -63,22 +57,19 @@ class CommentQueryService {
     });
 
     const [comments, totalComments] = await Promise.all([
-      CommentRepository.findParentCommentsByPost(postId, paginatedQuery),
-      CommentRepository.countByPost(postId),
+      this.repo.findParentCommentsByPost(postId, paginatedQuery),
+      this.repo.countByPost(postId),
     ]);
 
     const { data, pagination } = processPaginatedResults(comments, limit, "id");
 
     return {
-      comments: data,
+      data,
       pagination: { ...pagination, totalComments },
     };
   }
 
-  /**
-   * Get replies for a parent comment
-   */
-  static async getReplies(parentId: number, limit = 10, cursor?: number) {
+  async getReplies(parentId: number, limit = 10, cursor?: number) {
     const baseQuery: Prisma.CommentFindManyArgs = {};
 
     const paginatedQuery = buildPaginatedQuery<"comment">(baseQuery, {
@@ -87,18 +78,15 @@ class CommentQueryService {
       cursorField: "id",
     });
 
-    const replies = await CommentRepository.findRepliesByParent(
+    const replies = await this.repo.findRepliesByParent(
       parentId,
-      paginatedQuery
+      paginatedQuery,
     );
 
     const { data, pagination } = processPaginatedResults(replies, limit, "id");
 
-    return {
-      replies: data,
-      pagination,
-    };
+    return { data, pagination };
   }
 }
 
-export default CommentQueryService;
+export { CommentQueryService };

@@ -1,6 +1,6 @@
 import { ReportNotFoundError } from "../../../core/error/custom/report.error.js";
 import { assertPermission } from "../../../core/security/rbac.js";
-import CommentService from "../../comments/service/CommentService.js";
+import { commentService } from "../../comment/service/index.js";
 import { postService } from "../../posts/service/PostService.js";
 import { autoHideContent } from "../helpers/autoHideContent.js";
 
@@ -45,7 +45,7 @@ class ReportService {
     if (contentType === "post") {
       return await postService.validate.verifyPostExists(contentId as string);
     } else if (contentType === "comment") {
-      return await CommentService.commentExists(contentId as number);
+      return await commentService.validate.commentExists(contentId as number);
     }
 
     throw new Error("Unsupported content");

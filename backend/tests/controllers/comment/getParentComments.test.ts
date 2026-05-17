@@ -190,7 +190,7 @@ describe("getParentComments controller", () => {
 
       expect(prisma.post.findUnique).toHaveBeenCalledWith({
         where: { id: mockPostId },
-        select: { id: true },
+        select: { id: true, authorId: true, type: true, fileUrl: true, createdAt: true },
       });
 
       expect(prisma.comment.findMany).toHaveBeenCalledWith(
@@ -220,7 +220,7 @@ describe("getParentComments controller", () => {
 
       expect(prisma.post.findUnique).toHaveBeenCalledWith({
         where: { id: nonExistentPostId },
-        select: { id: true },
+        select: { id: true, authorId: true, type: true, fileUrl: true, createdAt: true },
       });
       expect(prisma.comment.findMany).not.toHaveBeenCalled();
       expect(prisma.comment.count).not.toHaveBeenCalled();

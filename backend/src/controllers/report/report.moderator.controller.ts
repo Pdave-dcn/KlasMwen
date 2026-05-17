@@ -1,6 +1,6 @@
 import prisma from "../../core/config/db.js";
 import { createLogger } from "../../core/config/logger.js";
-import CommentService from "../../features/comments/service/CommentService.js";
+import { commentService } from "../../features/comment/service/index.js";
 import { postService } from "../../features/posts/service/PostService.js";
 import ReportService from "../../features/report/service/ReportService.js";
 import createActionLogger from "../../utils/logger.util.js";
@@ -227,7 +227,7 @@ const toggleVisibility = async (
         data: { hidden },
       });
     } else {
-      await CommentService.commentExists(resourceId as number);
+      await commentService.validate.commentExists(resourceId as number);
       await prisma.comment.update({
         where: { id: resourceId as number },
         data: { hidden },

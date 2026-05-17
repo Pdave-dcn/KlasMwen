@@ -1,26 +1,8 @@
-import type { CommentWithRelations, TransformedComment } from "./types.js";
+import type { CommentWithRelations, TransformedComment } from "./types/commentTypes.js";
 
-/**
- * Utility functions for transforming comment data
- */
 class CommentTransformer {
-  /**
-   * Truncate text with ellipsis
-   */
-  private static truncateText(
-    text: string | null,
-    maxLength: number
-  ): string | null {
-    if (!text) return null;
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + "...";
-  }
-
-  /**
-   * Transform comments with relations for API response
-   */
   static transformCommentsForResponse(
-    comments: CommentWithRelations[]
+    comments: CommentWithRelations[],
   ): TransformedComment[] {
     return comments.map((comment) => ({
       id: comment.id,
@@ -49,6 +31,15 @@ class CommentTransformer {
       isReply: Boolean(comment.parent),
     }));
   }
+
+  private static truncateText(
+    text: string | null,
+    maxLength: number,
+  ): string | null {
+    if (!text) return null;
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + "...";
+  }
 }
 
-export default CommentTransformer;
+export { CommentTransformer };

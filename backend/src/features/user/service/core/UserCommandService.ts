@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 
 import env from "../../../../core/config/env.js";
 import { UserNotFoundError } from "../../../../core/error/custom/user.error.js";
-import { getRandomDefaultAvatar } from "../../../avatar/avatarService.js";
+import { avatarQueryService } from "../../../avatar/service/index.js";
 import { UserRepository } from "../repositories/userRepository.js";
 
 import type {
@@ -68,7 +68,7 @@ class UserCommandService implements IUserCommandService {
 
   async registerUser(userData: RegisterUserData) {
     const passwordHash = await this.hashPassword(userData.password);
-    const avatar = await getRandomDefaultAvatar();
+    const avatar = await avatarQueryService.getRandomDefaultAvatar();
     const newUser = await UserRepository.createUser({
       username: userData.username,
       email: userData.email,

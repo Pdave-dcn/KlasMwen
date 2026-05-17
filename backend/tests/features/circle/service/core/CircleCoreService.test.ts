@@ -4,7 +4,6 @@ import { CircleMemberService } from "../../../../../src/features/circle/service/
 import CircleRepository from "../../../../../src/features/circle/service/Repositories/CircleRepository.js";
 import CircleEnricher from "../../../../../src/features/circle/service/CircleEnrichers.js";
 import CircleTransformers from "../../../../../src/features/circle/service/CircleTransformers.js";
-import { getRandomCircleAvatar } from "../../../../../src/features/avatar/avatarService.js";
 import { assertCirclePermission } from "../../../../../src/features/circle/security/rbac.js";
 import { AuthorizationError } from "../../../../../src/core/error/custom/auth.error.js";
 import {
@@ -19,7 +18,13 @@ vi.mock(
 );
 vi.mock("../../../../../src/features/circle/service/CircleEnrichers.js");
 vi.mock("../../../../../src/features/circle/service/CircleTransformers.js");
-vi.mock("../../../../../src/features/avatar/avatarService.js");
+const mockGetRandomCircleAvatar = vi.fn();
+vi.mock("../../../../../src/features/avatar/service/index.js", () => ({
+  avatarQueryService: {
+    getRandomCircleAvatar: (...args: unknown[]) =>
+      mockGetRandomCircleAvatar(...args),
+  },
+}));
 vi.mock("../../../../../src/features/circle/security/rbac.js");
 vi.mock(
   "../../../../../src/features/circle/service/core/CircleMemberService.js",
@@ -71,7 +76,7 @@ describe("CircleCoreService", () => {
         tags: [],
       };
 
-      vi.mocked(getRandomCircleAvatar).mockResolvedValue(mockAvatar);
+      mockGetRandomCircleAvatar.mockResolvedValue(mockAvatar);
       vi.mocked(CircleRepository.createCircle).mockResolvedValue(
         mockCreatedCircle,
       );
@@ -81,7 +86,7 @@ describe("CircleCoreService", () => {
 
       const result = await CircleCoreService.createCircle(mockCircleData);
 
-      expect(getRandomCircleAvatar).toHaveBeenCalled();
+      expect(mockGetRandomCircleAvatar).toHaveBeenCalled();
       expect(CircleRepository.createCircle).toHaveBeenCalledWith({
         ...mockCircleData,
         avatarId: 1,
@@ -102,7 +107,7 @@ describe("CircleCoreService", () => {
         tagIds: [],
       };
 
-      vi.mocked(getRandomCircleAvatar).mockRejectedValue(
+      mockGetRandomCircleAvatar.mockRejectedValue(
         new Error("Avatar service error"),
       );
 

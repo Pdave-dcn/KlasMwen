@@ -5,10 +5,7 @@ const AddAvatarSchema = z.object({
   isDefault: z.boolean().optional(),
 });
 
-const AddAvatarsSchema = z.union([
-  AddAvatarSchema,
-  z.array(AddAvatarSchema).min(1),
-]);
+const AddAvatarsBatchSchema = z.array(AddAvatarSchema).min(1);
 
 const AvatarIdParamSchema = z.object({
   id: z
@@ -19,4 +16,4 @@ const AvatarIdParamSchema = z.object({
     .refine((val) => val > 0, "Avatar ID must be positive"),
 });
 
-export { AddAvatarSchema, AddAvatarsSchema, AvatarIdParamSchema };
+export { AddAvatarSchema, AddAvatarsBatchSchema, AvatarIdParamSchema };

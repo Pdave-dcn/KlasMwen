@@ -79,21 +79,29 @@ export const avatarSchemas = {
         example: "Avatar(s) added successfully",
       },
       data: {
-        oneOf: [
-          {
-            $ref: "#/components/schemas/Avatar",
+        $ref: "#/components/schemas/Avatar",
+      },
+    },
+    required: ["message", "data"],
+  },
+
+  AvatarBatchCreateResponse: {
+    type: "object",
+    properties: {
+      message: {
+        type: "string",
+        example: "Avatar(s) added successfully",
+      },
+      data: {
+        type: "object",
+        properties: {
+          count: {
+            type: "integer",
+            description: "Number of avatars created",
+            example: 3,
           },
-          {
-            type: "object",
-            properties: {
-              count: {
-                type: "integer",
-                description: "Number of avatars created",
-                example: 3,
-              },
-            },
-          },
-        ],
+        },
+        required: ["count"],
       },
     },
     required: ["message", "data"],

@@ -32,9 +32,11 @@ vi.mock("jsonwebtoken", () => ({
   },
 }));
 
-vi.mock("../../../../src/features/avatar/avatarService.js", () => ({
-  getRandomDefaultAvatar: (...args: unknown[]) =>
-    mockGetRandomDefaultAvatar(...args),
+vi.mock("../../../../src/features/avatar/service/index.js", () => ({
+  avatarQueryService: {
+    getRandomDefaultAvatar: (...args: unknown[]) =>
+      mockGetRandomDefaultAvatar(...args),
+  },
 }));
 
 vi.mock("../../../../src/core/config/env.js", () => ({

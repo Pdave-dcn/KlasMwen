@@ -4,7 +4,7 @@ import {
   CircleNotFoundError,
 } from "../../../../core/error/custom/circle.error.js";
 import { processPaginatedResults } from "../../../../utils/pagination.util.js";
-import { getRandomCircleAvatar } from "../../../avatar/avatarService.js";
+import { avatarQueryService } from "../../../avatar/service/index.js";
 import { assertCirclePermission } from "../../security/rbac.js";
 import CircleEnricher from "../CircleEnrichers.js";
 import CircleTransformers from "../CircleTransformers.js";
@@ -26,7 +26,7 @@ export class CircleCoreService {
    * @returns The newly created circle with member count and user role
    */
   static async createCircle(data: CreateCircleData) {
-    const avatar = await getRandomCircleAvatar();
+    const avatar = await avatarQueryService.getRandomCircleAvatar();
     const circle = await CircleRepository.createCircle({
       ...data,
       avatarId: avatar.id,

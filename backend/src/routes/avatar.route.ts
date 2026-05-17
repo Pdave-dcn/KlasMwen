@@ -2,6 +2,7 @@ import express from "express";
 
 import {
   addAvatar,
+  addBatchAvatars,
   deleteAvatar,
   getAvailableAvatars,
   getAvatars,
@@ -104,10 +105,10 @@ router.get("/available", getAvailableAvatars);
  *   post:
  *     tags:
  *       - Avatars
- *     summary: Add avatar(s) (Admin only)
+ *     summary: Add a single avatar (Admin only)
  *     description: |
- *       Creates one or multiple new avatars in the system.
- *       Accepts either a single avatar object or an array of avatar objects.
+ *       Creates one new avatar in the system.
+ *       Accepts a single avatar object with a URL and optional isDefault flag.
  *       Requires admin authentication.
  *     security:
  *       - cookieAuth: []
@@ -116,60 +117,37 @@ router.get("/available", getAvailableAvatars);
  *       content:
  *         application/json:
  *           schema:
- *             oneOf:
- *               - $ref: '#/components/schemas/CreateAvatarRequest'
- *               - type: array
- *                 items:
- *                   $ref: '#/components/schemas/CreateAvatarRequest'
- *                 minItems: 1
+ *             $ref: '#/components/schemas/CreateAvatarRequest'
  *           examples:
  *             single_avatar:
- *               summary: Single avatar
+ *               summary: Non-default avatar
  *               value:
  *                 url: "https://cdn.example.com/avatars/new-avatar.png"
  *                 isDefault: false
  *             single_default_avatar:
- *               summary: Single default avatar
+ *               summary: Default avatar
  *               value:
  *                 url: "https://cdn.example.com/avatars/default-avatar.png"
  *                 isDefault: true
- *             multiple_avatars:
- *               summary: Multiple avatars
- *               value:
- *                 - url: "https://cdn.example.com/avatars/avatar1.png"
- *                   isDefault: false
- *                 - url: "https://cdn.example.com/avatars/avatar2.png"
- *                   isDefault: true
- *                 - url: "https://cdn.example.com/avatars/avatar3.png"
  *     responses:
  *       '201':
- *         description: Avatar(s) created successfully
+ *         description: Avatar created successfully
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/AvatarCreateResponse'
- *             examples:
- *               single_avatar_response:
- *                 summary: Single avatar created
- *                 value:
- *                   message: "Avatar(s) added successfully"
- *                   data:
- *                     id: 10
- *                     url: "https://cdn.example.com/avatars/new-avatar.png"
- *                     isDefault: false
- *               multiple_avatars_response:
- *                 summary: Multiple avatars created
- *                 value:
- *                   message: "Avatar(s) added successfully"
- *                   data:
- *                    count: 3
- *
+ *             example:
+ *               message: "Avatar(s) added successfully"
+ *               data:
+ *                 id: 10
+ *                 url: "https://cdn.example.com/avatars/new-avatar.png"
+ *                 isDefault: false
  *       '400':
  *         description: Bad request
  *       '401':
  *         description: Unauthorized
- *       409:
- *         description: Conflict - Avatar already exists (Prisma error P2002)
+ *       '409':
+ *         description: Conflict - Avatar URL already exists
  *         content:
  *           application/json:
  *             schema:
@@ -194,6 +172,74 @@ router.use(writeOperationsLimiter);
 router.use(requireRole("ADMIN"));
 
 router.post("/", addAvatar);
+
+/**
+ * @openapi
+ * /avatars/batch:
+ *   post:
+ *     tags: [Avatars]
+ *     summary: Add multiple avatars (Admin only)
+ *     description: |
+ *       Creates multiple new avatars in the system in a single request.
+ *       Accepts an array of avatar objects, each containing a URL and an optional isDefault flag.
+ *       Requires admin authentication.
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: array
+ *             items:
+ *               $ref: '#/components/schemas/CreateAvatarRequest'
+ *             minItems: 1
+ *           examples:
+ *             multiple_avatars:
+ *               summary: Multiple avatars
+ *               value:
+ *                 - url: "https://cdn.example.com/avatars/avatar1.png"
+ *                   isDefault: false
+ *                 - url: "https://cdn.example.com/avatars/avatar2.png"
+ *                   isDefault: true
+ *                 - url: "https://cdn.example.com/avatars/avatar3.png"
+ *                   isDefault: false
+ *     responses:
+ *       '201':
+ *         description: Avatars created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AvatarBatchCreateResponse'
+ *             example:
+ *               message: "Avatar(s) added successfully"
+ *               data:
+ *                 count: 3
+ *       '400':
+ *         description: Bad request - invalid input or empty array
+ *       '401':
+ *         description: Unauthorized
+ *       '409':
+ *         description: Conflict - one or more URLs already exist
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Unique constraint failed on the field(s): url"
+ *                 fields:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["url"]
+ *       '429':
+ *         description: Too many requests (rate limit exceeded)
+ *       '500':
+ *         description: Internal server error
+ */
+router.post("/batch", addBatchAvatars);
 
 /**
  * @openapi

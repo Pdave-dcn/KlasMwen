@@ -1,45 +1,35 @@
 import prisma from "../../../../core/config/db.js";
 import {
   BaseSelectors,
-  type UpdateUserProfileData,
+  type BaseUser,
   type CreateUserData,
+  type ExtendedUser,
+  type UpdateUserProfileData,
+  type UserForSocket,
 } from "../types/userTypes.js";
 
 export class UserRepository {
-  /**
-   * Find a user by ID with basic fields (public profile)
-   */
-  static findById(userId: string) {
+  static findById(userId: string): Promise<BaseUser | null> {
     return prisma.user.findUnique({
       where: { id: userId },
       select: BaseSelectors.user,
     });
   }
 
-  /**
-   * Find a user by ID with extended fields (private profile)
-   */
-  static findByIdExtended(userId: string) {
+  static findByIdExtended(userId: string): Promise<ExtendedUser | null> {
     return prisma.user.findUnique({
       where: { id: userId },
       select: BaseSelectors.userExtended,
     });
   }
 
-  /**
-   * Find a user by ID with minimal fields for socket authentication
-   * Only returns essential fields needed for socket operations
-   */
-  static findByIdForSocket(userId: string) {
+  static findByIdForSocket(userId: string): Promise<UserForSocket | null> {
     return prisma.user.findUnique({
       where: { id: userId },
       select: BaseSelectors.userForSocket,
     });
   }
 
-  /**
-   * Check if a user exists by ID
-   */
   static async exists(userId: string): Promise<boolean> {
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -48,9 +38,6 @@ export class UserRepository {
     return !!user;
   }
 
-  /**
-   * Create a new user
-   */
   static async createUser(userData: CreateUserData) {
     return await prisma.user.create({
       data: {
@@ -71,10 +58,10 @@ export class UserRepository {
     });
   }
 
-  /**
-   * Update user profile (bio and avatar)
-   */
-  static updateProfile(userId: string, data: UpdateUserProfileData) {
+  static updateProfile(
+    userId: string,
+    data: UpdateUserProfileData,
+  ): Promise<ExtendedUser> {
     return prisma.user.update({
       where: { id: userId },
       data: {

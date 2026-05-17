@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 
 import env from "../../core/config/env.js";
 import { UserNotFoundError } from "../../core/error/custom/user.error.js";
-import UserService from "../../features/user/service/UserService.js";
+import { userQueryService } from "../../features/user/service/index.js";
 import { parseCookies } from "../utils/parseCookies.js";
 
 import type { JwtPayload } from "../../core/config/strategies/jwtStrategy.js";
@@ -26,7 +26,7 @@ export const socketAuthMiddleware = async (
       return next(new Error("Invalid token payload") as ExtendedError);
     }
 
-    const user = await UserService.getUserForSocket(payload.id);
+    const user = await userQueryService.getUserForSocket(payload.id);
 
     socket.data.user = user;
 

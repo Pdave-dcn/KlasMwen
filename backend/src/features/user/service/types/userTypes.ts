@@ -2,12 +2,7 @@ import type { UpdateUserProfileData } from "../../../../zodSchemas/user.zod.js";
 import type { Prisma } from "@prisma/client";
 
 const UserFragments = {
-  avatar: {
-    select: {
-      id: true,
-      url: true,
-    },
-  },
+  avatar: { select: { id: true, url: true } },
 } as const;
 
 const BaseSelectors = {
@@ -29,12 +24,31 @@ const BaseSelectors = {
     createdAt: true,
   } satisfies Prisma.UserSelect,
 
-  // Minimal fields needed for socket authentication
   userForSocket: {
     id: true,
     username: true,
     role: true,
   } satisfies Prisma.UserSelect,
+} as const;
+
+type BaseUser = Prisma.UserGetPayload<{
+  select: typeof BaseSelectors.user;
+}>;
+
+type ExtendedUser = Prisma.UserGetPayload<{
+  select: typeof BaseSelectors.userExtended;
+}>;
+
+type UserForSocket = Prisma.UserGetPayload<{
+  select: typeof BaseSelectors.userForSocket;
+}>;
+
+type ServiceUser = Omit<ExtendedUser, "Avatar"> & {
+  avatar: ExtendedUser["Avatar"];
+};
+
+type ServiceBaseUser = Omit<BaseUser, "Avatar"> & {
+  avatar: BaseUser["Avatar"];
 };
 
 interface RegisterUserData {
@@ -49,6 +63,7 @@ interface CreateUserData {
   password: string;
   avatarId: number;
 }
+
 interface AuthTokenPayload {
   id: string;
   username: string;
@@ -61,5 +76,11 @@ export type {
   RegisterUserData,
   CreateUserData,
   AuthTokenPayload,
+  BaseUser,
+  ExtendedUser,
+  UserForSocket,
+  ServiceUser,
+  ServiceBaseUser,
 };
-export { BaseSelectors };
+
+export { BaseSelectors, UserFragments };

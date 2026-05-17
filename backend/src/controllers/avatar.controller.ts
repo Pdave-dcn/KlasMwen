@@ -1,6 +1,6 @@
 import prisma from "../core/config/db.js";
 import { createLogger } from "../core/config/logger.js";
-import createActionLogger from "../utils/logger.util.js";
+import { withLogging } from "../utils/logger.util.js";
 import {
   buildPaginatedQuery,
   createPaginationSchema,
@@ -11,117 +11,77 @@ import {
   AvatarIdParamSchema,
 } from "../zodSchemas/avatar.zod.js";
 
-import type { Request, Response, NextFunction } from "express";
-
 const controllerLogger = createLogger({ module: "avatarController" });
 
-const getAvailableAvatars = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(controllerLogger, "getAvatars", req);
-
-  try {
-    actionLogger.info("Fetching available avatars");
-    const startTime = Date.now();
+const getAvailableAvatars = withLogging(
+  controllerLogger, "getAvailableAvatars",
+  async ({ req, res, log }) => {
+    log.info("Fetching available avatars");
 
     const customTagsSchema = createPaginationSchema(20, 60, "number");
     const { limit, cursor } = customTagsSchema.parse(req.query);
 
     const paginatedQuery = buildPaginatedQuery<"avatar">(
       { where: { isDefault: false } },
-      {
-        limit,
-        cursor,
-        cursorField: "id",
-      },
+      { limit, cursor, cursorField: "id" },
     );
 
-    actionLogger.debug("Executing database query for available avatars");
-    const dbStartTime = Date.now();
     const avatars = await prisma.avatar.findMany(paginatedQuery);
-    const dbDuration = Date.now() - dbStartTime;
-
     const result = processPaginatedResults(avatars, limit, "id");
 
-    const totalDuration = Date.now() - startTime;
-
-    actionLogger.info(
+    log.info(
       {
         totalAvatars: avatars.length,
         hasMore: result.pagination.hasMore,
         nextCursor: result.pagination.nextCursor,
-        dbDuration,
-        totalDuration,
       },
       "Available avatars fetched successfully",
     );
 
-    return res.status(200).json(result);
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+    res.status(200).json(result);
+  },
+);
 
-const getAvatars = async (req: Request, res: Response, next: NextFunction) => {
-  const actionLogger = createActionLogger(controllerLogger, "getAvatars", req);
-
-  try {
-    actionLogger.info("Fetching avatars");
-    const startTime = Date.now();
+const getAvatars = withLogging(
+  controllerLogger, "getAvatars",
+  async ({ req, res, log }) => {
+    log.info("Fetching avatars");
 
     const customTagsSchema = createPaginationSchema(20, 60, "number");
     const { limit, cursor } = customTagsSchema.parse(req.query);
 
     const paginatedQuery = buildPaginatedQuery<"avatar">(
       {},
-      {
-        limit,
-        cursor,
-        cursorField: "id",
-      },
+      { limit, cursor, cursorField: "id" },
     );
 
-    actionLogger.debug("Executing database query for avatars");
-    const dbStartTime = Date.now();
     const avatars = await prisma.avatar.findMany(paginatedQuery);
-    const dbDuration = Date.now() - dbStartTime;
-
     const result = processPaginatedResults(avatars, limit, "id");
 
-    const totalDuration = Date.now() - startTime;
-
-    actionLogger.info(
+    log.info(
       {
         totalAvatars: avatars.length,
         hasMore: result.pagination.hasMore,
         nextCursor: result.pagination.nextCursor,
-        dbDuration,
-        totalDuration,
       },
       "Avatars fetched successfully",
     );
 
-    return res.status(200).json(result);
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+    res.status(200).json(result);
+  },
+);
 
-const addAvatar = async (req: Request, res: Response, next: NextFunction) => {
-  const actionLogger = createActionLogger(controllerLogger, "addAvatar", req);
-  try {
-    actionLogger.info("Avatar addition attempt started");
-    const startTime = Date.now();
+const addAvatar = withLogging(
+  controllerLogger, "addAvatar",
+  async ({ req, res, log }) => {
+    log.info("Avatar addition attempt started");
 
     const parsedData = AddAvatarsSchema.parse(req.body);
 
     let createdAvatars;
-    const dbStartTime = Date.now();
 
     if (Array.isArray(parsedData)) {
-      actionLogger.debug(`Adding ${parsedData.length} avatars in database`);
+      log.debug(`Adding ${parsedData.length} avatars in database`);
       createdAvatars = await prisma.avatar.createMany({
         data: parsedData.map((a) => ({
           url: a.url,
@@ -129,7 +89,7 @@ const addAvatar = async (req: Request, res: Response, next: NextFunction) => {
         })),
       });
     } else {
-      actionLogger.debug("Adding single avatar in database");
+      log.debug("Adding single avatar in database");
       createdAvatars = await prisma.avatar.create({
         data: {
           url: parsedData.url,
@@ -138,77 +98,49 @@ const addAvatar = async (req: Request, res: Response, next: NextFunction) => {
       });
     }
 
-    const dbDuration = Date.now() - dbStartTime;
-    const totalDuration = Date.now() - startTime;
-
-    actionLogger.info(
+    log.info(
       {
         count: Array.isArray(parsedData) ? parsedData.length : 1,
-        dbDuration,
-        totalDuration,
       },
       "Avatar(s) added successfully",
     );
 
-    return res.status(201).json({
+    res.status(201).json({
       message: "Avatar(s) added successfully",
       data: createdAvatars,
     });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+  },
+);
 
-const deleteAvatar = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "deleteAvatar",
-    req,
-  );
-
-  try {
-    actionLogger.info("Avatar deletion attempt started");
-    const startTime = Date.now();
+const deleteAvatar = withLogging(
+  controllerLogger, "deleteAvatar",
+  async ({ req, res, log }) => {
+    log.info("Avatar deletion attempt started");
 
     const { id } = AvatarIdParamSchema.parse(req.params);
 
-    actionLogger.debug({ id }, "Checking if avatar exists");
+    log.debug({ id }, "Checking if avatar exists");
     const avatar = await prisma.avatar.findUnique({
       where: { id: Number(id) },
     });
 
     if (!avatar) {
-      actionLogger.warn({ id }, "Avatar not found");
-      return res.status(404).json({ message: "Avatar not found" });
+      log.warn({ id }, "Avatar not found");
+      res.status(404).json({ message: "Avatar not found" });
+      return;
     }
 
-    actionLogger.debug("Deleting avatar from database");
-    const dbStartTime = Date.now();
+    log.debug("Deleting avatar from database");
     await prisma.avatar.delete({
       where: { id: Number(id) },
     });
-    const dbDuration = Date.now() - dbStartTime;
 
-    const totalDuration = Date.now() - startTime;
+    log.info({}, "Avatar deleted successfully");
 
-    actionLogger.info(
-      {
-        dbDuration,
-        totalDuration,
-      },
-      "Avatar deleted successfully",
-    );
-
-    return res.status(200).json({
+    res.status(200).json({
       message: "Avatar deleted successfully",
     });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+  },
+);
 
 export { getAvatars, addAvatar, getAvailableAvatars, deleteAvatar };

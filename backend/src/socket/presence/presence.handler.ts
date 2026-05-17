@@ -2,13 +2,11 @@ import CircleRepository from "../../features/circle/service/Repositories/CircleR
 
 import { PresenceService } from "./presence.service.js";
 
-import type UserService from "../../features/user/service/UserService.js";
+import type { UserForSocket } from "../../features/user/service/index.js";
 import type { Socket, Server } from "socket.io";
 
 const handlePresenceConnect = async (io: Server, socket: Socket) => {
-  const user = socket.data.user as Awaited<
-    ReturnType<typeof UserService.getUserForSocket>
-  >;
+  const user = socket.data.user as UserForSocket;
 
   const isFirst = PresenceService.userConnected(user.id, socket.id);
 
@@ -28,9 +26,7 @@ const handlePresenceConnect = async (io: Server, socket: Socket) => {
 };
 
 const handlePresenceDisconnect = async (io: Server, socket: Socket) => {
-  const user = socket.data.user as Awaited<
-    ReturnType<typeof UserService.getUserForSocket>
-  >;
+  const user = socket.data.user as UserForSocket;
   const isLast = PresenceService.userDisconnected(user.id, socket.id);
 
   if (isLast) {

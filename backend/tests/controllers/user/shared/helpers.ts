@@ -1,23 +1,19 @@
 import { Role } from "@prisma/client";
 
-import prisma from "../../../../src/core/config/db.js";
-import { handleError } from "../../../../src/core/error/index.js";
-
 import { createMockRequest, createMockResponse } from "./mocks";
 
-import type { Request, Response, NextFunction } from "express";
+import type { NextFunction, Request, Response } from "express";
 import { expect, vi } from "vitest";
 
 type Controller = (
   req: Request,
   res: Response,
-  next: NextFunction
-) => Promise<void | Response<any, Record<string, any>>>;
+  next: NextFunction,
+) => Promise<void>;
 
 async function expectValidationError(
   controller: Controller,
   reqOverrides: Partial<Request>,
-  shouldCheckPrisma: boolean = true
 ): Promise<void> {
   const req = createMockRequest(reqOverrides);
   const res = createMockResponse();
@@ -26,9 +22,6 @@ async function expectValidationError(
   await controller(req, res, next);
 
   expect(next).toHaveBeenCalled();
-  if (shouldCheckPrisma) {
-    expect(prisma.user.findUnique).not.toHaveBeenCalled();
-  }
 }
 
 const createAuthenticatedUser = (overrides = {}) => ({

@@ -2,7 +2,7 @@ import { createLogger } from "../../../core/config/logger.js";
 import { StudyCircleIdParamSchema } from "../../../zodSchemas/circle.zod.js";
 import { broadcastPresenceUpdate } from "../helpers/broadcastPresenceUpdate.js";
 
-import type UserService from "../../../features/user/service/UserService.js";
+import type { UserForSocket } from "../../../features/user/service/index.js";
 import type { Namespace, Socket } from "socket.io";
 
 const logger = createLogger({ module: "StudyCircleSocket" });
@@ -26,9 +26,7 @@ export const handleLeaveCircle = (socket: Socket, nsp: Namespace) => {
     try {
       const { circleId } = StudyCircleIdParamSchema.parse(data);
 
-      const user = socket.data.user as Awaited<
-        ReturnType<typeof UserService.getUserForSocket>
-      >;
+      const user = socket.data.user as UserForSocket;
 
       logger.info(
         { userId: user.id, circleId },

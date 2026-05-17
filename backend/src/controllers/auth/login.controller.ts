@@ -4,10 +4,10 @@ import passport from "passport";
 
 import { getCookieConfig } from "../../core/config/cookie.js";
 import { createLogger } from "../../core/config/logger.js";
-import UserService from "../../features/user/service/UserService.js";
+import { userCommandService } from "../../features/user/service/index.js";
 import createActionLogger from "../../utils/logger.util.js";
 
-import type { Request, Response, NextFunction } from "express";
+import type { NextFunction, Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "AuthController" });
 
@@ -71,7 +71,7 @@ const handleAuthenticationResult = (
 
     // Process successful login through service layer
 
-    const { user: userData, token } = UserService.processLogin(user);
+    const { user: userData, token } = userCommandService.processLogin(user);
 
     const totalDuration = Date.now() - startTime;
     actionLogger.info(

@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import jwt from "jsonwebtoken";
 import { socketAuthMiddleware } from "../../../src/socket/auth/auth.js";
-import UserService from "../../../src/features/user/service/UserService.js";
+import { userQueryService } from "../../../src/features/user/service/index.js";
 import { UserNotFoundError } from "../../../src/core/error/custom/user.error.js";
 import env from "../../../src/core/config/env.js";
 import * as cookieParser from "../../../src/socket/utils/parseCookies.js";
 
 vi.mock("jsonwebtoken");
-vi.mock("../../../src/features/user/service/UserService.js");
+vi.mock("../../../src/features/user/service/index.js");
 vi.mock("../../../src/socket/utils/parseCookies.js");
 
 describe("socketAuthMiddleware", () => {
@@ -36,7 +36,7 @@ describe("socketAuthMiddleware", () => {
   it("should authenticate and attach user to socket when token is valid", async () => {
     vi.mocked(cookieParser.parseCookies).mockReturnValue({ token: validToken });
     vi.mocked(jwt.verify).mockReturnValue({ id: "user-1" } as any);
-    vi.mocked(UserService.getUserForSocket).mockResolvedValue(mockUser);
+    vi.mocked(userQueryService.getUserForSocket).mockResolvedValue(mockUser);
 
     await socketAuthMiddleware(socket, next);
 
@@ -82,7 +82,7 @@ describe("socketAuthMiddleware", () => {
   it("should call next with error when user is not found", async () => {
     vi.mocked(cookieParser.parseCookies).mockReturnValue({ token: validToken });
     vi.mocked(jwt.verify).mockReturnValue({ id: "nonexistent" } as any);
-    vi.mocked(UserService.getUserForSocket).mockRejectedValue(
+    vi.mocked(userQueryService.getUserForSocket).mockRejectedValue(
       new UserNotFoundError("nonexistent"),
     );
 
@@ -97,7 +97,7 @@ describe("socketAuthMiddleware", () => {
     const dbError = new Error("Database connection failed");
     vi.mocked(cookieParser.parseCookies).mockReturnValue({ token: validToken });
     vi.mocked(jwt.verify).mockReturnValue({ id: "user-1" } as any);
-    vi.mocked(UserService.getUserForSocket).mockRejectedValue(dbError);
+    vi.mocked(userQueryService.getUserForSocket).mockRejectedValue(dbError);
 
     await socketAuthMiddleware(socket, next);
 
@@ -107,7 +107,7 @@ describe("socketAuthMiddleware", () => {
   it("should use jwt.verify with correct secret", async () => {
     vi.mocked(cookieParser.parseCookies).mockReturnValue({ token: validToken });
     vi.mocked(jwt.verify).mockReturnValue({ id: "user-1" } as any);
-    vi.mocked(UserService.getUserForSocket).mockResolvedValue(mockUser);
+    vi.mocked(userQueryService.getUserForSocket).mockResolvedValue(mockUser);
 
     await socketAuthMiddleware(socket, next);
 
@@ -117,11 +117,11 @@ describe("socketAuthMiddleware", () => {
   it("should extract user with correct id from database", async () => {
     vi.mocked(cookieParser.parseCookies).mockReturnValue({ token: validToken });
     vi.mocked(jwt.verify).mockReturnValue({ id: "specific-user-id" } as any);
-    vi.mocked(UserService.getUserForSocket).mockResolvedValue(mockUser);
+    vi.mocked(userQueryService.getUserForSocket).mockResolvedValue(mockUser);
 
     await socketAuthMiddleware(socket, next);
 
-    expect(UserService.getUserForSocket).toHaveBeenCalledWith(
+    expect(userQueryService.getUserForSocket).toHaveBeenCalledWith(
       "specific-user-id",
     );
   });
@@ -129,7 +129,7 @@ describe("socketAuthMiddleware", () => {
   it("should not call next with arguments on success", async () => {
     vi.mocked(cookieParser.parseCookies).mockReturnValue({ token: validToken });
     vi.mocked(jwt.verify).mockReturnValue({ id: "user-1" } as any);
-    vi.mocked(UserService.getUserForSocket).mockResolvedValue(mockUser);
+    vi.mocked(userQueryService.getUserForSocket).mockResolvedValue(mockUser);
 
     await socketAuthMiddleware(socket, next);
 

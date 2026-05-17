@@ -1,16 +1,11 @@
-import type { User, Role } from "@prisma/client";
 import type { Request, Response } from "express";
 import { vi } from "vitest";
 
-const mockUser: User = {
+const mockUser = {
   id: "123e4567-e89b-12d3-a456-426614174000",
   username: "testuser",
-  password: "hash-password",
   email: "test@example.com",
-  bio: "Test bio",
-  avatarId: 1,
-  role: "STUDENT" as Role,
-  createdAt: new Date("2023-01-01"),
+  role: "STUDENT",
 };
 
 const createMockRequest = (overrides = {}) =>
@@ -20,7 +15,7 @@ const createMockRequest = (overrides = {}) =>
     query: {},
     user: undefined,
     ...overrides,
-  } as Request);
+  }) as unknown as Request;
 
 const createMockResponse = () => {
   const res = {

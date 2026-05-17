@@ -1,154 +1,69 @@
-import prisma from "../core/config/db.js";
 import { createLogger } from "../core/config/logger.js";
-import { postService } from "../features/posts/service/PostService.js";
-import createActionLogger from "../utils/logger.util.js";
+import { bookmarkService } from "../features/bookmark/service/index.js";
+import { withLogging } from "../utils/logger.util.js";
 import { uuidPaginationSchema } from "../utils/pagination.util.js";
 import { PostIdParamSchema } from "../zodSchemas/post.zod.js";
 
 import type { AuthenticatedRequest } from "../types/AuthRequest.js";
-import type { Request, Response, NextFunction} from "express";
 
 const controllerLogger = createLogger({ module: "BookmarkController" });
 
-const getBookmarks = async (req: Request, res: Response, next: NextFunction) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "getBookmarks",
-    req
-  );
-
-  try {
-    actionLogger.info("Fetching user bookmarks");
-    const startTime = Date.now();
-
+const getBookmarks = withLogging(
+  controllerLogger,
+  "getBookmarks",
+  async ({ req, res, log }) => {
     const { user } = req as AuthenticatedRequest;
     const { limit, cursor } = uuidPaginationSchema.parse(req.query);
 
-    actionLogger.debug("Processing user bookmarks request");
-    const serviceStartTime = Date.now();
-    const result = await postService.query.getUserBookmarkedPosts(
+    log.debug("Processing user bookmarks request");
+    const result = await bookmarkService.getBookmarks(
       user.id,
       limit,
-      cursor as string | undefined
+      cursor as string | undefined,
     );
-    const serviceDuration = Date.now() - serviceStartTime;
 
-    const totalDuration = Date.now() - startTime;
-    actionLogger.info(
+    log.info(
       {
         userId: user.id,
-        totalBookmarks: result.posts.length,
+        totalBookmarks: result.data.length,
         hasMore: result.pagination.hasMore,
         nextCursor: result.pagination.nextCursor,
-        serviceDuration,
-        totalDuration,
       },
-      "User bookmarks fetched successfully"
+      "User bookmarks fetched successfully",
     );
 
-    return res.status(200).json({
-      data: result.posts,
-      pagination: result.pagination,
-    });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+    res.status(200).json(result);
+  },
+);
 
-const createBookmark = async (req: Request, res: Response, next: NextFunction) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "createBookmark",
-    req
-  );
-
-  try {
-    actionLogger.info("Creating bookmark attempt");
-    const startTime = Date.now();
-
+const createBookmark = withLogging(
+  controllerLogger,
+  "createBookmark",
+  async ({ req, res, log }) => {
     const { user } = req as AuthenticatedRequest;
     const { id: postId } = PostIdParamSchema.parse(req.params);
 
-    actionLogger.debug("Verifying post exists");
-    await postService.validate.verifyPostExists(postId);
+    log.debug("Creating bookmark");
+    await bookmarkService.createBookmark(user.id, postId);
 
-    const dbStartTime = Date.now();
-    await prisma.bookmark.create({
-      data: { userId: user.id, postId },
-    });
+    log.info({ userId: user.id, postId }, "Bookmark created successfully");
+    res.status(201).json({ message: "Post bookmarked successfully" });
+  },
+);
 
-    const dbDuration = Date.now() - dbStartTime;
-    const totalDuration = Date.now() - startTime;
-
-    actionLogger.info(
-      {
-        userId: user.id,
-        postId,
-        dbDuration,
-        totalDuration,
-      },
-      "Bookmark created successfully"
-    );
-
-    return res.status(201).json({
-      message: "Post bookmarked successfully",
-    });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
-
-const deleteBookmark = async (req: Request, res: Response, next: NextFunction) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "deleteBookmark",
-    req
-  );
-
-  try {
-    actionLogger.info("Deleting bookmark attempt");
-    const startTime = Date.now();
-
+const deleteBookmark = withLogging(
+  controllerLogger,
+  "deleteBookmark",
+  async ({ req, res, log }) => {
     const { user } = req as AuthenticatedRequest;
     const { id: postId } = PostIdParamSchema.parse(req.params);
 
-    actionLogger.debug("Checking if bookmark exists");
-    const existingBookmark = await prisma.bookmark.findUnique({
-      where: { userId_postId: { userId: user.id, postId } },
-    });
+    log.debug({ postId, userId: user.id }, "Deleting bookmark");
+    await bookmarkService.deleteBookmark(user.id, postId);
 
-    if (!existingBookmark) {
-      actionLogger.warn(
-        { postId, userId: user.id },
-        "Attempted to delete non-existent bookmark"
-      );
-      return res.status(404).json({ message: "Bookmark not found" });
-    }
-
-    const dbStartTime = Date.now();
-    await prisma.bookmark.delete({
-      where: { userId_postId: { userId: user.id, postId } },
-    });
-
-    const dbDuration = Date.now() - dbStartTime;
-    const totalDuration = Date.now() - startTime;
-
-    actionLogger.info(
-      {
-        userId: user.id,
-        postId,
-        dbDuration,
-        totalDuration,
-      },
-      "Bookmark deleted successfully"
-    );
-
-    return res.status(200).json({
-      message: "Bookmark removed successfully",
-    });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+    log.info({ userId: user.id, postId }, "Bookmark deleted successfully");
+    res.status(200).json({ message: "Bookmark removed successfully" });
+  },
+);
 
 export { getBookmarks, createBookmark, deleteBookmark };

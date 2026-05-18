@@ -1,209 +1,96 @@
 import { createLogger } from "../core/config/logger.js";
-import TagService from "../features/tag/service/TagService.js";
-import createActionLogger from "../utils/logger.util.js";
+import { tagService } from "../features/tag/service/index.js";
+import { withLogging } from "../utils/logger.util.js";
 import { CreateTagSchema, TagIdParamSchema } from "../zodSchemas/tag.zod.js";
 
-import type { Request, Response, NextFunction} from "express";
+import type { AuthenticatedRequest } from "../types/AuthRequest.js";
 
 const controllerLogger = createLogger({ module: "TagController" });
 
-const createTag = async (req: Request, res: Response, next: NextFunction) => {
-  const actionLogger = createActionLogger(controllerLogger, "createTag", req);
-
-  try {
-    actionLogger.info("Tag creation attempt started");
-    const startTime = Date.now();
+const createTag = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "createTag",
+  async ({ req, res, log }) => {
+    log.info("Received request to create a new tag");
 
     const { name } = CreateTagSchema.parse(req.body);
+    const newTag = await tagService.createTag({ name });
 
-    actionLogger.debug("Creating tag via service");
-    const serviceStartTime = Date.now();
-    const newTag = await TagService.createTag({ name });
-    const serviceDuration = Date.now() - serviceStartTime;
+    log.info("Tag created successfully with ID: %s", newTag.id);
 
-    const totalDuration = Date.now() - startTime;
-    actionLogger.info(
-      {
-        tagId: newTag.id,
-        tagName: newTag.name,
-        serviceDuration,
-        totalDuration,
-      },
-      "Tag created successfully"
-    );
-
-    return res.status(201).json({
+    res.status(201).json({
       message: "New tag created successfully",
       data: newTag,
     });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+  },
+);
 
-const getTagForEdit = async (req: Request, res: Response, next: NextFunction) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "getTagForEdit",
-    req
-  );
-
-  try {
-    actionLogger.info("Fetching tag for edit");
-    const startTime = Date.now();
-
+const getTagForEdit = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "getTagForEdit",
+  async ({ req, res, log }) => {
+    log.info("Received request to fetch tag for edit");
     const { id: tagId } = TagIdParamSchema.parse(req.params);
+    const tag = await tagService.getTagForEdit(tagId);
+    res.status(200).json({ data: tag });
+  },
+);
 
-    actionLogger.debug("Fetching tag from service");
-    const serviceStartTime = Date.now();
-    const tag = await TagService.getTagForEdit(tagId);
-    if (!tag) return;
-    const serviceDuration = Date.now() - serviceStartTime;
+const getAllTags = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "getAllTags",
+  async ({ req: _req, res, log }) => {
+    log.info("Received request to fetch all tags");
+    const tags = await tagService.getAllTags();
+    res.status(200).json({ data: tags });
+  },
+);
 
-    const totalDuration = Date.now() - startTime;
-    actionLogger.info(
-      {
-        tagId: tag.id,
-        tagName: tag.name,
-        serviceDuration,
-        totalDuration,
-      },
-      "Tag for edit retrieved successfully"
-    );
+const getPopularTags = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "getPopularTags",
+  async ({ req: _req, res, log }) => {
+    log.info("Received request to fetch popular tags");
+    const tags = await tagService.getPopularTags(10);
+    res.status(200).json({ data: tags });
+  },
+);
 
-    return res.status(200).json({ data: tag });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
-
-const getAllTags = async (req: Request, res: Response, next: NextFunction) => {
-  const actionLogger = createActionLogger(controllerLogger, "getAllTags", req);
-
-  try {
-    actionLogger.info("Fetching all tags");
-    const startTime = Date.now();
-
-    actionLogger.debug("Executing service query for tags");
-    const serviceStartTime = Date.now();
-    const tags = await TagService.getAllTags();
-    const serviceDuration = Date.now() - serviceStartTime;
-
-    const totalDuration = Date.now() - startTime;
-    actionLogger.info(
-      {
-        totalTags: tags.length,
-        serviceDuration,
-        totalDuration,
-      },
-      "All tags fetched successfully"
-    );
-
-    return res.status(200).json({ data: tags });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
-
-const getPopularTags = async (req: Request, res: Response, next: NextFunction) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "getPopularTags",
-    req
-  );
-
-  try {
-    actionLogger.info("Fetching popular tags");
-    const startTime = Date.now();
-
-    const dbStartTime = Date.now();
-    const tags = await TagService.getPopularTags(10);
-    const dbDuration = Date.now() - dbStartTime;
-
-    const totalDuration = Date.now() - startTime;
-    actionLogger.info(
-      {
-        totalTags: tags.length,
-        dbDuration,
-        totalDuration,
-      },
-      "Popular tags fetched successfully"
-    );
-
-    return res.status(200).json({ data: tags });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
-
-const updateTag = async (req: Request, res: Response, next: NextFunction) => {
-  const actionLogger = createActionLogger(controllerLogger, "updateTag", req);
-
-  try {
-    actionLogger.info("Tag update attempt started");
-    const startTime = Date.now();
+const updateTag = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "updateTag",
+  async ({ req, res, log }) => {
+    log.info("Received request to update tag");
 
     const { id: tagId } = TagIdParamSchema.parse(req.params);
     const { name } = CreateTagSchema.parse(req.body);
+    const updatedTag = await tagService.updateTag(tagId, { name });
 
-    actionLogger.debug("Updating tag via service");
-    const serviceStartTime = Date.now();
-    const updatedTag = await TagService.updateTag(tagId, { name });
-    if (!updatedTag) return;
-    const serviceDuration = Date.now() - serviceStartTime;
+    log.info("Tag with ID %s updated successfully", tagId);
 
-    const totalDuration = Date.now() - startTime;
-    actionLogger.info(
-      {
-        tagId: updatedTag.id,
-        newName: updatedTag.name,
-        serviceDuration,
-        totalDuration,
-      },
-      "Tag updated successfully"
-    );
-
-    return res.status(200).json({
+    res.status(200).json({
       message: "Tag updated successfully",
       data: updatedTag,
     });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+  },
+);
 
-const deleteTag = async (req: Request, res: Response, next: NextFunction) => {
-  const actionLogger = createActionLogger(controllerLogger, "deleteTag", req);
-
-  try {
-    actionLogger.info("Tag deletion attempt started");
-    const startTime = Date.now();
+const deleteTag = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "deleteTag",
+  async ({ req, res, log }) => {
+    log.info("Received request to delete tag");
 
     const { id: tagId } = TagIdParamSchema.parse(req.params);
+    await tagService.deleteTag(tagId);
 
-    actionLogger.debug("Deleting tag via service");
-    const serviceStartTime = Date.now();
-    const result = await TagService.deleteTag(tagId);
-    if (!result) return;
-    const serviceDuration = Date.now() - serviceStartTime;
+    log.info("Tag with ID %s deleted successfully", tagId);
 
-    const totalDuration = Date.now() - startTime;
-    actionLogger.info(
-      {
-        tagId,
-        serviceDuration,
-        totalDuration,
-      },
-      "Tag deleted successfully"
-    );
-
-    return res.status(200).json({
+    res.status(200).json({
       message: "Tag deleted successfully",
     });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+  },
+);
 
 export {
   createTag,

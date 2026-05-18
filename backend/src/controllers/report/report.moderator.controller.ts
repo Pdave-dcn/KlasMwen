@@ -18,12 +18,12 @@ const controllerLogger = createLogger({ module: "ReportController" });
 const getAllReports = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "getAllReports",
-    req
+    req,
   );
 
   try {
@@ -63,7 +63,7 @@ const getAllReports = async (
         serviceDuration,
         totalDuration,
       },
-      "Reports fetched successfully"
+      "Reports fetched successfully",
     );
 
     return res.status(200).json(result);
@@ -75,12 +75,12 @@ const getAllReports = async (
 const getReportById = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "getReportById",
-    req
+    req,
   );
 
   try {
@@ -102,7 +102,7 @@ const getReportById = async (
         serviceDuration,
         totalDuration,
       },
-      "Report fetched successfully"
+      "Report fetched successfully",
     );
 
     return res.status(200).json({ data: report });
@@ -114,12 +114,12 @@ const getReportById = async (
 const updateReportStatus = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "updateReportStatus",
-    req
+    req,
   );
 
   try {
@@ -133,7 +133,7 @@ const updateReportStatus = async (
     const serviceStarttime = Date.now();
     const updatedReport = await ReportService.updateReportStatus(
       reportId,
-      validatedData
+      validatedData,
     );
     const serviceDuration = Date.now() - serviceStarttime;
 
@@ -146,7 +146,7 @@ const updateReportStatus = async (
         serviceDuration,
         totalDuration,
       },
-      "Report status updated successfully"
+      "Report status updated successfully",
     );
 
     return res.status(200).json({
@@ -161,12 +161,12 @@ const updateReportStatus = async (
 const deleteReport = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "deleteReport",
-    req
+    req,
   );
 
   try {
@@ -189,7 +189,7 @@ const deleteReport = async (
         serviceDuration,
         totalDuration,
       },
-      "Report deleted successfully"
+      "Report deleted successfully",
     );
 
     return res.status(200).json({
@@ -203,12 +203,12 @@ const deleteReport = async (
 const toggleVisibility = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "toggleVisibility",
-    req
+    req,
   );
 
   try {
@@ -216,7 +216,7 @@ const toggleVisibility = async (
     const startTime = Date.now();
 
     const { resourceType, resourceId, hidden } = ToggleVisibilitySchema.parse(
-      req.body
+      req.body,
     );
 
     actionLogger.debug("Starting database operation");
@@ -238,7 +238,7 @@ const toggleVisibility = async (
 
     actionLogger.info(
       { totalDuration },
-      `Resource (${resourceType}) ${resourceId} hidden=${hidden}`
+      `Resource (${resourceType}) ${resourceId} hidden=${hidden}`,
     );
 
     return res.status(200).json({
@@ -252,12 +252,12 @@ const toggleVisibility = async (
 const getReportStats = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const actionLogger = createActionLogger(
     controllerLogger,
     "getReportStats",
-    req
+    req,
   );
 
   try {
@@ -277,7 +277,7 @@ const getReportStats = async (
         serviceDuration,
         totalDuration,
       },
-      "Report statistics fetched successfully"
+      "Report statistics fetched successfully",
     );
 
     return res.status(200).json({ data: stats });

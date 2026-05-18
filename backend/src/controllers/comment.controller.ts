@@ -13,18 +13,26 @@ import type { AuthenticatedRequest } from "../types/AuthRequest.js";
 const controllerLogger = createLogger({ module: "CommentController" });
 
 const createComment = withLogging<AuthenticatedRequest>(
-  controllerLogger, "createComment",
+  controllerLogger,
+  "createComment",
   async ({ req, res, log }) => {
+    log.info("Received request to create comment");
     const { id: postId } = PostIdParamSchema.parse(req.params);
     const { content, parentId } = CreateCommentSchema.parse(req.body);
 
-    log.debug({ postId, hasParent: !!parentId, contentLength: content.length }, "Processing comment creation");
+    log.debug(
+      { postId, hasParent: !!parentId, contentLength: content.length },
+      "Processing comment creation",
+    );
     const newComment = await commentService.command.createComment(
       { content, authorId: req.user.id, postId, parentId },
       req.app,
     );
 
-    log.info({ commentId: newComment.id, postId }, "Comment created successfully");
+    log.info(
+      { commentId: newComment.id, postId },
+      "Comment created successfully",
+    );
     res.status(201).json({
       message: "Comment created successfully",
       data: newComment,
@@ -33,8 +41,10 @@ const createComment = withLogging<AuthenticatedRequest>(
 );
 
 const getParentComments = withLogging<AuthenticatedRequest>(
-  controllerLogger, "getParentComments",
+  controllerLogger,
+  "getParentComments",
   async ({ req, res, log }) => {
+    log.info("Received request to fetch parent comments");
     const { id: postId } = PostIdParamSchema.parse(req.params);
 
     const customRepliesSchema = createPaginationSchema(10, 40, "number");
@@ -57,8 +67,10 @@ const getParentComments = withLogging<AuthenticatedRequest>(
 );
 
 const getReplies = withLogging<AuthenticatedRequest>(
-  controllerLogger, "getReplies",
+  controllerLogger,
+  "getReplies",
   async ({ req, res, log }) => {
+    log.info("Received request to fetch replies for comment");
     const { id: parentId } = CommentIdParamSchema.parse(req.params);
 
     const customRepliesSchema = createPaginationSchema(10, 40, "number");
@@ -72,7 +84,11 @@ const getReplies = withLogging<AuthenticatedRequest>(
     );
 
     log.info(
-      { parentId, repliesReturned: result.data.length, hasMore: result.pagination.hasMore },
+      {
+        parentId,
+        repliesReturned: result.data.length,
+        hasMore: result.pagination.hasMore,
+      },
       "Replies fetched successfully",
     );
 
@@ -81,8 +97,10 @@ const getReplies = withLogging<AuthenticatedRequest>(
 );
 
 const deleteComment = withLogging<AuthenticatedRequest>(
-  controllerLogger, "deleteComment",
+  controllerLogger,
+  "deleteComment",
   async ({ req, res, log }) => {
+    log.info("Received request to delete comment");
     const { id: commentId } = CommentIdParamSchema.parse(req.params);
 
     log.debug({ commentId }, "Processing comment deletion");

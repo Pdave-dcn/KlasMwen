@@ -24,8 +24,8 @@ vi.mock("../../../../src/core/security/rbac.js", () => ({
   assertPermission: (...args: unknown[]) => mockAssertPermission(...args),
 }));
 
-vi.mock("../../../../src/features/notification/service/NotificationService.js", () => ({
-  default: {
+vi.mock("../../../../src/features/notification/service/index.js", () => ({
+  notificationService: {
     createNotification: (...args: unknown[]) => mockCreateNotification(...args),
   },
 }));

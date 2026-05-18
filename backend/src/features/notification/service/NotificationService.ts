@@ -1,44 +1,67 @@
-import { bindMethods } from "../../../utils/bindMethods.util.js";
+import {
+  notificationCommandService,
+  type NotificationCommandService,
+} from "./core/NotificationCommandService.js";
+import {
+  notificationQueryService,
+  type NotificationQueryService,
+} from "./core/NotificationQueryService.js";
 
-import NotificationCommandService from "./core/NotificationCommandService.js";
-import NotificationQueryService from "./core/NotificationQueryService.js";
+import type { CreateNotificationData } from "./types/NotificationTypes.js";
+import type { NotificationType } from "@prisma/client";
+import type { Application } from "express";
 
-/**
- * Main facade for notification operations.
- * Delegates to specialized services for different concerns.
- */
 class NotificationService {
-  // Query Operations
-  static getUserNotifications: typeof NotificationQueryService.getUserNotifications;
-  static getUnreadCount: typeof NotificationQueryService.getUnreadCount;
-  static getNotificationById: typeof NotificationQueryService.getNotificationById;
+  constructor(
+    private readonly query: NotificationQueryService,
+    private readonly command: NotificationCommandService,
+  ) {}
 
-  // Command Operations
-  static createNotification: typeof NotificationCommandService.createNotification;
-  static markAsRead: typeof NotificationCommandService.markAsRead;
-  static markAllAsRead: typeof NotificationCommandService.markAllAsRead;
-  static deleteNotification: typeof NotificationCommandService.deleteNotification;
-  static deleteAllNotifications: typeof NotificationCommandService.deleteAllNotifications;
-  static deleteReadNotifications: typeof NotificationCommandService.deleteReadNotifications;
+  getUserNotifications(
+    userId: string,
+    limit = 20,
+    cursor?: number,
+    filters?: { read?: boolean; type?: NotificationType },
+  ) {
+    return this.query.getUserNotifications(userId, limit, cursor, filters);
+  }
 
-  static {
-    Object.assign(
-      this,
-      bindMethods(NotificationQueryService, [
-        "getUserNotifications",
-        "getUnreadCount",
-        "getNotificationById",
-      ]),
-      bindMethods(NotificationCommandService, [
-        "createNotification",
-        "markAsRead",
-        "markAllAsRead",
-        "deleteNotification",
-        "deleteAllNotifications",
-        "deleteReadNotifications",
-      ])
-    );
+  getUnreadCount(userId: string) {
+    return this.query.getUnreadCount(userId);
+  }
+
+  getNotificationById(notificationId: number) {
+    return this.query.getNotificationById(notificationId);
+  }
+
+  createNotification(data: CreateNotificationData, app?: Application) {
+    return this.command.createNotification(data, app);
+  }
+
+  markAsRead(notificationId: number, user: Express.User) {
+    return this.command.markAsRead(notificationId, user);
+  }
+
+  markAllAsRead(userId: string) {
+    return this.command.markAllAsRead(userId);
+  }
+
+  deleteNotification(notificationId: number, user: Express.User) {
+    return this.command.deleteNotification(notificationId, user);
+  }
+
+  deleteAllNotifications(userId: string) {
+    return this.command.deleteAllNotifications(userId);
+  }
+
+  deleteReadNotifications(userId: string) {
+    return this.command.deleteReadNotifications(userId);
   }
 }
 
-export default NotificationService;
+const notificationService = new NotificationService(
+  notificationQueryService,
+  notificationCommandService,
+);
+
+export { notificationService, NotificationService };

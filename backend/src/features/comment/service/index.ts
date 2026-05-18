@@ -5,7 +5,9 @@ import { CommentService } from "./core/CommentService.js";
 import { CommentValidationService } from "./core/CommentValidationService.js";
 import { CommentRepository } from "./repositories/commentRepository.js";
 
-const commentValidationService = new CommentValidationService(CommentRepository);
+const commentValidationService = new CommentValidationService(
+  CommentRepository,
+);
 const commentQueryService = new CommentQueryService(
   CommentRepository,
   CommentTransformer,

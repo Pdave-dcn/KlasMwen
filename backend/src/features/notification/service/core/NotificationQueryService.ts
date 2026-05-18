@@ -4,14 +4,8 @@ import NotificationRepository from "../repo/NotificationRepository.js";
 import type { NotificationFilters } from "../types/NotificationTypes.js";
 import type { NotificationType } from "@prisma/client";
 
-/**
- * NotificationQueryService - Read operations only
- */
 class NotificationQueryService {
-  /**
-   * Get user's notifications with pagination
-   */
-  static async getUserNotifications(
+  async getUserNotifications(
     userId: string,
     limit = 20,
     cursor?: number,
@@ -44,19 +38,14 @@ class NotificationQueryService {
     };
   }
 
-  /**
-   * Get unread notification count
-   */
-  static async getUnreadCount(userId: string) {
+  async getUnreadCount(userId: string) {
     return await NotificationRepository.countUnread(userId);
   }
 
-  /**
-   * Get a single notification by ID
-   */
-  static async getNotificationById(notificationId: number) {
+  async getNotificationById(notificationId: number) {
     return await NotificationRepository.findById(notificationId);
   }
 }
 
-export default NotificationQueryService;
+const notificationQueryService = new NotificationQueryService();
+export { notificationQueryService, NotificationQueryService };

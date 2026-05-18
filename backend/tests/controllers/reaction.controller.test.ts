@@ -1,30 +1,13 @@
-import { Like, Post, Role } from "@prisma/client";
-import { Request, Response } from "express";
 import { it, expect, describe, vi, beforeEach } from "vitest";
 
-import { toggleLike } from "../../src/controllers/reaction.controller";
-import prisma from "../../src/core/config/db.js";
-import { AuthenticationError } from "../../src/core/error/custom/auth.error";
-import { PostNotFoundError } from "../../src/core/error/custom/post.error";
-import { PostIdParamSchema } from "../../src/zodSchemas/post.zod.js";
+import { PostNotFoundError } from "../../src/core/error/custom/post.error.js";
+import { toggleLike } from "../../src/controllers/reaction.controller.js";
 
-vi.mock("../../src/core/config/db.js", () => ({
-  default: {
-    post: {
-      findUnique: vi.fn(),
-    },
-    like: {
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      delete: vi.fn(),
-    },
-  },
-}));
-vi.mock("../../src/core/error/index");
+const mockToggleLike = vi.fn();
 
-vi.mock("../../src/zodSchemas/post.zod.js", () => ({
-  PostIdParamSchema: {
-    parse: vi.fn(),
+vi.mock("../../src/features/reaction/service/index.js", () => ({
+  reactionService: {
+    toggleLike: (...args: unknown[]) => mockToggleLike(...args),
   },
 }));
 
@@ -41,72 +24,55 @@ vi.mock("../../src/core/config/logger.js", () => ({
     warn: vi.fn(),
     error: vi.fn(),
   })),
-  logger: {
-    child: vi.fn(() => ({
-      debug: vi.fn(),
-      info: vi.fn(),
-      warn: vi.fn(),
-      error: vi.fn(),
-    })),
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
 }));
 
-describe("Reaction controller", () => {
-  let mockRequest: Partial<Request>;
-  let mockResponse: Partial<Response>;
-  let mockNext: any;
+type MockReq = Record<string, unknown>;
+type MockRes = { status: ReturnType<typeof vi.fn>; json: ReturnType<typeof vi.fn> };
+type MockNext = ReturnType<typeof vi.fn>;
 
-  const mockPostId = "a1b2c3d4-e5f6-7890-1234-567890abcdef";
-  const mockUserId = "c3d4e5f6-7890-1234-5678-90abcdef1234";
+function createReq(overrides: Record<string, unknown> = {}): MockReq {
+  return {
+    params: {},
+    body: {},
+    query: {},
+    ...overrides,
+  };
+}
+
+function createRes(): MockRes {
+  return {
+    status: vi.fn().mockReturnThis(),
+    json: vi.fn().mockReturnThis(),
+  };
+}
+
+describe("Reaction Controller", () => {
+  let mockRequest: MockReq;
+  let mockResponse: MockRes;
+  let mockNext: MockNext;
+  const mockUserId = "c3d4e5f6-7890-4b78-8a90-90abcdef1234";
+  const mockPostId = "550e8400-e29b-41d4-a716-446655440000";
 
   beforeEach(() => {
     vi.clearAllMocks();
-
+    mockResponse = createRes();
     mockNext = vi.fn();
-
-    mockResponse = {
-      status: vi.fn(() => mockResponse as Response),
-      json: vi.fn(),
-    };
-
-    vi.mocked(PostIdParamSchema.parse).mockImplementation((params: any) => ({
-      id: params.id,
-    }));
   });
 
   describe("toggleLike", () => {
     it("should like a post successfully", async () => {
-      mockRequest = {
-        user: {
-          id: mockUserId,
-          role: "STUDENT" as Role,
-          username: "test_username",
-          email: "test_email",
-        },
+      mockRequest = createReq({
+        user: { id: mockUserId, role: "STUDENT" },
         params: { id: mockPostId },
-      };
+      });
+      mockToggleLike.mockResolvedValue({
+        action: "like",
+        message: "Post liked successfully",
+      });
 
-      vi.mocked(prisma.post.findUnique).mockResolvedValue({
-        id: mockPostId,
-        title: "Test Post",
-        authorId: mockUserId,
-        content: "Some post content",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        type: "NOTE",
-        fileUrl: null,
-        fileName: null,
-        fileSize: null,
-        mimeType: null,
-      } as Post);
+      await toggleLike(mockRequest as any, mockResponse as any, mockNext);
 
-      await toggleLike(mockRequest as Request, mockResponse as Response, mockNext);
-
-      expect(PostIdParamSchema.parse).toHaveBeenCalledWith({ id: mockPostId });
+      expect(mockToggleLike).toHaveBeenCalledWith(mockUserId, mockPostId, undefined);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "Post liked successfully",
@@ -114,218 +80,62 @@ describe("Reaction controller", () => {
     });
 
     it("should unlike a post successfully", async () => {
-      mockRequest = {
-        user: {
-          id: mockUserId,
-          role: "STUDENT" as Role,
-          username: "test_username",
-          email: "test_email",
-        },
+      mockRequest = createReq({
+        user: { id: mockUserId, role: "STUDENT" },
         params: { id: mockPostId },
-      };
+      });
+      mockToggleLike.mockResolvedValue({
+        action: "unlike",
+        message: "Post unliked successfully",
+      });
 
-      vi.mocked(prisma.post.findUnique).mockResolvedValue({
-        id: mockPostId,
-        title: "Test Post",
-        authorId: mockUserId,
-        content: "Some post content",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        type: "NOTE",
-        fileUrl: null,
-        fileName: null,
-        fileSize: null,
-        mimeType: null,
-      } as Post);
+      await toggleLike(mockRequest as any, mockResponse as any, mockNext);
 
-      vi.mocked(prisma.like.findUnique).mockResolvedValue({
-        userId: mockUserId,
-        postId: mockPostId,
-      } as Like);
-
-      await toggleLike(mockRequest as Request, mockResponse as Response, mockNext);
-
-      expect(PostIdParamSchema.parse).toHaveBeenCalledWith({ id: mockPostId });
+      expect(mockToggleLike).toHaveBeenCalledWith(mockUserId, mockPostId, undefined);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "Post unliked successfully",
       });
     });
 
-    it("should call handleError if the post does not exist", async () => {
-      mockRequest = {
-        user: {
-          id: mockUserId,
-          role: "STUDENT" as Role,
-          username: "test_username",
-          email: "test_email",
-        },
+    it("should call next with PostNotFoundError when post does not exist", async () => {
+      mockRequest = createReq({
+        user: { id: mockUserId, role: "STUDENT" },
         params: { id: mockPostId },
-      };
+      });
+      mockToggleLike.mockRejectedValue(new PostNotFoundError(mockPostId));
 
-      vi.mocked(prisma.post.findUnique).mockResolvedValue(null);
+      await toggleLike(mockRequest as any, mockResponse as any, mockNext);
 
-      await toggleLike(mockRequest as Request, mockResponse as Response, mockNext);
-
-      expect(PostIdParamSchema.parse).toHaveBeenCalledWith({ id: mockPostId });
+      expect(mockToggleLike).toHaveBeenCalledWith(mockUserId, mockPostId, undefined);
+      expect(mockResponse.status).not.toHaveBeenCalled();
       expect(mockNext).toHaveBeenCalledWith(expect.any(PostNotFoundError));
     });
 
-    it("should throw an error and call handleError if the post ID is invalid", async () => {
-      mockRequest = {
-        user: {
-          id: mockUserId,
-          role: "STUDENT" as Role,
-          username: "test_username",
-          email: "test_email",
-        },
-        params: { id: 1 as any },
-      };
-
-      vi.mocked(PostIdParamSchema.parse).mockImplementationOnce(() => {
-        throw new Error("Invalid UUID format");
+    it("should call next with validation error for invalid post ID", async () => {
+      mockRequest = createReq({
+        user: { id: mockUserId, role: "STUDENT" },
+        params: { id: "invalid-uuid" },
       });
 
-      await toggleLike(mockRequest as Request, mockResponse as Response, mockNext);
+      await toggleLike(mockRequest as any, mockResponse as any, mockNext);
 
-      expect(PostIdParamSchema.parse).toHaveBeenCalledWith({ id: 1 });
+      expect(mockToggleLike).not.toHaveBeenCalled();
       expect(mockNext).toHaveBeenCalled();
     });
 
-    it("should handle database errors when creating a like", async () => {
-      mockRequest = {
-        user: {
-          id: mockUserId,
-          role: "STUDENT" as Role,
-          username: "test_username",
-          email: "test_email",
-        },
+    it("should handle service errors", async () => {
+      const dbError = new Error("Database connection failed");
+      mockRequest = createReq({
+        user: { id: mockUserId, role: "STUDENT" },
         params: { id: mockPostId },
-      };
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue({
-        id: mockPostId,
-        title: "Test Post",
-        authorId: mockUserId,
-        content: "Some post content",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        type: "NOTE",
-        fileUrl: null,
-        fileName: null,
-        fileSize: null,
-        mimeType: null,
-      } as Post);
-
-      vi.mocked(prisma.like.findUnique).mockResolvedValue(null);
-      vi.mocked(prisma.like.create).mockRejectedValue(
-        new Error("Database connection failed")
-      );
-
-      await toggleLike(mockRequest as Request, mockResponse as Response, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
-      expect(prisma.like.create).toHaveBeenCalledWith({
-        data: { userId: mockUserId, postId: mockPostId },
       });
-    });
+      mockToggleLike.mockRejectedValue(dbError);
 
-    it("should handle database errors when deleting a like", async () => {
-      mockRequest = {
-        user: {
-          id: mockUserId,
-          role: "STUDENT" as Role,
-          username: "test_username",
-          email: "test_email",
-        },
-        params: { id: mockPostId },
-      };
+      await toggleLike(mockRequest as any, mockResponse as any, mockNext);
 
-      vi.mocked(prisma.post.findUnique).mockResolvedValue({
-        id: mockPostId,
-        title: "Test Post",
-        authorId: mockUserId,
-        content: "Some post content",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        type: "NOTE",
-        fileUrl: null,
-        fileName: null,
-        fileSize: null,
-        mimeType: null,
-      } as Post);
-
-      vi.mocked(prisma.like.findUnique).mockResolvedValue({
-        userId: mockUserId,
-        postId: mockPostId,
-      } as Like);
-
-      vi.mocked(prisma.like.delete).mockRejectedValue(
-        new Error("Database connection failed")
-      );
-
-      await toggleLike(mockRequest as Request, mockResponse as Response, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
-      expect(prisma.like.delete).toHaveBeenCalledWith({
-        where: { userId_postId: { userId: mockUserId, postId: mockPostId } },
-      });
-    });
-
-    it("should handle errors when fetching post and like data", async () => {
-      mockRequest = {
-        user: {
-          id: mockUserId,
-          role: "STUDENT" as Role,
-          username: "test_username",
-          email: "test_email",
-        },
-        params: { id: mockPostId },
-      };
-
-      vi.mocked(prisma.post.findUnique).mockRejectedValue(
-        new Error("Database connection failed")
-      );
-
-      await toggleLike(mockRequest as Request, mockResponse as Response, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
-      expect(PostIdParamSchema.parse).toHaveBeenCalledWith({ id: mockPostId });
-    });
-
-    it("should handle errors when like query fails in Promise.all", async () => {
-      mockRequest = {
-        user: {
-          id: mockUserId,
-          role: "STUDENT" as Role,
-          username: "test_username",
-          email: "test_email",
-        },
-        params: { id: mockPostId },
-      };
-
-      vi.mocked(prisma.post.findUnique).mockResolvedValue({
-        id: mockPostId,
-        title: "Test Post",
-        authorId: mockUserId,
-        content: "Some post content",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        type: "NOTE",
-        fileUrl: null,
-        fileName: null,
-        fileSize: null,
-        mimeType: null,
-      } as Post);
-
-      vi.mocked(prisma.like.findUnique).mockRejectedValue(
-        new Error("Like query failed")
-      );
-
-      await toggleLike(mockRequest as Request, mockResponse as Response, mockNext);
-
-      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
-      expect(PostIdParamSchema.parse).toHaveBeenCalledWith({ id: mockPostId });
+      expect(mockNext).toHaveBeenCalledWith(dbError);
+      expect(mockResponse.status).not.toHaveBeenCalled();
     });
   });
 });

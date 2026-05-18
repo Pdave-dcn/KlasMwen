@@ -1,6 +1,6 @@
 import { PostNotFoundError } from "../../../../core/error/custom/post.error.js";
 import { assertPermission } from "../../../../core/security/rbac.js";
-import NotificationService from "../../../notification/service/NotificationService.js";
+import { notificationService as NotificationService } from "../../../notification/service/index.js";
 import { postService } from "../../../posts/service/PostService.js";
 
 import type { CommentValidationService } from "./CommentValidationService.js";

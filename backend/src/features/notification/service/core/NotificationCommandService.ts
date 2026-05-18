@@ -5,19 +5,11 @@ import NotificationRepository from "../repo/NotificationRepository.js";
 import type { CreateNotificationData } from "../types/NotificationTypes.js";
 import type { Application } from "express";
 
-/**
- * NotificationCommandService - Write operations only
- */
 class NotificationCommandService {
-  /**
-   * Create a new notification
-   * Prevents users from sending notifications to themselves
-   */
-  static async createNotification(
+  async createNotification(
     data: CreateNotificationData,
     app?: Application
   ) {
-    // Don't create notification if user is notifying themselves
     if (data.userId === data.actorId) {
       return null;
     }
@@ -35,10 +27,7 @@ class NotificationCommandService {
     return notification;
   }
 
-  /**
-   * Mark a notification as read
-   */
-  static async markAsRead(notificationId: number, user: Express.User) {
+  async markAsRead(notificationId: number, user: Express.User) {
     const notification = await NotificationRepository.exists(notificationId);
 
     if (!notification) {
@@ -50,18 +39,11 @@ class NotificationCommandService {
     return await NotificationRepository.markAsRead(notificationId);
   }
 
-  /**
-   * Mark all notifications as read for a user
-   * No permission check needed as users can only mark their own notifications
-   */
-  static async markAllAsRead(userId: string) {
+  async markAllAsRead(userId: string) {
     return await NotificationRepository.markAllAsRead(userId);
   }
 
-  /**
-   * Delete a notification
-   */
-  static async deleteNotification(notificationId: number, user: Express.User) {
+  async deleteNotification(notificationId: number, user: Express.User) {
     const notification = await NotificationRepository.exists(notificationId);
 
     if (!notification) {
@@ -73,21 +55,14 @@ class NotificationCommandService {
     return await NotificationRepository.delete(notificationId);
   }
 
-  /**
-   * Delete all notifications for a user
-   * No permission check needed as users can only delete their own notifications
-   */
-  static async deleteAllNotifications(userId: string) {
+  async deleteAllNotifications(userId: string) {
     return await NotificationRepository.deleteAll(userId);
   }
 
-  /**
-   * Delete all read notifications for a user
-   * No permission check needed as users can only delete their own notifications
-   */
-  static async deleteReadNotifications(userId: string) {
+  async deleteReadNotifications(userId: string) {
     return await NotificationRepository.deleteRead(userId);
   }
 }
 
-export default NotificationCommandService;
+const notificationCommandService = new NotificationCommandService();
+export { notificationCommandService, NotificationCommandService };

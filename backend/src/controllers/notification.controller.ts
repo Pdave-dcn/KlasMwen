@@ -1,6 +1,6 @@
 import { createLogger } from "../core/config/logger.js";
-import NotificationService from "../features/notification/service/NotificationService.js";
-import createActionLogger from "../utils/logger.util.js";
+import { notificationService } from "../features/notification/service/index.js";
+import { withLogging } from "../utils/logger.util.js";
 import { createPaginationSchema } from "../utils/pagination.util.js";
 import {
   NotificationsQuerySchema,
@@ -8,25 +8,14 @@ import {
 } from "../zodSchemas/notification.zod.js";
 
 import type { AuthenticatedRequest } from "../types/AuthRequest.js";
-import type { NextFunction, Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "NotificationController" });
 
-const getNotifications = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "getNotifications",
-    req
-  );
-  try {
-    actionLogger.info("Fetching notifications");
-
-    const { user } = req as AuthenticatedRequest;
-
+const getNotifications = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "getNotifications",
+  async ({ req, res, log }) => {
+    log.info("Received request to fetch notifications");
     const customValidator = createPaginationSchema(10, 50, "number");
     const { limit, cursor } = customValidator.parse(req.query);
 
@@ -35,94 +24,49 @@ const getNotifications = async (
       type: req.query.type,
     });
 
-    const result = await NotificationService.getUserNotifications(
-      user.id,
+    const result = await notificationService.getUserNotifications(
+      req.user.id,
       limit,
       cursor as number | undefined,
-      parsed
+      parsed,
     );
 
-    actionLogger.info(
-      {
-        userId: user.id,
-        notificationCount: result.data.length,
-        unreadCount: result.unreadCount,
-      },
-      "Notifications fetched"
-    );
+    log.info("Notifications fetched successfully");
 
-    return res.status(200).json(result);
-  } catch (error) {
-    return next(error);
-  }
-};
+    res.status(200).json(result);
+  },
+);
 
-const markNotificationAsRead = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "markNotificationAsRead",
-    req
-  );
-
-  try {
-    actionLogger.info("Marking notification as read");
-
-    const { user } = req as AuthenticatedRequest;
+const markNotificationAsRead = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "markNotificationAsRead",
+  async ({ req, res, log }) => {
+    log.info("Received request to mark notification as read");
     const { id } = NotificationIdParamSchema.parse(req.params);
 
-    await NotificationService.markAsRead(id, user);
+    await notificationService.markAsRead(id, req.user);
 
-    actionLogger.info(
-      {
-        userId: user.id,
-        notificationId: id,
-      },
-      "Notification marked as read"
-    );
+    log.info("Notification marked as read");
 
-    return res.status(200).json({
+    res.status(200).json({
       message: "Notification marked as read",
     });
-  } catch (error) {
-    return next(error);
-  }
-};
+  },
+);
 
-const markAllNotificationsAsRead = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "markAllNotificationsAsRead",
-    req
-  );
+const markAllNotificationsAsRead = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "markAllNotificationsAsRead",
+  async ({ req, res, log }) => {
+    log.info("Received request to mark all notifications as read");
+    await notificationService.markAllAsRead(req.user.id);
 
-  try {
-    actionLogger.info("Marking all notifications as read");
+    log.info("All notifications marked as read");
 
-    const { user } = req as AuthenticatedRequest;
-
-    await NotificationService.markAllAsRead(user.id);
-
-    actionLogger.info(
-      {
-        userId: user.id,
-      },
-      "All notifications marked as read"
-    );
-
-    return res.status(200).json({
+    res.status(200).json({
       message: "All notifications marked as read",
     });
-  } catch (error) {
-    return next(error);
-  }
-};
+  },
+);
 
 export { getNotifications, markNotificationAsRead, markAllNotificationsAsRead };

@@ -1,4 +1,7 @@
-import type { CommentWithRelations, TransformedComment } from "./types/commentTypes.js";
+import type {
+  CommentWithRelations,
+  TransformedComment,
+} from "./types/commentTypes.js";
 
 class CommentTransformer {
   static transformCommentsForResponse(

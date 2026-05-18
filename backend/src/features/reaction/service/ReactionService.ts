@@ -1,4 +1,4 @@
-import NotificationService from "../../notification/service/NotificationService.js";
+import { notificationService as NotificationService } from "../../notification/service/index.js";
 import { postService } from "../../posts/service/PostService.js";
 
 import ReactionRepository from "./ReactionRepository.js";
@@ -10,27 +10,17 @@ interface ToggleLikeResult {
   message: string;
 }
 
-/**
- * ReactionService - Business logic for post reactions (likes)
- */
 class ReactionService {
-  /**
-   * Toggle like on a post
-   * If like exists, remove it. If not, create it.
-   */
-  static async toggleLike(
+  async toggleLike(
     userId: string,
     postId: string,
-    app?: Application
+    app?: Application,
   ): Promise<ToggleLikeResult> {
-    // Verify post exists and get author
     const post = await postService.validate.verifyPostExists(postId);
 
-    // Check if like already exists
     const existingLike = await ReactionRepository.findLike(userId, postId);
 
     if (existingLike) {
-      // Unlike
       await ReactionRepository.deleteLike(userId, postId);
 
       return {
@@ -39,10 +29,8 @@ class ReactionService {
       };
     }
 
-    // Like
     await ReactionRepository.createLike(userId, postId);
 
-    // Send notification
     await NotificationService.createNotification(
       {
         type: "LIKE",
@@ -50,7 +38,7 @@ class ReactionService {
         actorId: userId,
         postId,
       },
-      app
+      app,
     );
 
     return {
@@ -60,4 +48,5 @@ class ReactionService {
   }
 }
 
-export default ReactionService;
+const reactionService = new ReactionService();
+export { reactionService, ReactionService };

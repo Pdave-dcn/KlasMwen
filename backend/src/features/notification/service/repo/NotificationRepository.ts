@@ -1,46 +1,62 @@
-import { bindMethods } from "../../../../utils/bindMethods.util.js";
-
 import NotificationCommandRepository from "./core/NotificationCommandRepository.js";
 import NotificationQueryRepository from "./core/NotificationQueryRepository.js";
 
-/**
- * NotificationRepository - Main facade for notification data access
- */
+import type {
+  CreateNotificationData,
+  NotificationFilters,
+} from "../types/NotificationTypes.js";
+
 class NotificationRepository {
-  // Query Operations
-  static findUserNotifications: typeof NotificationQueryRepository.findUserNotifications;
-  static countUnread: typeof NotificationQueryRepository.countUnread;
-  static countTotal: typeof NotificationQueryRepository.countTotal;
-  static findById: typeof NotificationQueryRepository.findById;
-  static exists: typeof NotificationQueryRepository.exists;
-
-  // Command Operations
-  static create: typeof NotificationCommandRepository.create;
-  static markAsRead: typeof NotificationCommandRepository.markAsRead;
-  static markAllAsRead: typeof NotificationCommandRepository.markAllAsRead;
-  static delete: typeof NotificationCommandRepository.delete;
-  static deleteAll: typeof NotificationCommandRepository.deleteAll;
-  static deleteRead: typeof NotificationCommandRepository.deleteRead;
-
-  static {
-    Object.assign(
-      this,
-      bindMethods(NotificationQueryRepository, [
-        "findUserNotifications",
-        "countUnread",
-        "countTotal",
-        "findById",
-        "exists",
-      ]),
-      bindMethods(NotificationCommandRepository, [
-        "create",
-        "markAsRead",
-        "markAllAsRead",
-        "delete",
-        "deleteAll",
-        "deleteRead",
-      ])
+  static findUserNotifications(
+    filters: NotificationFilters,
+    limit: number,
+    cursor?: number,
+  ) {
+    return NotificationQueryRepository.findUserNotifications(
+      filters,
+      limit,
+      cursor,
     );
+  }
+
+  static countUnread(userId: string) {
+    return NotificationQueryRepository.countUnread(userId);
+  }
+
+  static countTotal(userId: string) {
+    return NotificationQueryRepository.countTotal(userId);
+  }
+
+  static findById(notificationId: number) {
+    return NotificationQueryRepository.findById(notificationId);
+  }
+
+  static exists(notificationId: number) {
+    return NotificationQueryRepository.exists(notificationId);
+  }
+
+  static create(data: CreateNotificationData) {
+    return NotificationCommandRepository.create(data);
+  }
+
+  static markAsRead(notificationId: number) {
+    return NotificationCommandRepository.markAsRead(notificationId);
+  }
+
+  static markAllAsRead(userId: string) {
+    return NotificationCommandRepository.markAllAsRead(userId);
+  }
+
+  static delete(notificationId: number) {
+    return NotificationCommandRepository.delete(notificationId);
+  }
+
+  static deleteAll(userId: string) {
+    return NotificationCommandRepository.deleteAll(userId);
+  }
+
+  static deleteRead(userId: string) {
+    return NotificationCommandRepository.deleteRead(userId);
   }
 }
 

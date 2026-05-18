@@ -1,40 +1,26 @@
 import { createLogger } from "../../core/config/logger.js";
-import ReportService from "../../features/report/service/ReportService.js";
-import createActionLogger from "../../utils/logger.util.js";
+import { reportService } from "../../features/report/service/index.js";
+import { withLogging } from "../../utils/logger.util.js";
 
-import type { Request, Response, NextFunction} from "express";
+import type { Request } from "express";
 
 const controllerLogger = createLogger({ module: "ReportController" });
 
-export const getReportReasons = async (req: Request, res: Response, next: NextFunction) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "getReportReasons",
-    req
-  );
-  try {
-    actionLogger.info("Fetching report reasons");
-    const startTime = Date.now();
+const getReportReasons = withLogging<Request>(
+  controllerLogger,
+  "getReportReasons",
+  async ({ res, log }) => {
+    log.info("Fetching report reasons");
 
-    actionLogger.debug("Processing report reasons fetching");
-    const serviceStarttime = Date.now();
-    const reportReasons = await ReportService.getReportReasons();
-    if (!reportReasons) return;
-    const serviceDuration = Date.now() - serviceStarttime;
+    const reportReasons = await reportService.getReportReasons();
 
-    const totalDuration = Date.now() - startTime;
-
-    actionLogger.info(
-      {
-        count: reportReasons.length,
-        serviceDuration,
-        totalDuration,
-      },
-      "Report reasons fetched successfully"
+    log.info(
+      { count: reportReasons.length },
+      "Report reasons fetched successfully",
     );
 
-    return res.status(200).json({ data: reportReasons });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+    res.status(200).json({ data: reportReasons });
+  },
+);
+
+export { getReportReasons };

@@ -20,7 +20,7 @@ class ReportRepository {
   /** Find all reports, optionally filtered by status, postId, or commentId */
   static async findAll(
     where: Prisma.ReportWhereInput,
-    pagination?: { page: number; limit: number }
+    pagination?: { page: number; limit: number },
   ) {
     const page = pagination?.page ?? 1;
     const limit = pagination?.limit ?? 10;
@@ -89,6 +89,22 @@ class ReportRepository {
   /** Count total reports, optionally filtered by status or post/comment */
   static count(where: Prisma.ReportWhereInput) {
     return prisma.report.count({ where });
+  }
+
+  /** Update a post's hidden flag */
+  static updatePostHidden(postId: string, hidden: boolean) {
+    return prisma.post.update({
+      where: { id: postId },
+      data: { hidden },
+    });
+  }
+
+  /** Update a comment's hidden flag */
+  static updateCommentHidden(commentId: number, hidden: boolean) {
+    return prisma.comment.update({
+      where: { id: commentId },
+      data: { hidden },
+    });
   }
 
   /** Get statistics about reports and hidden content */

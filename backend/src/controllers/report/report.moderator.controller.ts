@@ -1,9 +1,6 @@
-import prisma from "../../core/config/db.js";
 import { createLogger } from "../../core/config/logger.js";
-import { commentService } from "../../features/comment/service/index.js";
-import { postService } from "../../features/posts/service/PostService.js";
-import ReportService from "../../features/report/service/ReportService.js";
-import createActionLogger from "../../utils/logger.util.js";
+import { reportService } from "../../features/report/service/index.js";
+import { withLogging } from "../../utils/logger.util.js";
 import {
   ReportIdParamSchema,
   ReportQuerySchema,
@@ -11,24 +8,15 @@ import {
   ToggleVisibilitySchema,
 } from "../../zodSchemas/report.zod.js";
 
-import type { Request, Response, NextFunction } from "express";
+import type { AuthenticatedRequest } from "../../types/AuthRequest.js";
 
 const controllerLogger = createLogger({ module: "ReportController" });
 
-const getAllReports = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "getAllReports",
-    req,
-  );
-
-  try {
-    actionLogger.info("Fetching all reports");
-    const startTime = Date.now();
+const getAllReports = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "getAllReports",
+  async ({ req, res, log }) => {
+    log.info("Fetching all reports");
 
     const validatedQuery = ReportQuerySchema.parse(req.query);
 
@@ -47,244 +35,115 @@ const getAllReports = async (
       limit: validatedQuery.limit,
     };
 
-    actionLogger.debug("Processing reports fetching with filters");
-    const serviceStarttime = Date.now();
-    const result = await ReportService.getAllReports(filters, pagination);
-    const serviceDuration = Date.now() - serviceStarttime;
+    const result = await reportService.getAllReports(filters, pagination);
 
-    const totalDuration = Date.now() - startTime;
-
-    actionLogger.info(
+    log.info(
       {
         count: result.data.length,
         total: result.pagination.total,
         page: result.pagination.page,
         filters,
-        serviceDuration,
-        totalDuration,
       },
       "Reports fetched successfully",
     );
 
-    return res.status(200).json(result);
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+    res.status(200).json(result);
+  },
+);
 
-const getReportById = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "getReportById",
-    req,
-  );
-
-  try {
-    actionLogger.info("Fetching report by ID");
-    const startTime = Date.now();
+const getReportById = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "getReportById",
+  async ({ req, res, log }) => {
+    log.info("Fetching report by ID");
 
     const { id: reportId } = ReportIdParamSchema.parse(req.params);
+    const report = await reportService.getReportById(reportId);
 
-    actionLogger.debug("Processing report fetch");
-    const serviceStarttime = Date.now();
-    const report = await ReportService.getReportById(reportId);
-    const serviceDuration = Date.now() - serviceStarttime;
+    log.info({ reportId }, "Report fetched successfully");
 
-    const totalDuration = Date.now() - startTime;
+    res.status(200).json({ data: report });
+  },
+);
 
-    actionLogger.info(
-      {
-        reportId,
-        serviceDuration,
-        totalDuration,
-      },
-      "Report fetched successfully",
-    );
-
-    return res.status(200).json({ data: report });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
-
-const updateReportStatus = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "updateReportStatus",
-    req,
-  );
-
-  try {
-    actionLogger.info("Report status update attempt started");
-    const startTime = Date.now();
+const updateReportStatus = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "updateReportStatus",
+  async ({ req, res, log }) => {
+    log.info("Report status update attempt started");
 
     const { id: reportId } = ReportIdParamSchema.parse(req.params);
     const validatedData = ReportStatusUpdateSchema.parse(req.body);
-
-    actionLogger.debug("Processing report status update");
-    const serviceStarttime = Date.now();
-    const updatedReport = await ReportService.updateReportStatus(
+    const updatedReport = await reportService.updateReportStatus(
       reportId,
       validatedData,
     );
-    const serviceDuration = Date.now() - serviceStarttime;
 
-    const totalDuration = Date.now() - startTime;
-
-    actionLogger.info(
-      {
-        reportId,
-        newStatus: updatedReport.status,
-        serviceDuration,
-        totalDuration,
-      },
+    log.info(
+      { reportId, newStatus: updatedReport.status },
       "Report status updated successfully",
     );
 
-    return res.status(200).json({
+    res.status(200).json({
       message: "Report status updated successfully",
       data: updatedReport,
     });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+  },
+);
 
-const deleteReport = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "deleteReport",
-    req,
-  );
-
-  try {
-    actionLogger.info("Report deletion attempt started");
-    const startTime = Date.now();
+const deleteReport = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "deleteReport",
+  async ({ req, res, log }) => {
+    log.info("Report deletion attempt started");
 
     const { id: reportId } = ReportIdParamSchema.parse(req.params);
+    await reportService.deleteReport(reportId);
 
-    actionLogger.debug("Processing report deletion");
-    const serviceStarttime = Date.now();
-    const deletedReport = await ReportService.deleteReport(reportId);
-    const serviceDuration = Date.now() - serviceStarttime;
+    log.info({ reportId }, "Report deleted successfully");
 
-    const totalDuration = Date.now() - startTime;
-
-    actionLogger.info(
-      {
-        reportId,
-        deletedReportReason: deletedReport.reason.label,
-        serviceDuration,
-        totalDuration,
-      },
-      "Report deleted successfully",
-    );
-
-    return res.status(200).json({
+    res.status(200).json({
       message: "Report deleted successfully",
     });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+  },
+);
 
-const toggleVisibility = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "toggleVisibility",
-    req,
-  );
-
-  try {
-    actionLogger.info("Moderator requested visibility toggle");
-    const startTime = Date.now();
+const toggleVisibility = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "toggleVisibility",
+  async ({ req, res, log }) => {
+    log.info("Moderator requested visibility toggle");
 
     const { resourceType, resourceId, hidden } = ToggleVisibilitySchema.parse(
       req.body,
     );
 
-    actionLogger.debug("Starting database operation");
-    if (resourceType === "post") {
-      await postService.validate.verifyPostExists(resourceId as string);
-      await prisma.post.update({
-        where: { id: resourceId as string },
-        data: { hidden },
-      });
-    } else {
-      await commentService.validate.commentExists(resourceId as number);
-      await prisma.comment.update({
-        where: { id: resourceId as number },
-        data: { hidden },
-      });
-    }
+    await reportService.toggleVisibility(resourceType, resourceId, hidden);
 
-    const totalDuration = Date.now() - startTime;
-
-    actionLogger.info(
-      { totalDuration },
+    log.info(
+      { resourceType, resourceId, hidden },
       `Resource (${resourceType}) ${resourceId} hidden=${hidden}`,
     );
 
-    return res.status(200).json({
+    res.status(200).json({
       message: `Successfully ${hidden ? "hid" : "unhid"} ${resourceType}`,
     });
-  } catch (error) {
-    return next(error);
-  }
-};
+  },
+);
 
-const getReportStats = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "getReportStats",
-    req,
-  );
+const getReportStats = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "getReportStats",
+  async ({ req: _req, res, log }) => {
+    log.info("Fetching report statistics");
 
-  try {
-    actionLogger.info("Fetching report statistics");
-    const startTime = Date.now();
+    const stats = await reportService.getReportStats();
 
-    actionLogger.debug("Processing report stats fetching");
-    const serviceStarttime = Date.now();
-    const stats = await ReportService.getReportStats();
-    const serviceDuration = Date.now() - serviceStarttime;
+    log.info({ stats }, "Report statistics fetched successfully");
 
-    const totalDuration = Date.now() - startTime;
-
-    actionLogger.info(
-      {
-        stats,
-        serviceDuration,
-        totalDuration,
-      },
-      "Report statistics fetched successfully",
-    );
-
-    return res.status(200).json({ data: stats });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+    res.status(200).json({ data: stats });
+  },
+);
 
 export {
   getAllReports,

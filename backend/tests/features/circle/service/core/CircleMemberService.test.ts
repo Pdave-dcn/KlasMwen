@@ -28,8 +28,13 @@ vi.mock(
 vi.mock("../../../../../src/features/circle/security/rbac.js");
 
 describe("CircleMemberService", () => {
+  let circleMemberService: CircleMemberService;
+  let mockValidationService: CircleValidationService;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    mockValidationService = new CircleValidationService();
+    circleMemberService = new CircleMemberService(mockValidationService);
   });
 
   const mockCircle = {
@@ -63,12 +68,10 @@ describe("CircleMemberService", () => {
 
   describe("addMember", () => {
     it("should add a user to a public circle when not already a member", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.checkMembership).mockResolvedValue(
-        false,
-      );
+      vi.mocked(mockValidationService.checkMembership).mockResolvedValue(false);
       vi.mocked(CircleRepository.addMember).mockResolvedValue(mockMembership);
       vi.mocked(CircleEnricher.enrichMember).mockResolvedValue(
         mockEnrichedMember,
@@ -78,12 +81,12 @@ describe("CircleMemberService", () => {
       );
 
       const data = { userId: "user-2", circleId: "circle-1" };
-      const result = await CircleMemberService.addMember(data);
+      const result = await circleMemberService.addMember(data);
 
-      expect(CircleValidationService.verifyCircleExists).toHaveBeenCalledWith(
+      expect(mockValidationService.verifyCircleExists).toHaveBeenCalledWith(
         "circle-1",
       );
-      expect(CircleValidationService.checkMembership).toHaveBeenCalledWith(
+      expect(mockValidationService.checkMembership).toHaveBeenCalledWith(
         "user-2",
         "circle-1",
       );
@@ -95,34 +98,30 @@ describe("CircleMemberService", () => {
     });
 
     it("should throw CircleNotFoundError when circle does not exist", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockRejectedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockRejectedValue(
         new CircleNotFoundError("circle-1"),
       );
       await expect(
-        CircleMemberService.addMember({ userId: "u", circleId: "circle-1" }),
+        circleMemberService.addMember({ userId: "u", circleId: "circle-1" }),
       ).rejects.toThrow(CircleNotFoundError);
     });
 
     it("should throw AlreadyMemberError if user is already a member", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.checkMembership).mockResolvedValue(
-        true,
-      );
+      vi.mocked(mockValidationService.checkMembership).mockResolvedValue(true);
 
       await expect(
-        CircleMemberService.addMember({ userId: "u", circleId: "c" }),
+        circleMemberService.addMember({ userId: "u", circleId: "c" }),
       ).rejects.toThrow(AlreadyMemberError);
     });
 
     it("should invoke permission check when requester adds someone else", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.checkMembership).mockResolvedValue(
-        false,
-      );
+      vi.mocked(mockValidationService.checkMembership).mockResolvedValue(false);
       vi.mocked(CircleRepository.addMember).mockResolvedValue(mockMembership);
       vi.mocked(CircleEnricher.enrichMember).mockResolvedValue(
         mockEnrichedMember,
@@ -132,7 +131,7 @@ describe("CircleMemberService", () => {
       );
 
       const requester = { id: "admin", circleRole: "OWNER" } as any;
-      await CircleMemberService.addMember(
+      await circleMemberService.addMember(
         { userId: "user-2", circleId: "circle-1" },
         requester,
       );
@@ -145,18 +144,16 @@ describe("CircleMemberService", () => {
     });
 
     it("should propagate authorization errors from rbac", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.checkMembership).mockResolvedValue(
-        false,
-      );
+      vi.mocked(mockValidationService.checkMembership).mockResolvedValue(false);
       vi.mocked(assertCirclePermission).mockImplementation(() => {
         throw new AuthorizationError("nope");
       });
 
       await expect(
-        CircleMemberService.addMember(
+        circleMemberService.addMember(
           { userId: "user-2", circleId: "circle-1" },
           { id: "admin" } as any,
         ),
@@ -166,10 +163,10 @@ describe("CircleMemberService", () => {
 
   describe("removeMember", () => {
     it("should remove a member and return transformed result", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.verifyMembership).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyMembership).mockResolvedValue(
         mockMembership,
       );
       vi.mocked(assertCirclePermission).mockReturnValue(undefined);
@@ -183,13 +180,13 @@ describe("CircleMemberService", () => {
         mockTransformedMember,
       );
 
-      const result = await CircleMemberService.removeMember(
+      const result = await circleMemberService.removeMember(
         "user-2",
         "circle-1",
         { id: "user-2" } as any,
       );
 
-      expect(CircleValidationService.verifyMembership).toHaveBeenCalledWith(
+      expect(mockValidationService.verifyMembership).toHaveBeenCalledWith(
         "user-2",
         "circle-1",
       );
@@ -198,31 +195,31 @@ describe("CircleMemberService", () => {
     });
 
     it("should throw CircleNotFoundError if circle doesn't exist", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockRejectedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockRejectedValue(
         new CircleNotFoundError("c"),
       );
       await expect(
-        CircleMemberService.removeMember("u", "c", { id: "u" } as any),
+        circleMemberService.removeMember("u", "c", { id: "u" } as any),
       ).rejects.toThrow(CircleNotFoundError);
     });
 
     it("should throw CircleMemberNotFoundError when membership missing", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.verifyMembership).mockRejectedValue(
+      vi.mocked(mockValidationService.verifyMembership).mockRejectedValue(
         new CircleMemberNotFoundError("u", "c"),
       );
       await expect(
-        CircleMemberService.removeMember("u", "c", { id: "u" } as any),
+        circleMemberService.removeMember("u", "c", { id: "u" } as any),
       ).rejects.toThrow(CircleMemberNotFoundError);
     });
 
     it("should propagate authorization errors from rbac", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.verifyMembership).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyMembership).mockResolvedValue(
         mockMembership,
       );
       vi.mocked(assertCirclePermission).mockImplementation(() => {
@@ -230,7 +227,7 @@ describe("CircleMemberService", () => {
       });
 
       await expect(
-        CircleMemberService.removeMember("user-2", "circle-1", {
+        circleMemberService.removeMember("user-2", "circle-1", {
           id: "foo",
         } as any),
       ).rejects.toThrow(AuthorizationError);
@@ -239,10 +236,10 @@ describe("CircleMemberService", () => {
 
   describe("updateMemberRole", () => {
     it("should update a member's role when authorized", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.verifyMembership).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyMembership).mockResolvedValue(
         mockMembership,
       );
       vi.mocked(assertCirclePermission).mockReturnValue(undefined);
@@ -257,7 +254,7 @@ describe("CircleMemberService", () => {
       );
 
       const requester = { id: "owner", circleRole: "OWNER" } as any;
-      const result = await CircleMemberService.updateMemberRole(
+      const result = await circleMemberService.updateMemberRole(
         "user-2",
         "circle-1",
         { role: "MODERATOR" as const },
@@ -274,15 +271,15 @@ describe("CircleMemberService", () => {
     });
 
     it("should throw CircleMemberNotFoundError when membership missing", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.verifyMembership).mockRejectedValue(
+      vi.mocked(mockValidationService.verifyMembership).mockRejectedValue(
         new CircleMemberNotFoundError("user-2", "circle-1"),
       );
 
       await expect(
-        CircleMemberService.updateMemberRole(
+        circleMemberService.updateMemberRole(
           "user-2",
           "circle-1",
           { role: "MODERATOR" as const },
@@ -292,10 +289,10 @@ describe("CircleMemberService", () => {
     });
 
     it("should propagate authorization errors", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.verifyMembership).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyMembership).mockResolvedValue(
         mockMembership,
       );
       vi.mocked(assertCirclePermission).mockImplementation(() => {
@@ -303,7 +300,7 @@ describe("CircleMemberService", () => {
       });
 
       await expect(
-        CircleMemberService.updateMemberRole(
+        circleMemberService.updateMemberRole(
           "user-2",
           "circle-1",
           { role: "MODERATOR" as const },
@@ -315,21 +312,21 @@ describe("CircleMemberService", () => {
 
   describe("updateLastReadAt", () => {
     it("should update the timestamp when membership exists", async () => {
-      vi.mocked(CircleValidationService.verifyMembership).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyMembership).mockResolvedValue(
         mockMembership,
       );
       const spy = vi.spyOn(CircleRepository, "updateLastReadAt");
 
-      await CircleMemberService.updateLastReadAt("user-2", "circle-1");
+      await circleMemberService.updateLastReadAt("user-2", "circle-1");
       expect(spy).toHaveBeenCalledWith("user-2", "circle-1");
     });
 
     it("should throw CircleMemberNotFoundError when membership missing", async () => {
-      vi.mocked(CircleValidationService.verifyMembership).mockRejectedValue(
+      vi.mocked(mockValidationService.verifyMembership).mockRejectedValue(
         new CircleMemberNotFoundError("user-2", "circle-1"),
       );
       await expect(
-        CircleMemberService.updateLastReadAt("user-2", "circle-1"),
+        circleMemberService.updateLastReadAt("user-2", "circle-1"),
       ).rejects.toThrow(CircleMemberNotFoundError);
     });
   });
@@ -340,10 +337,10 @@ describe("CircleMemberService", () => {
     const defaultPagination = { limit: 15, cursor: undefined };
 
     it("should return transformed members with pagination when circle exists and user is a member", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.verifyIsMember).mockResolvedValue(true);
+      vi.mocked(mockValidationService.verifyIsMember).mockResolvedValue(true);
       vi.mocked(CircleRepository.getGroupMembers).mockResolvedValue([
         mockMembership,
       ]);
@@ -354,7 +351,7 @@ describe("CircleMemberService", () => {
         mockTransformedMember,
       ]);
 
-      const res = await CircleMemberService.getCircleMembers(
+      const res = await circleMemberService.getCircleMembers(
         userId,
         circleId,
         defaultPagination,
@@ -369,10 +366,10 @@ describe("CircleMemberService", () => {
     it("should correctly detect hasMore and return nextCursor when more results exist", async () => {
       const extraMember = { ...mockMembership, userId: "user-3" } as any;
 
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.verifyIsMember).mockResolvedValue(true);
+      vi.mocked(mockValidationService.verifyIsMember).mockResolvedValue(true);
       // Return limit+1 items to trigger hasMore
       vi.mocked(CircleRepository.getGroupMembers).mockResolvedValue([
         mockMembership,
@@ -386,7 +383,7 @@ describe("CircleMemberService", () => {
         mockTransformedMember,
       ]);
 
-      const res = await CircleMemberService.getCircleMembers(userId, circleId, {
+      const res = await circleMemberService.getCircleMembers(userId, circleId, {
         limit: 1,
         cursor: undefined,
       });
@@ -398,10 +395,10 @@ describe("CircleMemberService", () => {
     });
 
     it("should pass the cursor to the repository on subsequent pages", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.verifyIsMember).mockResolvedValue(true);
+      vi.mocked(mockValidationService.verifyIsMember).mockResolvedValue(true);
       vi.mocked(CircleRepository.getGroupMembers).mockResolvedValue([
         mockMembership,
       ]);
@@ -412,7 +409,7 @@ describe("CircleMemberService", () => {
         mockTransformedMember,
       ]);
 
-      await CircleMemberService.getCircleMembers(userId, circleId, {
+      await circleMemberService.getCircleMembers(userId, circleId, {
         limit: 15,
         cursor: "user-2",
       });
@@ -424,12 +421,12 @@ describe("CircleMemberService", () => {
     });
 
     it("should throw CircleNotFoundError if circle does not exist", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockRejectedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockRejectedValue(
         new CircleNotFoundError(circleId),
       );
 
       await expect(
-        CircleMemberService.getCircleMembers(
+        circleMemberService.getCircleMembers(
           userId,
           circleId,
           defaultPagination,
@@ -438,15 +435,15 @@ describe("CircleMemberService", () => {
     });
 
     it("should throw NotAMemberError if the user is not a member of the circle", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.verifyIsMember).mockRejectedValue(
+      vi.mocked(mockValidationService.verifyIsMember).mockRejectedValue(
         new NotAMemberError(userId, circleId),
       );
 
       await expect(
-        CircleMemberService.getCircleMembers(
+        circleMemberService.getCircleMembers(
           userId,
           circleId,
           defaultPagination,
@@ -484,10 +481,10 @@ describe("CircleMemberService", () => {
     } as any;
 
     it("should return paginated muted members when circle exists and user is a member", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.verifyIsMember).mockResolvedValue(true);
+      vi.mocked(mockValidationService.verifyIsMember).mockResolvedValue(true);
       vi.mocked(CircleRepository.getMutedMembers).mockResolvedValue({
         data: [mockMutedMembership],
         totalMuted: 5,
@@ -499,16 +496,16 @@ describe("CircleMemberService", () => {
         mockTransformedMutedMember,
       ]);
 
-      const result = await CircleMemberService.getMutedMembers(
+      const result = await circleMemberService.getMutedMembers(
         requester,
         circleId,
         defaultPagination,
       );
 
-      expect(CircleValidationService.verifyCircleExists).toHaveBeenCalledWith(
+      expect(mockValidationService.verifyCircleExists).toHaveBeenCalledWith(
         circleId,
       );
-      expect(CircleValidationService.verifyIsMember).toHaveBeenCalledWith(
+      expect(mockValidationService.verifyIsMember).toHaveBeenCalledWith(
         requester.id,
         circleId,
       );
@@ -523,10 +520,10 @@ describe("CircleMemberService", () => {
     });
 
     it("should use default limit of 15 when not provided", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.verifyIsMember).mockResolvedValue(true);
+      vi.mocked(mockValidationService.verifyIsMember).mockResolvedValue(true);
       vi.mocked(CircleRepository.getMutedMembers).mockResolvedValue({
         data: [],
         totalMuted: 0,
@@ -534,7 +531,7 @@ describe("CircleMemberService", () => {
       vi.mocked(CircleEnricher.enrichMembers).mockResolvedValue([]);
       vi.mocked(CircleTransformers.transformMembers).mockReturnValue([]);
 
-      await CircleMemberService.getMutedMembers(requester, circleId, {});
+      await circleMemberService.getMutedMembers(requester, circleId, {});
 
       expect(CircleRepository.getMutedMembers).toHaveBeenCalledWith(
         circleId,
@@ -544,10 +541,10 @@ describe("CircleMemberService", () => {
     });
 
     it("should correctly handle pagination with cursor", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.verifyIsMember).mockResolvedValue(true);
+      vi.mocked(mockValidationService.verifyIsMember).mockResolvedValue(true);
       vi.mocked(CircleRepository.getMutedMembers).mockResolvedValue({
         data: [mockMutedMembership],
         totalMuted: 10,
@@ -559,7 +556,7 @@ describe("CircleMemberService", () => {
         mockTransformedMutedMember,
       ]);
 
-      await CircleMemberService.getMutedMembers(requester, circleId, {
+      await circleMemberService.getMutedMembers(requester, circleId, {
         limit: 10,
         cursor: "user-5",
       });
@@ -573,10 +570,10 @@ describe("CircleMemberService", () => {
     it("should detect hasMore when more results exist", async () => {
       const extraMember = { ...mockMutedMembership, userId: "user-3" } as any;
 
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.verifyIsMember).mockResolvedValue(true);
+      vi.mocked(mockValidationService.verifyIsMember).mockResolvedValue(true);
       // Return limit+1 items to trigger hasMore
       vi.mocked(CircleRepository.getMutedMembers).mockResolvedValue({
         data: [mockMutedMembership, extraMember],
@@ -589,7 +586,7 @@ describe("CircleMemberService", () => {
         mockTransformedMutedMember,
       ]);
 
-      const result = await CircleMemberService.getMutedMembers(
+      const result = await circleMemberService.getMutedMembers(
         requester,
         circleId,
         { limit: 1 },
@@ -601,10 +598,10 @@ describe("CircleMemberService", () => {
     });
 
     it("should return empty array when no muted members exist", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.verifyIsMember).mockResolvedValue(true);
+      vi.mocked(mockValidationService.verifyIsMember).mockResolvedValue(true);
       vi.mocked(CircleRepository.getMutedMembers).mockResolvedValue({
         data: [],
         totalMuted: 0,
@@ -612,7 +609,7 @@ describe("CircleMemberService", () => {
       vi.mocked(CircleEnricher.enrichMembers).mockResolvedValue([]);
       vi.mocked(CircleTransformers.transformMembers).mockReturnValue([]);
 
-      const result = await CircleMemberService.getMutedMembers(
+      const result = await circleMemberService.getMutedMembers(
         requester,
         circleId,
         defaultPagination,
@@ -625,12 +622,12 @@ describe("CircleMemberService", () => {
     });
 
     it("should throw CircleNotFoundError if circle does not exist", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockRejectedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockRejectedValue(
         new CircleNotFoundError(circleId),
       );
 
       await expect(
-        CircleMemberService.getMutedMembers(
+        circleMemberService.getMutedMembers(
           requester,
           circleId,
           defaultPagination,
@@ -639,15 +636,15 @@ describe("CircleMemberService", () => {
     });
 
     it("should throw NotAMemberError if requester is not a member", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.verifyIsMember).mockRejectedValue(
+      vi.mocked(mockValidationService.verifyIsMember).mockRejectedValue(
         new NotAMemberError(requester.id, circleId),
       );
 
       await expect(
-        CircleMemberService.getMutedMembers(
+        circleMemberService.getMutedMembers(
           requester,
           circleId,
           defaultPagination,
@@ -703,10 +700,10 @@ describe("CircleMemberService", () => {
     }));
 
     it("should return matching members when search query matches usernames", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.verifyIsMember).mockResolvedValue(true);
+      vi.mocked(mockValidationService.verifyIsMember).mockResolvedValue(true);
       vi.mocked(CircleRepository.searchCircleMembers).mockResolvedValue(
         mockMemberships,
       );
@@ -717,16 +714,16 @@ describe("CircleMemberService", () => {
         mockTransformedMembers,
       );
 
-      const result = await CircleMemberService.searchCircleMembers(
+      const result = await circleMemberService.searchCircleMembers(
         userId,
         circleId,
         searchQuery,
       );
 
-      expect(CircleValidationService.verifyCircleExists).toHaveBeenCalledWith(
+      expect(mockValidationService.verifyCircleExists).toHaveBeenCalledWith(
         circleId,
       );
-      expect(CircleValidationService.verifyIsMember).toHaveBeenCalledWith(
+      expect(mockValidationService.verifyIsMember).toHaveBeenCalledWith(
         userId,
         circleId,
       );
@@ -738,15 +735,15 @@ describe("CircleMemberService", () => {
     });
 
     it("should return empty array when no members match the search query", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.verifyIsMember).mockResolvedValue(true);
+      vi.mocked(mockValidationService.verifyIsMember).mockResolvedValue(true);
       vi.mocked(CircleRepository.searchCircleMembers).mockResolvedValue([]);
       vi.mocked(CircleEnricher.enrichMembers).mockResolvedValue([]);
       vi.mocked(CircleTransformers.transformMembers).mockReturnValue([]);
 
-      const result = await CircleMemberService.searchCircleMembers(
+      const result = await circleMemberService.searchCircleMembers(
         userId,
         circleId,
         "nonexistent",
@@ -756,10 +753,10 @@ describe("CircleMemberService", () => {
     });
 
     it("should perform case-insensitive search", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.verifyIsMember).mockResolvedValue(true);
+      vi.mocked(mockValidationService.verifyIsMember).mockResolvedValue(true);
       vi.mocked(CircleRepository.searchCircleMembers).mockResolvedValue(
         mockMemberships,
       );
@@ -770,7 +767,7 @@ describe("CircleMemberService", () => {
         mockTransformedMembers,
       );
 
-      await CircleMemberService.searchCircleMembers(userId, circleId, "JOHN");
+      await circleMemberService.searchCircleMembers(userId, circleId, "JOHN");
 
       expect(CircleRepository.searchCircleMembers).toHaveBeenCalledWith(
         circleId,
@@ -779,10 +776,10 @@ describe("CircleMemberService", () => {
     });
 
     it("should handle partial username matches", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.verifyIsMember).mockResolvedValue(true);
+      vi.mocked(mockValidationService.verifyIsMember).mockResolvedValue(true);
       vi.mocked(CircleRepository.searchCircleMembers).mockResolvedValue([
         mockMemberships[0],
       ]);
@@ -793,7 +790,7 @@ describe("CircleMemberService", () => {
         mockTransformedMembers[0],
       ]);
 
-      const result = await CircleMemberService.searchCircleMembers(
+      const result = await circleMemberService.searchCircleMembers(
         userId,
         circleId,
         "doe",
@@ -808,25 +805,25 @@ describe("CircleMemberService", () => {
     });
 
     it("should throw CircleNotFoundError if circle does not exist", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockRejectedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockRejectedValue(
         new CircleNotFoundError(circleId),
       );
 
       await expect(
-        CircleMemberService.searchCircleMembers(userId, circleId, searchQuery),
+        circleMemberService.searchCircleMembers(userId, circleId, searchQuery),
       ).rejects.toThrow(CircleNotFoundError);
     });
 
     it("should throw NotAMemberError if user is not a member", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.verifyIsMember).mockRejectedValue(
+      vi.mocked(mockValidationService.verifyIsMember).mockRejectedValue(
         new NotAMemberError(userId, circleId),
       );
 
       await expect(
-        CircleMemberService.searchCircleMembers(userId, circleId, searchQuery),
+        circleMemberService.searchCircleMembers(userId, circleId, searchQuery),
       ).rejects.toThrow(NotAMemberError);
     });
   });
@@ -843,14 +840,14 @@ describe("CircleMemberService", () => {
         mockTransformedMember,
       );
 
-      const res = await CircleMemberService.getMemberInfo("user-2", "circle-1");
+      const res = await circleMemberService.getMemberInfo("user-2", "circle-1");
       expect(res).toEqual(mockTransformedMember);
     });
 
     it("should throw CircleMemberNotFoundError when membership missing", async () => {
       vi.mocked(CircleRepository.getMembership).mockResolvedValue(null);
       await expect(
-        CircleMemberService.getMemberInfo("user-2", "circle-1"),
+        circleMemberService.getMemberInfo("user-2", "circle-1"),
       ).rejects.toThrow(CircleMemberNotFoundError);
     });
   });
@@ -873,10 +870,10 @@ describe("CircleMemberService", () => {
     } as any;
 
     beforeEach(() => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.verifyMembership).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyMembership).mockResolvedValue(
         targetMembership,
       );
       vi.mocked(assertCirclePermission).mockReturnValue(undefined);
@@ -890,17 +887,17 @@ describe("CircleMemberService", () => {
     });
 
     it("should mute a member for a finite duration", async () => {
-      const result = await CircleMemberService.muteMember(
+      const result = await circleMemberService.muteMember(
         actor,
         "circle-1",
         "user-2",
         15,
       );
 
-      expect(CircleValidationService.verifyCircleExists).toHaveBeenCalledWith(
+      expect(mockValidationService.verifyCircleExists).toHaveBeenCalledWith(
         "circle-1",
       );
-      expect(CircleValidationService.verifyMembership).toHaveBeenCalledWith(
+      expect(mockValidationService.verifyMembership).toHaveBeenCalledWith(
         "user-2",
         "circle-1",
       );
@@ -922,7 +919,7 @@ describe("CircleMemberService", () => {
     });
 
     it("should set mutedUntil to the sentinel date for an indefinite mute", async () => {
-      await CircleMemberService.muteMember(
+      await circleMemberService.muteMember(
         actor,
         "circle-1",
         "user-2",
@@ -937,7 +934,7 @@ describe("CircleMemberService", () => {
     it("should set mutedUntil roughly durationMinutes in the future for a timed mute", async () => {
       const duration: MuteDurationMinutes = 60;
       const before = Date.now();
-      await CircleMemberService.muteMember(
+      await circleMemberService.muteMember(
         actor,
         "circle-1",
         "user-2",
@@ -953,22 +950,22 @@ describe("CircleMemberService", () => {
     });
 
     it("should throw if the circle does not exist", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockRejectedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockRejectedValue(
         new CircleNotFoundError("circle-1"),
       );
 
       await expect(
-        CircleMemberService.muteMember(actor, "circle-1", "user-2", 15),
+        circleMemberService.muteMember(actor, "circle-1", "user-2", 15),
       ).rejects.toThrow(CircleNotFoundError);
     });
 
     it("should throw if the member is not found", async () => {
-      vi.mocked(CircleValidationService.verifyMembership).mockRejectedValue(
+      vi.mocked(mockValidationService.verifyMembership).mockRejectedValue(
         new CircleMemberNotFoundError("user-2", "circle-1"),
       );
 
       await expect(
-        CircleMemberService.muteMember(actor, "circle-1", "user-2", 15),
+        circleMemberService.muteMember(actor, "circle-1", "user-2", 15),
       ).rejects.toThrow(CircleMemberNotFoundError);
     });
 
@@ -978,7 +975,7 @@ describe("CircleMemberService", () => {
       });
 
       await expect(
-        CircleMemberService.muteMember(actor, "circle-1", "user-2", 15),
+        circleMemberService.muteMember(actor, "circle-1", "user-2", 15),
       ).rejects.toThrow(AuthorizationError);
     });
   });
@@ -1001,10 +998,10 @@ describe("CircleMemberService", () => {
     } as any;
 
     beforeEach(() => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockResolvedValue(
         mockCircle,
       );
-      vi.mocked(CircleValidationService.verifyMembership).mockResolvedValue(
+      vi.mocked(mockValidationService.verifyMembership).mockResolvedValue(
         targetMembership,
       );
       vi.mocked(assertCirclePermission).mockReturnValue(undefined);
@@ -1018,16 +1015,16 @@ describe("CircleMemberService", () => {
     });
 
     it("should unmute a member", async () => {
-      const result = await CircleMemberService.unmuteMember(
+      const result = await circleMemberService.unmuteMember(
         actor,
         "circle-1",
         "user-2",
       );
 
-      expect(CircleValidationService.verifyCircleExists).toHaveBeenCalledWith(
+      expect(mockValidationService.verifyCircleExists).toHaveBeenCalledWith(
         "circle-1",
       );
-      expect(CircleValidationService.verifyMembership).toHaveBeenCalledWith(
+      expect(mockValidationService.verifyMembership).toHaveBeenCalledWith(
         "user-2",
         "circle-1",
       );
@@ -1049,22 +1046,22 @@ describe("CircleMemberService", () => {
     });
 
     it("should throw if the circle does not exist", async () => {
-      vi.mocked(CircleValidationService.verifyCircleExists).mockRejectedValue(
+      vi.mocked(mockValidationService.verifyCircleExists).mockRejectedValue(
         new CircleNotFoundError("circle-1"),
       );
 
       await expect(
-        CircleMemberService.unmuteMember(actor, "circle-1", "user-2"),
+        circleMemberService.unmuteMember(actor, "circle-1", "user-2"),
       ).rejects.toThrow(CircleNotFoundError);
     });
 
     it("should throw if the member is not found", async () => {
-      vi.mocked(CircleValidationService.verifyMembership).mockRejectedValue(
+      vi.mocked(mockValidationService.verifyMembership).mockRejectedValue(
         new CircleMemberNotFoundError("user-2", "circle-1"),
       );
 
       await expect(
-        CircleMemberService.unmuteMember(actor, "circle-1", "user-2"),
+        circleMemberService.unmuteMember(actor, "circle-1", "user-2"),
       ).rejects.toThrow(CircleMemberNotFoundError);
     });
   });

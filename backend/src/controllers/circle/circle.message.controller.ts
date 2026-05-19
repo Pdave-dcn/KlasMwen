@@ -1,6 +1,6 @@
 import { createLogger } from "../../core/config/logger.js";
-import CircleService from "../../features/circle/service/CircleService.js";
-import createActionLogger from "../../utils/logger.util.js";
+import { circleService } from "../../features/circle/service/CircleService.js";
+import { withLogging } from "../../utils/logger.util.js";
 import { createPaginationSchema } from "../../utils/pagination.util.js";
 import {
   StudyCircleIdParamSchema,
@@ -9,27 +9,25 @@ import {
 } from "../../zodSchemas/circle.zod.js";
 
 import type { AuthenticatedRequest } from "../../types/AuthRequest.js";
-import type { NextFunction, Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "CircleMessageController" });
 
-const sendMessage = async (req: Request, res: Response, next: NextFunction) => {
-  const actionLogger = createActionLogger(controllerLogger, "sendMessage", req);
+const sendMessage = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "sendMessage",
+  async ({ req, res, log }) => {
+    log.info("Sending message to study circle");
 
-  try {
-    actionLogger.info("Sending message to study circle");
-
-    const { user } = req as AuthenticatedRequest;
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
     const { content } = SendMessageDataSchema.parse(req.body);
 
-    const message = await CircleService.sendMessage(
+    const message = await circleService.messages.sendMessage(
       {
         content,
-        senderId: user.id,
+        senderId: req.user.id,
         circleId,
       },
-      user,
+      req.user,
     );
 
     const io = req.app.get("io");
@@ -42,39 +40,36 @@ const sendMessage = async (req: Request, res: Response, next: NextFunction) => {
         .emit("circle:new_message", message);
     }
 
-    actionLogger.info(
+    log.info(
       {
         messageId: message.id,
         circleId,
-        senderId: user.id,
+        senderId: req.user.id,
       },
       "Message sent successfully",
     );
 
-    return res.status(201).json({
+    res.status(201).json({
       data: message,
     });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+  },
+);
 
-const getMessages = async (req: Request, res: Response, next: NextFunction) => {
-  const actionLogger = createActionLogger(controllerLogger, "getMessages", req);
-
-  try {
-    actionLogger.info("Fetching messages from study circle");
-    const { user } = req as AuthenticatedRequest;
+const getMessages = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "getMessages",
+  async ({ req, res, log }) => {
+    log.info("Fetching messages from study circle");
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
     const customValidator = createPaginationSchema(10, 50, "number");
     const { limit, cursor } = customValidator.parse(req.query);
 
-    const result = await CircleService.getMessages(circleId, user, {
+    const result = await circleService.messages.getMessages(circleId, req.user, {
       limit,
       cursor: cursor as number | undefined,
     });
 
-    actionLogger.info(
+    log.info(
       {
         circleId,
         messageCount: result.data.length,
@@ -84,44 +79,31 @@ const getMessages = async (req: Request, res: Response, next: NextFunction) => {
       "Messages retrieved successfully",
     );
 
-    return res.status(200).json(result);
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+    res.status(200).json(result);
+  },
+);
 
-const deleteMessage = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "deleteMessage",
-    req,
-  );
-
-  try {
-    actionLogger.info("Deleting message");
-    const { user } = req as AuthenticatedRequest;
+const deleteMessage = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "deleteMessage",
+  async ({ req, res, log }) => {
+    log.info("Deleting message");
     const { id: messageId } = MessageIdParamSchema.parse(req.params);
 
-    await CircleService.deleteMessage(messageId, user);
+    await circleService.messages.deleteMessage(messageId, req.user);
 
-    actionLogger.info(
+    log.info(
       {
         messageId,
-        userId: user.id,
+        userId: req.user.id,
       },
       "Message deleted successfully",
     );
 
-    return res.status(200).json({
+    res.status(200).json({
       message: "Message deleted successfully",
     });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+  },
+);
 
 export { sendMessage, getMessages, deleteMessage };

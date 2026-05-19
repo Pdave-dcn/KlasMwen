@@ -38,8 +38,13 @@ const makeTransformed = () => ({
 });
 
 describe("CircleMessageService", () => {
+  let circleMessageService: CircleMessageService;
+  let mockValidationService: CircleValidationService;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    mockValidationService = new CircleValidationService();
+    circleMessageService = new CircleMessageService(mockValidationService);
   });
 
   describe("sendMessage", () => {
@@ -53,7 +58,7 @@ describe("CircleMessageService", () => {
         circle as any,
       );
       vi.mocked(assertCirclePermission).mockReturnValue(undefined);
-      vi.mocked(CircleValidationService.ensureMemberNotMuted).mockResolvedValue(
+      vi.mocked(mockValidationService.ensureMemberNotMuted).mockResolvedValue(
         undefined,
       );
       vi.mocked(CircleRepository.createMessage).mockResolvedValue(msg as any);
@@ -61,7 +66,7 @@ describe("CircleMessageService", () => {
         transformed as any,
       );
 
-      const result = await CircleMessageService.sendMessage(data, {
+      const result = await circleMessageService.sendMessage(data, {
         id: "user-1",
       } as any);
 
@@ -71,7 +76,7 @@ describe("CircleMessageService", () => {
         "circleMessages",
         "send",
       );
-      expect(CircleValidationService.ensureMemberNotMuted).toHaveBeenCalledWith(
+      expect(mockValidationService.ensureMemberNotMuted).toHaveBeenCalledWith(
         data,
       );
       expect(CircleRepository.createMessage).toHaveBeenCalledWith(data);
@@ -81,7 +86,7 @@ describe("CircleMessageService", () => {
     it("should throw CircleNotFoundError when circle missing", async () => {
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue(null);
       await expect(
-        CircleMessageService.sendMessage(
+        circleMessageService.sendMessage(
           { content: "", circleId: "c", senderId: "s" },
           { id: "s" } as any,
         ),
@@ -97,7 +102,7 @@ describe("CircleMessageService", () => {
       });
 
       await expect(
-        CircleMessageService.sendMessage(
+        circleMessageService.sendMessage(
           { content: "", circleId: "c", senderId: "s" },
           { id: "s" } as any,
         ),
@@ -109,12 +114,12 @@ describe("CircleMessageService", () => {
         id: "c",
       } as any);
       vi.mocked(assertCirclePermission).mockReturnValue(undefined);
-      vi.mocked(CircleValidationService.ensureMemberNotMuted).mockRejectedValue(
+      vi.mocked(mockValidationService.ensureMemberNotMuted).mockRejectedValue(
         new UserMutedError("u", "c", new Date()),
       );
 
       await expect(
-        CircleMessageService.sendMessage(
+        circleMessageService.sendMessage(
           { content: "", circleId: "c", senderId: "s" },
           { id: "s" } as any,
         ),
@@ -138,7 +143,7 @@ describe("CircleMessageService", () => {
         transformed as any,
       ]);
 
-      const result = await CircleMessageService.getMessages(
+      const result = await circleMessageService.getMessages(
         "c",
         { id: "u" } as any,
         pagination,
@@ -150,7 +155,7 @@ describe("CircleMessageService", () => {
     it("should throw CircleNotFoundError when missing", async () => {
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue(null);
       await expect(
-        CircleMessageService.getMessages("c", { id: "u" } as any),
+        circleMessageService.getMessages("c", { id: "u" } as any),
       ).rejects.toThrow(CircleNotFoundError);
     });
 
@@ -163,7 +168,7 @@ describe("CircleMessageService", () => {
       });
 
       await expect(
-        CircleMessageService.getMessages("c", { id: "u" } as any),
+        circleMessageService.getMessages("c", { id: "u" } as any),
       ).rejects.toThrow(AuthorizationError);
     });
   });
@@ -177,13 +182,13 @@ describe("CircleMessageService", () => {
         transformed as any,
       );
 
-      const res = await CircleMessageService.getMessageById(1);
+      const res = await circleMessageService.getMessageById(1);
       expect(res).toEqual(transformed);
     });
 
     it("should throw MessageNotFoundError when missing", async () => {
       vi.mocked(CircleRepository.findMessageById).mockResolvedValue(null);
-      await expect(CircleMessageService.getMessageById(1)).rejects.toThrow(
+      await expect(circleMessageService.getMessageById(1)).rejects.toThrow(
         MessageNotFoundError,
       );
     });
@@ -200,7 +205,7 @@ describe("CircleMessageService", () => {
         transformed as any,
       );
 
-      const res = await CircleMessageService.deleteMessage(1, {
+      const res = await circleMessageService.deleteMessage(1, {
         id: "u",
       } as any);
       expect(res).toEqual(transformed);
@@ -209,7 +214,7 @@ describe("CircleMessageService", () => {
     it("should throw MessageNotFoundError when missing", async () => {
       vi.mocked(CircleRepository.findMessageById).mockResolvedValue(null);
       await expect(
-        CircleMessageService.deleteMessage(1, { id: "u" } as any),
+        circleMessageService.deleteMessage(1, { id: "u" } as any),
       ).rejects.toThrow(MessageNotFoundError);
     });
 
@@ -222,7 +227,7 @@ describe("CircleMessageService", () => {
       });
 
       await expect(
-        CircleMessageService.deleteMessage(1, { id: "u" } as any),
+        circleMessageService.deleteMessage(1, { id: "u" } as any),
       ).rejects.toThrow(AuthorizationError);
     });
   });
@@ -238,13 +243,13 @@ describe("CircleMessageService", () => {
         transformed as any,
       );
 
-      const res = await CircleMessageService.getLatestMessage("c");
+      const res = await circleMessageService.getLatestMessage("c");
       expect(res).toEqual(transformed);
     });
 
     it("should return null when none exists", async () => {
       vi.mocked(CircleRepository.getLatestMessage).mockResolvedValue(null);
-      const res = await CircleMessageService.getLatestMessage("c");
+      const res = await circleMessageService.getLatestMessage("c");
       expect(res).toBeNull();
     });
   });

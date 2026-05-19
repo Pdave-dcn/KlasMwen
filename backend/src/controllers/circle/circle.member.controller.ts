@@ -1,6 +1,6 @@
 import { createLogger } from "../../core/config/logger.js";
-import CircleService from "../../features/circle/service/CircleService.js";
-import createActionLogger from "../../utils/logger.util.js";
+import { circleService } from "../../features/circle/service/CircleService.js";
+import { withLogging } from "../../utils/logger.util.js";
 import { createPaginationSchema } from "../../utils/pagination.util.js";
 import {
   AddMemberDataSchema,
@@ -15,72 +15,59 @@ import type {
   AuthenticatedEnrichedRequest,
   AuthenticatedRequest,
 } from "../../types/AuthRequest.js";
-import type { NextFunction, Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "CircleMemberController" });
 
-const addMember = async (req: Request, res: Response, next: NextFunction) => {
-  const actionLogger = createActionLogger(controllerLogger, "addMember", req);
-
-  try {
-    actionLogger.info("Adding member to study circle");
-    const { user } = req as AuthenticatedRequest;
+const addMember = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "addMember",
+  async ({ req, res, log }) => {
+    log.info("Adding member to study circle");
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
     const { userId, role } = AddMemberDataSchema.parse(req.body);
 
-    const member = await CircleService.addMember(
+    const member = await circleService.members.addMember(
       {
         userId,
         circleId,
         role,
       },
-      user,
+      req.user,
     );
 
-    actionLogger.info(
+    log.info(
       {
         circleId,
         addedUserId: userId,
         role: member.role,
-        requesterId: user.id,
+        requesterId: req.user.id,
       },
       "Member added successfully",
     );
 
-    return res.status(201).json({
+    res.status(201).json({
       data: member,
     });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+  },
+);
 
-const getCircleMembers = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "getCircleMembers",
-    req,
-  );
+const getCircleMembers = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "getCircleMembers",
+  async ({ req, res, log }) => {
+    log.info("Fetching study circle members");
 
-  try {
-    actionLogger.info("Fetching study circle members");
-
-    const { user } = req as AuthenticatedRequest;
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
 
     const customParser = createPaginationSchema(10, 30, "uuid");
     const { limit, cursor } = customParser.parse(req.query);
 
-    const result = await CircleService.getCircleMembers(user.id, circleId, {
+    const result = await circleService.members.getCircleMembers(req.user.id, circleId, {
       limit,
       cursor: cursor as string,
     });
 
-    actionLogger.info(
+    log.info(
       {
         circleId,
         pageSize: limit,
@@ -88,114 +75,82 @@ const getCircleMembers = async (
       "Circle members retrieved successfully",
     );
 
-    return res.status(200).json(result);
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
-const getMutedMembers = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "getMutedMembers",
-    req,
-  );
+    res.status(200).json(result);
+  },
+);
 
-  try {
-    actionLogger.info("Fetching muted circle members");
+const getMutedMembers = withLogging<AuthenticatedEnrichedRequest>(
+  controllerLogger,
+  "getMutedMembers",
+  async ({ req, res, log }) => {
+    log.info("Fetching muted circle members");
 
-    const { user } = req as AuthenticatedEnrichedRequest;
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
 
     const customParser = createPaginationSchema(10, 30, "uuid");
     const { limit, cursor } = customParser.parse(req.query);
 
-    const result = await CircleService.getMutedMembers(user, circleId, {
+    const result = await circleService.members.getMutedMembers(req.user, circleId, {
       limit,
       cursor: cursor as string,
     });
 
-    actionLogger.info(
+    log.info(
       {
-        circleRole: user.circleRole,
+        circleRole: req.user.circleRole,
         circleId,
         pageSize: limit,
       },
       "Muted circle members retrieved successfully",
     );
 
-    return res.status(200).json(result);
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+    res.status(200).json(result);
+  },
+);
 
-const searchCircleMembers = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "searchCircleMembers",
-    req,
-  );
-
-  try {
-    actionLogger.info("Searching circle members");
-    const { user } = req as AuthenticatedRequest;
+const searchCircleMembers = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "searchCircleMembers",
+  async ({ req, res, log }) => {
+    log.info("Searching circle members");
 
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
     const { q } = SearchCircleMembersQuerySchema.parse(req.query);
 
-    const result = await CircleService.searchCircleMembers(
-      user.id,
+    const result = await circleService.members.searchCircleMembers(
+      req.user.id,
       circleId,
       q,
     );
 
-    actionLogger.info(
+    log.info(
       { circleId, query: q, resultCount: result.length },
       "Circle member search completed",
     );
 
-    return res.status(200).json({
+    res.status(200).json({
       data: result,
     });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+  },
+);
 
-const removeMember = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "removeMember",
-    req,
-  );
-
-  try {
-    actionLogger.info("Removing member from study circle");
-    const { user } = req as AuthenticatedRequest;
+const removeMember = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "removeMember",
+  async ({ req, res, log }) => {
+    log.info("Removing member from study circle");
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
     const { userId } = UserIdParamSchema.parse(req.params);
 
-    await CircleService.removeMember(userId, circleId, user);
+    await circleService.members.removeMember(userId, circleId, req.user);
 
-    const isSelfRemoval = user.id === userId;
+    const isSelfRemoval = req.user.id === userId;
 
-    actionLogger.info(
+    log.info(
       {
         circleId,
         removedUserId: userId,
-        requesterId: user.id,
+        requesterId: req.user.id,
         isSelfRemoval,
       },
       isSelfRemoval
@@ -203,127 +158,94 @@ const removeMember = async (
         : "Member removed successfully",
     );
 
-    return res.status(200).json({
+    res.status(200).json({
       message: isSelfRemoval
         ? "Left circle successfully"
         : "Member removed successfully",
     });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+  },
+);
 
-const updateMemberRole = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "updateMemberRole",
-    req,
-  );
-
-  try {
-    actionLogger.info("Updating member role");
-    const { user } = req as AuthenticatedRequest;
+const updateMemberRole = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "updateMemberRole",
+  async ({ req, res, log }) => {
+    log.info("Updating member role");
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
     const { userId } = UserIdParamSchema.parse(req.params);
     const { role } = UpdateMemberRoleDataSchema.parse(req.body);
 
-    const updatedMember = await CircleService.updateMemberRole(
+    const updatedMember = await circleService.members.updateMemberRole(
       userId,
       circleId,
       { role },
-      user,
+      req.user,
     );
 
-    actionLogger.info(
+    log.info(
       {
         circleId,
         targetUserId: userId,
         newRole: role,
-        requesterId: user.id,
+        requesterId: req.user.id,
       },
       "Member role updated successfully",
     );
 
-    return res.status(200).json({
+    res.status(200).json({
       data: updatedMember,
     });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+  },
+);
 
-const updateLastReadAt = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "updateLastReadAt",
-    req,
-  );
-
-  try {
-    actionLogger.info("Updating last read timestamp");
-    const { user } = req as AuthenticatedRequest;
+const updateLastReadAt = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "updateLastReadAt",
+  async ({ req, res, log }) => {
+    log.info("Updating last read timestamp");
     const { circleId: chatGroupId } = StudyCircleIdParamSchema.parse(
       req.params,
     );
 
-    await CircleService.updateLastReadAt(user.id, chatGroupId);
+    await circleService.members.updateLastReadAt(req.user.id, chatGroupId);
 
-    actionLogger.info(
+    log.info(
       {
         groupId: chatGroupId,
-        targetUserId: user.id,
-        requesterId: user.id,
+        targetUserId: req.user.id,
+        requesterId: req.user.id,
       },
       "Last read timestamp updated successfully",
     );
 
-    return res.status(200).json({
+    res.status(200).json({
       message: "Last read timestamp updated successfully",
     });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+  },
+);
 
-const setMemberMute = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "setMemberMute",
-    req,
-  );
-
-  try {
-    const { user } = req as AuthenticatedRequest;
+const setMemberMute = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "setMemberMute",
+  async ({ req, res, log }) => {
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
     const { userId } = UserIdParamSchema.parse(req.params);
     const parsed = MuteMemberDataSchema.parse(req.body);
 
-    actionLogger.info(
+    log.info(
       { circleId, targetUserId: userId, muted: parsed.muted },
       parsed.muted ? "Muting circle member" : "Unmuting circle member",
     );
 
     const updatedMember = parsed.muted
-      ? await CircleService.muteMember(user, circleId, userId, parsed.duration)
-      : await CircleService.unmuteMember(user, circleId, userId);
+      ? await circleService.members.muteMember(req.user, circleId, userId, parsed.duration)
+      : await circleService.members.unmuteMember(req.user, circleId, userId);
 
-    actionLogger.info(
+    log.info(
       {
         circleId,
         targetUserId: userId,
-        requesterId: user.id,
+        requesterId: req.user.id,
         isMuted: updatedMember.isMuted,
       },
       parsed.muted
@@ -331,13 +253,11 @@ const setMemberMute = async (
         : "Member unmuted successfully",
     );
 
-    return res.status(200).json({
+    res.status(200).json({
       data: updatedMember,
     });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+  },
+);
 
 export {
   addMember,

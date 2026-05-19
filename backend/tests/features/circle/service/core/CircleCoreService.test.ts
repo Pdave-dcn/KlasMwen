@@ -31,8 +31,13 @@ vi.mock(
 );
 
 describe("CircleCoreService", () => {
+  let circleCoreService: CircleCoreService;
+  let mockMemberService: CircleMemberService;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    mockMemberService = new CircleMemberService();
+    circleCoreService = new CircleCoreService(mockMemberService);
   });
 
   const mockAvatar = {
@@ -84,7 +89,7 @@ describe("CircleCoreService", () => {
         mockEnrichedCircle,
       );
 
-      const result = await CircleCoreService.createCircle(mockCircleData);
+      const result = await circleCoreService.createCircle(mockCircleData);
 
       expect(mockGetRandomCircleAvatar).toHaveBeenCalled();
       expect(CircleRepository.createCircle).toHaveBeenCalledWith({
@@ -112,7 +117,7 @@ describe("CircleCoreService", () => {
       );
 
       await expect(
-        CircleCoreService.createCircle(mockCircleData),
+        circleCoreService.createCircle(mockCircleData),
       ).rejects.toThrow("Avatar service error");
     });
   });
@@ -138,14 +143,14 @@ describe("CircleCoreService", () => {
       };
 
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue(mockCircle);
-      vi.mocked(CircleMemberService.addMemberToCircle).mockResolvedValue(
+      vi.mocked(mockMemberService.addMemberToCircle).mockResolvedValue(
         mockTransformedMember,
       );
 
-      const result = await CircleCoreService.joinCircle("circle-1", "user-2");
+      const result = await circleCoreService.joinCircle("circle-1", "user-2");
 
       expect(CircleRepository.findCircleById).toHaveBeenCalledWith("circle-1");
-      expect(CircleMemberService.addMemberToCircle).toHaveBeenCalledWith(
+      expect(mockMemberService.addMemberToCircle).toHaveBeenCalledWith(
         "user-2",
         "circle-1",
         "MEMBER",
@@ -158,7 +163,7 @@ describe("CircleCoreService", () => {
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue(null);
 
       await expect(
-        CircleCoreService.joinCircle("circle-1", "user-2"),
+        circleCoreService.joinCircle("circle-1", "user-2"),
       ).rejects.toThrow(CircleNotFoundError);
     });
 
@@ -172,11 +177,11 @@ describe("CircleCoreService", () => {
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue(mockCircle);
 
       await expect(
-        CircleCoreService.joinCircle("circle-1", "user-2"),
+        circleCoreService.joinCircle("circle-1", "user-2"),
       ).rejects.toThrow(AuthorizationError);
 
       // Ensure addMemberToCircle was not called for private circles
-      expect(CircleMemberService.addMemberToCircle).not.toHaveBeenCalled();
+      expect(mockMemberService.addMemberToCircle).not.toHaveBeenCalled();
     });
   });
 
@@ -219,7 +224,7 @@ describe("CircleCoreService", () => {
         mockMembership,
       );
 
-      const result = await CircleCoreService.leaveCircle(
+      const result = await circleCoreService.leaveCircle(
         "circle-1",
         mockRequester,
       );
@@ -245,7 +250,7 @@ describe("CircleCoreService", () => {
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue(null);
 
       await expect(
-        CircleCoreService.leaveCircle("circle-1", mockRequester),
+        circleCoreService.leaveCircle("circle-1", mockRequester),
       ).rejects.toThrow(CircleNotFoundError);
 
       expect(CircleRepository.getMembership).not.toHaveBeenCalled();
@@ -257,7 +262,7 @@ describe("CircleCoreService", () => {
       vi.mocked(CircleRepository.getMembership).mockResolvedValue(null);
 
       await expect(
-        CircleCoreService.leaveCircle("circle-1", mockRequester),
+        circleCoreService.leaveCircle("circle-1", mockRequester),
       ).rejects.toThrow(CircleMemberNotFoundError);
 
       expect(assertCirclePermission).not.toHaveBeenCalled();
@@ -284,7 +289,7 @@ describe("CircleCoreService", () => {
       });
 
       await expect(
-        CircleCoreService.leaveCircle("circle-1", ownerRequester),
+        circleCoreService.leaveCircle("circle-1", ownerRequester),
       ).rejects.toThrow(AuthorizationError);
 
       expect(CircleRepository.removeMember).not.toHaveBeenCalled();
@@ -305,7 +310,7 @@ describe("CircleCoreService", () => {
         mockEnrichedCircle,
       );
 
-      const result = await CircleCoreService.getCircleById(
+      const result = await circleCoreService.getCircleById(
         "circle-1",
         "user-1",
       );
@@ -331,7 +336,7 @@ describe("CircleCoreService", () => {
         mockEnrichedCircle,
       );
 
-      const result = await CircleCoreService.getCircleById(
+      const result = await circleCoreService.getCircleById(
         "circle-1",
         "user-1",
       );
@@ -348,7 +353,7 @@ describe("CircleCoreService", () => {
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue(null);
 
       await expect(
-        CircleCoreService.getCircleById("circle-1", "user-1"),
+        circleCoreService.getCircleById("circle-1", "user-1"),
       ).rejects.toThrow(CircleNotFoundError);
     });
   });
@@ -374,7 +379,7 @@ describe("CircleCoreService", () => {
       ).mockReturnValue(mockTransformedDetails);
 
       const result =
-        await CircleCoreService.getCirclePreviewDetails("circle-1");
+        await circleCoreService.getCirclePreviewDetails("circle-1");
 
       expect(CircleRepository.getCircleDetails).toHaveBeenCalledWith(
         "circle-1",
@@ -389,7 +394,7 @@ describe("CircleCoreService", () => {
       vi.mocked(CircleRepository.getCircleDetails).mockResolvedValue(null);
 
       await expect(
-        CircleCoreService.getCirclePreviewDetails("circle-1"),
+        circleCoreService.getCirclePreviewDetails("circle-1"),
       ).rejects.toThrow(CircleNotFoundError);
     });
   });
@@ -416,7 +421,7 @@ describe("CircleCoreService", () => {
         mockEnrichedCircles,
       );
 
-      const result = await CircleCoreService.getUserCircles(
+      const result = await circleCoreService.getUserCircles(
         userId,
         defaultPagination,
       );
@@ -449,7 +454,7 @@ describe("CircleCoreService", () => {
         mockEnrichedCircles,
       );
 
-      const result = await CircleCoreService.getUserCircles(userId, {
+      const result = await circleCoreService.getUserCircles(userId, {
         limit: 2,
         cursor: undefined,
       });
@@ -468,7 +473,7 @@ describe("CircleCoreService", () => {
         mockEnrichedCircles,
       );
 
-      await CircleCoreService.getUserCircles(userId, {
+      await circleCoreService.getUserCircles(userId, {
         limit: 15,
         cursor: "circle-1",
       });
@@ -483,7 +488,7 @@ describe("CircleCoreService", () => {
       vi.mocked(CircleRepository.findUserCircles).mockResolvedValue([]);
       vi.mocked(CircleEnricher.enrichCircles).mockResolvedValueOnce([]);
 
-      const result = await CircleCoreService.getUserCircles(
+      const result = await circleCoreService.getUserCircles(
         userId,
         defaultPagination,
       );
@@ -519,7 +524,7 @@ describe("CircleCoreService", () => {
       ).mockResolvedValue(mockCircles);
       vi.mocked(CircleEnricher.enrichCircles).mockResolvedValue(mockCircles);
 
-      const result = await CircleCoreService.getRecentActivityCircles("user-1");
+      const result = await circleCoreService.getRecentActivityCircles("user-1");
 
       expect(
         CircleRepository.findRecentCirclesWithActivity,
@@ -554,7 +559,7 @@ describe("CircleCoreService", () => {
       ).mockResolvedValue(mockCircles);
       vi.mocked(CircleEnricher.enrichCircles).mockResolvedValue(mockCircles);
 
-      const result = await CircleCoreService.getRecentActivityCircles(
+      const result = await circleCoreService.getRecentActivityCircles(
         "user-1",
         10,
       );
@@ -576,7 +581,7 @@ describe("CircleCoreService", () => {
       ).mockResolvedValue(mockCircles);
       vi.mocked(CircleEnricher.enrichCircles).mockResolvedValue(mockCircles);
 
-      const result = await CircleCoreService.getRecentActivityCircles(
+      const result = await circleCoreService.getRecentActivityCircles(
         "user-1",
         5,
       );
@@ -614,7 +619,7 @@ describe("CircleCoreService", () => {
         mockEnrichedCircle,
       );
 
-      const result = await CircleCoreService.updateCircle(
+      const result = await circleCoreService.updateCircle(
         "circle-1",
         mockUser,
         updateData,
@@ -647,7 +652,7 @@ describe("CircleCoreService", () => {
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue(null);
 
       await expect(
-        CircleCoreService.updateCircle("circle-1", mockUser, updateData),
+        circleCoreService.updateCircle("circle-1", mockUser, updateData),
       ).rejects.toThrow(CircleNotFoundError);
     });
 
@@ -672,7 +677,7 @@ describe("CircleCoreService", () => {
       });
 
       await expect(
-        CircleCoreService.updateCircle("circle-1", mockUser, updateData),
+        circleCoreService.updateCircle("circle-1", mockUser, updateData),
       ).rejects.toThrow(AuthorizationError);
     });
   });
@@ -693,7 +698,7 @@ describe("CircleCoreService", () => {
         mockDeletedCircle,
       );
 
-      const result = await CircleCoreService.deleteCircle("circle-1", mockUser);
+      const result = await circleCoreService.deleteCircle("circle-1", mockUser);
 
       expect(CircleRepository.findCircleById).toHaveBeenCalledWith("circle-1");
       expect(assertCirclePermission).toHaveBeenCalledWith(
@@ -712,7 +717,7 @@ describe("CircleCoreService", () => {
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue(null);
 
       await expect(
-        CircleCoreService.deleteCircle("circle-1", mockUser),
+        circleCoreService.deleteCircle("circle-1", mockUser),
       ).rejects.toThrow(CircleNotFoundError);
     });
 
@@ -730,7 +735,7 @@ describe("CircleCoreService", () => {
       });
 
       await expect(
-        CircleCoreService.deleteCircle("circle-1", mockUser),
+        circleCoreService.deleteCircle("circle-1", mockUser),
       ).rejects.toThrow(AuthorizationError);
     });
   });
@@ -746,7 +751,7 @@ describe("CircleCoreService", () => {
       const avatars = makeAvatars(5);
       vi.mocked(CircleRepository.getCircleAvatars).mockResolvedValue(avatars);
 
-      const result = await CircleCoreService.getCircleAvatars(20);
+      const result = await circleCoreService.getCircleAvatars(20);
 
       expect(CircleRepository.getCircleAvatars).toHaveBeenCalledWith(
         20,
@@ -763,7 +768,7 @@ describe("CircleCoreService", () => {
       const avatars = makeAvatars(21);
       vi.mocked(CircleRepository.getCircleAvatars).mockResolvedValue(avatars);
 
-      const result = await CircleCoreService.getCircleAvatars(20);
+      const result = await circleCoreService.getCircleAvatars(20);
 
       expect(result.data).toHaveLength(20);
       expect(result.pagination.hasMore).toBe(true);
@@ -773,7 +778,7 @@ describe("CircleCoreService", () => {
     it("should pass cursor to the repository", async () => {
       vi.mocked(CircleRepository.getCircleAvatars).mockResolvedValue([]);
 
-      await CircleCoreService.getCircleAvatars(20, 42);
+      await circleCoreService.getCircleAvatars(20, 42);
 
       expect(CircleRepository.getCircleAvatars).toHaveBeenCalledWith(20, 42);
     });
@@ -781,7 +786,7 @@ describe("CircleCoreService", () => {
     it("should use the default limit of 20 when none is provided", async () => {
       vi.mocked(CircleRepository.getCircleAvatars).mockResolvedValue([]);
 
-      await CircleCoreService.getCircleAvatars();
+      await circleCoreService.getCircleAvatars();
 
       expect(CircleRepository.getCircleAvatars).toHaveBeenCalledWith(
         20,
@@ -792,7 +797,7 @@ describe("CircleCoreService", () => {
     it("should return empty data with no next cursor when repository returns nothing", async () => {
       vi.mocked(CircleRepository.getCircleAvatars).mockResolvedValue([]);
 
-      const result = await CircleCoreService.getCircleAvatars(20);
+      const result = await circleCoreService.getCircleAvatars(20);
 
       expect(result.data).toEqual([]);
       expect(result.pagination.hasMore).toBe(false);
@@ -803,7 +808,7 @@ describe("CircleCoreService", () => {
       const avatars = makeAvatars(11); // limit=10, +1 overflow
       vi.mocked(CircleRepository.getCircleAvatars).mockResolvedValue(avatars);
 
-      const result = await CircleCoreService.getCircleAvatars(10);
+      const result = await circleCoreService.getCircleAvatars(10);
 
       expect(result.data).toHaveLength(10);
       expect(result.pagination.nextCursor).toBe(10); // id 10, not 11
@@ -813,7 +818,7 @@ describe("CircleCoreService", () => {
       const avatars = makeAvatars(20);
       vi.mocked(CircleRepository.getCircleAvatars).mockResolvedValue(avatars);
 
-      const result = await CircleCoreService.getCircleAvatars(20);
+      const result = await circleCoreService.getCircleAvatars(20);
 
       expect(result.data).toHaveLength(20);
       expect(result.pagination.hasMore).toBe(false);

@@ -9,12 +9,24 @@ import {
   NotAMemberError,
 } from "../../../../src/core/error/custom/circle.error.js";
 
+const { mockValidate, mockMembers } = vi.hoisted(() => ({
+  mockValidate: {
+    verifyCircleExists: vi.fn(),
+    verifyIsMember: vi.fn(),
+  },
+  mockMembers: {
+    getCircleMemberIds: vi.fn(),
+  },
+}));
+
 vi.mock("../../../../src/features/circle/service/CircleService.js", () => ({
   default: {
-    verifyCircleExists: vi.fn(),
-    isMember: vi.fn(),
-    getCircleMemberIds: vi.fn(),
-    verifyIsMember: vi.fn(),
+    validate: mockValidate,
+    members: mockMembers,
+  },
+  circleService: {
+    validate: mockValidate,
+    members: mockMembers,
   },
 }));
 
@@ -66,9 +78,9 @@ describe("handleJoinCircle socket handler", () => {
     it("allows a valid member to join and returns presence lists", async () => {
       const circleId = "123e4567-e89b-12d3-a456-426614174000";
 
-      (CircleService.verifyCircleExists as any).mockResolvedValue(undefined);
-      (CircleService.verifyIsMember as any).mockResolvedValue(true);
-      (CircleService.getCircleMemberIds as any).mockResolvedValue([
+      mockValidate.verifyCircleExists.mockResolvedValue(undefined);
+      mockValidate.verifyIsMember.mockResolvedValue(true);
+      mockMembers.getCircleMemberIds.mockResolvedValue([
         "user1",
         "user2",
       ]);
@@ -89,8 +101,8 @@ describe("handleJoinCircle socket handler", () => {
       const handler = handleJoinCircle(socket, nsp);
       await handler({ circleId }, callback);
 
-      expect(CircleService.verifyCircleExists).toHaveBeenCalledWith(circleId);
-      expect(CircleService.verifyIsMember).toHaveBeenCalledWith(
+      expect(mockValidate.verifyCircleExists).toHaveBeenCalledWith(circleId);
+      expect(mockValidate.verifyIsMember).toHaveBeenCalledWith(
         socket.data.user.id,
         circleId,
       );
@@ -125,14 +137,14 @@ describe("handleJoinCircle socket handler", () => {
   describe("error handling", () => {
     it("reports a not-found circle using the proper message", async () => {
       const circleId = "00000000-0000-0000-0000-000000000000";
-      (CircleService.verifyCircleExists as any).mockRejectedValue(
+      mockValidate.verifyCircleExists.mockRejectedValue(
         new CircleNotFoundError(circleId),
       );
 
       const handler = handleJoinCircle(socket, nsp);
       await handler({ circleId }, callback);
 
-      expect(CircleService.verifyIsMember).not.toHaveBeenCalled();
+      expect(mockValidate.verifyIsMember).not.toHaveBeenCalled();
       expect(callback).toHaveBeenCalledWith({
         success: false,
         error: "Study circle not found",
@@ -141,8 +153,8 @@ describe("handleJoinCircle socket handler", () => {
 
     it("reports a user who isn't a member", async () => {
       const circleId = "e02c971d-2f74-4a14-a85f-bf55bd26c077";
-      (CircleService.verifyCircleExists as any).mockResolvedValue(undefined);
-      (CircleService.verifyIsMember as any).mockRejectedValue(
+      mockValidate.verifyCircleExists.mockResolvedValue(undefined);
+      mockValidate.verifyIsMember.mockRejectedValue(
         new NotAMemberError(socket.data.user.id, circleId),
       );
 
@@ -158,7 +170,7 @@ describe("handleJoinCircle socket handler", () => {
     it("propagates generic failures as a generic message", async () => {
       const circleId = "12c5e71f-0ef9-447d-8485-460f0e9a974e";
 
-      (CircleService.verifyCircleExists as any).mockRejectedValue(
+      mockValidate.verifyCircleExists.mockRejectedValue(
         new Error("oops"),
       );
 
@@ -188,9 +200,9 @@ describe("handleJoinCircle socket handler", () => {
       const circleId = "123e4567-e89b-12d3-a456-426614174000";
 
       // prepare mocks like success path
-      (CircleService.verifyCircleExists as any).mockResolvedValue(undefined);
-      (CircleService.verifyIsMember as any).mockResolvedValue(true);
-      (CircleService.getCircleMemberIds as any).mockResolvedValue(["user1"]);
+      mockValidate.verifyCircleExists.mockResolvedValue(undefined);
+      mockValidate.verifyIsMember.mockResolvedValue(true);
+      mockMembers.getCircleMemberIds.mockResolvedValue(["user1"]);
       const fakeSockets = [{ data: { user: { id: "user1" } } }];
       (nsp.in(`circle:${circleId}`) as any).fetchSockets.mockResolvedValue(
         fakeSockets,

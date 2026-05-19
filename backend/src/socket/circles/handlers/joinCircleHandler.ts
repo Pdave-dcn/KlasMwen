@@ -3,7 +3,7 @@ import {
   CircleNotFoundError,
   NotAMemberError,
 } from "../../../core/error/custom/circle.error.js";
-import CircleService from "../../../features/circle/service/CircleService.js";
+import { circleService } from "../../../features/circle/service/CircleService.js";
 import { StudyCircleIdParamSchema } from "../../../zodSchemas/circle.zod.js";
 import { PresenceService } from "../../presence/presence.service.js";
 import { broadcastPresenceUpdate } from "../helpers/broadcastPresenceUpdate.js";
@@ -24,7 +24,7 @@ const getMemberPresence = async (
     new Set(socketsInRoom.map((s) => s.data.user.id)),
   );
 
-  const allMemberIds = await CircleService.getCircleMemberIds(studyCircleId);
+  const allMemberIds = await circleService.members.getCircleMemberIds(studyCircleId);
 
   const onlineMemberIds = allMemberIds.filter((userId) =>
     PresenceService.isOnline(userId),
@@ -81,8 +81,8 @@ export const handleJoinCircle = (socket: Socket, nsp: Namespace) => {
       );
 
       // Validate study circle exists and user is a member
-      await CircleService.verifyCircleExists(circleId);
-      await CircleService.verifyIsMember(user.id, circleId);
+      await circleService.validate.verifyCircleExists(circleId);
+      await circleService.validate.verifyIsMember(user.id, circleId);
 
       // Join the room
       await socket.join(`circle:${circleId}`);

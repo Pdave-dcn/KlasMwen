@@ -7,27 +7,17 @@ import { assertCirclePermission } from "../../security/rbac.js";
 import CircleTransformers from "../CircleTransformers.js";
 import CircleRepository from "../Repositories/CircleRepository.js";
 
-import { CircleValidationService } from "./CircleValidationService.js";
-
 import type {
   SendMessageData,
   MessagePaginationCursor,
 } from "../CircleTypes.js";
+import type { CircleValidationService } from "./CircleValidationService.js";
 import type { CircleRole } from "@prisma/client";
 
-/**
- * Service for circle message operations.
- * Handles message sending, retrieval, and deletion.
- */
 export class CircleMessageService {
-  /**
-   * Sends a message to a circle.
-   * Only circle members can send messages.
-   * @throws {CircleNotFoundError} If the circle does not exist
-   * @throws {AuthorizationError} If user is not a member
-   * @throws {UserMutedError} if user is muted
-   */
-  static async sendMessage(
+  constructor(private validationService: CircleValidationService) {}
+
+  async sendMessage(
     data: SendMessageData,
     user: Omit<Express.User, "email"> & { userRole?: CircleRole },
   ) {
@@ -36,19 +26,13 @@ export class CircleMessageService {
 
     assertCirclePermission(user, "circleMessages", "send");
 
-    await CircleValidationService.ensureMemberNotMuted(data);
+    await this.validationService.ensureMemberNotMuted(data);
 
     const message = await CircleRepository.createMessage(data);
     return CircleTransformers.transformMessage(message);
   }
 
-  /**
-   * Retrieves messages from a circle with cursor-based pagination.
-   * Only group members can view messages.
-   * @throws {CircleNotFoundError} If the group does not exist
-   * @throws {AuthorizationError} If user is not a member
-   */
-  static async getMessages(
+  async getMessages(
     circleId: string,
     user: Express.User & { circleRole?: CircleRole },
     pagination?: MessagePaginationCursor,
@@ -71,11 +55,7 @@ export class CircleMessageService {
     return result;
   }
 
-  /**
-   * Retrieves a single message by ID.
-   * @throws {Error} If the message does not exist
-   */
-  static async getMessageById(messageId: number) {
+  async getMessageById(messageId: number) {
     const message = await CircleRepository.findMessageById(messageId);
     if (!message) {
       throw new MessageNotFoundError(messageId);
@@ -84,13 +64,7 @@ export class CircleMessageService {
     return CircleTransformers.transformMessage(message);
   }
 
-  /**
-   * Deletes a message from a circle.
-   * Only the sender, moderators, or owners can delete messages.
-   * @throws {MessageNotFoundError} If the message does not exist
-   * @throws {AuthorizationError} If user lacks permissions
-   */
-  static async deleteMessage(
+  async deleteMessage(
     messageId: number,
     user: Express.User & { circleRole?: CircleRole },
   ) {
@@ -106,10 +80,7 @@ export class CircleMessageService {
     return CircleTransformers.transformMessage(message);
   }
 
-  /**
-   * Gets the latest message in a circle.
-   */
-  static async getLatestMessage(circleId: string) {
+  async getLatestMessage(circleId: string) {
     const message = await CircleRepository.getLatestMessage(circleId);
     if (!message) return null;
     return CircleTransformers.transformMessage(message);

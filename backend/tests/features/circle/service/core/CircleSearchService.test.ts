@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { CircleSearchService } from "../../../../../src/features/circle/service/core/CircleSearchService.js";
+import { CircleSearchService } from "../../../../../src/features/circle/service/core/circleSearchService.js";
 import CircleSearchRepository from "../../../../../src/features/circle/service/Repositories/CircleSearchRepository.js";
 import CircleRepository from "../../../../../src/features/circle/service/Repositories/CircleRepository.js";
 import CircleTransformers from "../../../../../src/features/circle/service/CircleTransformers.js";
@@ -19,8 +19,11 @@ const transformedGroup = { id: "circle-1", name: "Test", memberCount: 0 };
 const pagination = { limit: 1 };
 
 describe("CircleSearchService", () => {
+  let circleSearchService: CircleSearchService;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    circleSearchService = new CircleSearchService();
   });
 
   describe("searchCircles", () => {
@@ -33,7 +36,7 @@ describe("CircleSearchService", () => {
       ).mockReturnValue([transformedGroup] as any);
 
       const filters = { query: "foo" } as any;
-      const res = await CircleSearchService.searchCircles(
+      const res = await circleSearchService.searchCircles(
         "user-1",
         filters,
         pagination as any,
@@ -58,7 +61,7 @@ describe("CircleSearchService", () => {
         CircleTransformers.transformCirclesForDiscovery,
       ).mockReturnValue([transformedGroup] as any);
 
-      const res = await CircleSearchService.discoverCircles(
+      const res = await circleSearchService.discoverCircles(
         "user-x",
         pagination as any,
       );
@@ -79,7 +82,7 @@ describe("CircleSearchService", () => {
         CircleTransformers.transformCirclesForDiscovery,
       ).mockReturnValue([transformedGroup] as any);
 
-      const res = await CircleSearchService.getRecommendedCircles(
+      const res = await circleSearchService.getRecommendedCircles(
         "u",
         pagination as any,
       );
@@ -100,7 +103,7 @@ describe("CircleSearchService", () => {
         CircleTransformers.transformCirclesForDiscovery,
       ).mockReturnValue([transformedGroup] as any);
 
-      const res = await CircleSearchService.getTrendingCircles(
+      const res = await circleSearchService.getTrendingCircles(
         "u",
         pagination as any,
         5,
@@ -118,7 +121,7 @@ describe("CircleSearchService", () => {
     it("should throw if reference circle not found", async () => {
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue(null);
       await expect(
-        CircleSearchService.getSimilarCircles("u", "ref", pagination as any),
+        circleSearchService.getSimilarCircles("u", "ref", pagination as any),
       ).rejects.toThrow(CircleNotFoundError);
     });
 
@@ -138,7 +141,7 @@ describe("CircleSearchService", () => {
         CircleTransformers.transformCirclesForDiscovery,
       ).mockReturnValue([transformedGroup] as any);
 
-      const res = await CircleSearchService.getSimilarCircles(
+      const res = await circleSearchService.getSimilarCircles(
         "u",
         "ref",
         pagination as any,
@@ -161,7 +164,7 @@ describe("CircleSearchService", () => {
         CircleTransformers.transformCirclesForDiscovery,
       ).mockReturnValue([transformedGroup] as any);
 
-      const res = await CircleSearchService.getNewCircles(
+      const res = await circleSearchService.getNewCircles(
         "u",
         pagination as any,
       );
@@ -182,7 +185,7 @@ describe("CircleSearchService", () => {
         CircleTransformers.transformCirclesForDiscovery,
       ).mockReturnValue([transformedGroup] as any);
 
-      const res = await CircleSearchService.getActiveCircles(
+      const res = await circleSearchService.getActiveCircles(
         "u",
         pagination as any,
         2,
@@ -205,7 +208,7 @@ describe("CircleSearchService", () => {
         CircleTransformers.transformCirclesForDiscovery,
       ).mockReturnValue([transformedGroup] as any);
 
-      const res = await CircleSearchService.getSmallCircles(
+      const res = await circleSearchService.getSmallCircles(
         "u",
         pagination as any,
       );
@@ -227,7 +230,7 @@ describe("CircleSearchService", () => {
         CircleTransformers.transformCirclesForDiscovery,
       ).mockReturnValue([transformedGroup] as any);
 
-      const res = await CircleSearchService.getCirclesByCreator(
+      const res = await circleSearchService.getCirclesByCreator(
         "u",
         "creator-1",
         pagination as any,
@@ -250,7 +253,7 @@ describe("CircleSearchService", () => {
         CircleTransformers.transformCirclesForSuggestion,
       ).mockReturnValue([transformedGroup] as any);
 
-      const res = await CircleSearchService.getSearchSuggestions("foo", 5);
+      const res = await circleSearchService.getSearchSuggestions("foo", 5);
       expect(CircleSearchRepository.getSearchSuggestions).toHaveBeenCalledWith(
         "foo",
         5,

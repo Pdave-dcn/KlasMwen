@@ -1,38 +1,26 @@
 import { createLogger } from "../../core/config/logger.js";
-import CircleService from "../../features/circle/service/CircleService.js";
-import createActionLogger from "../../utils/logger.util.js";
+import { circleService } from "../../features/circle/service/CircleService.js";
+import { withLogging } from "../../utils/logger.util.js";
 
 import type { AuthenticatedRequest } from "../../types/AuthRequest.js";
-import type { NextFunction, Request, Response } from "express";
 
 const controllerLogger = createLogger({ module: "CircleStatsController" });
 
-export const getQuickStats = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "getQuickStats",
-    req,
-  );
+export const getQuickStats = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "getQuickStats",
+  async ({ req, res, log }) => {
+    log.info("Fetching quick chat statistics");
 
-  try {
-    actionLogger.info("Fetching quick chat statistics");
-    const { user } = req as AuthenticatedRequest;
+    const quickStats = await circleService.getQuickStats(req.user.id);
 
-    const quickStats = await CircleService.getQuickStats(user.id);
-
-    actionLogger.info(
+    log.info(
       { quickStats },
       "Quick chat statistics fetched successfully",
     );
 
-    return res.status(200).json({
+    res.status(200).json({
       data: quickStats,
     });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+  },
+);

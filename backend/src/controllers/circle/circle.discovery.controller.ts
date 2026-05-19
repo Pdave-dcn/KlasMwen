@@ -1,6 +1,6 @@
 import { createLogger } from "../../core/config/logger.js";
-import CircleService from "../../features/circle/service/CircleService.js";
-import createActionLogger from "../../utils/logger.util.js";
+import { circleService } from "../../features/circle/service/CircleService.js";
+import { withLogging } from "../../utils/logger.util.js";
 import { createPaginationSchema } from "../../utils/pagination.util.js";
 import {
   StudyCircleIdParamSchema,
@@ -12,37 +12,26 @@ import {
 } from "../../zodSchemas/circle.zod.js";
 
 import type { AuthenticatedRequest } from "../../types/AuthRequest.js";
-import type { NextFunction, Request, Response } from "express";
 
 const controllerLogger = createLogger({
   module: "StudyCircleSearchController",
 });
 
-const discoverCircles = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "discoverCircles",
-    req,
-  );
-
-  try {
-    actionLogger.info("Discovering public study circles");
-
-    const { user } = req as AuthenticatedRequest;
+const discoverCircles = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "discoverCircles",
+  async ({ req, res, log }) => {
+    log.info("Discovering public study circles");
 
     const discoveryPaginationSchema = createPaginationSchema(10, 50, "uuid");
     const { limit, cursor } = discoveryPaginationSchema.parse(req.query);
 
-    const result = await CircleService.discoverCircles(user.id, {
+    const result = await circleService.search.discoverCircles(req.user.id, {
       limit,
       cursor: cursor as string | undefined,
     });
 
-    actionLogger.info(
+    log.info(
       {
         count: result.data.length,
         hasMore: result.pagination.hasMore,
@@ -51,35 +40,25 @@ const discoverCircles = async (
       "Public circles discovered successfully",
     );
 
-    return res.status(200).json(result);
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+    res.status(200).json(result);
+  },
+);
 
-const getRecommendedCircles = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "getRecommendedCircles",
-    req,
-  );
-  try {
-    actionLogger.info("Fetching recommended study circles for user");
+const getRecommendedCircles = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "getRecommendedCircles",
+  async ({ req, res, log }) => {
+    log.info("Fetching recommended study circles for user");
 
-    const { user } = req as AuthenticatedRequest;
     const suggestionPaginationSchema = createPaginationSchema(5, 20, "uuid");
     const { limit, cursor } = suggestionPaginationSchema.parse(req.query);
 
-    const result = await CircleService.getRecommendedCircles(user.id, {
+    const result = await circleService.search.getRecommendedCircles(req.user.id, {
       limit,
       cursor: cursor as string | undefined,
     });
 
-    actionLogger.info(
+    log.info(
       {
         count: result.data.length,
         hasMore: result.pagination.hasMore,
@@ -88,34 +67,22 @@ const getRecommendedCircles = async (
       "Recommended circles fetched successfully",
     );
 
-    return res.status(200).json(result);
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+    res.status(200).json(result);
+  },
+);
 
-const getTrendingCircles = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "getTrendingCircles",
-    req,
-  );
-
-  try {
-    actionLogger.info("Fetching trending study circles");
-
-    const { user } = req as AuthenticatedRequest;
+const getTrendingCircles = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "getTrendingCircles",
+  async ({ req, res, log }) => {
+    log.info("Fetching trending study circles");
 
     const trendingPaginationSchema = createPaginationSchema(10, 50, "uuid");
     const { limit, cursor } = trendingPaginationSchema.parse(req.query);
     const { timeframe } = TrendingQuerySchema.parse(req.query);
 
-    const result = await CircleService.getTrendingCircles(
-      user.id,
+    const result = await circleService.search.getTrendingCircles(
+      req.user.id,
       {
         limit,
         cursor: cursor as string | undefined,
@@ -123,7 +90,7 @@ const getTrendingCircles = async (
       timeframe,
     );
 
-    actionLogger.info(
+    log.info(
       {
         count: result.data.length,
         hasMore: result.pagination.hasMore,
@@ -133,37 +100,25 @@ const getTrendingCircles = async (
       "Trending circles fetched successfully",
     );
 
-    return res.status(200).json(result);
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+    res.status(200).json(result);
+  },
+);
 
-const getNewCircles = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "getNewCircles",
-    req,
-  );
-
-  try {
-    actionLogger.info("Fetching newly created study circles");
-
-    const { user } = req as AuthenticatedRequest;
+const getNewCircles = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "getNewCircles",
+  async ({ req, res, log }) => {
+    log.info("Fetching newly created study circles");
 
     const newGroupsPaginationSchema = createPaginationSchema(10, 50, "uuid");
     const { limit, cursor } = newGroupsPaginationSchema.parse(req.query);
 
-    const result = await CircleService.getNewCircles(user.id, {
+    const result = await circleService.search.getNewCircles(req.user.id, {
       limit,
       cursor: cursor as string | undefined,
     });
 
-    actionLogger.info(
+    log.info(
       {
         count: result.data.length,
         hasMore: result.pagination.hasMore,
@@ -172,34 +127,22 @@ const getNewCircles = async (
       "New circles fetched successfully",
     );
 
-    return res.status(200).json(result);
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+    res.status(200).json(result);
+  },
+);
 
-const getSmallCircles = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "getSmallCircles",
-    req,
-  );
-
-  try {
-    actionLogger.info("Fetching small study circles");
-
-    const { user } = req as AuthenticatedRequest;
+const getSmallCircles = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "getSmallCircles",
+  async ({ req, res, log }) => {
+    log.info("Fetching small study circles");
 
     const smallGroupsPaginationSchema = createPaginationSchema(10, 50, "uuid");
     const { limit, cursor } = smallGroupsPaginationSchema.parse(req.query);
     const { maxMembers } = SmallCirclesQuerySchema.parse(req.query);
 
-    const result = await CircleService.getSmallCircles(
-      user.id,
+    const result = await circleService.search.getSmallCircles(
+      req.user.id,
       {
         limit,
         cursor: cursor as string | undefined,
@@ -207,7 +150,7 @@ const getSmallCircles = async (
       maxMembers,
     );
 
-    actionLogger.info(
+    log.info(
       {
         count: result.data.length,
         hasMore: result.pagination.hasMore,
@@ -217,39 +160,27 @@ const getSmallCircles = async (
       "Small circles fetched successfully",
     );
 
-    return res.status(200).json(result);
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+    res.status(200).json(result);
+  },
+);
 
-const getSimilarCircles = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "getSimilarCircles",
-    req,
-  );
-
-  try {
-    actionLogger.info("Fetching similar study circles");
-
-    const { user } = req as AuthenticatedRequest;
+const getSimilarCircles = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "getSimilarCircles",
+  async ({ req, res, log }) => {
+    log.info("Fetching similar study circles");
 
     const { circleId } = StudyCircleIdParamSchema.parse(req.params);
 
     const similarPaginationSchema = createPaginationSchema(10, 50, "uuid");
     const { limit, cursor } = similarPaginationSchema.parse(req.query);
 
-    const result = await CircleService.getSimilarCircles(user.id, circleId, {
+    const result = await circleService.search.getSimilarCircles(req.user.id, circleId, {
       limit,
       cursor: cursor as string | undefined,
     });
 
-    actionLogger.info(
+    log.info(
       {
         count: result.data.length,
         hasMore: result.pagination.hasMore,
@@ -259,39 +190,27 @@ const getSimilarCircles = async (
       "Similar circles fetched successfully",
     );
 
-    return res.status(200).json(result);
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+    res.status(200).json(result);
+  },
+);
 
-const getCirclesByCreator = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "getCirclesByCreator",
-    req,
-  );
-
-  try {
-    actionLogger.info("Fetching circles by creator");
-
-    const { user } = req as AuthenticatedRequest;
+const getCirclesByCreator = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "getCirclesByCreator",
+  async ({ req, res, log }) => {
+    log.info("Fetching circles by creator");
 
     const { creatorId } = CreatorIdParamSchema.parse(req.params);
 
     const creatorPaginationSchema = createPaginationSchema(10, 50, "uuid");
     const { limit, cursor } = creatorPaginationSchema.parse(req.query);
 
-    const result = await CircleService.getCirclesByCreator(user.id, creatorId, {
+    const result = await circleService.search.getCirclesByCreator(req.user.id, creatorId, {
       limit,
       cursor: cursor as string | undefined,
     });
 
-    actionLogger.info(
+    log.info(
       {
         count: result.data.length,
         hasMore: result.pagination.hasMore,
@@ -301,47 +220,31 @@ const getCirclesByCreator = async (
       "Circles by creator fetched successfully",
     );
 
-    return res.status(200).json(result);
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+    res.status(200).json(result);
+  },
+);
 
-const searchCircles = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "searchCircles",
-    req,
-  );
-
-  try {
-    actionLogger.info("Searching study circles");
-
-    const { user } = req as AuthenticatedRequest;
+const searchCircles = withLogging<AuthenticatedRequest>(
+  controllerLogger,
+  "searchCircles",
+  async ({ req, res, log }) => {
+    log.info("Searching study circles");
 
     const filters = CircleSearchFiltersSchema.parse(req.query);
-
-    const sanitizedSearchTerm = filters.query
-      ? filters.query.replace(/[%_]/g, "\\$&")
-      : undefined;
 
     const searchPaginationSchema = createPaginationSchema(10, 50, "uuid");
     const { limit, cursor } = searchPaginationSchema.parse(req.query);
 
-    const result = await CircleService.searchCircles(
-      user.id,
-      { ...filters, query: sanitizedSearchTerm },
+    const result = await circleService.search.searchCircles(
+      req.user.id,
+      filters,
       {
         limit,
         cursor: cursor as string | undefined,
       },
     );
 
-    actionLogger.info(
+    log.info(
       {
         count: result.data.length,
         hasMore: result.pagination.hasMore,
@@ -351,31 +254,21 @@ const searchCircles = async (
       "Circles search completed successfully",
     );
 
-    return res.status(200).json(result);
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+    res.status(200).json(result);
+  },
+);
 
-const getSearchSuggestions = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const actionLogger = createActionLogger(
-    controllerLogger,
-    "getSearchSuggestions",
-    req,
-  );
-
-  try {
-    actionLogger.info("Fetching search suggestions");
+const getSearchSuggestions = withLogging(
+  controllerLogger,
+  "getSearchSuggestions",
+  async ({ req, res, log }) => {
+    log.info("Fetching search suggestions");
 
     const { query, limit } = SearchSuggestionQuerySchema.parse(req.query);
 
-    const result = await CircleService.getSearchSuggestions(query, limit);
+    const result = await circleService.search.getSearchSuggestions(query, limit);
 
-    actionLogger.info(
+    log.info(
       {
         count: result.length,
         query,
@@ -383,11 +276,9 @@ const getSearchSuggestions = async (
       "Search suggestions fetched successfully",
     );
 
-    return res.status(200).json({ data: result });
-  } catch (error: unknown) {
-    return next(error);
-  }
-};
+    res.status(200).json({ data: result });
+  },
+);
 
 export {
   discoverCircles,

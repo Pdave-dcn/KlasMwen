@@ -58,7 +58,7 @@ const enrichCircleRole = async (
 
     // Get user's membership and role
     if (req.user) {
-      const membership = await CircleService.verifyMembership(
+      const membership = await CircleService.validate.verifyMembership(
         req.user.id,
         result.data.circleId,
       );

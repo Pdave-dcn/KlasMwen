@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { CircleValidationService } from "../../../../../src/features/circle/service/core/CircleValidationService.js";
+import { CircleValidationService } from "../../../../../src/features/circle/service/core/circleValidationService.js";
 import CircleRepository from "../../../../../src/features/circle/service/Repositories/CircleRepository.js";
 import {
   CircleNotFoundError,
@@ -13,8 +13,11 @@ vi.mock(
 );
 
 describe("CircleValidationService", () => {
+  let circleValidationService: CircleValidationService;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    circleValidationService = new CircleValidationService();
   });
 
   describe("verifyCircleExists", () => {
@@ -23,14 +26,14 @@ describe("CircleValidationService", () => {
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue(
         circle as any,
       );
-      const res = await CircleValidationService.verifyCircleExists("c1");
+      const res = await circleValidationService.verifyCircleExists("c1");
       expect(res).toEqual(circle);
     });
 
     it("throws CircleNotFoundError when missing", async () => {
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue(null);
       await expect(
-        CircleValidationService.verifyCircleExists("c1"),
+        circleValidationService.verifyCircleExists("c1"),
       ).rejects.toThrow(CircleNotFoundError);
     });
   });
@@ -41,14 +44,14 @@ describe("CircleValidationService", () => {
       vi.mocked(CircleRepository.getMembership).mockResolvedValue(
         membership as any,
       );
-      const res = await CircleValidationService.verifyMembership("u", "c1");
+      const res = await circleValidationService.verifyMembership("u", "c1");
       expect(res).toEqual(membership);
     });
 
     it("throws CircleMemberNotFoundError when missing", async () => {
       vi.mocked(CircleRepository.getMembership).mockResolvedValue(null);
       await expect(
-        CircleValidationService.verifyMembership("u", "c1"),
+        circleValidationService.verifyMembership("u", "c1"),
       ).rejects.toThrow(CircleMemberNotFoundError);
     });
   });
@@ -59,7 +62,7 @@ describe("CircleValidationService", () => {
         mutedUntil: null,
       } as any);
       await expect(
-        CircleValidationService.ensureMemberNotMuted({
+        circleValidationService.ensureMemberNotMuted({
           senderId: "u",
           circleId: "c1",
           content: "hi",
@@ -70,7 +73,7 @@ describe("CircleValidationService", () => {
         mutedUntil: new Date(Date.now() - 1000),
       } as any);
       await expect(
-        CircleValidationService.ensureMemberNotMuted({
+        circleValidationService.ensureMemberNotMuted({
           senderId: "u",
           circleId: "c1",
           content: "hi",
@@ -84,7 +87,7 @@ describe("CircleValidationService", () => {
         mutedUntil: future,
       } as any);
       await expect(
-        CircleValidationService.ensureMemberNotMuted({
+        circleValidationService.ensureMemberNotMuted({
           senderId: "u",
           circleId: "c1",
           content: "hi",
@@ -97,14 +100,14 @@ describe("CircleValidationService", () => {
     it("returns message when found", async () => {
       const msg = { id: 5 };
       vi.mocked(CircleRepository.findMessageById).mockResolvedValue(msg as any);
-      const res = await CircleValidationService.verifyMessageExists(5);
+      const res = await circleValidationService.verifyMessageExists(5);
       expect(res).toEqual(msg);
     });
 
     it("throws MessageNotFoundError when missing", async () => {
       vi.mocked(CircleRepository.findMessageById).mockResolvedValue(null);
       await expect(
-        CircleValidationService.verifyMessageExists(5),
+        circleValidationService.verifyMessageExists(5),
       ).rejects.toThrow(MessageNotFoundError);
     });
   });
@@ -112,11 +115,11 @@ describe("CircleValidationService", () => {
   describe("checkMembership", () => {
     it("returns true/false based on repository", async () => {
       vi.mocked(CircleRepository.isMember).mockResolvedValue(true);
-      expect(await CircleValidationService.checkMembership("u", "c")).toBe(
+      expect(await circleValidationService.checkMembership("u", "c")).toBe(
         true,
       );
       vi.mocked(CircleRepository.isMember).mockResolvedValue(false);
-      expect(await CircleValidationService.checkMembership("u", "c")).toBe(
+      expect(await circleValidationService.checkMembership("u", "c")).toBe(
         false,
       );
     });

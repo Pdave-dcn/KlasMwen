@@ -4,13 +4,13 @@ import {
   NotAMemberError,
 } from "../../../core/error/custom/circle.error.js";
 
-import type CircleService from "../../../features/circle/service/CircleService.js";
+import type { circleService } from "../../../features/circle/service/CircleService.js";
 import type { Logger } from "pino";
 import type { Socket } from "socket.io";
 
 export type SendMessageCallback = (response: {
   success: boolean;
-  message?: Awaited<ReturnType<typeof CircleService.sendMessage>>;
+  message?: Awaited<ReturnType<typeof circleService.messages.sendMessage>>;
   error?: string;
 }) => void;
 

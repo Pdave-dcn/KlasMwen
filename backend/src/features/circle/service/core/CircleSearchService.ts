@@ -9,23 +9,20 @@ import type {
   CircleSearchFilters,
 } from "../CircleTypes.js";
 
-/**
- * Service for circle search and discovery operations.
- * Handles searching, filtering, and discovering circles.
- */
 export class CircleSearchService {
-  /**
-   * Search for circles based on filters and query.
-   * Excludes groups the user is already a member of unless specified.
-   */
-  static async searchCircles(
+  async searchCircles(
     userId: string,
     filters: CircleSearchFilters,
     pagination: CirclePaginationCursor,
   ) {
+    const sanitizedFilters = {
+      ...filters,
+      query: filters.query ? filters.query.replace(/[%_]/g, "\\$&") : undefined,
+    };
+
     const groups = await CircleSearchRepository.searchCircles(
       userId,
-      filters,
+      sanitizedFilters,
       pagination,
     );
 
@@ -35,11 +32,7 @@ export class CircleSearchService {
     return processPaginatedResults(transformedGroups, pagination.limit, "id");
   }
 
-  /**
-   * Discover public circles (convenience method for searchCircles).
-   * Only returns public circles the user hasn't joined.
-   */
-  static async discoverCircles(
+  async discoverCircles(
     userId: string,
     pagination: CirclePaginationCursor,
   ) {
@@ -54,10 +47,7 @@ export class CircleSearchService {
     return processPaginatedResults(transformedGroups, pagination.limit, "id");
   }
 
-  /**
-   * Get recommended circles (popular circles by member count).
-   */
-  static async getRecommendedCircles(
+  async getRecommendedCircles(
     userId: string,
     pagination: CirclePaginationCursor,
   ) {
@@ -72,10 +62,7 @@ export class CircleSearchService {
     return processPaginatedResults(transformedGroups, pagination.limit, "id");
   }
 
-  /**
-   * Get trending circles (most active in recent time).
-   */
-  static async getTrendingCircles(
+  async getTrendingCircles(
     userId: string,
     pagination: CirclePaginationCursor,
     timeframe: number = 7,
@@ -92,10 +79,7 @@ export class CircleSearchService {
     return processPaginatedResults(transformedGroups, pagination.limit, "id");
   }
 
-  /**
-   * Get similar circles based on a reference circle.
-   */
-  static async getSimilarCircles(
+  async getSimilarCircles(
     userId: string,
     referenceCircleId: string,
     pagination: CirclePaginationCursor,
@@ -122,10 +106,7 @@ export class CircleSearchService {
     return processPaginatedResults(transformedCircles, pagination.limit, "id");
   }
 
-  /**
-   * Get newly created circles.
-   */
-  static async getNewCircles(
+  async getNewCircles(
     userId: string,
     pagination: CirclePaginationCursor,
   ) {
@@ -140,10 +121,7 @@ export class CircleSearchService {
     return processPaginatedResults(transformedCircles, pagination.limit, "id");
   }
 
-  /**
-   * Get active circles (circles with recent activity).
-   */
-  static async getActiveCircles(
+  async getActiveCircles(
     userId: string,
     pagination: CirclePaginationCursor,
     activityDays: number = 3,
@@ -160,10 +138,7 @@ export class CircleSearchService {
     return processPaginatedResults(transformedCircles, pagination.limit, "id");
   }
 
-  /**
-   * Get small circles (under a certain member threshold).
-   */
-  static async getSmallCircles(
+  async getSmallCircles(
     userId: string,
     pagination: CirclePaginationCursor,
     maxMembers: number = 10,
@@ -180,10 +155,7 @@ export class CircleSearchService {
     return processPaginatedResults(transformedCircles, pagination.limit, "id");
   }
 
-  /**
-   * Get circles by a specific creator.
-   */
-  static async getCirclesByCreator(
+  async getCirclesByCreator(
     userId: string,
     creatorId: string,
     pagination: CirclePaginationCursor,
@@ -200,10 +172,7 @@ export class CircleSearchService {
     return processPaginatedResults(transformedCircles, pagination.limit, "id");
   }
 
-  /**
-   * Get search suggestions for autocomplete.
-   */
-  static async getSearchSuggestions(query: string, limit: number = 10) {
+  async getSearchSuggestions(query: string, limit: number = 10) {
     const suggestions = await CircleSearchRepository.getSearchSuggestions(
       query,
       limit,

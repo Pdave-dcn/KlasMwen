@@ -1,4 +1,3 @@
-import prisma from "../../../core/config/db.js";
 import { ReportNotFoundError } from "../../../core/error/custom/report.error.js";
 import {
   permissionService as defaultPermissionService,
@@ -29,10 +28,7 @@ class ReportService {
     return true;
   }
 
-  private async contentExists(
-    contentType: string,
-    contentId: string | number,
-  ) {
+  private async contentExists(contentType: string, contentId: string | number) {
     if (contentType === "post") {
       return await postService.validate.verifyPostExists(contentId as string);
     }
@@ -48,53 +44,37 @@ class ReportService {
     threshold = 5,
     gracePeriodMs = 24 * 60 * 60 * 1000,
   ): Promise<void> {
-    const relationField = resourceType === "post" ? "postId" : "commentId" as const;
-
-    const reportCount = await prisma.report.count({
-      where: {
-        [relationField]: resourceId,
-        status: { not: "DISMISSED" },
-      },
-    });
+    const reportCount = await ReportRepository.countActiveReports(
+      resourceType,
+      resourceId,
+    );
 
     if (reportCount < threshold) return;
 
-    const thresholdReport = await prisma.report.findMany({
-      where: {
-        [relationField]: resourceId,
-        status: { not: "DISMISSED" },
-      },
-      orderBy: { createdAt: "asc" },
-      take: threshold,
-    });
+    const thresholdReports = await ReportRepository.findThresholdReports(
+      resourceType,
+      resourceId,
+      threshold,
+    );
 
-    if (!thresholdReport.length) return;
+    if (!thresholdReports.length) return;
 
-    const thresholdReachedAt = thresholdReport[thresholdReport.length - 1].createdAt;
+    const thresholdReachedAt =
+      thresholdReports[thresholdReports.length - 1].createdAt;
     const elapsed = Date.now() - thresholdReachedAt.getTime();
     if (elapsed < gracePeriodMs) return;
 
     if (resourceType === "post") {
-      const post = await prisma.post.findUnique({
-        where: { id: resourceId as string },
-        select: { hidden: true },
-      });
+      const post = await ReportRepository.findPostHidden(resourceId as string);
       if (!post?.hidden) {
-        await prisma.post.update({
-          where: { id: resourceId as string },
-          data: { hidden: true },
-        });
+        await ReportRepository.updatePostHidden(resourceId as string, true);
       }
     } else {
-      const comment = await prisma.comment.findUnique({
-        where: { id: resourceId as number },
-        select: { hidden: true },
-      });
+      const comment = await ReportRepository.findCommentHidden(
+        resourceId as number,
+      );
       if (!comment?.hidden) {
-        await prisma.comment.update({
-          where: { id: resourceId as number },
-          data: { hidden: true },
-        });
+        await ReportRepository.updateCommentHidden(resourceId as number, true);
       }
     }
   }
@@ -120,7 +100,9 @@ class ReportService {
     if (filters.dateFrom || filters.dateTo) {
       where.createdAt = {};
       if (filters.dateFrom) {
-        where.createdAt.gte = ReportTransFormer.parseLocalDate(filters.dateFrom);
+        where.createdAt.gte = ReportTransFormer.parseLocalDate(
+          filters.dateFrom,
+        );
       }
       if (filters.dateTo) {
         const endDate = ReportTransFormer.parseLocalDate(filters.dateTo);
@@ -163,8 +145,9 @@ class ReportService {
   }
 
   async createReport(user: Express.User, data: CreateReportData) {
-    const resourceType = data.postId ? "post" as const : "comment" as const;
-    const resourceId: string | number = data.postId ?? data.commentId as number;
+    const resourceType = data.postId ? ("post" as const) : ("comment" as const);
+    const resourceId: string | number =
+      data.postId ?? (data.commentId as number);
 
     const resource = await this.contentExists(resourceType, resourceId);
 
@@ -221,7 +204,5 @@ class ReportService {
   }
 }
 
-const reportService = new ReportService(
-  defaultPermissionService,
-);
+const reportService = new ReportService(defaultPermissionService);
 export { ReportService, reportService };

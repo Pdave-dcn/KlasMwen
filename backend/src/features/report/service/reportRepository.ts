@@ -91,6 +91,55 @@ class ReportRepository {
     return prisma.report.count({ where });
   }
 
+  /** Count non-dismissed reports for a specific resource */
+  static countActiveReports(
+    resourceType: "post" | "comment",
+    resourceId: string | number,
+  ) {
+    const relationField =
+      resourceType === "post" ? "postId" : ("commentId" as const);
+    return prisma.report.count({
+      where: {
+        [relationField]: resourceId,
+        status: { not: "DISMISSED" },
+      },
+    });
+  }
+
+  /** Find the oldest N non-dismissed reports for a resource (ascending by creation date) */
+  static findThresholdReports(
+    resourceType: "post" | "comment",
+    resourceId: string | number,
+    threshold: number,
+  ) {
+    const relationField =
+      resourceType === "post" ? "postId" : ("commentId" as const);
+    return prisma.report.findMany({
+      where: {
+        [relationField]: resourceId,
+        status: { not: "DISMISSED" },
+      },
+      orderBy: { createdAt: "asc" },
+      take: threshold,
+    });
+  }
+
+  /** Check whether a post is hidden */
+  static findPostHidden(postId: string) {
+    return prisma.post.findUnique({
+      where: { id: postId },
+      select: { hidden: true },
+    });
+  }
+
+  /** Check whether a comment is hidden */
+  static findCommentHidden(commentId: number) {
+    return prisma.comment.findUnique({
+      where: { id: commentId },
+      select: { hidden: true },
+    });
+  }
+
   /** Update a post's hidden flag */
   static updatePostHidden(postId: string, hidden: boolean) {
     return prisma.post.update({

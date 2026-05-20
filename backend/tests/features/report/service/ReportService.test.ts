@@ -22,12 +22,10 @@ const mockEnrichReports = vi.fn();
 const mockEnrichReport = vi.fn();
 
 const mockParseLocalDate = vi.fn();
-const mockReportCount = vi.fn();
-const mockReportFindMany = vi.fn();
-const mockPostFindUnique = vi.fn();
-const mockPostUpdate = vi.fn();
-const mockCommentFindUnique = vi.fn();
-const mockCommentUpdate = vi.fn();
+const mockCountActiveReports = vi.fn();
+const mockFindThresholdReports = vi.fn();
+const mockFindPostHidden = vi.fn();
+const mockFindCommentHidden = vi.fn();
 
 vi.mock("../../../../src/features/report/service/reportRepository.js", () => ({
   default: {
@@ -42,6 +40,11 @@ vi.mock("../../../../src/features/report/service/reportRepository.js", () => ({
     updatePostHidden: (...args: unknown[]) => mockUpdatePostHidden(...args),
     updateCommentHidden: (...args: unknown[]) =>
       mockUpdateCommentHidden(...args),
+    countActiveReports: (...args: unknown[]) => mockCountActiveReports(...args),
+    findThresholdReports: (...args: unknown[]) =>
+      mockFindThresholdReports(...args),
+    findPostHidden: (...args: unknown[]) => mockFindPostHidden(...args),
+    findCommentHidden: (...args: unknown[]) => mockFindCommentHidden(...args),
   },
 }));
 
@@ -71,23 +74,6 @@ vi.mock("../../../../src/features/report/service/reportEnricher.js", () => ({
 vi.mock("../../../../src/features/report/service/reportTransformer.js", () => ({
   default: {
     parseLocalDate: (...args: unknown[]) => mockParseLocalDate(...args),
-  },
-}));
-
-vi.mock("../../../../src/core/config/db.js", () => ({
-  default: {
-    report: {
-      count: (...args: unknown[]) => mockReportCount(...args),
-      findMany: (...args: unknown[]) => mockReportFindMany(...args),
-    },
-    post: {
-      findUnique: (...args: unknown[]) => mockPostFindUnique(...args),
-      update: (...args: unknown[]) => mockPostUpdate(...args),
-    },
-    comment: {
-      findUnique: (...args: unknown[]) => mockCommentFindUnique(...args),
-      update: (...args: unknown[]) => mockCommentUpdate(...args),
-    },
   },
 }));
 
@@ -281,7 +267,7 @@ describe("ReportService", () => {
       mockVerifyPostExists.mockResolvedValue(mockPostResource);
       mockAssertCanReport.mockReturnValue(undefined);
       mockCreate.mockResolvedValue(mockCreatedReport);
-      mockReportCount.mockResolvedValue(0);
+      mockCountActiveReports.mockResolvedValue(0);
 
       const result = await reportService.createReport(mockUser, {
         postId: mockPostId,
@@ -307,7 +293,7 @@ describe("ReportService", () => {
       mockCommentExists.mockResolvedValue(mockCommentResource);
       mockAssertCanReport.mockReturnValue(undefined);
       mockCreate.mockResolvedValue(mockCreatedReport);
-      mockReportCount.mockResolvedValue(0);
+      mockCountActiveReports.mockResolvedValue(0);
 
       const result = await reportService.createReport(mockUser, {
         commentId: mockCommentId,
@@ -361,7 +347,7 @@ describe("ReportService", () => {
       mockVerifyPostExists.mockResolvedValue(mockPostResource);
       mockAssertCanReport.mockReturnValue(undefined);
       mockCreate.mockResolvedValue(mockCreatedReport);
-      mockReportCount.mockResolvedValue(0);
+      mockCountActiveReports.mockResolvedValue(0);
 
       await reportService.createReport(mockUser, {
         postId: mockPostId,
@@ -369,7 +355,7 @@ describe("ReportService", () => {
         reporterId: mockUser.id,
       });
 
-      expect(mockReportCount).toHaveBeenCalled();
+      expect(mockCountActiveReports).toHaveBeenCalled();
     });
   });
 

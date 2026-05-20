@@ -19,7 +19,7 @@ export class CircleMessageService {
 
   async sendMessage(
     data: SendMessageData,
-    user: Omit<Express.User, "email"> & { userRole?: CircleRole },
+    user: Omit<Express.User, "email"> & { circleRole?: CircleRole },
   ) {
     const circle = await CircleRepository.findCircleById(data.circleId);
     if (!circle) throw new CircleNotFoundError(data.circleId);

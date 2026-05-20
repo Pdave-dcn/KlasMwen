@@ -1,34 +1,30 @@
-import type { Circle, CircleMessage, CircleRole } from "@prisma/client";
+export type CircleRole = "OWNER" | "MODERATOR" | "MEMBER";
 
-type WithCreatorId<T extends { id: string; creatorId: string }> = Pick<
-  T,
-  "id"
-> & {
+export type WithCreatorId = {
+  id: string;
   creatorId?: string;
   creator?: { id: string };
 };
 
-type WithSenderId<T extends { id: number; senderId: string }> = Pick<
-  T,
-  "id"
-> & {
+export type WithSenderId = {
+  id: number;
   senderId?: string;
   sender?: { id: string };
 };
 
-type WithMembershipRole = {
+export type WithMembershipRole = {
   role: CircleRole;
   userId?: string;
   user?: { id: string };
 };
 
-type CircleForPolicy = WithCreatorId<Circle>;
-type CircleMemberForPolicy = WithMembershipRole;
-type CircleMessageForPolicy = WithSenderId<CircleMessage> & {
+export type CircleForPolicy = WithCreatorId;
+export type CircleMemberForPolicy = WithMembershipRole;
+export type CircleMessageForPolicy = WithSenderId & {
   circleId: string;
 };
 
-const circleRegistry = {
+export const circleRegistry = {
   circles: {
     datatype: {} as CircleForPolicy,
     action: ["create", "read", "update", "delete", "join", "invite", "leave"],
@@ -43,6 +39,4 @@ const circleRegistry = {
   },
 } as const;
 
-type CircleRegistry = typeof circleRegistry;
-
-export { circleRegistry, type CircleRegistry };
+export type CircleRegistry = typeof circleRegistry;

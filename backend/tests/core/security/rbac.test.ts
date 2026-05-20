@@ -336,7 +336,7 @@ describe("assertPermission", () => {
 
       expect(() => {
         assertPermission(user, "posts", "update", post);
-      }).toThrow(`User student-1 not permitted to update posts`);
+      }).toThrow(`User student-1 (role: STUDENT) not permitted to update posts`);
     });
 
     it("should throw when permission is undefined", () => {
@@ -361,7 +361,7 @@ describe("assertPermission", () => {
 
       expect(() => {
         assertPermission(user, "comments", "delete", comment);
-      }).toThrow(`User student-1 not permitted to delete comments`);
+      }).toThrow(`User student-1 (role: STUDENT) not permitted to delete comments`);
     });
 
     it("should throw when user tries to report their own content", () => {

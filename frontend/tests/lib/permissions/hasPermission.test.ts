@@ -13,38 +13,22 @@ const otherStudentUser: User = { id: "student-2", role: "STUDENT" };
 
 const mockPost: PostForPolicy = {
   id: "post-1",
-  author: {
-    id: "student-1",
-    username: "student1",
-    avatar: { id: 1, url: "mock-url.com/avatar-1.svg" },
-  },
+  author: { id: "student-1" },
 };
 
 const mockPostByOtherUser: PostForPolicy = {
   id: "post-2",
-  author: {
-    id: "student-2",
-    username: "student2",
-    avatar: { id: 2, url: "mock-url.com/avatar-2.svg" },
-  },
+  author: { id: "student-2" },
 };
 
 const mockComment: CommentForPolicy = {
   id: 1,
-  author: {
-    id: "student-1",
-    username: "student1",
-    avatar: { id: 1, url: "mock-url.com/avatar-1.svg" },
-  },
+  author: { id: "student-1" },
 };
 
 const mockCommentByOtherUser: CommentForPolicy = {
   id: 2,
-  author: {
-    id: "student-2",
-    username: "student2",
-    avatar: { id: 2, url: "mock-url.com/avatar-2.svg" },
-  },
+  author: { id: "student-2" },
 };
 
 describe("hasPermission", () => {

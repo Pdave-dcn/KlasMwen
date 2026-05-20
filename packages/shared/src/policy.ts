@@ -1,19 +1,22 @@
-import { getAuthorId, isOwner, isReceiver } from "./helpers.js";
+import { isOwner, isNotOwner, isReceiver } from "./helpers.js";
 
-import type { Registry } from "./types.js";
-import type { Role } from "@prisma/client";
+import type { Registry, UserRole } from "./types.js";
 
 type PermissionCheck<K extends keyof Registry> =
   | boolean
-  | ((user: Express.User, data: Registry[K]["datatype"]) => boolean);
+  | ((
+      user: { id: string; role: UserRole },
+      data: Registry[K]["datatype"],
+    ) => boolean);
 
-type PolicyMap = {
-  [R in Role]: Partial<{
+type PolicyMap = Record<
+  UserRole,
+  Partial<{
     [K in keyof Registry]: Partial<{
       [A in Registry[K]["action"][number]]: PermissionCheck<K>;
     }>;
-  }>;
-};
+  }>
+>;
 
 export const POLICY: PolicyMap = {
   ADMIN: {
@@ -22,14 +25,14 @@ export const POLICY: PolicyMap = {
       read: true,
       update: true,
       delete: true,
-      report: (u, p) => u.id !== getAuthorId(p),
+      report: isNotOwner,
     },
     comments: {
       create: true,
       read: true,
       update: true,
       delete: true,
-      report: (u, c) => u.id !== getAuthorId(c),
+      report: isNotOwner,
     },
     notifications: {
       read: true,
@@ -44,14 +47,14 @@ export const POLICY: PolicyMap = {
       read: true,
       update: isOwner,
       delete: true,
-      report: (u, p) => u.id !== getAuthorId(p),
+      report: isNotOwner,
     },
     comments: {
       create: true,
       read: true,
       update: isOwner,
       delete: true,
-      report: (u, c) => u.id !== getAuthorId(c),
+      report: isNotOwner,
     },
     notifications: {
       read: isReceiver,
@@ -66,14 +69,14 @@ export const POLICY: PolicyMap = {
       read: true,
       update: isOwner,
       delete: isOwner,
-      report: (u, p) => u.id !== getAuthorId(p),
+      report: isNotOwner,
     },
     comments: {
       create: true,
       read: true,
       update: isOwner,
       delete: isOwner,
-      report: (u, c) => u.id !== getAuthorId(c),
+      report: isNotOwner,
     },
     notifications: {
       read: isReceiver,

@@ -9,7 +9,7 @@ const mockVerifyPostExists = vi.fn();
 const mockFindById = vi.fn();
 const mockCreate = vi.fn();
 const mockDelete = vi.fn();
-const mockAssertPermission = vi.fn();
+const mockAssertDeleteComment = vi.fn();
 const mockCreateNotification = vi.fn();
 
 vi.mock("../../../../src/features/posts/service/PostService.js", () => ({
@@ -18,10 +18,6 @@ vi.mock("../../../../src/features/posts/service/PostService.js", () => ({
       verifyPostExists: (...args: unknown[]) => mockVerifyPostExists(...args),
     },
   },
-}));
-
-vi.mock("../../../../src/core/security/rbac.js", () => ({
-  assertPermission: (...args: unknown[]) => mockAssertPermission(...args),
 }));
 
 vi.mock("../../../../src/features/notification/service/index.js", () => ({
@@ -46,7 +42,8 @@ describe("CommentCommandService", () => {
       delete: mockDelete,
     };
     validationService = new CommentValidationService(mockRepo as any);
-    service = new CommentCommandService(validationService, mockRepo as any);
+    const mockPermission = { assertCanDeleteComment: mockAssertDeleteComment };
+    service = new CommentCommandService(validationService, mockRepo as any, mockPermission as any);
   });
 
   describe("createComment", () => {
@@ -148,9 +145,7 @@ describe("CommentCommandService", () => {
       await service.deleteComment(1, { id: mockUserId, role: "STUDENT" } as Express.User);
 
       expect(mockFindById).toHaveBeenCalledWith(1);
-      expect(mockAssertPermission).toHaveBeenCalledWith(
-        { id: mockUserId, role: "STUDENT" }, "comments", "delete", comment,
-      );
+      expect(mockAssertDeleteComment).toHaveBeenCalledWith({ id: mockUserId, role: "STUDENT" }, comment);
       expect(mockDelete).toHaveBeenCalledWith(1);
     });
 

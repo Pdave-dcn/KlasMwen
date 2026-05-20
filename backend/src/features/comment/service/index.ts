@@ -1,3 +1,5 @@
+import { permissionService } from "../../../core/security/PermissionService.js";
+
 import { CommentTransformer } from "./commentTransformer.js";
 import { CommentCommandService } from "./core/CommentCommandService.js";
 import { CommentQueryService } from "./core/CommentQueryService.js";
@@ -15,6 +17,7 @@ const commentQueryService = new CommentQueryService(
 const commentCommandService = new CommentCommandService(
   commentValidationService,
   CommentRepository,
+  permissionService,
 );
 const commentService = new CommentService(
   commentQueryService,

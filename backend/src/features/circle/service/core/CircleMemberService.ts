@@ -3,7 +3,10 @@ import {
   CircleMemberNotFoundError,
 } from "../../../../core/error/custom/circle.error.js";
 import { processPaginatedResults } from "../../../../utils/pagination.util.js";
-import { assertCirclePermission } from "../../security/rbac.js";
+import {
+  circlePermissionService as defaultCirclePermission,
+  type CirclePermissionService,
+} from "../../security/CirclePermissionService.js";
 import CircleEnricher from "../CircleEnrichers.js";
 import CircleTransformers from "../CircleTransformers.js";
 import {
@@ -18,7 +21,10 @@ import type { CircleValidationService } from "./CircleValidationService.js";
 import type { CircleRole } from "@prisma/client";
 
 export class CircleMemberService {
-  constructor(private validationService: CircleValidationService) {}
+  constructor(
+    private validationService: CircleValidationService,
+    private circlePermission: CirclePermissionService = defaultCirclePermission,
+  ) {}
 
   async addMemberToCircle(
     userId: string,
@@ -38,7 +44,7 @@ export class CircleMemberService {
 
     if (circle.isPrivate || (requester && requester.id !== userId)) {
       if (requester) {
-        assertCirclePermission(requester, "circleMembers", "add");
+        this.circlePermission.assertCan(requester, "circleMembers", "add");
       }
     }
 
@@ -75,7 +81,7 @@ export class CircleMemberService {
       circleId,
     );
 
-    assertCirclePermission(requester, "circleMembers", "remove", membership);
+    this.circlePermission.assertCanRemoveMember(requester, membership);
 
     const member = await CircleRepository.removeMember(targetUserId, circleId);
     const enrichedMember = CircleEnricher.enrichMember(member);
@@ -96,7 +102,7 @@ export class CircleMemberService {
       circleId,
     );
 
-    assertCirclePermission(actor, "circleMembers", "mute", {
+    this.circlePermission.assertCanMuteMember(actor, {
       role: targetMember.role,
       userId: targetMember.userId,
     });
@@ -129,7 +135,7 @@ export class CircleMemberService {
       circleId,
     );
 
-    assertCirclePermission(actor, "circleMembers", "mute", {
+    this.circlePermission.assertCanMuteMember(actor, {
       role: targetMember.role,
       userId: targetMember.userId,
     });
@@ -158,10 +164,8 @@ export class CircleMemberService {
       circleId,
     );
 
-    assertCirclePermission(
+    this.circlePermission.assertCanUpdateMemberRole(
       requester,
-      "circleMembers",
-      "updateRole",
       membership,
     );
 

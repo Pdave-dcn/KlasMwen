@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { CircleMessageService } from "../../../../../src/features/circle/service/core/CircleMessageService.js";
 import CircleRepository from "../../../../../src/features/circle/service/Repositories/CircleRepository.js";
 import CircleTransformers from "../../../../../src/features/circle/service/CircleTransformers.js";
-import { assertCirclePermission } from "../../../../../src/features/circle/security/rbac.js";
 import { AuthorizationError } from "../../../../../src/core/error/custom/auth.error.js";
 import {
   CircleNotFoundError,
@@ -15,10 +14,14 @@ vi.mock(
   "../../../../../src/features/circle/service/Repositories/CircleRepository.js",
 );
 vi.mock("../../../../../src/features/circle/service/CircleTransformers.js");
-vi.mock("../../../../../src/features/circle/security/rbac.js");
 vi.mock(
   "../../../../../src/features/circle/service/core/CircleValidationService.js",
 );
+
+const mockCirclePermission = {
+  assertCan: vi.fn(),
+  assertCanDeleteMessage: vi.fn(),
+};
 
 // helpers
 const makeMessage = () => ({
@@ -44,7 +47,7 @@ describe("CircleMessageService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockValidationService = new CircleValidationService();
-    circleMessageService = new CircleMessageService(mockValidationService);
+    circleMessageService = new CircleMessageService(mockValidationService, mockCirclePermission);
   });
 
   describe("sendMessage", () => {
@@ -57,7 +60,7 @@ describe("CircleMessageService", () => {
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue(
         circle as any,
       );
-      vi.mocked(assertCirclePermission).mockReturnValue(undefined);
+      mockCirclePermission.assertCan.mockReturnValue(undefined);
       vi.mocked(mockValidationService.ensureMemberNotMuted).mockResolvedValue(
         undefined,
       );
@@ -71,7 +74,7 @@ describe("CircleMessageService", () => {
       } as any);
 
       expect(CircleRepository.findCircleById).toHaveBeenCalledWith("circle-1");
-      expect(assertCirclePermission).toHaveBeenCalledWith(
+      expect(mockCirclePermission.assertCan).toHaveBeenCalledWith(
         { id: "user-1" },
         "circleMessages",
         "send",
@@ -97,7 +100,7 @@ describe("CircleMessageService", () => {
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue({
         id: "c",
       } as any);
-      vi.mocked(assertCirclePermission).mockImplementation(() => {
+      mockCirclePermission.assertCan.mockImplementation(() => {
         throw new AuthorizationError("nope");
       });
 
@@ -113,7 +116,7 @@ describe("CircleMessageService", () => {
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue({
         id: "c",
       } as any);
-      vi.mocked(assertCirclePermission).mockReturnValue(undefined);
+      mockCirclePermission.assertCan.mockReturnValue(undefined);
       vi.mocked(mockValidationService.ensureMemberNotMuted).mockRejectedValue(
         new UserMutedError("u", "c", new Date()),
       );
@@ -137,7 +140,7 @@ describe("CircleMessageService", () => {
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue(
         circle as any,
       );
-      vi.mocked(assertCirclePermission).mockReturnValue(undefined);
+      mockCirclePermission.assertCan.mockReturnValue(undefined);
       vi.mocked(CircleRepository.getMessages).mockResolvedValue([msg as any]);
       vi.mocked(CircleTransformers.transformMessages).mockReturnValue([
         transformed as any,
@@ -163,7 +166,7 @@ describe("CircleMessageService", () => {
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue({
         id: "c",
       } as any);
-      vi.mocked(assertCirclePermission).mockImplementation(() => {
+      mockCirclePermission.assertCan.mockImplementation(() => {
         throw new AuthorizationError("nope");
       });
 
@@ -199,7 +202,7 @@ describe("CircleMessageService", () => {
       const msg = makeMessage();
       const transformed = makeTransformed();
       vi.mocked(CircleRepository.findMessageById).mockResolvedValue(msg as any);
-      vi.mocked(assertCirclePermission).mockReturnValue(undefined);
+      mockCirclePermission.assertCanDeleteMessage.mockReturnValue(undefined);
       vi.mocked(CircleRepository.deleteMessage).mockResolvedValue(msg as any);
       vi.mocked(CircleTransformers.transformMessage).mockReturnValue(
         transformed as any,
@@ -222,7 +225,7 @@ describe("CircleMessageService", () => {
       vi.mocked(CircleRepository.findMessageById).mockResolvedValue(
         makeMessage() as any,
       );
-      vi.mocked(assertCirclePermission).mockImplementation(() => {
+      mockCirclePermission.assertCanDeleteMessage.mockImplementation(() => {
         throw new AuthorizationError("nope");
       });
 

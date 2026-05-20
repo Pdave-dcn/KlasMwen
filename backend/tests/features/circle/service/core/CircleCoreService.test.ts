@@ -4,7 +4,6 @@ import { CircleMemberService } from "../../../../../src/features/circle/service/
 import CircleRepository from "../../../../../src/features/circle/service/Repositories/CircleRepository.js";
 import CircleEnricher from "../../../../../src/features/circle/service/CircleEnrichers.js";
 import CircleTransformers from "../../../../../src/features/circle/service/CircleTransformers.js";
-import { assertCirclePermission } from "../../../../../src/features/circle/security/rbac.js";
 import { AuthorizationError } from "../../../../../src/core/error/custom/auth.error.js";
 import {
   CircleNotFoundError,
@@ -25,10 +24,15 @@ vi.mock("../../../../../src/features/avatar/service/index.js", () => ({
       mockGetRandomCircleAvatar(...args),
   },
 }));
-vi.mock("../../../../../src/features/circle/security/rbac.js");
 vi.mock(
   "../../../../../src/features/circle/service/core/CircleMemberService.js",
 );
+
+const mockCirclePermission = {
+  assertCan: vi.fn(),
+  assertCanUpdateCircle: vi.fn(),
+  assertCanDeleteCircle: vi.fn(),
+};
 
 describe("CircleCoreService", () => {
   let circleCoreService: CircleCoreService;
@@ -37,7 +41,7 @@ describe("CircleCoreService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockMemberService = new CircleMemberService();
-    circleCoreService = new CircleCoreService(mockMemberService);
+    circleCoreService = new CircleCoreService(mockMemberService, mockCirclePermission as any);
   });
 
   const mockAvatar = {
@@ -219,7 +223,7 @@ describe("CircleCoreService", () => {
       vi.mocked(CircleRepository.getMembership).mockResolvedValue(
         mockMembership,
       );
-      vi.mocked(assertCirclePermission).mockReturnValue(undefined);
+      mockCirclePermission.assertCan.mockReturnValue(undefined);
       vi.mocked(CircleRepository.removeMember).mockResolvedValue(
         mockMembership,
       );
@@ -234,7 +238,7 @@ describe("CircleCoreService", () => {
         "user-2",
         "circle-1",
       );
-      expect(assertCirclePermission).toHaveBeenCalledWith(
+      expect(mockCirclePermission.assertCan).toHaveBeenCalledWith(
         mockRequester,
         "circles",
         "leave",
@@ -265,7 +269,7 @@ describe("CircleCoreService", () => {
         circleCoreService.leaveCircle("circle-1", mockRequester),
       ).rejects.toThrow(CircleMemberNotFoundError);
 
-      expect(assertCirclePermission).not.toHaveBeenCalled();
+      expect(mockCirclePermission.assertCan).not.toHaveBeenCalled();
       expect(CircleRepository.removeMember).not.toHaveBeenCalled();
     });
 
@@ -282,7 +286,7 @@ describe("CircleCoreService", () => {
         userId: "user-1",
         role: "OWNER" as CircleRole,
       });
-      vi.mocked(assertCirclePermission).mockImplementation(() => {
+      mockCirclePermission.assertCan.mockImplementation(() => {
         throw new AuthorizationError(
           "Owners cannot leave without transferring ownership",
         );
@@ -611,7 +615,7 @@ describe("CircleCoreService", () => {
       const mockEnrichedCircle = { ...mockUpdatedCircle, userRole: "OWNER" };
 
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue(mockCircle);
-      vi.mocked(assertCirclePermission).mockReturnValue(undefined);
+      mockCirclePermission.assertCanUpdateCircle.mockReturnValue(undefined);
       vi.mocked(CircleRepository.updateCircle).mockResolvedValue(
         mockUpdatedCircle,
       );
@@ -626,10 +630,8 @@ describe("CircleCoreService", () => {
       );
 
       expect(CircleRepository.findCircleById).toHaveBeenCalledWith("circle-1");
-      expect(assertCirclePermission).toHaveBeenCalledWith(
+      expect(mockCirclePermission.assertCanUpdateCircle).toHaveBeenCalledWith(
         mockUser,
-        "circles",
-        "update",
         mockCircle,
       );
       expect(CircleRepository.updateCircle).toHaveBeenCalledWith(
@@ -672,7 +674,7 @@ describe("CircleCoreService", () => {
       };
 
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue(mockCircle);
-      vi.mocked(assertCirclePermission).mockImplementation(() => {
+      mockCirclePermission.assertCanUpdateCircle.mockImplementation(() => {
         throw new AuthorizationError("Insufficient permissions");
       });
 
@@ -693,7 +695,7 @@ describe("CircleCoreService", () => {
       const mockDeletedCircle = { ...mockCircle };
 
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue(mockCircle);
-      vi.mocked(assertCirclePermission).mockReturnValue(undefined);
+      mockCirclePermission.assertCanDeleteCircle.mockReturnValue(undefined);
       vi.mocked(CircleRepository.deleteCircle).mockResolvedValue(
         mockDeletedCircle,
       );
@@ -701,10 +703,8 @@ describe("CircleCoreService", () => {
       const result = await circleCoreService.deleteCircle("circle-1", mockUser);
 
       expect(CircleRepository.findCircleById).toHaveBeenCalledWith("circle-1");
-      expect(assertCirclePermission).toHaveBeenCalledWith(
+      expect(mockCirclePermission.assertCanDeleteCircle).toHaveBeenCalledWith(
         mockUser,
-        "circles",
-        "delete",
         mockCircle,
       );
       expect(CircleRepository.deleteCircle).toHaveBeenCalledWith("circle-1");
@@ -730,7 +730,7 @@ describe("CircleCoreService", () => {
       } as any;
 
       vi.mocked(CircleRepository.findCircleById).mockResolvedValue(mockCircle);
-      vi.mocked(assertCirclePermission).mockImplementation(() => {
+      mockCirclePermission.assertCanDeleteCircle.mockImplementation(() => {
         throw new AuthorizationError("Only owner can delete circle");
       });
 

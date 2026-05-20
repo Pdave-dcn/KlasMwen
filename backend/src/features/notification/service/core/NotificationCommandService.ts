@@ -1,11 +1,18 @@
 import { NotificationNotFoundError } from "../../../../core/error/custom/notification.error.js";
-import { assertPermission } from "../../../../core/security/rbac.js";
+import {
+  permissionService as defaultPermissionService,
+  type PermissionService,
+} from "../../../../core/security/PermissionService.js";
 import NotificationRepository from "../repo/NotificationRepository.js";
 
 import type { CreateNotificationData } from "../types/NotificationTypes.js";
 import type { Application } from "express";
 
 class NotificationCommandService {
+  constructor(
+    private permission: PermissionService = defaultPermissionService,
+  ) {}
+
   async createNotification(
     data: CreateNotificationData,
     app?: Application
@@ -34,7 +41,7 @@ class NotificationCommandService {
       throw new NotificationNotFoundError(notificationId);
     }
 
-    assertPermission(user, "notifications", "update", notification);
+    this.permission.assertCanUpdateNotification(user, notification);
 
     return await NotificationRepository.markAsRead(notificationId);
   }
@@ -50,7 +57,7 @@ class NotificationCommandService {
       throw new NotificationNotFoundError(notificationId);
     }
 
-    assertPermission(user, "notifications", "delete", notification);
+    this.permission.assertCanDeleteNotification(user, notification);
 
     return await NotificationRepository.delete(notificationId);
   }
@@ -64,5 +71,7 @@ class NotificationCommandService {
   }
 }
 
-const notificationCommandService = new NotificationCommandService();
+const notificationCommandService = new NotificationCommandService(
+  defaultPermissionService,
+);
 export { notificationCommandService, NotificationCommandService };

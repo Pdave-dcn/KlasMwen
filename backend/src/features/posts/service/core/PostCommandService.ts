@@ -3,7 +3,10 @@ import {
   PostNotFoundError,
   PostUpdateFailedError,
 } from "../../../../core/error/custom/post.error.js";
-import { assertPermission } from "../../../../core/security/rbac.js";
+import {
+  permissionService as defaultPermissionService,
+  type PermissionService,
+} from "../../../../core/security/PermissionService.js";
 import {
   postRepository,
   type IPostRepository,
@@ -52,6 +55,7 @@ class PostCommandService implements IPostCommandService {
     private validationService: IPostValidationService,
     private cloudinary: ICloudinaryCleanupService,
     private transformer: IPostTransformer,
+    private permission: PermissionService = defaultPermissionService,
   ) {}
 
   async createPost(
@@ -76,7 +80,7 @@ class PostCommandService implements IPostCommandService {
 
   async deletePost(postId: string, user: Express.User): Promise<void> {
     const post = await this.validationService.verifyPostExists(postId);
-    assertPermission(user, "posts", "delete", post);
+    this.permission.assertCanDeletePost(user, post);
 
     if (post.type === "RESOURCE" && post.fileUrl) {
       await this.cloudinary.handleResourceCleanup(
@@ -94,7 +98,7 @@ class PostCommandService implements IPostCommandService {
     user: Express.User,
   ) {
     const post = await this.validationService.verifyPostExists(postId);
-    assertPermission(user, "posts", "update", post);
+    this.permission.assertCanUpdatePost(user, post);
     this.validationService.validateEditTimeWindow(post.createdAt, postId);
 
     const updateData =
@@ -125,7 +129,7 @@ class PostCommandService implements IPostCommandService {
       throw new PostNotFoundError(postId);
     }
 
-    assertPermission(user, "posts", "update", post);
+    this.permission.assertCanUpdatePost(user, post);
 
     const transformedPost = this.transformer.transformPost(post);
     return this.transformer.toEditResponse(transformedPost);
@@ -137,6 +141,7 @@ const postCommandService = new PostCommandService(
   postValidationService,
   cloudinaryCleanupService,
   postTransformer,
+  defaultPermissionService,
 );
 
-export { postCommandService, type IPostCommandService };
+export { PostCommandService, postCommandService, type IPostCommandService };

@@ -1,5 +1,8 @@
 import { PostNotFoundError } from "../../../../core/error/custom/post.error.js";
-import { assertPermission } from "../../../../core/security/rbac.js";
+import {
+  permissionService as defaultPermissionService,
+  type PermissionService,
+} from "../../../../core/security/PermissionService.js";
 import { notificationService as NotificationService } from "../../../notification/service/index.js";
 import { postService } from "../../../posts/service/PostService.js";
 
@@ -12,6 +15,7 @@ class CommentCommandService {
   constructor(
     private readonly validation: CommentValidationService,
     private readonly repo: typeof CommentRepository,
+    private readonly permission: PermissionService = defaultPermissionService,
   ) {}
 
   private resolveCommentHierarchy(parentComment: {
@@ -121,7 +125,7 @@ class CommentCommandService {
   async deleteComment(commentId: number, user: Express.User) {
     const comment = await this.validation.commentExists(commentId);
 
-    assertPermission(user, "comments", "delete", comment);
+    this.permission.assertCanDeleteComment(user, comment);
 
     await this.repo.delete(commentId);
   }

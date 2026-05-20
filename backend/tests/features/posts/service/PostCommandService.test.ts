@@ -12,7 +12,6 @@ const mockVerifyPostExists = vi.fn();
 const mockValidateEditTimeWindow = vi.fn();
 const mockCleanupFile = vi.fn();
 const mockHandleResourceCleanup = vi.fn();
-const mockAssertPermission = vi.fn();
 const mockTransformTagsToFlat = vi.fn();
 const mockCreateEditResponse = vi.fn();
 
@@ -54,10 +53,6 @@ vi.mock(
   }),
 );
 
-vi.mock("../../../../src/core/security/rbac.js", () => ({
-  assertPermission: (...args: unknown[]) => mockAssertPermission(...args),
-}));
-
 vi.mock(
   "../../../../src/features/posts/service/transformers/postTransformers.js",
   () => ({
@@ -68,7 +63,7 @@ vi.mock(
   }),
 );
 
-import { postCommandService } from "../../../../src/features/posts/service/core/PostCommandService.js";
+import { PostCommandService } from "../../../../src/features/posts/service/core/PostCommandService.js";
 
 import type {
   CreatePostInput,
@@ -76,8 +71,22 @@ import type {
 } from "../../../../src/features/posts/service/types/postTypes.js";
 
 describe("PostCommandService", () => {
+  let service: PostCommandService;
+  const mockPermission = {
+    assertCanDeletePost: vi.fn(),
+    assertCanUpdatePost: vi.fn(),
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
+
+    service = new PostCommandService(
+      { command: { createPost: mockCreatePost, delete: mockDelete, updatePost: mockUpdatePost }, query: { findPostForEdit: mockFindPostForEdit } } as any,
+      { verifyPostExists: mockVerifyPostExists, validateEditTimeWindow: mockValidateEditTimeWindow } as any,
+      { cleanupFile: mockCleanupFile, handleResourceCleanup: mockHandleResourceCleanup } as any,
+      { transformPost: mockTransformTagsToFlat, toEditResponse: mockCreateEditResponse } as any,
+      mockPermission as any,
+    );
   });
 
   describe("createPost", () => {
@@ -95,7 +104,7 @@ describe("PostCommandService", () => {
       mockCreatePost.mockResolvedValue(createdPost);
       mockTransformTagsToFlat.mockReturnValue(transformed);
 
-      const result = await postCommandService.createPost(input, "u1", null);
+      const result = await service.createPost(input, "u1", null);
 
       expect(mockCreatePost).toHaveBeenCalledWith(input, "u1");
       expect(mockTransformTagsToFlat).toHaveBeenCalledWith(createdPost);
@@ -111,7 +120,7 @@ describe("PostCommandService", () => {
       mockCreatePost.mockResolvedValue(null);
 
       await expect(
-        postCommandService.createPost(input, "u1", uploadedFile),
+        service.createPost(input, "u1", uploadedFile),
       ).rejects.toThrow(PostCreationFailedError);
 
       expect(mockCleanupFile).toHaveBeenCalledWith(
@@ -124,7 +133,7 @@ describe("PostCommandService", () => {
       mockCreatePost.mockResolvedValue(null);
 
       await expect(
-        postCommandService.createPost(input, "u1", null),
+        service.createPost(input, "u1", null),
       ).rejects.toThrow(PostCreationFailedError);
 
       expect(mockCleanupFile).not.toHaveBeenCalled();
@@ -141,10 +150,10 @@ describe("PostCommandService", () => {
         createdAt: new Date(),
       });
 
-      await postCommandService.deletePost("p1", { id: "u1" } as any);
+      await service.deletePost("p1", { id: "u1" } as any);
 
       expect(mockVerifyPostExists).toHaveBeenCalledWith("p1");
-      expect(mockAssertPermission).toHaveBeenCalled();
+      expect(mockPermission.assertCanDeletePost).toHaveBeenCalled();
       expect(mockHandleResourceCleanup).not.toHaveBeenCalled();
       expect(mockDelete).toHaveBeenCalledWith("p1");
     });
@@ -158,7 +167,7 @@ describe("PostCommandService", () => {
         createdAt: new Date(),
       });
 
-      await postCommandService.deletePost("p1", { id: "u1" } as any);
+      await service.deletePost("p1", { id: "u1" } as any);
 
       expect(mockHandleResourceCleanup).toHaveBeenCalledWith(
         "http://example.com/file.pdf",
@@ -171,7 +180,7 @@ describe("PostCommandService", () => {
       mockVerifyPostExists.mockRejectedValue(new PostNotFoundError("p1"));
 
       await expect(
-        postCommandService.deletePost("p1", { id: "u1" } as any),
+        service.deletePost("p1", { id: "u1" } as any),
       ).rejects.toThrow(PostNotFoundError);
 
       expect(mockDelete).not.toHaveBeenCalled();
@@ -192,7 +201,7 @@ describe("PostCommandService", () => {
       mockVerifyPostExists.mockResolvedValue(post);
       mockUpdatePost.mockResolvedValue(updatedPost);
 
-      const result = await postCommandService.updatePost(
+      const result = await service.updatePost(
         {
           title: "Updated",
           type: "NOTE",
@@ -204,7 +213,7 @@ describe("PostCommandService", () => {
       );
 
       expect(mockVerifyPostExists).toHaveBeenCalledWith("p1");
-      expect(mockAssertPermission).toHaveBeenCalled();
+      expect(mockPermission.assertCanUpdatePost).toHaveBeenCalled();
       expect(mockValidateEditTimeWindow).toHaveBeenCalledWith(
         post.createdAt,
         "p1",
@@ -229,7 +238,7 @@ describe("PostCommandService", () => {
       mockVerifyPostExists.mockResolvedValue(post);
       mockUpdatePost.mockResolvedValue({ id: "p1", title: "New Title" });
 
-      await postCommandService.updatePost(
+      await service.updatePost(
         { title: "New Title", type: "RESOURCE", tagIds: [] } as any,
         "p1",
         { id: "u1" } as any,
@@ -255,7 +264,7 @@ describe("PostCommandService", () => {
       mockUpdatePost.mockResolvedValue(null);
 
       await expect(
-        postCommandService.updatePost(
+        service.updatePost(
           { title: "Updated", type: "NOTE", tagIds: [] } as any,
           "p1",
           { id: "u1" } as any,
@@ -274,13 +283,13 @@ describe("PostCommandService", () => {
       mockTransformTagsToFlat.mockReturnValue(transformed);
       mockCreateEditResponse.mockReturnValue(editResponse);
 
-      const result = await postCommandService.getPostForEdit(
+      const result = await service.getPostForEdit(
         { id: "u1" } as any,
         "p1",
       );
 
       expect(mockFindPostForEdit).toHaveBeenCalledWith("p1");
-      expect(mockAssertPermission).toHaveBeenCalled();
+      expect(mockPermission.assertCanUpdatePost).toHaveBeenCalled();
       expect(mockTransformTagsToFlat).toHaveBeenCalledWith(post);
       expect(mockCreateEditResponse).toHaveBeenCalledWith(transformed);
       expect(result).toBe(editResponse);
@@ -290,7 +299,7 @@ describe("PostCommandService", () => {
       mockFindPostForEdit.mockResolvedValue(null);
 
       await expect(
-        postCommandService.getPostForEdit({ id: "u1" } as any, "p1"),
+        service.getPostForEdit({ id: "u1" } as any, "p1"),
       ).rejects.toThrow(PostNotFoundError);
     });
   });

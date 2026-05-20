@@ -5,7 +5,10 @@ import {
 } from "../../../../core/error/custom/circle.error.js";
 import { processPaginatedResults } from "../../../../utils/pagination.util.js";
 import { avatarQueryService } from "../../../avatar/service/index.js";
-import { assertCirclePermission } from "../../security/rbac.js";
+import {
+  circlePermissionService as defaultCirclePermission,
+  type CirclePermissionService,
+} from "../../security/CirclePermissionService.js";
 import CircleEnricher from "../CircleEnrichers.js";
 import CircleTransformers from "../CircleTransformers.js";
 import CircleRepository from "../Repositories/CircleRepository.js";
@@ -15,7 +18,10 @@ import type { CreateCircleData, UpdateCircleData } from "../CircleTypes.js";
 import type { CircleRole } from "@prisma/client";
 
 export class CircleCoreService {
-  constructor(private memberService: CircleMemberService) {}
+  constructor(
+    private memberService: CircleMemberService,
+    private circlePermission: CirclePermissionService = defaultCirclePermission,
+  ) {}
 
   async createCircle(data: CreateCircleData) {
     const avatar = await avatarQueryService.getRandomCircleAvatar();
@@ -59,7 +65,7 @@ export class CircleCoreService {
       throw new CircleMemberNotFoundError(requester.id, circleId);
     }
 
-    assertCirclePermission(requester, "circles", "leave");
+    this.circlePermission.assertCan(requester, "circles", "leave");
 
     return await CircleRepository.removeMember(requester.id, circleId);
   }
@@ -145,7 +151,7 @@ export class CircleCoreService {
     const circle = await CircleRepository.findCircleById(circleId);
     if (!circle) throw new CircleNotFoundError(circleId);
 
-    assertCirclePermission(user, "circles", "update", circle);
+    this.circlePermission.assertCanUpdateCircle(user, circle);
 
     const updatedCircle = await CircleRepository.updateCircle(circleId, data);
     return CircleEnricher.enrichCircle(updatedCircle, user.id);
@@ -158,7 +164,7 @@ export class CircleCoreService {
     const circle = await CircleRepository.findCircleById(circleId);
     if (!circle) throw new CircleNotFoundError(circleId);
 
-    assertCirclePermission(user, "circles", "delete", circle);
+    this.circlePermission.assertCanDeleteCircle(user, circle);
 
     return await CircleRepository.deleteCircle(circleId);
   }

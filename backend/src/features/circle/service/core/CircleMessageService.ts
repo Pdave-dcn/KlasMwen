@@ -3,7 +3,10 @@ import {
   MessageNotFoundError,
 } from "../../../../core/error/custom/circle.error.js";
 import { processPaginatedResults } from "../../../../utils/pagination.util.js";
-import { assertCirclePermission } from "../../security/rbac.js";
+import {
+  circlePermissionService as defaultCirclePermission,
+  type CirclePermissionService,
+} from "../../security/CirclePermissionService.js";
 import CircleTransformers from "../CircleTransformers.js";
 import CircleRepository from "../Repositories/CircleRepository.js";
 
@@ -15,7 +18,10 @@ import type { CircleValidationService } from "./CircleValidationService.js";
 import type { CircleRole } from "@prisma/client";
 
 export class CircleMessageService {
-  constructor(private validationService: CircleValidationService) {}
+  constructor(
+    private validationService: CircleValidationService,
+    private circlePermission: CirclePermissionService = defaultCirclePermission,
+  ) {}
 
   async sendMessage(
     data: SendMessageData,
@@ -24,7 +30,7 @@ export class CircleMessageService {
     const circle = await CircleRepository.findCircleById(data.circleId);
     if (!circle) throw new CircleNotFoundError(data.circleId);
 
-    assertCirclePermission(user, "circleMessages", "send");
+    this.circlePermission.assertCan(user, "circleMessages", "send");
 
     await this.validationService.ensureMemberNotMuted(data);
 
@@ -40,7 +46,7 @@ export class CircleMessageService {
     const circle = await CircleRepository.findCircleById(circleId);
     if (!circle) throw new CircleNotFoundError(circleId);
 
-    assertCirclePermission(user, "circleMessages", "read");
+    this.circlePermission.assertCan(user, "circleMessages", "read");
 
     const messages = await CircleRepository.getMessages(circleId, pagination);
 
@@ -73,7 +79,7 @@ export class CircleMessageService {
       throw new MessageNotFoundError(messageId);
     }
 
-    assertCirclePermission(user, "circleMessages", "delete", message);
+    this.circlePermission.assertCanDeleteMessage(user, message);
 
     await CircleRepository.deleteMessage(messageId);
 

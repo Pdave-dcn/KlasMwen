@@ -4,7 +4,6 @@ import CircleRepository from "../../../../../src/features/circle/service/Reposit
 import CircleEnricher from "../../../../../src/features/circle/service/CircleEnrichers.js";
 import CircleTransformers from "../../../../../src/features/circle/service/CircleTransformers.js";
 import { CircleValidationService } from "../../../../../src/features/circle/service/core/CircleValidationService.js";
-import { assertCirclePermission } from "../../../../../src/features/circle/security/rbac.js";
 import { AuthorizationError } from "../../../../../src/core/error/custom/auth.error.js";
 import {
   CircleNotFoundError,
@@ -25,7 +24,13 @@ vi.mock("../../../../../src/features/circle/service/CircleTransformers.js");
 vi.mock(
   "../../../../../src/features/circle/service/core/CircleValidationService.js",
 );
-vi.mock("../../../../../src/features/circle/security/rbac.js");
+
+const mockCirclePermission = {
+  assertCan: vi.fn(),
+  assertCanRemoveMember: vi.fn(),
+  assertCanMuteMember: vi.fn(),
+  assertCanUpdateMemberRole: vi.fn(),
+};
 
 describe("CircleMemberService", () => {
   let circleMemberService: CircleMemberService;
@@ -34,7 +39,7 @@ describe("CircleMemberService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockValidationService = new CircleValidationService();
-    circleMemberService = new CircleMemberService(mockValidationService);
+    circleMemberService = new CircleMemberService(mockValidationService, mockCirclePermission as any);
   });
 
   const mockCircle = {
@@ -136,7 +141,7 @@ describe("CircleMemberService", () => {
         requester,
       );
 
-      expect(assertCirclePermission).toHaveBeenCalledWith(
+      expect(mockCirclePermission.assertCan).toHaveBeenCalledWith(
         requester,
         "circleMembers",
         "add",
@@ -148,7 +153,7 @@ describe("CircleMemberService", () => {
         mockCircle,
       );
       vi.mocked(mockValidationService.checkMembership).mockResolvedValue(false);
-      vi.mocked(assertCirclePermission).mockImplementation(() => {
+      mockCirclePermission.assertCan.mockImplementation(() => {
         throw new AuthorizationError("nope");
       });
 
@@ -169,7 +174,7 @@ describe("CircleMemberService", () => {
       vi.mocked(mockValidationService.verifyMembership).mockResolvedValue(
         mockMembership,
       );
-      vi.mocked(assertCirclePermission).mockReturnValue(undefined);
+      mockCirclePermission.assertCanRemoveMember.mockReturnValue(undefined);
       vi.mocked(CircleRepository.removeMember).mockResolvedValue(
         mockMembership,
       );
@@ -190,7 +195,7 @@ describe("CircleMemberService", () => {
         "user-2",
         "circle-1",
       );
-      expect(assertCirclePermission).toHaveBeenCalled();
+      expect(mockCirclePermission.assertCanRemoveMember).toHaveBeenCalled();
       expect(result).toEqual(mockTransformedMember);
     });
 
@@ -222,7 +227,7 @@ describe("CircleMemberService", () => {
       vi.mocked(mockValidationService.verifyMembership).mockResolvedValue(
         mockMembership,
       );
-      vi.mocked(assertCirclePermission).mockImplementation(() => {
+      mockCirclePermission.assertCanRemoveMember.mockImplementation(() => {
         throw new AuthorizationError("nope");
       });
 
@@ -242,7 +247,7 @@ describe("CircleMemberService", () => {
       vi.mocked(mockValidationService.verifyMembership).mockResolvedValue(
         mockMembership,
       );
-      vi.mocked(assertCirclePermission).mockReturnValue(undefined);
+      mockCirclePermission.assertCanUpdateMemberRole.mockReturnValue(undefined);
       vi.mocked(CircleRepository.updateMemberRole).mockResolvedValue(
         mockMembership,
       );
@@ -261,10 +266,8 @@ describe("CircleMemberService", () => {
         requester,
       );
 
-      expect(assertCirclePermission).toHaveBeenCalledWith(
+      expect(mockCirclePermission.assertCanUpdateMemberRole).toHaveBeenCalledWith(
         requester,
-        "circleMembers",
-        "updateRole",
         mockMembership,
       );
       expect(result).toEqual(mockTransformedMember);
@@ -295,7 +298,7 @@ describe("CircleMemberService", () => {
       vi.mocked(mockValidationService.verifyMembership).mockResolvedValue(
         mockMembership,
       );
-      vi.mocked(assertCirclePermission).mockImplementation(() => {
+      mockCirclePermission.assertCanUpdateMemberRole.mockImplementation(() => {
         throw new AuthorizationError("nope");
       });
 
@@ -876,7 +879,7 @@ describe("CircleMemberService", () => {
       vi.mocked(mockValidationService.verifyMembership).mockResolvedValue(
         targetMembership,
       );
-      vi.mocked(assertCirclePermission).mockReturnValue(undefined);
+      mockCirclePermission.assertCanMuteMember.mockReturnValue(undefined);
       vi.mocked(CircleRepository.setMemberMute).mockResolvedValue(
         mutedMembership,
       );
@@ -901,10 +904,8 @@ describe("CircleMemberService", () => {
         "user-2",
         "circle-1",
       );
-      expect(assertCirclePermission).toHaveBeenCalledWith(
+      expect(mockCirclePermission.assertCanMuteMember).toHaveBeenCalledWith(
         actor,
-        "circleMembers",
-        "mute",
         {
           role: "MEMBER",
           userId: "user-2",
@@ -970,7 +971,7 @@ describe("CircleMemberService", () => {
     });
 
     it("should propagate authorization errors from rbac", async () => {
-      vi.mocked(assertCirclePermission).mockImplementation(() => {
+      mockCirclePermission.assertCanMuteMember.mockImplementation(() => {
         throw new AuthorizationError("nope");
       });
 
@@ -1004,7 +1005,7 @@ describe("CircleMemberService", () => {
       vi.mocked(mockValidationService.verifyMembership).mockResolvedValue(
         targetMembership,
       );
-      vi.mocked(assertCirclePermission).mockReturnValue(undefined);
+      mockCirclePermission.assertCanMuteMember.mockReturnValue(undefined);
       vi.mocked(CircleRepository.setMemberMute).mockResolvedValue(
         unmutedMembership,
       );
@@ -1028,10 +1029,8 @@ describe("CircleMemberService", () => {
         "user-2",
         "circle-1",
       );
-      expect(assertCirclePermission).toHaveBeenCalledWith(
+      expect(mockCirclePermission.assertCanMuteMember).toHaveBeenCalledWith(
         actor,
-        "circleMembers",
-        "mute",
         {
           role: "MEMBER",
           userId: "user-2",

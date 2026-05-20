@@ -1,6 +1,9 @@
 import prisma from "../../../core/config/db.js";
 import { ReportNotFoundError } from "../../../core/error/custom/report.error.js";
-import { assertPermission } from "../../../core/security/rbac.js";
+import {
+  permissionService as defaultPermissionService,
+  type PermissionService,
+} from "../../../core/security/PermissionService.js";
 import { commentService } from "../../comment/service/index.js";
 import { postService } from "../../posts/service/PostService.js";
 
@@ -16,6 +19,10 @@ import type {
 import type { Prisma } from "@prisma/client";
 
 class ReportService {
+  constructor(
+    private permission: PermissionService = defaultPermissionService,
+  ) {}
+
   private async reportExists(reportId: number) {
     const report = await ReportRepository.findUnique(reportId);
     if (!report) throw new ReportNotFoundError(reportId);
@@ -161,11 +168,10 @@ class ReportService {
 
     const resource = await this.contentExists(resourceType, resourceId);
 
-    assertPermission(
+    this.permission.assertCanReport(
       user,
-      data.postId ? "posts" : "comments",
-      "report",
       resource,
+      data.postId ? "posts" : "comments",
     );
 
     const newReport = await ReportRepository.create(data);
@@ -215,5 +221,7 @@ class ReportService {
   }
 }
 
-const reportService = new ReportService();
+const reportService = new ReportService(
+  defaultPermissionService,
+);
 export { ReportService, reportService };

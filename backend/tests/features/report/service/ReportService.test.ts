@@ -16,7 +16,7 @@ const mockUpdateCommentHidden = vi.fn();
 const mockVerifyPostExists = vi.fn();
 const mockCommentExists = vi.fn();
 
-const mockAssertPermission = vi.fn();
+const mockAssertCanReport = vi.fn();
 
 const mockEnrichReports = vi.fn();
 const mockEnrichReport = vi.fn();
@@ -61,10 +61,6 @@ vi.mock("../../../../src/features/comment/service/index.js", () => ({
   },
 }));
 
-vi.mock("../../../../src/core/security/rbac.js", () => ({
-  assertPermission: (...args: unknown[]) => mockAssertPermission(...args),
-}));
-
 vi.mock("../../../../src/features/report/service/reportEnricher.js", () => ({
   default: {
     enrichReports: (...args: unknown[]) => mockEnrichReports(...args),
@@ -95,7 +91,7 @@ vi.mock("../../../../src/core/config/db.js", () => ({
   },
 }));
 
-import { reportService } from "../../../../src/features/report/service/index.js";
+import { ReportService } from "../../../../src/features/report/service/ReportService.js";
 
 const mockUser = {
   id: "910da3f7-f419-4929-b775-6e26ba17f248",
@@ -109,8 +105,12 @@ const mockCommentId = 42;
 const mockReasonId = 1;
 
 describe("ReportService", () => {
+  let reportService: ReportService;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    const mockPermission = { assertCanReport: mockAssertCanReport };
+    reportService = new ReportService(mockPermission as any);
   });
 
   describe("getAllReports", () => {
@@ -279,7 +279,7 @@ describe("ReportService", () => {
 
     it("should create a post report successfully", async () => {
       mockVerifyPostExists.mockResolvedValue(mockPostResource);
-      mockAssertPermission.mockReturnValue(undefined);
+      mockAssertCanReport.mockReturnValue(undefined);
       mockCreate.mockResolvedValue(mockCreatedReport);
       mockReportCount.mockResolvedValue(0);
 
@@ -290,11 +290,10 @@ describe("ReportService", () => {
       });
 
       expect(mockVerifyPostExists).toHaveBeenCalledWith(mockPostId);
-      expect(mockAssertPermission).toHaveBeenCalledWith(
+      expect(mockAssertCanReport).toHaveBeenCalledWith(
         mockUser,
-        "posts",
-        "report",
         mockPostResource,
+        "posts",
       );
       expect(mockCreate).toHaveBeenCalledWith({
         postId: mockPostId,
@@ -306,7 +305,7 @@ describe("ReportService", () => {
 
     it("should create a comment report successfully", async () => {
       mockCommentExists.mockResolvedValue(mockCommentResource);
-      mockAssertPermission.mockReturnValue(undefined);
+      mockAssertCanReport.mockReturnValue(undefined);
       mockCreate.mockResolvedValue(mockCreatedReport);
       mockReportCount.mockResolvedValue(0);
 
@@ -317,11 +316,10 @@ describe("ReportService", () => {
       });
 
       expect(mockCommentExists).toHaveBeenCalledWith(mockCommentId);
-      expect(mockAssertPermission).toHaveBeenCalledWith(
+      expect(mockAssertCanReport).toHaveBeenCalledWith(
         mockUser,
-        "comments",
-        "report",
         mockCommentResource,
+        "comments",
       );
       expect(mockCreate).toHaveBeenCalledWith({
         commentId: mockCommentId,
@@ -361,7 +359,7 @@ describe("ReportService", () => {
 
     it("should trigger auto-hide content check after creating report", async () => {
       mockVerifyPostExists.mockResolvedValue(mockPostResource);
-      mockAssertPermission.mockReturnValue(undefined);
+      mockAssertCanReport.mockReturnValue(undefined);
       mockCreate.mockResolvedValue(mockCreatedReport);
       mockReportCount.mockResolvedValue(0);
 

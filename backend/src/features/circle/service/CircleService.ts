@@ -1,3 +1,5 @@
+import { circlePermissionService } from "../security/CirclePermissionService.js";
+
 import { CircleCoreService } from "./core/CircleCoreService.js";
 import { CircleMemberService } from "./core/CircleMemberService.js";
 import { CircleMessageService } from "./core/CircleMessageService.js";
@@ -6,9 +8,18 @@ import { CircleValidationService } from "./core/CircleValidationService.js";
 import CircleRepository from "./Repositories/CircleRepository.js";
 
 const circleValidationService = new CircleValidationService();
-const circleMemberService = new CircleMemberService(circleValidationService);
-const circleCoreService = new CircleCoreService(circleMemberService);
-const circleMessageService = new CircleMessageService(circleValidationService);
+const circleMemberService = new CircleMemberService(
+  circleValidationService,
+  circlePermissionService,
+);
+const circleCoreService = new CircleCoreService(
+  circleMemberService,
+  circlePermissionService,
+);
+const circleMessageService = new CircleMessageService(
+  circleValidationService,
+  circlePermissionService,
+);
 const circleSearchService = new CircleSearchService();
 
 class CircleService {

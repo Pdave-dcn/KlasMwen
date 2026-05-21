@@ -513,75 +513,50 @@ Abstraction over HTTP requests to backend.
 ### Circle Operations
 
 ```typescript
+import { api } from "@/api/api";  // Axios base instance
+
 export const circlesAPI = {
   // Circles
-  getUserCircles: () => fetch("/api/circles").then((r) => r.json()),
-  getCircleDetails: (id: string) =>
-    fetch(`/api/circles/${id}`).then((r) => r.json()),
+  getUserCircles: () => api.get("/circles"),
+  getCircleDetails: (id: string) => api.get(`/circles/${id}`),
   discoverCircles: (pagination?: any) =>
-    fetch(`/api/circles?discover=true`).then((r) => r.json()),
+    api.get("/circles", { params: { discover: true, ...pagination } }),
   createStudyCircle: (data: CreateCircleData) =>
-    fetch("/api/circles", { method: "POST", body: JSON.stringify(data) }).then(
-      (r) => r.json(),
-    ),
+    api.post("/circles", data),
   updateCircle: (id: string, data: UpdateCircleData) =>
-    fetch(`/api/circles/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    }).then((r) => r.json()),
-  deleteCircle: (id: string) =>
-    fetch(`/api/circles/${id}`, { method: "DELETE" }).then((r) => r.json()),
+    api.put(`/circles/${id}`, data),
+  deleteCircle: (id: string) => api.delete(`/circles/${id}`),
 
   // Membership
-  joinStudyCircle: (id: string) =>
-    fetch(`/api/circles/${id}/join`, { method: "POST" }).then((r) => r.json()),
-  leaveStudyCircle: (id: string) =>
-    fetch(`/api/circles/${id}/leave`, { method: "POST" }).then((r) => r.json()),
+  joinStudyCircle: (id: string) => api.post(`/circles/${id}/join`),
+  leaveStudyCircle: (id: string) => api.post(`/circles/${id}/leave`),
 
   // Members
   getMembers: (circleId: string) =>
-    fetch(`/api/circles/${circleId}/members`).then((r) => r.json()),
+    api.get(`/circles/${circleId}/members`),
   searchMembers: (circleId: string, query: string) =>
-    fetch(`/api/circles/${circleId}/members/search?q=${query}`).then((r) =>
-      r.json(),
-    ),
+    api.get(`/circles/${circleId}/members/search`, { params: { q: query } }),
   addMember: (circleId: string, userId: string) =>
-    fetch(`/api/circles/${circleId}/members`, {
-      method: "POST",
-      body: JSON.stringify({ userId }),
-    }).then((r) => r.json()),
+    api.post(`/circles/${circleId}/members`, { userId }),
   removeMember: (circleId: string, userId: string) =>
-    fetch(`/api/circles/${circleId}/members/${userId}`, {
-      method: "DELETE",
-    }).then((r) => r.json()),
+    api.delete(`/circles/${circleId}/members/${userId}`),
   muteMember: (circleId: string, userId: string, data: { duration: number }) =>
-    fetch(`/api/circles/${circleId}/members/${userId}/mute`, {
-      method: "PATCH",
-      body: JSON.stringify(data),
-    }).then((r) => r.json()),
+    api.patch(`/circles/${circleId}/members/${userId}/mute`, data),
 
   // Messages
   getMessages: (circleId: string, cursor?: string) =>
-    fetch(
-      `/api/circles/${circleId}/messages${cursor ? `?cursor=${cursor}` : ""}`,
-    ).then((r) => r.json()),
+    api.get(`/circles/${circleId}/messages`, {
+      params: cursor ? { cursor } : undefined,
+    }),
   sendMessage: (circleId: string, data: { content: string }) =>
-    fetch(`/api/circles/${circleId}/messages`, {
-      method: "POST",
-      body: JSON.stringify(data),
-    }).then((r) => r.json()),
+    api.post(`/circles/${circleId}/messages`, data),
   deleteMessage: (circleId: string, messageId: string) =>
-    fetch(`/api/circles/${circleId}/messages/${messageId}`, {
-      method: "DELETE",
-    }).then((r) => r.json()),
+    api.delete(`/circles/${circleId}/messages/${messageId}`),
 
   // Unread
   updateLastReadAt: (circleId: string) =>
-    fetch(`/api/circles/${circleId}/members/me/read`, { method: "POST" }).then(
-      (r) => r.json(),
-    ),
-  getUnreadCounts: () =>
-    fetch("/api/circles/unread-counts").then((r) => r.json()),
+    api.post(`/circles/${circleId}/members/me/read`),
+  getUnreadCounts: () => api.get("/circles/unread-counts"),
 };
 ```
 
@@ -686,7 +661,6 @@ export const updateCircleSchema = z.object({
   name: z.string().min(3).max(100).optional(),
   description: z.string().max(500).optional(),
   isPrivate: z.boolean().optional(),
-  isPrivate: z.boolean().optional(),
   tagIds: z.array(z.string()).optional(),
 });
 ```
@@ -743,9 +717,9 @@ const handleSendMessage = async (content: string) => {
   // 2. Add to UI immediately
   store.addMessage(optimisticMessage);
 
-  // 3. Send to server
+  // 3. Send to server (via axios)
   try {
-    const realMessage = await circlesAPI.sendMessage(circleId, { content });
+    const { data: realMessage } = await circlesAPI.sendMessage(circleId, { content });
 
     // 4. Replace optimistic with real (ID = 42)
     store.replaceOptimisticMessage(-1, realMessage);

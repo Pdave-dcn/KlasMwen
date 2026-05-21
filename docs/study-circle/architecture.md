@@ -36,21 +36,23 @@
     └────────────┬───────────┴──────────────────┘
                  │
 ┌────────────────▼────────────────────────────────────────────┐
-│         Controllers (Endpoint Handlers)                      │
+│         Controllers (withLogging wrapper)                    │
 ├─────────────────────────────────────────────────────────────┤
 │ CircleCoreController | CircleMemberController                │
 │ CircleMessageController                                      │
 └────────────────┬────────────────────────────────────────────┘
-                 │
+                  │
 ┌────────────────▼────────────────────────────────────────────┐
 │       Service Layer (Business Logic)                         │
 ├─────────────────────────────────────────────────────────────┤
-│ CircleService (Facade)                                       │
+│ CircleService (Namespace Facade — instance-based,            │
+│               constructor injection)                         │
 │   ├─ CircleCoreService (CRUD, Discovery)                    │
 │   ├─ CircleMemberService (Permissions, Roles)               │
 │   ├─ CircleMessageService (Messaging, Validation)           │
 │   ├─ CircleValidationService (Assertions)                   │
-│   └─ CircleSearchService (Full-text, Recommendations)       │
+│   ├─ CircleSearchService (Full-text, Recommendations)       │
+│   └─ CirclePermissionService (RBAC enforcement — injected)  │
 └────────────────┬────────────────────────────────────────────┘
                  │
 ┌────────────────▼────────────────────────────────────────────┐
@@ -94,8 +96,8 @@ Socket.io Event / REST Request
 ### Service Delegation Model
 
 ```bash
-CircleService (Facade)
-├── CircleCoreService
+CircleService (Namespace Facade — instance, constructor DI)
+├── .core       → CircleCoreService
 │   ├── createCircle()
 │   ├── joinCircle()
 │   ├── leaveCircle()
@@ -103,7 +105,7 @@ CircleService (Facade)
 │   ├── getUserCircles()
 │   └── updateCircle()
 │
-├── CircleMemberService
+├── .members    → CircleMemberService
 │   ├── addMemberToCircle()  ← UNIFIED member addition
 │   ├── removeMember()
 │   ├── updateMemberRole()
@@ -111,21 +113,24 @@ CircleService (Facade)
 │   ├── getCircleMembers()
 │   └── searchCircleMembers()
 │
-├── CircleMessageService
+├── .messages   → CircleMessageService
 │   ├── sendMessage()
 │   ├── getMessages()
 │   ├── deleteMessage()
 │   └── getLatestMessage()
 │
-├── CircleValidationService
+├── .validate   → CircleValidationService
 │   ├── verifyCircleExists()
 │   ├── checkMembership()
 │   └── ensureMemberNotMuted()
 │
-└── CircleSearchService
-    ├── discoverCircles()
-    ├── getTrendingCircles()
-    └── searchCircles()
+├── .search     → CircleSearchService
+│   ├── discoverCircles()
+│   ├── getTrendingCircles()
+│   └── searchCircles()
+│
+└── .circlePermission → CirclePermissionService (injected)
+    └── assertCan(resource, action, user, data?)
 ```
 
 ---
@@ -434,10 +439,11 @@ JWT Validation (requireAuth middleware)
 Circle Middleware (enrichCircleRole)
     → Attach user's role for this circle
     ↓
-RBAC Check (assertCirclePermission)
+RBAC Check (CirclePermissionService.assertCan)
     ├─ Resource: "circles", "circleMembers", "circleMessages"
     ├─ Action: "read", "create", "update", "delete"
     ├─ Role check: OWNER > MODERATOR > MEMBER
+    ├─ Injected via constructor: this.circlePermission.assertCan(...)
     → Error: 403 if insufficient
     ↓
 Business Logic & DB Operation
@@ -460,7 +466,7 @@ MODERATOR (Trusted member)
   ├─ Can add members (public invite)
   ├─ Can remove MEMBER roles
   ├─ Can mute MEMBER members
-  ├─ Candelete any message
+  ├─ Can delete any message
   └─ INHERITS: MEMBER permissions
 
 MEMBER (Standard member)

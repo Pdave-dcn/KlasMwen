@@ -37,10 +37,10 @@ VALIDATION PHASE
 ================================================================================
 
 5. Business Logic Validation
-   Backend: CircleMessageService.sendMessage()
-   - Call CircleValidationService.verifyMembership(userId, circleId)
+    Backend: circleService.messages.sendMessage()
+    - Call circleService.validate.verifyMembership(userId, circleId)
      ✓ User IS member
-   - Call CircleValidationService.ensureMemberNotMuted(...)
+    - Call circleService.validate.ensureMemberNotMuted(...)
      ✓ User NOT muted
 
 6. Mute Check Detail
@@ -297,17 +297,17 @@ Complete flow when user joins a public circle.
 3. Handler Receives Request
    Backend: CircleCoreController.joinCircle()
    - Extract userId from auth
-   - Call CircleService.joinCircle(circleId, userId)
+    - Call circleService.core.joinCircle(circleId, userId)
 
 4. Business Logic
-   Backend: CircleCoreService.joinCircle()
+   Backend: circleService.core.joinCircle()
    - Verify circle exists
    - Check NOT private (public circles only)
    - If private, throw AuthorizationError
-   - Delegate to CircleMemberService.addMemberToCircle()
+   - Delegate to circleService.members.addMemberToCircle()
 
 5. Unified Member Addition
-   Backend: CircleMemberService.addMemberToCircle()
+   Backend: circleService.members.addMemberToCircle()
    Parameters:
    - userId: 'user-2'
    - circleId: 'circle-123'
@@ -317,7 +317,7 @@ Complete flow when user joins a public circle.
    Validation:
    - verifyCircleExists() → ✓
    - checkMembership() → ✗ (not member yet)
-   - assertCirclePermission() → skipped (public join)
+    - circlePermission.assertCan() → skipped (public join)
 
 6. DATABASE INSERT KEY STEP
    Backend: CircleRepository.addMember(data, new Date())
@@ -466,18 +466,18 @@ Requester: user-1 (MODERATOR)
    Result: requester.circleRole = "MODERATOR"
 
 3. Call service
-   CircleMemberService.addMember(data, requester)
+   circleService.members.addMember(data, requester)
 
 4. Service validates
-   verifyCircleExists() → ✓
-   checkMembership(user-5, circle-123) → Already member? ✗
+   validate.verifyCircleExists() → ✓
+   validate.checkMembership(user-5, circle-123) → Already member? ✗
 
 5. Permission check
-   assertCirclePermission(
-     requester: { id: "user-1", circleRole: "MODERATOR" },
-     resource: "circleMembers",
-     action: "add",
-     targetData: { role: "MEMBER" }
+   circlePermission.assertCan(
+     "circleMembers",
+     "add",
+     requester,
+     { role: "MEMBER" }
    )
 
    RBAC Rules:
@@ -510,10 +510,10 @@ Target: user-3 (MODERATOR)
 ================================================================================
 
 1. Permission check
-   assertCirclePermission(
-     requester: { circleRole: "OWNER" },
-     resource: "circleMembers",
-     action: "mute"
+   circlePermission.assertCan(
+     "circleMembers",
+     "mute",
+     requester
    )
 
 2. Hierarchy check
@@ -531,7 +531,7 @@ Target: user-3 (MODERATOR)
 5. Effect
    Next 60 minutes: user-3 cannot send messages
    message send check will fail:
-   - CircleValidationService.ensureMemberNotMuted()
+   - circleService.validate.ensureMemberNotMuted()
    - membership.mutedUntil > now? → Throw MemberMutedError
 
 6. Auto-unmute

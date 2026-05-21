@@ -100,7 +100,7 @@ Users create public circles for shared hobbies (chess, coding, languages) to mee
 
 ### Key Design Patterns
 
-- **Facade Pattern**: CircleService delegates to specialized services
+- **Facade Pattern**: CircleService (namespace pattern) delegates to injected sub-services
 - **Repository Pattern**: Data access layer with optimized batch queries
 - **Event-Driven**: Backend broadcasts events to Socket.io rooms
 - **Optimistic Updates**: Frontend adds messages immediately, confirms later
@@ -175,7 +175,7 @@ backend/
   src/
     features/circle/
       service/
-        CircleService.ts              # Main facade
+        CircleService.ts              # Namespace facade (instance-based)
         core/
           CircleCoreService.ts        # CRUD operations
           CircleMemberService.ts      # Member management
@@ -184,15 +184,15 @@ backend/
           CircleSearchService.ts      # Discovery & search
         Repositories/
           CircleRepository.ts         # Data access layer
+      security/
+        CirclePermissionService.ts    # Circle-scoped RBAC (injected)
     controllers/circle/
-      circle.core.controller.ts       # Core endpoints
-      circle.member.controller.ts     # Member endpoints
-      circle.message.controller.ts    # Message endpoints
+      circle.core.controller.ts       # Core endpoints (withLogging)
+      circle.member.controller.ts     # Member endpoints (withLogging)
+      circle.message.controller.ts    # Message endpoints (withLogging)
     socket/circles/
       circle.socket.ts               # Socket registration
       handlers/                       # Event handlers (6 types)
-    security/
-      rbac.js                         # Permission enforcement
 
 frontend/
   src/

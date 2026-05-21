@@ -8,32 +8,25 @@
 
 ## Service Layer Overview
 
-### Entry Point: CircleService Facade
+### Entry Point: CircleService Facade (Namespace Pattern)
 
 **File**: `backend/src/features/circle/service/CircleService.ts`
 
-The CircleService is the main entry point that delegates to specialized services:
+CircleService is an instance-based namespace facade that exposes sub-services as readonly properties. All dependencies (including permission services) are injected via constructor:
 
 ```typescript
 export class CircleService {
-  // Delegates to CircleCoreService
-  static createCircle = CircleCoreService.createCircle;
-  static joinCircle = CircleCoreService.joinCircle;
-  static getUserCircles = CircleCoreService.getUserCircles;
-
-  // Delegates to CircleMemberService
-  static addMemberToCircle = CircleMemberService.addMemberToCircle;
-  static removeMember = CircleMemberService.removeMember;
-
-  // Delegates to CircleMessageService
-  static sendMessage = CircleMessageService.sendMessage;
-
-  // Delegates to CircleSearchService
-  static discoverCircles = CircleSearchService.discoverCircles;
-
-  // ... ~50+ total methods
+  constructor(
+    public readonly core: CircleCoreService,
+    public readonly members: CircleMemberService,
+    public readonly messages: CircleMessageService,
+    public readonly search: CircleSearchService,
+    public readonly validate: CircleValidationService,
+  ) {}
 }
 ```
+
+Consumers use `circleService.core.createCircle(...)` or `circleService.members.addMemberToCircle(...)`. The Facade is instantiated once in the DI container and exported as a named singleton:
 
 ### Service 1: CircleCoreService
 
@@ -57,16 +50,16 @@ Handles core circle operations (CRUD, discovery, member listing).
 
 ```typescript
 // Example: joinCircle implementation
-static async joinCircle(circleId: string, userId: string): Promise<CircleMember> {
+async joinCircle(circleId: string, userId: string): Promise<CircleMember> {
   // Validate circle exists
   const circle = await CircleRepository.findCircleById(circleId);
-  if (!circle) throw CircleNotFoundError();
+  if (!circle) throw new CircleNotFoundError();
 
   // Private circles cannot be self-joined
-  if (circle.isPrivate) throw AuthorizationError("Cannot join private circle");
+  if (circle.isPrivate) throw new AuthorizationError("Cannot join private circle");
 
-  // Delegate to unified member addition method
-  return CircleMemberService.addMemberToCircle(
+  // Delegate to unified member addition method (via injected members service)
+  return this.members.addMemberToCircle(
     userId,
     circleId,
     "MEMBER",
@@ -99,23 +92,23 @@ Handles all member-related operations and role-based permissions.
 #### Critical Implementation: Unified Member Addition
 
 ```typescript
-static async addMemberToCircle(
+async addMemberToCircle(
   userId: string,
   circleId: string,
   role: CircleRole = "MEMBER",
   requester?: Express.User & { circleRole?: CircleRole }
 ): Promise<CircleMember> {
   // 1. Verify circle exists
-  const circle = await CircleValidationService.verifyCircleExists(circleId);
+  const circle = await this.validate.verifyCircleExists(circleId);
 
   // 2. Check user not already member
-  const isMember = await CircleValidationService.checkMembership(userId, circleId);
-  if (isMember) throw AlreadyMemberError();
+  const isMember = await this.validate.checkMembership(userId, circleId);
+  if (isMember) throw new AlreadyMemberError();
 
   // 3. Permission checks (different for public join vs admin add)
   if (circle.isPrivate || (requester && requester.id !== userId)) {
     if (requester) {
-      assertCirclePermission(requester, "circleMembers", "add");
+      this.circlePermission.assertCan("circleMembers", "add", requester);
     }
   }
 
@@ -133,7 +126,7 @@ static async addMemberToCircle(
 }
 ```
 
-#### Authorization Levels (assertCirclePermission)
+#### Authorization Levels (via CirclePermissionService)
 
 ```typescript
 // Resource: "circleMembers", Action: "add"
@@ -150,6 +143,8 @@ static async addMemberToCircle(
 // OWNER: Can update any role
 // MODERATOR: Cannot update roles
 // MEMBER: Cannot update roles
+
+// Used via: this.circlePermission.assertCan("circleMembers", "add", requester)
 ```
 
 ---
@@ -172,41 +167,41 @@ Manages message lifecycle: send, retrieve, delete.
 #### Message Sending Flow
 
 ```typescript
-static async sendMessage(
+async sendMessage(
   data: SendMessageData,
   user: AuthUser
 ): Promise<CircleMessage> {
   // 1. Validate membership
-  const membership = await CircleValidationService.verifyMembership(
+  const membership = await this.validate.verifyMembership(
     user.id,
     data.circleId
   );
 
-  // 2. Check mute status
-  await CircleValidationService.ensureMemberNotMuted({
+  // 2. Check mute status (throws MemberMutedError if muted)
+  await this.validate.ensureMemberNotMuted({
     userId: user.id,
     circleId: data.circleId,
     timestamp: new Date()
   });
-  if (membership.mutedUntil && membership.mutedUntil > new Date()) {
-    throw MemberMutedError("You are muted in this circle");
-  }
 
-  // 3. Create message in database
+  // 3. Permission check
+  this.circlePermission.assertCan("circleMessages", "create", user);
+
+  // 4. Create message in database
   const message = await CircleRepository.createMessage({
     content: data.content,
     circleId: data.circleId,
     senderId: user.id
   });
 
-  // 4. Get Socket.io io instance and broadcast
+  // 5. Get Socket.io io instance and broadcast
   const io = getSocketIOInstance();
   io.to(`circle:${data.circleId}`).emit("circle:new_message", {
     ...message,
     sender: { id: user.id, username: user.username }
   });
 
-  // 5. Return enriched message
+  // 6. Return enriched message
   return CircleEnricher.enrichMessage(message);
 }
 ```
@@ -223,22 +218,22 @@ Centralized validation logic.
 
 ```typescript
 // Returns enriched circle or throws CircleNotFoundError
-static async verifyCircleExists(circleId: string): Promise<Circle>
+async verifyCircleExists(circleId: string): Promise<Circle>
 
 // Returns boolean (safe for conditional logic)
-static async checkMembership(userId: string, circleId: string): Promise<boolean>
+async checkMembership(userId: string, circleId: string): Promise<boolean>
 
 // Returns membership record or throws NotAMemberError
-static async verifyMembership(userId: string, circleId: string): Promise<CircleMember>
+async verifyMembership(userId: string, circleId: string): Promise<CircleMember>
 
 // Throws if not member
-static async verifyIsMember(userId: string, circleId: string): Promise<void>
+async verifyIsMember(userId: string, circleId: string): Promise<void>
 
 // Throws CircleNotFoundError if missing
-static async verifyMessageExists(messageId: string): Promise<CircleMessage>
+async verifyMessageExists(messageId: string): Promise<CircleMessage>
 
 // Throws MemberMutedError if muted
-static async ensureMemberNotMuted(data: { userId, circleId, timestamp }): Promise<void>
+async ensureMemberNotMuted(data: { userId, circleId, timestamp }): Promise<void>
 ```
 
 ---
@@ -266,7 +261,7 @@ Discovery, search, and recommendations.
 
 ## Repository Layer (Data Access)
 
-**File**: `backend/src/features/circle/service/Repositories/CircleRepository.ts`
+**File**: `backend/src/features/circle/service/Repositories/CircleRepository.ts` (static — repositories stay stateless)
 
 Optimized database queries using Prisma.
 
@@ -843,8 +838,8 @@ const unreads = await CircleRepository.countUnreadMessagesBatch(userId);
 ### 4. Validate membership, then permissions
 
 ```typescript
-const member = await CircleValidationService.verifyMembership(userId, circleId);
-assertCirclePermission(requester, "resource", "action");
+const member = await this.validate.verifyMembership(userId, circleId);
+this.circlePermission.assertCan("circleMembers", "add", requester);
 ```
 
 ### 5. Broadcast Socket Events After DB Write

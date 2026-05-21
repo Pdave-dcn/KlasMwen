@@ -72,32 +72,40 @@ The **KlasMwen backend** is built with a clear and scalable **feature-based modu
 backend/
 ├── prisma/                     # Prisma schema, migrations, and seeds
 └── src/
-    ├── app.ts                  # Express app initialization
-    ├── index.ts                # Entry point for the backend server
-    ├── controllers/            # Request handlers mapped to routes
-    │   └── avatar.controller.ts
+    ├── app.ts                  # Express + Socket.IO init (app, server, io)
+    ├── index.ts                # Entry point, verifies DB + Cloudinary
+    ├── controllers/            # Thin handlers using withLogging pattern
     ├── core/                   # Core configuration and utilities
     │   ├── config/             # Server-level configurations
     │   │   ├── strategies/     # Passport strategies (JWT, Local)
     │   │   ├── cloudinary.ts   # Cloudinary setup for media storage
     │   │   ├── cors.ts         # CORS setup
     │   │   ├── logger.ts       # Pino logging configuration
-    │   │   └── db.ts           # Prisma client instance
-    │   │   └── passport.ts     # Passport initializer
-    │   └── error/              # Centralized error handling system
-    │       ├── index.ts        # Main error handler
-    │       ├── handlers/       # Specialized error types (e.g., Validation, Auth)
-    │       └── custom/         # Custom error classes (e.g., PostNotFoundError)
+    │   │   ├── db.ts           # Prisma client instance
+    │   │   ├── passport.ts     # Passport initializer
+    │   │   └── env.ts          # Zod-validated env parsing
+    │   ├── error/              # Centralized error handling system
+    │   │   ├── index.ts        # Main error handler
+    │   │   ├── handlers/       # Specialized error types (Zod, JWT, Prisma, Multer)
+    │   │   └── custom/         # Custom error classes (e.g., PostNotFoundError)
+    │   └── security/           # RBAC: PermissionService + registry
     ├── features/               # Core domain logic divided by feature
     │   ├── avatar/             # Avatar module (upload, retrieve, delete)
-    │   ├── comment/            # Comment module (create, reply, delete)
-    │   ├── user/               # User management and profile operations
-    │   ├── post/               # Post creation, reading, updating, deleting
+    │   ├── bookmark/           # Bookmark/unbookmark posts
+    │   ├── circle/             # Study circles (service, security, socket handlers)
+    │   ├── comment/            # Comments with nested replies
     │   ├── media/              # File/media handling and storage
-    │   └── tag/                # Tag management
+    │   ├── notification/       # Notification delivery and management
+    │   ├── post/               # Post CRUD, query, enrichment
+    │   ├── reaction/           # Like/unlike posts
+    │   ├── report/             # Moderation reports and review
+    │   ├── tag/                # Tag management
+    │   └── user/               # User management and profile operations
     ├── middlewares/            # Express middleware (auth, validation, rate limiting)
     ├── routes/                 # API route definitions and module mounting
-    ├── seeds/                  # Database seed scripts (e.g., default users, posts)
+    ├── seeds/                  # Multi-phase database seed scripts
+    ├── socket/                 # Socket.IO auth middleware + event handlers
+    │   └── circles/            # Circle namespace handlers
     ├── swagger/                # Swagger/OpenAPI configuration setup
     ├── utils/                  # Helper functions shared across modules
     └── zodSchemas/             # Zod validation schemas for requests/responses

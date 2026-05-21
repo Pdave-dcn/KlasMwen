@@ -54,7 +54,7 @@ Client → Middleware → Controller → Service → Repository → Prisma → R
 - Validates inputs using **Zod schemas**.
 - Calls **service methods**.
 - Returns **standardized JSON responses**.
-- Logs execution start, end, and duration for performance tracking.
+- Uses `withLogging<AuthenticatedRequest>` wrapper for automatic logging, timing, and error forwarding.
 
 ### Service & Repository Layers
 
@@ -64,17 +64,27 @@ Client → Middleware → Controller → Service → Repository → Prisma → R
 
 ### Error Handling in Controllers
 
-Controllers do **not** send error responses directly. Instead:
+Controllers use the `withLogging<AuthenticatedRequest>` wrapper instead of manual `try/catch`. The wrapper handles timing, logging, and error forwarding automatically:
 
-- Controller logic is wrapped in `try/catch` blocks
-- On failure, the controller calls `next(error)`
-- The error is forwarded to the centralized `errorMiddleware`
+```ts
+import { withLogging } from "@/middlewares/withLogging.js";
 
-This ensures:
+export const createPost = [
+  withLogging<AuthenticatedRequest>(async (req, res, next) => {
+    log.info("Creating post");
+    const data = CreatePostRequestSchema.parse(req.body);
+    const post = await postService.command.createPost(data, req.user!);
+    res.status(201).json({ data: post });
+  }),
+];
+```
 
-- consistent error formatting across the application
-- separation of concerns between controllers and error handling
-- easier maintenance and extensibility of error logic
+Key points:
+
+- `withLogging` wraps the handler — no `try/catch` in controllers
+- On failure, errors propagate to the centralized `errorMiddleware`
+- `next(error)` is called automatically by the wrapper
+- Consistent error formatting across the application
 
 ---
 
@@ -411,21 +421,37 @@ The backend implements a **type-safe, flexible RBAC system** using a **registry*
 - **`hasPermission(user, resource, action, data?)`** → returns `true/false` depending on the user's rights.
 - **`assertPermission(user, resource, action, data?)`** → throws `AuthorizationError` if permission is denied.
 
-### Example Usage in Service
+### Permission Service Injection
+
+Permission checks are performed through **injected service instances** rather than static imports:
 
 ```ts
-const user = ensureAuthenticated(req);
-assertPermission(user, "post", "delete", post);
-await PostRepository.delete(post.id);
+export class PostCommandService {
+  constructor(private permission: PermissionService) {}
+
+  async deletePost(postId: string, user: AuthUser): Promise<void> {
+    const post = await PostRepository.findPostById(postId);
+    if (!post) throw new PostNotFoundError();
+
+    this.permission.assertCan("post", "delete", user, post);
+    await PostRepository.deletePost(postId);
+  }
+}
 ```
 
-- Fine-grained permission checks are typically done inside **services** using `assertPermission` or `hasPermission`.
+Two permission service classes exist:
+
+- **`PermissionService`** — global RBAC (posts, comments, users, etc.)
+- **`CirclePermissionService`** — circle-scoped RBAC (circles, circleMembers, circleMessages)
+
+Both provide typed semantic methods for complex checks and a generic `assertCan<Res extends keyof Registry>` for simple boolean checks.
 
 ### Benefits
 
 - Centralized, type-safe permissions.
 - Supports ownership and conditional access.
 - Consistent enforcement across controllers, services, and even frontend checks.
+- Fully mockable in tests — no `vi.mock("...rbac.js")` needed.
 
 ---
 
@@ -456,8 +482,8 @@ This section provides a structured approach for adding new features, routes, con
 ### 10.2 Add a Controller Method
 
 1. Create or update the controller for your feature.
-2. Import the relevant service methods.
-3. Wrap logic in `try/catch` and use `handleError` for error handling.
+2. Import the relevant service instance.
+3. Use `withLogging<AuthenticatedRequest>` wrapper — no `try/catch` needed.
 4. Validate incoming requests with the corresponding Zod schema.
 5. Return standardized JSON responses.
 
@@ -469,23 +495,31 @@ This section provides a structured approach for adding new features, routes, con
 
 ### 10.4 Add Permission Checks
 
-1. Update `registry` with the new resource and allowed actions.
+1. Add the resource and actions to the shared `Registry` in `@klasmwen/shared`.
 2. Update `POLICY` to define role-based rules and ownership logic.
-3. Use `hasPermission` in services or `assertPermission` to enforce backend checks.
+3. Inject `PermissionService` (or `CirclePermissionService` for circle features) into the service constructor.
+4. Use typed methods (e.g., `permission.assertCan("post", "delete", user, post)`) in the service.
 
 **Example in a service:**
 
 ```ts
-const user = ensureAuthenticated(req);
-assertPermission(user, "post", "delete", post);
-await PostRepository.delete(post.id);
+export class PostCommandService {
+  constructor(private permission: PermissionService) {}
+
+  async deletePost(postId: string, user: AuthUser): Promise<void> {
+    const post = await PostRepository.findPostById(postId);
+    if (!post) throw new PostNotFoundError();
+    this.permission.assertCan("post", "delete", user, post);
+    await PostRepository.deletePost(postId);
+  }
+}
 ```
 
 **Benefits:**
 
 - Consistent structure for new features.
-- Centralized permission enforcement.
-- Type-safe validation with Zod ensures runtime safety.
+- Centralized, type-safe permission enforcement.
+- Fully mockable in tests — no `vi.mock("...rbac.js")` needed.
 
 ---
 
@@ -510,7 +544,7 @@ npm run test:ui --workspace backend
 
 Multi-phased, deterministic seeding ensures **realistic data**:
 
-- Seeders run sequentially: cleanup → tags → avatars → users → posts → comments → likes → bookmarks.
+- Seeders run sequentially across 13 phases: cleanup → tags → avatars → users → posts → comments → likes → bookmarks → report reasons → reports → circle avatars → circles → notifications.
 - Data generated with `@faker-js/faker`.
 - Bulk inserts used with retries for constraints.
 - Self-interaction and referential safety enforced.

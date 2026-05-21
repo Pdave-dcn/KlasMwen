@@ -62,6 +62,7 @@ const defaultPagination = {
   fetchNextPage: vi.fn(),
   hasNextPage: false,
   isFetchingNextPage: false,
+  isFetching: false,
 };
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -342,6 +343,7 @@ describe("MemberItem & MemberList", () => {
             fetchNextPage: vi.fn(),
             hasNextPage: true,
             isFetchingNextPage: true,
+            isFetching: false,
           }}
         />,
       );

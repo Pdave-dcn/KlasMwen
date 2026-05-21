@@ -10,6 +10,7 @@ interface RightSidebarProps {
     fetchNextPage: () => void;
     hasNextPage: boolean | undefined;
     isFetchingNextPage: boolean;
+    isFetching: boolean;
   };
   currentUserId?: string;
   isLoading: boolean;

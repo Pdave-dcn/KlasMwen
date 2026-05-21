@@ -74,6 +74,7 @@ const defaultPagination = {
   fetchNextPage: vi.fn(),
   hasNextPage: false,
   isFetchingNextPage: false,
+  isFetching: false,
 };
 
 // ── helpers ───────────────────────────────────────────────────────────────────

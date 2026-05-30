@@ -24,10 +24,12 @@ const createComment = withLogging<AuthenticatedRequest>(
       { postId, hasParent: !!parentId, contentLength: content.length },
       "Processing comment creation",
     );
-    const newComment = await commentService.command.createComment(
-      { content, authorId: req.user.id, postId, parentId },
-      req.app,
-    );
+    const newComment = await commentService.command.createComment({
+      content,
+      authorId: req.user.id,
+      postId,
+      parentId,
+    });
 
     log.info(
       { commentId: newComment.id, postId },

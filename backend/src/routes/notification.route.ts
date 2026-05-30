@@ -4,6 +4,9 @@ import {
   getNotifications,
   markNotificationAsRead,
   markAllNotificationsAsRead,
+  deleteNotification,
+  deleteAllNotifications,
+  deleteReadNotifications,
 } from "../controllers/notification.controller.js";
 import {
   generalApiLimiter,
@@ -157,5 +160,114 @@ router.patch("/:id/read", notificationWriteLimiter, markNotificationAsRead);
  *               $ref: '#/components/schemas/RateLimitError'
  */
 router.patch("/read-all", notificationWriteLimiter, markAllNotificationsAsRead);
+
+/**
+ * @openapi
+ * /notifications/all:
+ *   delete:
+ *     tags: [Notifications]
+ *     summary: Delete all notifications
+ *     description: Delete all notifications for the authenticated user
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: All notifications successfully deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MessageResponse'
+ *             example:
+ *               message: "All notifications deleted successfully"
+ *       401:
+ *         description: Unauthorized - Authentication required
+ *       429:
+ *         description: Rate limit exceeded
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/RateLimitError'
+ */
+router.delete("/all", notificationWriteLimiter, deleteAllNotifications);
+
+/**
+ * @openapi
+ * /notifications/read:
+ *   delete:
+ *     tags: [Notifications]
+ *     summary: Delete read notifications
+ *     description: Delete all read notifications for the authenticated user
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Read notifications successfully deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MessageResponse'
+ *             example:
+ *               message: "Read notifications deleted successfully"
+ *       401:
+ *         description: Unauthorized - Authentication required
+ *       429:
+ *         description: Rate limit exceeded
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/RateLimitError'
+ */
+router.delete("/read", notificationWriteLimiter, deleteReadNotifications);
+
+/**
+ * @openapi
+ * /notifications/{id}:
+ *   delete:
+ *     tags: [Notifications]
+ *     summary: Delete a notification
+ *     description: Delete a specific notification. Users can only delete their own notifications.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Notification ID
+ *         example: 123
+ *     responses:
+ *       200:
+ *         description: Notification successfully deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MessageResponse'
+ *             example:
+ *               message: "Notification deleted successfully"
+ *       400:
+ *         description: Invalid notification ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationError'
+ *       401:
+ *         description: Unauthorized - Authentication required
+ *       403:
+ *         description: Forbidden - Cannot delete other users' notifications
+ *       404:
+ *         description: Notification not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/NotificationError'
+ *       429:
+ *         description: Rate limit exceeded
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/RateLimitError'
+ */
+router.delete("/:id", notificationWriteLimiter, deleteNotification);
 
 export default router;

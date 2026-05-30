@@ -60,14 +60,13 @@ vi.mock("../../../src/core/config/db.js", () => ({
       count: vi.fn(),
       delete: vi.fn(),
     },
-    notification: {
-      create: vi.fn(),
-    },
+    // notification is no longer created directly via prisma
+    // it is now triggered through the event-driven notification system
   },
 }));
 
 describe("createComment controller", () => {
-  let mockRequest: Request;
+  let mockRequest: Request & { user?: any };
   let mockResponse: Response;
   let mockNext: any;
 
@@ -94,7 +93,7 @@ describe("createComment controller", () => {
       mockRequest.body = { content: "This is a new comment." };
 
       vi.mocked(prisma.post.findUnique).mockResolvedValue(
-        createMockPost({ id: mockPostId, authorId: mockUserId1 })
+        createMockPost({ id: mockPostId, authorId: mockUserId1 }),
       );
 
       vi.mocked(prisma.comment.create).mockResolvedValue({
@@ -132,7 +131,7 @@ describe("createComment controller", () => {
       mockRequest.body = { content: "This is a reply.", parentId: 2 };
 
       vi.mocked(prisma.post.findUnique).mockResolvedValue(
-        createMockPost({ id: mockPostId, authorId: mockUserId1 })
+        createMockPost({ id: mockPostId, authorId: mockUserId1 }),
       );
 
       vi.mocked(prisma.comment.findUnique).mockResolvedValue({
@@ -195,7 +194,7 @@ describe("createComment controller", () => {
       };
 
       vi.mocked(prisma.post.findUnique).mockResolvedValue(
-        createMockPost({ id: mockPostId, authorId: mockUserId1 })
+        createMockPost({ id: mockPostId, authorId: mockUserId1 }),
       );
 
       vi.mocked(prisma.comment.findUnique).mockResolvedValue(null);
@@ -212,7 +211,7 @@ describe("createComment controller", () => {
       mockRequest.body = { content: "Reply to wrong post.", parentId: 2 };
 
       vi.mocked(prisma.post.findUnique).mockResolvedValue(
-        createMockPost({ id: mockPostId, authorId: mockUserId1 })
+        createMockPost({ id: mockPostId, authorId: mockUserId1 }),
       );
 
       vi.mocked(prisma.comment.findUnique).mockResolvedValue({
@@ -229,7 +228,7 @@ describe("createComment controller", () => {
       await createComment(mockRequest, mockResponse, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith(
-        expect.any(CommentPostMismatchError)
+        expect.any(CommentPostMismatchError),
       );
       expect(prisma.comment.create).not.toHaveBeenCalled();
     });
@@ -299,7 +298,7 @@ describe("createComment controller", () => {
       await createComment(mockRequest, mockResponse, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith(
-        expect.any(ZodError) // ZodError from schema validation
+        expect.any(ZodError), // ZodError from schema validation
       );
       expect(prisma.post.findUnique).not.toHaveBeenCalled();
     });
@@ -312,7 +311,7 @@ describe("createComment controller", () => {
       mockRequest.body = { content: "Test reply", parentId: 0 };
 
       vi.mocked(prisma.post.findUnique).mockResolvedValue(
-        createMockPost({ id: mockPostId, authorId: mockUserId1 })
+        createMockPost({ id: mockPostId, authorId: mockUserId1 }),
       );
 
       vi.mocked(prisma.comment.findUnique).mockResolvedValue(null);
@@ -328,7 +327,7 @@ describe("createComment controller", () => {
       mockRequest.body = { content: "Test reply", parentId: -1 };
 
       vi.mocked(prisma.post.findUnique).mockResolvedValue(
-        createMockPost({ id: mockPostId, authorId: mockUserId1 })
+        createMockPost({ id: mockPostId, authorId: mockUserId1 }),
       );
 
       vi.mocked(prisma.comment.findUnique).mockResolvedValue(null);
@@ -347,7 +346,7 @@ describe("createComment controller", () => {
       mockRequest.body = { content: specialContent };
 
       vi.mocked(prisma.post.findUnique).mockResolvedValue(
-        createMockPost({ id: mockPostId, authorId: mockUserId1 })
+        createMockPost({ id: mockPostId, authorId: mockUserId1 }),
       );
 
       vi.mocked(prisma.comment.create).mockResolvedValue({
@@ -403,7 +402,7 @@ describe("createComment controller", () => {
       };
 
       vi.mocked(prisma.post.findUnique).mockResolvedValue(
-        createMockPost({ id: mockPostId, authorId: mockUserId1 })
+        createMockPost({ id: mockPostId, authorId: mockUserId1 }),
       );
 
       vi.mocked(prisma.comment.create).mockResolvedValue(mockCreatedComment);

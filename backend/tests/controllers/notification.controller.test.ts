@@ -13,9 +13,13 @@ const mockMarkAllAsRead = vi.fn();
 
 vi.mock("../../src/features/notification/service/index.js", () => ({
   notificationService: {
-    getUserNotifications: (...args: unknown[]) => mockGetUserNotifications(...args),
-    markAsRead: (...args: unknown[]) => mockMarkAsRead(...args),
-    markAllAsRead: (...args: unknown[]) => mockMarkAllAsRead(...args),
+    query: {
+      getUserNotifications: (...args: unknown[]) => mockGetUserNotifications(...args),
+    },
+    command: {
+      markAsRead: (...args: unknown[]) => mockMarkAsRead(...args),
+      markAllAsRead: (...args: unknown[]) => mockMarkAllAsRead(...args),
+    },
   },
 }));
 

@@ -101,7 +101,6 @@ describe("Comment Controller", () => {
 
       expect(mockCreateComment).toHaveBeenCalledWith(
         { content: "Great post!", authorId: mockUserId, postId: mockPostId },
-        undefined,
       );
       expect(mockNext).not.toHaveBeenCalled();
       expect(mockResponse.status).toHaveBeenCalledWith(201);
@@ -123,7 +122,6 @@ describe("Comment Controller", () => {
 
       expect(mockCreateComment).toHaveBeenCalledWith(
         { content: "A reply", authorId: mockUserId, postId: mockPostId, parentId: 5 },
-        undefined,
       );
       expect(mockResponse.status).toHaveBeenCalledWith(201);
     });

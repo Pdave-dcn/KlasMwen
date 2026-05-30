@@ -1,9 +1,9 @@
-import { notificationService as NotificationService } from "../../notification/service/index.js";
+import { eventBus } from "../../../core/events/EventBus.js";
 import { postService } from "../../posts/service/PostService.js";
 
 import ReactionRepository from "./ReactionRepository.js";
 
-import type { Application } from "express";
+import type { PostLikedEvent } from "../../../core/events/types.js";
 
 interface ToggleLikeResult {
   action: "like" | "unlike";
@@ -11,11 +11,7 @@ interface ToggleLikeResult {
 }
 
 class ReactionService {
-  async toggleLike(
-    userId: string,
-    postId: string,
-    app?: Application,
-  ): Promise<ToggleLikeResult> {
+  async toggleLike(userId: string, postId: string): Promise<ToggleLikeResult> {
     const post = await postService.validate.verifyPostExists(postId);
 
     const existingLike = await ReactionRepository.findLike(userId, postId);
@@ -31,15 +27,14 @@ class ReactionService {
 
     await ReactionRepository.createLike(userId, postId);
 
-    await NotificationService.createNotification(
-      {
-        type: "LIKE",
-        userId: post.authorId,
-        actorId: userId,
-        postId,
-      },
-      app,
-    );
+    const event: PostLikedEvent = {
+      type: "post:liked",
+      postId,
+      postAuthorId: post.authorId,
+      actorId: userId,
+    };
+
+    eventBus.emit(event);
 
     return {
       action: "like",

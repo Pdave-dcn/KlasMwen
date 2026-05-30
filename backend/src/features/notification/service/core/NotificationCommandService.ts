@@ -5,31 +5,19 @@ import {
 } from "../../../../core/security/PermissionService.js";
 import NotificationRepository from "../repo/NotificationRepository.js";
 
+import { notificationEmitter } from "./NotificationEmitter.js";
+
 import type { CreateNotificationData } from "../types/NotificationTypes.js";
-import type { Application } from "express";
 
 class NotificationCommandService {
   constructor(
     private permission: PermissionService = defaultPermissionService,
   ) {}
 
-  async createNotification(
-    data: CreateNotificationData,
-    app?: Application
-  ) {
-    if (data.userId === data.actorId) {
-      return null;
-    }
-
+  async createNotification(data: CreateNotificationData) {
     const notification = await NotificationRepository.create(data);
 
-    if (app) {
-      const io = app.get("io");
-
-      if (io) {
-        io.to(`user:${data.userId}`).emit("notification:new", notification);
-      }
-    }
+    notificationEmitter.emit(data.userId, "notification:new", notification);
 
     return notification;
   }

@@ -12,12 +12,10 @@ const toggleLike = withLogging<AuthenticatedRequest>(
   "toggleLike",
   async ({ req, res, log }) => {
     log.info("Received request to toggle like");
+
     const { id: postId } = PostIdParamSchema.parse(req.params);
-    const result = await reactionService.toggleLike(
-      req.user.id,
-      postId,
-      req.app,
-    );
+    const result = await reactionService.toggleLike(req.user.id, postId);
+
     res.status(200).json({ message: result.message });
   },
 );

@@ -72,7 +72,7 @@ describe("Reaction Controller", () => {
 
       await toggleLike(mockRequest as any, mockResponse as any, mockNext);
 
-      expect(mockToggleLike).toHaveBeenCalledWith(mockUserId, mockPostId, undefined);
+      expect(mockToggleLike).toHaveBeenCalledWith(mockUserId, mockPostId);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "Post liked successfully",
@@ -91,7 +91,7 @@ describe("Reaction Controller", () => {
 
       await toggleLike(mockRequest as any, mockResponse as any, mockNext);
 
-      expect(mockToggleLike).toHaveBeenCalledWith(mockUserId, mockPostId, undefined);
+      expect(mockToggleLike).toHaveBeenCalledWith(mockUserId, mockPostId);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "Post unliked successfully",
@@ -107,7 +107,7 @@ describe("Reaction Controller", () => {
 
       await toggleLike(mockRequest as any, mockResponse as any, mockNext);
 
-      expect(mockToggleLike).toHaveBeenCalledWith(mockUserId, mockPostId, undefined);
+      expect(mockToggleLike).toHaveBeenCalledWith(mockUserId, mockPostId);
       expect(mockResponse.status).not.toHaveBeenCalled();
       expect(mockNext).toHaveBeenCalledWith(expect.any(PostNotFoundError));
     });

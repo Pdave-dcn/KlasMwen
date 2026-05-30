@@ -9,6 +9,8 @@ import { Server } from "socket.io";
 import { corsOptions } from "./core/config/cors.js";
 import env from "./core/config/env.js";
 import initializePassport from "./core/config/passport.js";
+import { notificationEmitter } from "./features/notification/service/index.js";
+import { notificationEventHandler } from "./features/notification/service/listeners/index.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
 import { httpLogger } from "./middleware/httpLogger.middleware.js";
 import router from "./routes/index.js";
@@ -46,6 +48,10 @@ registerSocketHandlers(io);
 const studyCircleNamespace = io.of("/circles");
 studyCircleNamespace.use(socketAuthMiddleware);
 registerCircleSocketHandlers(studyCircleNamespace);
+
+// Initialize notification system
+notificationEmitter.initialize(io);
+notificationEventHandler.register(); // Subscribe to events that trigger notifications
 
 setupSwagger(app);
 

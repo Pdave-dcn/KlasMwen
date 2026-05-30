@@ -10,19 +10,12 @@ const mockFindById = vi.fn();
 const mockCreate = vi.fn();
 const mockDelete = vi.fn();
 const mockAssertDeleteComment = vi.fn();
-const mockCreateNotification = vi.fn();
 
 vi.mock("../../../../src/features/posts/service/PostService.js", () => ({
   postService: {
     validate: {
       verifyPostExists: (...args: unknown[]) => mockVerifyPostExists(...args),
     },
-  },
-}));
-
-vi.mock("../../../../src/features/notification/service/index.js", () => ({
-  notificationService: {
-    createNotification: (...args: unknown[]) => mockCreateNotification(...args),
   },
 }));
 
@@ -65,10 +58,6 @@ describe("CommentCommandService", () => {
         author: { connect: { id: mockUserId } },
         post: { connect: { id: mockPostId } },
       });
-      expect(mockCreateNotification).toHaveBeenCalledWith(
-        expect.objectContaining({ type: "COMMENT_ON_POST", userId: mockAuthorId }),
-        undefined,
-      );
       expect(result).toEqual(newComment);
     });
 
@@ -93,10 +82,6 @@ describe("CommentCommandService", () => {
         post: { connect: { id: mockPostId } },
         parent: { connect: { id: 5 } },
       });
-      expect(mockCreateNotification).toHaveBeenCalledWith(
-        expect.objectContaining({ type: "REPLY_TO_COMMENT", userId: "parent-author" }),
-        undefined,
-      );
       expect(result).toEqual(newComment);
     });
 

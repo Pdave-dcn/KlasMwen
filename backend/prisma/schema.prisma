@@ -32,7 +32,6 @@ enum NotificationType {
   COMMENT_ON_POST
   REPLY_TO_COMMENT
   LIKE
-  REPORT_UPDATE
 }
 
 // User Roles in a study circle

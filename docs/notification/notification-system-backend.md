@@ -22,7 +22,7 @@
 
 ## 1. Overview
 
-The notification system delivers in-app alerts for social interactions (likes, comments, replies) and administrative actions (report updates). It uses an **event-driven architecture** on the write path — services emit domain events via a shared `EventBus`, and a dedicated event handler subscribes, translates events into notifications, persists them, and pushes real-time delivery via Socket.IO.
+The notification system delivers in-app alerts for social interactions (likes, comments, replies). It uses an **event-driven architecture** on the write path — services emit domain events via a shared `EventBus`, and a dedicated event handler subscribes, translates events into notifications, persists them, and pushes real-time delivery via Socket.IO.
 
 **Key design decisions:**
 
@@ -42,7 +42,6 @@ enum NotificationType {
   COMMENT_ON_POST  // Root comment on user's post
   REPLY_TO_COMMENT // Reply to user's comment
   LIKE             // Like on user's post
-  REPORT_UPDATE    // Report status change (not yet wired)
 }
 ```
 
@@ -76,7 +75,6 @@ model Notification {
 | `post:liked`              | `LIKE`             | Post author           | `postId`              |
 | `comment:created` (root)  | `COMMENT_ON_POST`  | Post author           | `postId`, `commentId` |
 | `comment:created` (reply) | `REPLY_TO_COMMENT` | Parent comment author | `postId`, `commentId` |
-| _(not wired)_             | `REPORT_UPDATE`    | Reported user         | —                     |
 
 ---
 
@@ -200,7 +198,6 @@ eventBus.on<PostLikedEvent>("post:liked", handler);
 | ----------------------- | -------------------------------------------------------------------------------------------- |
 | `post:liked`            | `postId`, `postAuthorId`, `actorId`                                                          |
 | `comment:created`       | `commentId`, `postId`, `postAuthorId`, `commentAuthorId`, `parentCommentAuthorId`, `isReply` |
-| `report:status_updated` | `reportId`, `reportedUserId`, `updatedBy`, `newStatus`                                       |
 
 ### NotificationEventHandler
 

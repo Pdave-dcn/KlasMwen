@@ -55,7 +55,7 @@ router.use(requireAuth);
  *         name: type
  *         schema:
  *           type: string
- *           enum: [COMMENT_ON_POST, REPLY_TO_COMMENT, LIKE, REPORT_UPDATE]
+ *           enum: [COMMENT_ON_POST, REPLY_TO_COMMENT, LIKE]
  *         description: Filter by notification type
  *     responses:
  *       200:

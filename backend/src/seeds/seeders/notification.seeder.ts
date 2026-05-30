@@ -7,7 +7,6 @@ import {
   type Post,
   type Comment,
   type Like,
-  type Report,
   type Prisma,
 } from "@prisma/client";
 
@@ -25,14 +24,13 @@ interface NotificationStats {
 }
 
 /**
- * Seeds notifications based on existing interactions (Likes, Comments, Reports)
+ * Seeds notifications based on existing interactions (Likes, Comments)
  */
 const seedNotifications = async (
   users: User[],
   posts: Post[],
   comments: Comment[],
   likes: Like[],
-  reports?: Report[]
 ) => {
   const seedingStartTime = Date.now();
   logger.info("Starting notification seeding process");
@@ -43,7 +41,6 @@ const seedNotifications = async (
       COMMENT_ON_POST: 0,
       REPLY_TO_COMMENT: 0,
       LIKE: 0,
-      REPORT_UPDATE: 0,
     };
 
     // 1. Collect LIKE notifications
@@ -93,25 +90,6 @@ const seedNotifications = async (
           createdAt: null, // Will be assigned after shuffle
         });
         typeStats.COMMENT_ON_POST++;
-      }
-    }
-
-    // 3. Collect REPORT notifications (only if reports are provided)
-    if (reports && reports.length > 0) {
-      const reportsToNotify = reports.filter(() =>
-        faker.datatype.boolean({ probability: 0.3 })
-      );
-      const systemAdmin = users.find((u) => u.role === "ADMIN") ?? users[0];
-
-      for (const report of reportsToNotify) {
-        notificationsToCreate.push({
-          type: NotificationType.REPORT_UPDATE,
-          userId: report.reporterId,
-          actorId: systemAdmin.id,
-          read: faker.datatype.boolean({ probability: 0.2 }),
-          createdAt: null, // Will be assigned after shuffle
-        });
-        typeStats.REPORT_UPDATE++;
       }
     }
 

@@ -9,7 +9,7 @@ export const notificationSchemas = {
       },
       type: {
         type: "string",
-        enum: ["COMMENT_ON_POST", "REPLY_TO_COMMENT", "LIKE", "REPORT_UPDATE"],
+        enum: ["COMMENT_ON_POST", "REPLY_TO_COMMENT", "LIKE"],
         description: "Type of notification",
         example: "COMMENT_ON_POST",
       },
